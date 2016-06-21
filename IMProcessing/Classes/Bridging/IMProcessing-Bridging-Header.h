@@ -16,6 +16,9 @@
 #include "IMPExif.h"
 #include "IMPJpegturbo.h"
 
+#else
+
+
 #endif
 
 #define IMPSTD_PASS_KERNEL "kernel_passthrough"

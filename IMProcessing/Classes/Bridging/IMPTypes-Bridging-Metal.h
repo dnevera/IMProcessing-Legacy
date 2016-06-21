@@ -15,19 +15,18 @@
 extern "C" {
 #endif
     
+    typedef struct {
+        float2 vectors[4][4];
+    } IMPFloat2x4x4;
     
+
 #ifndef __METAL_VERSION__
     
      typedef struct {
         float3 position;
         float3 texcoord;
     } IMPVertex;
-    
-    typedef struct {
-        float4 position;
-        float2 texcoord;
-    } IMPVertexOut;
-    
+
 #else
     
     typedef struct {
@@ -38,10 +37,10 @@ extern "C" {
     typedef struct {
         float4 position [[position]];
         float2 texcoord;
-    } IMPVertexOut;
-    
+    } IMPVertexOut;    
+
 #endif
-        
+    
     typedef struct {
         float left;
         float right;

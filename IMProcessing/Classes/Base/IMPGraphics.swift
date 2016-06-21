@@ -16,7 +16,7 @@ import simd
 
 public protocol IMPGraphicsProvider {
     var backgroundColor:IMPColor {get set}
-    var graphics:IMPGraphics! {get}
+    //var graphics:IMPGraphics! {get}
 }
 
 extension IMPGraphicsProvider{

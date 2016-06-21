@@ -45,6 +45,12 @@ public class IMPPhotoPlateNode: IMPRenderNode {
     }
 }
 
+public extension IMPGraphics {
+    public convenience init(context: IMPContext, fragment: String) {
+        self.init(context: context, vertex: "vertex_transformation", fragment: fragment)
+    }
+}
+
 /// Photo plate transformation filter
 public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
 
@@ -58,15 +64,33 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
     
     public var keepAspectRatio = true
     
-    public var graphics:IMPGraphics!
+    //public var graphics:IMPGraphics!
 
-    required public init(context: IMPContext, vertex:String, fragment:String) {
-        super.init(context: context)
-        graphics = IMPGraphics(context: context, vertex: vertex, fragment: fragment)
+    private var graphicsList:[IMPGraphics] = [IMPGraphics]()
+
+    public final func addGraphics(graphics:IMPGraphics){
+        if graphicsList.contains(graphics) == false {
+            graphicsList.append(graphics)
+            self.dirty = true
+        }
     }
     
-    convenience public required init(context: IMPContext) {
-        self.init(context: context, vertex: "vertex_transformation", fragment: "fragment_transformation")
+    public final func removeGraphics(graphics:IMPGraphics){
+        if let index = graphicsList.indexOf(graphics) {
+            graphicsList.removeAtIndex(index)
+            self.dirty = true
+        }
+    }
+    
+    //required public init(context: IMPContext, vertex:String, fragment:String) {
+    //    super.init(context: context)
+    //    //graphics = IMPGraphics(context: context, vertex: vertex, fragment: fragment)
+    //}
+    
+    public required init(context: IMPContext) {
+        super.init(context: context)
+        //self.init(context: context, vertex: "vertex_transformation", fragment: "fragment_transformation")
+        addGraphics(IMPGraphics(context: context, vertex: "vertex_transformation", fragment: "fragment_transformation"))
     }    
     
     public var viewPortSize: MTLSize? {
@@ -77,38 +101,45 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
     }
     
     public override func main(source source:IMPImageProvider , destination provider: IMPImageProvider) -> IMPImageProvider? {
-        self.context.execute{ (commandBuffer) -> Void in
-
-            if let inputTexture = source.texture {
+        var inputSource = source
+        for graphics in graphicsList{
+            self.context.execute{ (commandBuffer) -> Void in
                 
-                var width  = inputTexture.width.float
-                var height = inputTexture.height.float
-
-                if let s = self.viewPortSize {
-                    width = s.width.float
-                    height = s.height.float
-                }
-                
-                width  -= width  * (self.plate.region.left   + self.plate.region.right);
-                height -= height * (self.plate.region.bottom + self.plate.region.top);                            
-                
-                if width.int != provider.texture?.width || height.int != provider.texture?.height{
+                if let inputTexture = inputSource.texture {
                     
-                    let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                        inputTexture.pixelFormat,
-                        width: width.int, height: height.int,
-                        mipmapped: false)
-                                        
-                    provider.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                    var width  = inputTexture.width.float
+                    var height = inputTexture.height.float
+                    
+                    if let s = self.viewPortSize {
+                        width = s.width.float
+                        height = s.height.float
+                    }
+                    
+                    width  -= width  * (self.plate.region.left   + self.plate.region.right);
+                    height -= height * (self.plate.region.bottom + self.plate.region.top);
+                    
+                    if width.int != provider.texture?.width || height.int != provider.texture?.height
+                        ||
+                    inputSource === provider
+                    {
+                        
+                        let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
+                            inputTexture.pixelFormat,
+                            width: width.int, height: height.int,
+                            mipmapped: false)
+                        
+                        provider.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                    }
+                    
+                    self.plate.render(commandBuffer,
+                        pipelineState: graphics.pipeline!,
+                        source: source,
+                        destination: provider,
+                        clearColor: self.clearColor, configure: { (command) in
+                            self.configureGraphics(graphics, command: command)
+                    })
                 }
-                
-                self.plate.render(commandBuffer,
-                    pipelineState: self.graphics.pipeline!,
-                    source: source,
-                    destination: provider,
-                    clearColor: self.clearColor, configure: { (command) in
-                        self.configureGraphics(self.graphics, command: command)
-                })
+                inputSource = provider
             }
         }
         return provider
