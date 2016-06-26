@@ -12,59 +12,111 @@ import Accelerate
 // MARK: - Bezier cubic splines 
 public extension Float {
     
-    public func cubicBesierFunction(c1 c1:float2, c2:float2) -> Float {
-        let t = cubicBezierBinarySubdivide(x: self, x1: c1.x, x2: c2.x)
-        return cubicBezierCalculate(t: t, a1: c1.y, a2: c2.y)
+    func cubicBesierFunction(c1 c1:float2, c2:float2) -> Float{
         
+        let x = self
+        
+        let x0a:Float = 0
+        let y0a:Float = 0
+        let x3a:Float = 1
+        let y3a:Float = 1
+        
+        let x1a:Float = c1.x
+        let y1a:Float = c1.y
+        let x2a:Float = c2.x
+        let y2a:Float = c2.y
+        
+        let A =   x3a - 3*x2a + 3*x1a - x0a
+        let B = 3*x2a - 6*x1a + 3*x0a
+        let C = 3*x1a - 3*x0a
+        let D =   x0a
+        
+        let E =   y3a - 3*y2a + 3*y1a - y0a
+        let F = 3*y2a - 6*y1a + 3*y0a
+        let G = 3*y1a - 3*y0a
+        let H =   y0a
+        
+        var currentt = x
+        let nRefinementIterations = 5
+        
+        for _ in 0..<nRefinementIterations{
+            let currentx = valueFromT (currentt, A:A, B:B, C:C, D:D)
+            currentt -= (currentx - x)*(slopeFromT (currentt, A: A,B: B,C: C));
+            currentt = currentt < 0 ? 0 : currentt > 1 ? 1: currentt
+        }
+        
+        let y = valueFromT (currentt,  A:E, B:F , C:G, D:H)
+        
+        return (y.isInfinite) ? 1 : (y.isFinite) ? y : 0
     }
     
-    func  A(a1 a1:Float, a2:Float) -> Float { return (1.0 - 3.0 * a2 + 3.0 * a1) }
-    func  B(a1 a1:Float, a2:Float) -> Float { return (3.0 * a2 - 6.0 * a1) }
-    func  C(a1 a1:Float) -> Float  { return (3.0 * a1) }
-    
-    func cubicBezierCalculate(t t:Float, a1:Float, a2:Float) -> Float {
-        return ((A(a1: a1, a2: a2) * t + B(a1: a1, a2: a2)) * t + C(a1: a1)) * t
+    func slopeFromT (t:Float, A:Float, B:Float, C:Float) -> Float {
+        return 1.0/(3.0*A*t*t + 2.0*B*t + C)
     }
     
-    func cubicBezierSlope(t t:Float, a1:Float, a2:Float) ->Float {
-        return 3.0 * A(a1: a1, a2: a2) * t * t + 2.0 * B(a1: a1, a2: a2) * t + C(a1: a1)
+    func valueFromT (t:Float, A:Float, B:Float, C:Float, D:Float) -> Float {
+        return  A*(t*t*t) + B*(t*t) + C*t + D
     }
-    
-    func cubicBezierBinarySubdivide(x x:Float, x1: Float, x2: Float) -> Float {
-        let epsilon:Float = 0.0000001
-        let maxIterations = 10
-        
-        var start:Float = 0
-        var end:Float = 1
-        
-        var currentX:Float
-        var currentT:Float
-        
-        var i = 0
-        repeat {
-            currentT = start + (end - start) / 2
-            currentX = cubicBezierCalculate(t: currentT, a1: x1, a2: x2) - x;
-            
-            if (currentX > 0) {
-                end = currentT;
-            } else {
-                start = currentT;
-            }
-            
-            i += 1
-            
-        } while (fabs(currentX) > epsilon && i < maxIterations)
-        
-        return currentT
-    }
+
+//    public func cubicBesierFunction(c1 c1:float2, c2:float2) -> Float {
+//        let t = cubicBezierBinarySubdivide(x: self, x1: c1.x, x2: c2.x)
+//        return cubicBezierCalculate(t: t, a1: c1.y, a2: c2.y)
+//        
+//    }
+//    
+//    func  A(a1 a1:Float, a2:Float) -> Float { return (1.0 - 3.0 * a2 + 3.0 * a1) }
+//    func  B(a1 a1:Float, a2:Float) -> Float { return (3.0 * a2 - 6.0 * a1) }
+//    func  C(a1 a1:Float) -> Float  { return (3.0 * a1) }
+//    
+//    func cubicBezierCalculate(t t:Float, a1:Float, a2:Float) -> Float {
+//        return ((A(a1: a1, a2: a2) * t + B(a1: a1, a2: a2)) * t + C(a1: a1)) * t
+//    }
+//    
+//    func cubicBezierSlope(t t:Float, a1:Float, a2:Float) ->Float {
+//        return 3.0 * A(a1: a1, a2: a2) * t * t + 2.0 * B(a1: a1, a2: a2) * t + C(a1: a1)
+//    }
+//    
+//    func cubicBezierBinarySubdivide(x x:Float, x1: Float, x2: Float) -> Float {
+//        let epsilon:Float = 0.0000001
+//        let maxIterations = 10
+//        
+//        var start:Float = 0
+//        var end:Float = 1
+//        
+//        var currentX:Float
+//        var currentT:Float
+//        
+//        var i = 0
+//        repeat {
+//            currentT = start + (end - start) / 2
+//            currentX = cubicBezierCalculate(t: currentT, a1: x1, a2: x2) - x;
+//            
+//            if (currentX > 0) {
+//                end = currentT;
+//            } else {
+//                start = currentT;
+//            }
+//            
+//            i += 1
+//            
+//        } while (fabs(currentX) > epsilon && i < maxIterations)
+//        
+//        return currentT
+//    }
 }
 
 public extension CollectionType where Generator.Element == Float {
-    public func cubicBezierSpline(c1 c1:float2, c2:float2, scale:Float=0)-> [Float]{
+    public func cubicBezierSpline(c1 c1:float2, c2:float2)-> [Float]{
         var curve = [Float]()
         for x in self {
             curve.append(x.cubicBesierFunction(c1: c1, c2: c2))
         }
+//        if scale>0 {
+//            var max:Float = 0
+//            vDSP_maxv(curve, 1, &max, vDSP_Length(curve.count))
+//            max = scale/max
+//            vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
+//        }
         return curve
     }
 }
@@ -148,12 +200,9 @@ public extension CollectionType where Generator.Element == Float {
         
         S [start] = B
         
-        //var j=0
-        
         // Slopes here are a weighted average of the slopes
         // to each of the adjcent control points.
         
-        //for j = start + 2; j < end; j += 1 {
         for j in (start + 2)  ..< end {
             
             let C =  X[j] - X[j-1]
@@ -175,7 +224,6 @@ public extension CollectionType where Generator.Element == Float {
             G [start] = 0.75 * (S [start] + S [start+1])
             G [end-1] = 0.75 * (S [end-2] + S [end-1])
             
-            //for j = start+1; j < end - 1; j += 1 {
             for j in (start+1) ..< (end-1) {
                 
                 A = (X [j+1] - X [j-1]) * 2.0
@@ -186,7 +234,6 @@ public extension CollectionType where Generator.Element == Float {
                 
             }
             
-            //for j = start+1; j < end; j += 1 {
             for j in (start+1) ..< end {
                 
                 A = 1.0 - F [j-1] * E [j]
@@ -197,12 +244,10 @@ public extension CollectionType where Generator.Element == Float {
                 
             }
             
-            //for j = end - 2; j >= start; j -= 1 {
             for j in (end - 2).stride(through: start, by: -1){
                 G [j] = G [j] - F [j] * G [j+1]
             }
             
-            //for j = start; j < end; j += 1 {
             for j in start ..< end {
                 S [j] = G [j]
             }

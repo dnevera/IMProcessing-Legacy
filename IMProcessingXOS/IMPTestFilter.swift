@@ -72,11 +72,12 @@ class IMPTestFilter:IMPFilter {
         })
         
         addSourceObserver { (source) -> Void in
+            histogramView.filter?.source = source
             self.sourceAnalayzer.source = source
         }
         
         addDestinationObserver { (destination) -> Void in
-            histogramView.filter?.source = destination
+           // histogramView.filter?.source = destination
             histogramCDFView.filter?.source = destination
         }
     }
