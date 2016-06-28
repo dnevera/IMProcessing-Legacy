@@ -12,9 +12,28 @@ public class IMPSpline {
     public let range:RangeType
     public let size:Int
     
-    public var controlPoints = [float2]() {
-        didSet{
-            
+    var controlPoints = [float2]()
+    
+    public func add(points points: [float2]) {
+        
+    }
+    
+    public func remove(points points: [float2]){
+        for p in points {
+            if
+            (abs(p.x-range.first.x) < FLT_EPSILON
+            &&
+            abs(p.y-range.first.y) < FLT_EPSILON
+            ) ||
+            (abs(p.x-range.last.x) < FLT_EPSILON
+            &&
+            abs(p.y-range.last.y) < FLT_EPSILON)
+            {
+                continue
+            }
+            if let i = controlPoints.indexOf(p) {
+                controlPoints.removeAtIndex(i)
+            }
         }
     }
     
@@ -29,6 +48,11 @@ public class IMPSpline {
     }
 }
 
+let defaultRange = Float.range(start: 0, step: 1/256, end: 1)
+
 let spline = IMPSpline(range: (float2(0),float2(1)), size: 10) { (controls) -> [Float] in
     
 }
+
+let v:Float = 1
+
