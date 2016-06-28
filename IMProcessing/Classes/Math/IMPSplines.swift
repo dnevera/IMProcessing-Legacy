@@ -42,7 +42,6 @@ public extension Float {
         for _ in 0..<nRefinementIterations{
             let currentx = valueFromT (currentt, A:A, B:B, C:C, D:D)
             currentt -= (currentx - x)*(slopeFromT (currentt, A: A,B: B,C: C));
-            currentt = currentt < 0 ? 0 : currentt > 1 ? 1: currentt
         }
         
         let y = valueFromT (currentt,  A:E, B:F , C:G, D:H)
@@ -57,66 +56,23 @@ public extension Float {
     func valueFromT (t:Float, A:Float, B:Float, C:Float, D:Float) -> Float {
         return  A*(t*t*t) + B*(t*t) + C*t + D
     }
-
-//    public func cubicBesierFunction(c1 c1:float2, c2:float2) -> Float {
-//        let t = cubicBezierBinarySubdivide(x: self, x1: c1.x, x2: c2.x)
-//        return cubicBezierCalculate(t: t, a1: c1.y, a2: c2.y)
-//        
-//    }
-//    
-//    func  A(a1 a1:Float, a2:Float) -> Float { return (1.0 - 3.0 * a2 + 3.0 * a1) }
-//    func  B(a1 a1:Float, a2:Float) -> Float { return (3.0 * a2 - 6.0 * a1) }
-//    func  C(a1 a1:Float) -> Float  { return (3.0 * a1) }
-//    
-//    func cubicBezierCalculate(t t:Float, a1:Float, a2:Float) -> Float {
-//        return ((A(a1: a1, a2: a2) * t + B(a1: a1, a2: a2)) * t + C(a1: a1)) * t
-//    }
-//    
-//    func cubicBezierSlope(t t:Float, a1:Float, a2:Float) ->Float {
-//        return 3.0 * A(a1: a1, a2: a2) * t * t + 2.0 * B(a1: a1, a2: a2) * t + C(a1: a1)
-//    }
-//    
-//    func cubicBezierBinarySubdivide(x x:Float, x1: Float, x2: Float) -> Float {
-//        let epsilon:Float = 0.0000001
-//        let maxIterations = 10
-//        
-//        var start:Float = 0
-//        var end:Float = 1
-//        
-//        var currentX:Float
-//        var currentT:Float
-//        
-//        var i = 0
-//        repeat {
-//            currentT = start + (end - start) / 2
-//            currentX = cubicBezierCalculate(t: currentT, a1: x1, a2: x2) - x;
-//            
-//            if (currentX > 0) {
-//                end = currentT;
-//            } else {
-//                start = currentT;
-//            }
-//            
-//            i += 1
-//            
-//        } while (fabs(currentX) > epsilon && i < maxIterations)
-//        
-//        return currentT
-//    }
 }
 
 public extension CollectionType where Generator.Element == Float {
+   
+    public func cubicBezierSpline(controls:[float2])-> [Float]{
+        var curve = [Float]()
+        for x in self {
+            curve.append(x.cubicBesierFunction(c1: controls[0], c2: controls[1]))
+        }
+        return curve
+    }
+    
     public func cubicBezierSpline(c1 c1:float2, c2:float2)-> [Float]{
         var curve = [Float]()
         for x in self {
             curve.append(x.cubicBesierFunction(c1: c1, c2: c2))
         }
-//        if scale>0 {
-//            var max:Float = 0
-//            vDSP_maxv(curve, 1, &max, vDSP_Length(curve.count))
-//            max = scale/max
-//            vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
-//        }
         return curve
     }
 }

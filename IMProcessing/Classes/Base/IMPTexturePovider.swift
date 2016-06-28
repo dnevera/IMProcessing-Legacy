@@ -11,7 +11,6 @@ import Metal
 
 public protocol IMPTextureProvider{
     var texture:MTLTexture?{ get set }
-    init(context:IMPContext)
 }
 
 public extension IMPTextureProvider {
