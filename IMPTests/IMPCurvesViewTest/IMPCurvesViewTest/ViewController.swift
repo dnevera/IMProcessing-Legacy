@@ -22,32 +22,15 @@ class ViewController: NSViewController {
     
     var context = IMPContext()
     
-    lazy var contrast:IMTLAutoContrastFilter = {
-        let c = IMTLAutoContrastFilter(context: self.context)
-        c.addDestinationObserver(destination: { (destination) in
-            
-            if c.autoContrastEnabled {
-                self.curvesControl.curvesView["Red"]?.controlPoints = c.curvesFilter.splines.redControls
-                self.curvesControl.curvesView["Green"]?.controlPoints = c.curvesFilter.splines.greenControls
-                self.curvesControl.curvesView["Blue"]?.controlPoints = c.curvesFilter.splines.blueControls
-            }
-            
-            dispatch_async(dispatch_get_main_queue(), {
-                self.curvesControl.curvesView["Red"]?.curve = c.curvesFilter.splines.redCurve
-                self.curvesControl.curvesView["Green"]?.curve = c.curvesFilter.splines.greenCurve
-                self.curvesControl.curvesView["Blue"]?.curve = c.curvesFilter.splines.blueCurve
-                self.curvesControl.display()
-            })
-            
-        })
+    lazy var curves:IMPXYZCurvesFilter = {
+        let c = IMPRGBCurvesFilter(context: self.context)
         return c
     }()
     
-    /// Композитный фильтр
     lazy var filter:IMPFilter = {
         let f = IMPFilter(context: self.context)
         
-        f.addFilter(self.contrast)
+        f.addFilter(self.curves)
         
         return f
     }()
@@ -59,29 +42,27 @@ class ViewController: NSViewController {
         return v
     }()
     
-    lazy var curvesControl:IMPCurvesControl = {
-        let v = IMPCurvesControl(frame: self.view.bounds)
+    lazy var curvesControl:IMPRGBCurvesControl = {
+        let v = IMPRGBCurvesControl(frame: self.view.bounds)
+        
+        v.curvesView.curveFunction = .Cubic
         
         v.curvesView.didControlPointsUpdate = { (info) in
             
-            self.contrast.autoContrastEnabled = false
-            
             if info.id == "Red" {
-                self.contrast.curvesFilter.splines.redControls = info.controlPoints
+                self.curves.x <- info.controlPoints
             }
             else if info.id == "Green" {
-                self.contrast.curvesFilter.splines.greenControls = info.controlPoints
+                self.curves.y <- info.controlPoints
             }
             else if info.id == "Blue" {
-                self.contrast.curvesFilter.splines.blueControls = info.controlPoints
+                self.curves.z <- info.controlPoints
             }
         }
         
         v.wantsLayer = true
         v.layer?.backgroundColor = IMPColor.clearColor().CGColor
-        v.curvesView["Red"]   = IMPCurvesView.CurveInfo(name: "Red",   color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8), maxControls:2)
-        v.curvesView["Green"] = IMPCurvesView.CurveInfo(name: "Green", color:  IMPColor(red: 0,   green: 1,   blue: 0,   alpha: 0.6), maxControls:2)
-        v.curvesView["Blue"]  = IMPCurvesView.CurveInfo(name: "Blue",  color:  IMPColor(red: 0.2, green: 0.2, blue: 1,   alpha: 0.8), maxControls:2)
+        
         return v
     }()
     
@@ -183,8 +164,8 @@ class ViewController: NSViewController {
                 if let image = loadImage(IMPDocument.sharedInstance.currentFile!, size: 0) {
                     
                     let filter = IMPFilter(context: IMPContext())
-                    let contrast = IMTLAutoContrastFilter(context: self.context)
-                    filter.addFilter(contrast)
+                    //let contrast = IMTLAutoContrastFilter(context: self.context)
+                    //filter.addFilter(contrast)
                     
                     filter.source = image
                     
@@ -286,28 +267,28 @@ class ViewController: NSViewController {
     lazy var toolBar:IMPToolBar = {
         let t = IMPToolBar(frame: NSRect(x: 0,y: 0,width: 100,height: 40))
         
-        t.shadows = self.contrast.shadows
-        t.highlights = self.contrast.highlights
+        //t.shadows = self.contrast.shadows
+        //t.highlights = self.contrast.highlights
         
         t.enableFilterHandler = { (flag) in
             self.filter.enabled = flag
         }
         
         t.enableNormalHandler = { (flag) in
-            self.contrast.curvesFilter.adjustment.blending.mode = flag == false ? .LUMNINOSITY : .NORMAL
+            //self.contrast.curvesFilter.adjustment.blending.mode = flag == false ? .LUMNINOSITY : .NORMAL
         }
         
         t.slideHandler = { (step) in
-            self.contrast.autoContrastEnabled = true
-            self.contrast.degree = step.float/100
+            //self.contrast.autoContrastEnabled = true
+            //self.contrast.degree = step.float/100
         }
         
         t.shadowsHandler = { (value) in
-            self.contrast.shadows = value
+            //self.contrast.shadows = value
         }
         
         t.highlightsHandler = { (value) in
-            self.contrast.highlights = value
+            //self.contrast.highlights = value
         }
 
         t.resetHandler = {

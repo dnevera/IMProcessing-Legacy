@@ -1,7 +1,33 @@
-//: Playground - noun: a place where people can play
+//
+//  IMPCurveFunctions.swift
+//  IMPCurvesViewTest
+//
+//  Created by Denis Svinarchuk on 29/06/16.
+//  Copyright © 2016 IMProcessing. All rights reserved.
+//
 
-import Cocoa
+import Foundation
+import IMProcessing
+import Accelerate
 import simd
+
+infix operator <- { associativity right precedence 90 }
+
+public func <- (left:IMPSpline, right:[float2]) {
+    left.set(points: right)
+}
+
+public func <- (left:IMPSpline, right:float2) {
+    left.set(points: [right])
+}
+
+public func - (left:IMPSpline, right:[float2]) {
+    left.remove(points: right)
+}
+
+public func - (left:IMPSpline, right:float2) {
+    left.remove(points: [right])
+}
 
 public class IMPSpline {
     
@@ -12,17 +38,18 @@ public class IMPSpline {
     public static var cubicFunction:FunctionType = { (controls, segments) -> [Float] in
         return segments.cubicSpline(controls)
     }
-
+    
     public static var bezierFunction:FunctionType = { (controls, segments) -> [Float] in
         return segments.cubicBezierSpline(controls)
     }
-
+    
     
     public let function:FunctionType
     public let bounds:BoundsType
     public let size:Int
     public let maxControlPoints:Int
     public let segments:[Float]
+    public var controlPoints:[float2] { return _controlPoints }
     
     public var curve:[Float] {
         return _curve
@@ -35,8 +62,8 @@ public class IMPSpline {
         self.maxControlPoints = maxControlPoints
         self.segments = Float.range(start: self.bounds.first.x, step: self.bounds.last.x/Float(self.size), end: self.bounds.last.x)
         defer {
-            controlPoints.append(bounds.first)
-            controlPoints.append(bounds.last)
+            _controlPoints.append(bounds.first)
+            _controlPoints.append(bounds.last)
             updateCurve()
         }
     }
@@ -44,7 +71,7 @@ public class IMPSpline {
     public func isBounds(point p:float2) -> Bool {
         return (abs(p.x-bounds.first.x) <= FLT_EPSILON || abs(p.x-bounds.last.x) <= FLT_EPSILON)
     }
-
+    
     public func addUpdateObserver(observer:UpdateHandlerType){
         observers.append(observer)
     }
@@ -58,14 +85,18 @@ public class IMPSpline {
             if isBounds(point: p) {
                 continue
             }
-            if findClosePoint(p) != nil {
+            if findXPoint(p) != nil {
                 continue
             }
-            controlPoints.append(p)
+            if let i = indexOf(point: p) {
+                _controlPoints[i] = p
+                continue
+            }
+            _controlPoints.append(p)
         }
         
-        controlPoints = [float2](controlPoints.suffix(maxControlPoints))
-        controlPoints = controlPoints.sort({ (one, two) -> Bool in
+        _controlPoints = [float2](_controlPoints.suffix(maxControlPoints))
+        _controlPoints = _controlPoints.sort({ (one, two) -> Bool in
             if distance(one, bounds.first) <= FLT_EPSILON {
                 return false
             }
@@ -76,7 +107,7 @@ public class IMPSpline {
         })
         updateCurve()
         
-        print(controlPoints)
+        print(_controlPoints)
     }
     
     public func remove(points points: [float2]){
@@ -84,13 +115,21 @@ public class IMPSpline {
             if isBounds(point: p) {
                 continue
             }
-            if let i = controlPoints.indexOf(p) {
-                controlPoints.removeAtIndex(i)
+            if let i = _controlPoints.indexOf(p) {
+                _controlPoints.removeAtIndex(i)
             }
         }
         updateCurve()
     }
-
+    
+    public func set(point point: float2, atIndex:Int){
+        if isBounds(point: point) {
+            return
+        }
+        _controlPoints[atIndex] = point
+        updateCurve()
+    }
+    
     public func set(points points: [float2]){
         reset()
         add(points: points)
@@ -100,14 +139,26 @@ public class IMPSpline {
         reset()
         updateCurve()
     }
-    
-    private func reset() {
-        controlPoints.removeAll()
-        controlPoints.append(bounds.first)
-        controlPoints.append(bounds.last)
+
+    func indexOf(point point:float2?, dist:Float = 0.05) -> Int? {
+        
+        guard let p = point else { return  nil}
+        
+        for i in 0..<_controlPoints.count {
+            if distance(_controlPoints[i], p) < dist {
+                return i
+            }
+        }
+        return nil
     }
-    
-    private var controlPoints = [float2]()
+
+    private func reset() {
+        _controlPoints.removeAll()
+        _controlPoints.append(bounds.first)
+        _controlPoints.append(bounds.last)
+    }
+
+    private var _controlPoints = [float2]()
     private var _curve = [Float]() {
         didSet{
             executeObservers()
@@ -117,21 +168,22 @@ public class IMPSpline {
     private var observers = [UpdateHandlerType]()
     
     private func updateCurve()  {
-        _curve = self.function(controls: controlPoints, segments: segments)
+        _curve = self.function(controls: _controlPoints, segments: segments)
     }
     
     private func executeObservers()  {
+        print("executeObservers \(controlPoints)")
         for o in observers {
             o(spline: self)
         }
     }
     
-    private func findClosePoint(point:float2?) -> Int? {
+    private func findXPoint(point:float2?) -> Int? {
         
         guard let p = point else { return  nil}
         
-        for i in 0..<controlPoints.count {
-            if abs(controlPoints[i].x - p.x) < 1/Float(size/2) {
+        for i in 0..<_controlPoints.count {
+            if abs(_controlPoints[i].x - p.x) < 1/Float(size/2) {
                 return i
             }
         }
@@ -139,12 +191,8 @@ public class IMPSpline {
     }
 }
 
-infix operator <- { associativity right precedence 90 }
-public func <- (left:IMPSpline, right:[float2]) {
-    left.set(points: right)
-}
-
 public enum IMPCurveFunction {
+
     case Cubic
     case Bezier
     
@@ -156,16 +204,5 @@ public enum IMPCurveFunction {
             return IMPSpline()
         }
     }
-}
-
-let cubic = IMPCurveFunction.Cubic.spline
-let bezier = IMPCurveFunction.Bezier.spline
-
-cubic <- [float2(0.3,0),float2(0.9,1)]
-
-let c = cubic.curve
-
-for y in c {
-    let y = y
 }
 

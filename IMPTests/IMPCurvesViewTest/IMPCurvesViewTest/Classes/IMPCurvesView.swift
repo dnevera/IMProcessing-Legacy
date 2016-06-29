@@ -11,6 +11,10 @@ import SnapKit
 import IMProcessing
 import simd
 
+public func <- (left:IMPCurvesView, right:IMPCurvesView.CurveInfo) {
+    left.add(right)
+}
+
 public func == (left: IMPCurvesView.CurveInfo, right: IMPCurvesView.CurveInfo) -> Bool {
     return left.id == right.id
 }
@@ -23,42 +27,26 @@ public class IMPCurvesView: IMPViewBase {
     
     public typealias ControlPointsUpdateHandler = ((CurveInfo:CurveInfo) -> Void)
 
-    public class CurveInfo: Equatable{
-        
-        public static let defaultControlsNumber = 10
-        
-        public var curve:[Float] = [Float]()
-        public var id:String { get{return _id} }
-        public let name:String
-        public let color:IMPColor
-        public let maxControls:Int
-        
-        var controlPoints = [float2(0),float2(1)] {
-            didSet{
-                controlPoints = [float2](controlPoints.suffix(maxControls))
-                controlPoints = controlPoints.sort({ $0.x < $1.x })
-                
-                if let o = view.didControlPointsUpdate {
-                    o(CurveInfo: self)
-                }
-                
-                NSLog("controlPoints = \(controlPoints)")
-                view.needsDisplay = true
-                view.displayIfNeeded()
-
+    public var curveFunction:IMPCurveFunction = .Cubic {
+        didSet{
+            for l in list {
+                l._spline = curveFunction.spline
             }
         }
+    }
+    
+    public class CurveInfo: Equatable{
         
-        func findClosePoint(point:float2?, dist:Float = 0.05) -> Int? {
-            
-            guard let p = point else { return  nil}
-            
-            for i in 0..<controlPoints.count {
-                if distance(controlPoints[i], p) < dist {
-                    return i
-                }
-            }
-            return nil
+        public var spline:IMPSpline? {
+            return _spline
+        }
+        
+        public var id:String { return _id }
+        public let name:String
+        public let color:IMPColor
+        public var controlPoints:[float2] {
+            guard let s = _spline else { return [] }
+            return s.controlPoints
         }
         
         public var isActive = false {
@@ -69,18 +57,29 @@ public class IMPCurvesView: IMPViewBase {
         }
         
         public var _id:String
-        public init (id: String, name: String, color: IMPColor, maxControls:Int = CurveInfo.defaultControlsNumber) {
+        public init (id: String, name: String, color: IMPColor) {
             self._id = id
             self.name = name
             self.color = color
-            self.maxControls = maxControls
         }
         
-        public convenience init (name: String, color: IMPColor, maxControls:Int = CurveInfo.defaultControlsNumber) {
-            self.init(id: name, name: name, color: color, maxControls:maxControls)
+        public convenience init (name: String, color: IMPColor) {
+            self.init(id: name, name: name, color: color)
         }
         
-        var view:IMPCurvesView!
+        var _spline:IMPSpline? {
+            didSet {
+                _spline?.addUpdateObserver({ (spline) in
+                    self.view.needsDisplay = true
+                    self.view.displayIfNeeded()
+                })
+            }
+        }
+        var view:IMPCurvesView! {
+            didSet{
+                _spline = view.curveFunction.spline
+            }
+        }
     }
 
     var list = [CurveInfo]()
@@ -124,6 +123,12 @@ public class IMPCurvesView: IMPViewBase {
         }
     }
     
+    public func add(info:CurveInfo) {
+        self[info.id] = info
+    }
+
+    public var didControlPointsUpdate:ControlPointsUpdateHandler?
+
     var activeCurve:CurveInfo? {
         get {
             for i in list {
@@ -134,8 +139,6 @@ public class IMPCurvesView: IMPViewBase {
             return nil
         }
     }
-    
-    public var didControlPointsUpdate:ControlPointsUpdateHandler?
     
     func covertPoint(event:NSEvent) -> float2 {
         let location = event.locationInWindow
@@ -153,15 +156,18 @@ public class IMPCurvesView: IMPViewBase {
         let xy = covertPoint(event)
 
         if let curve = activeCurve {
-            if let i = curve.findClosePoint(cp) {
+            
+            if let i = curve.spline?.indexOf(point: cp) {
                 currentPointIndex = i
                 currentPoint = xy
             }
             else if currentPointIndex != nil {
                 currentPoint = xy
             }
+    
+            guard let index = currentPointIndex else { return }
             
-            curve.controlPoints[currentPointIndex!] = currentPoint!
+            curve.spline?.set(point: xy, atIndex: index)
         }
     }
     
@@ -170,18 +176,18 @@ public class IMPCurvesView: IMPViewBase {
         
         currentPointIndex = nil
         
-        if let curve = activeCurve {
-            if let i = curve.findClosePoint(xy) {
-                curve.controlPoints[i] = xy
+        if let spline = activeCurve?.spline {
+            if let i = spline.indexOf(point: xy) {
+                spline.set(point: xy, atIndex: i)
                 currentPoint = xy
             }
             else {
-                for i in 0..<curve.curve.count {
-                    let x = i.float/curve.curve.count.float
-                    let y = curve.curve[i]
+                for i in 0..<spline.curve.count {
+                    let x = i.float/spline.curve.count.float
+                    let y = spline.curve[i]
                     let p = float2(x,y)
                     if distance(p, xy) < 0.05 {
-                        curve.controlPoints.append(xy)
+                        spline <- xy
                         currentPoint = xy
                         break
                     }
@@ -218,6 +224,9 @@ public class IMPCurvesView: IMPViewBase {
     }
     
     func drawCurve(dirtyRect: NSRect, info:CurveInfo){
+        
+        guard let spline = info.spline else { return }
+        
         let path = NSBezierPath()
         
         var a = info.color.alphaComponent
@@ -234,14 +243,14 @@ public class IMPCurvesView: IMPViewBase {
         
         path.moveToPoint(NSPoint(x:0, y:0))
         
-        for i in 0..<info.curve.count {
+        for i in 0..<spline.curve.count {
             let x = CGFloat(i) * dirtyRect.size.width / CGFloat(255)
-            let y = info.curve[i].cgfloat*dirtyRect.size.height
+            let y = spline.curve[i].cgfloat*dirtyRect.size.height
 
             let xy = float2((x/dirtyRect.size.width).float,(y/dirtyRect.size.height).float)
             
-            if let i = info.findClosePoint(xy) {
-                let p = info.controlPoints[i]
+            if spline.indexOf(point: xy) != nil {
+                let p = xy
                 
                 let rect = NSRect(
                     x: p.x.cgfloat * dirtyRect.size.width-2.5,
@@ -262,8 +271,6 @@ public class IMPCurvesView: IMPViewBase {
         path.stroke()
     }
     
-    
-    
     override public func drawRect(dirtyRect: NSRect)
     {
         super.drawRect(dirtyRect)
@@ -273,66 +280,4 @@ public class IMPCurvesView: IMPViewBase {
         }
     }
   
-}
-
-public class IMPCurvesControl: IMPViewBase {
-    
-    public var backgroundColor:IMPColor? {
-        didSet{
-            wantsLayer = true
-            layer?.backgroundColor = backgroundColor?.CGColor
-            curvesSelector.backgroundColor = backgroundColor
-        }
-    }
-    
-    lazy var _contentView:IMPCurvesView = {
-        return IMPCurvesView(frame: self.bounds)
-    }()
-    
-    public var curvesView:IMPCurvesView {get{return _contentView}}
-    
-    lazy var curvesSelector:IMPPopUpButton = {
-        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.bounds.size.width, height: 40), pullsDown: false)
-        v.autoenablesItems = false
-        v.target = self
-        v.action = #selector(self.selectCurve(_:))
-        v.selectItemAtIndex(0)
-        return v
-    }()
-    
-    @objc private func selectCurve(sender:NSPopUpButton)  {
-        for i in curvesView.list {
-            i.isActive = false
-        }
-        let el = curvesView.list[sender.indexOfSelectedItem]
-        el.isActive = true
-    }
-    
-    var initial = true
-    override public func updateLayer() {
-        if initial {
-            
-            addSubview(curvesView)
-            addSubview(curvesSelector)
-
-            curvesSelector.selectItemAtIndex(0)
-
-            initial = true
-            
-            curvesSelector.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.snp_top).offset(0)
-                make.left.equalTo(self).offset(0)
-                make.right.equalTo(self).offset(0)
-            }
-
-            curvesView.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.curvesSelector.snp_bottom).offset(5)
-                make.left.equalTo(self).offset(0)
-                make.right.equalTo(self).offset(0)
-                make.bottom.equalTo(self).offset(0)
-            }
-
-        }
-        
-    }
 }
