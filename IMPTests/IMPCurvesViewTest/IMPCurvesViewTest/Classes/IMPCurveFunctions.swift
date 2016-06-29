@@ -184,20 +184,34 @@ public class IMPSpline {
         updateCurve()
     }
     
-    public func indexOf(point point:float2?) -> Int? {
+    public func closeToCurve(point point: float2, distance:Float?=nil) -> float2? {
+        
+        for i in 0..<curve.count {
+            let x = Float(i)/Float(curve.count) * bounds.last.x
+            let y = curve[i]
+            let p = float2(x,y)
+            if simd.distance(p, point) <= distance ?? closeDistance {
+                return p
+            }
+        }
+        
+        return nil
+    }
+    
+    public func indexOf(point point:float2?, distance:Float?=nil) -> Int? {
         
         guard let p = point else { return  nil}
         
         for i in 0..<_controlPoints.count {
-            if closeness(one: _controlPoints[i], two: p) {
+            if closeness(one: _controlPoints[i], two: p, distance: distance) {
                 return i
             }
         }
         return nil
     }
 
-    public func closeness(one one: float2, two: float2) -> Bool {
-        return distance(one, two) <= closeDistance
+    public func closeness(one one: float2, two: float2, distance:Float?=nil) -> Bool {
+        return simd.distance(one, two) <= distance ?? closeDistance
     }
     
     public func outOfBounds(point point: float2) -> Bool {

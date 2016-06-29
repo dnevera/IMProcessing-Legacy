@@ -19,6 +19,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
             wantsLayer = true
             layer?.backgroundColor = backgroundColor?.CGColor
             curvesSelector.backgroundColor = backgroundColor
+            _contentView.backgroundColor = backgroundColor
         }
     }
     

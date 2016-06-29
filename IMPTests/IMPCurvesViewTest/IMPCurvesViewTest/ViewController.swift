@@ -45,6 +45,7 @@ class ViewController: NSViewController {
     lazy var curvesControl:IMPRGBCurvesControl = {
         let v = IMPRGBCurvesControl(frame: self.view.bounds)
         
+        v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
         v.curvesView.curveFunction = .Cubic
         
         v.curvesView.didControlPointsUpdate = { (info) in
@@ -59,9 +60,6 @@ class ViewController: NSViewController {
                 self.curves.z <- info.controlPoints
             }
         }
-        
-        v.wantsLayer = true
-        v.layer?.backgroundColor = IMPColor.clearColor().CGColor
         
         return v
     }()

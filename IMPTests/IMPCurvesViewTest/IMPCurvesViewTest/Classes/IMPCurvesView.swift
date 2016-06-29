@@ -27,10 +27,10 @@ public class IMPCurvesView: IMPViewBase {
     
     public typealias ControlPointsUpdateHandler = ((CurveInfo:CurveInfo) -> Void)
 
-    public var backgroundColor:IMPColor = IMPColor.clearColor(){
+    public var backgroundColor:IMPColor? = IMPColor.clearColor(){
         didSet{
             wantsLayer = true
-            layer?.backgroundColor = backgroundColor.CGColor
+            layer?.backgroundColor = backgroundColor?.CGColor
         }
     }
     
@@ -58,6 +58,12 @@ public class IMPCurvesView: IMPViewBase {
         }
     }
 
+    public var precision:Float = 0.05 {
+        didSet{
+            needsDisplay = true
+        }
+    }
+    
     public var curveFunction:IMPCurveFunction = .Cubic {
         didSet{
             for l in list {
@@ -216,28 +222,28 @@ public class IMPCurvesView: IMPViewBase {
             if spline.maxControlPoints == spline.controlPoints.count {
                 for i in 0..<spline.controlPoints.count {
                     let p = spline.controlPoints[i]
-                    if distance(p, xy) < 0.05 {
+                    if distance(p, xy) < precision {
                         currentPoint = xy
                         spline.set(point: xy, atIndex: i)
                         break
                     }
                 }
             }
-            else if let i = spline.indexOf(point: xy) {
+            else if let i = spline.indexOf(point: xy, distance: precision) {
                 spline.set(point: xy, atIndex: i)
                 currentPoint = xy
             }
-            else if distance(spline.bounds.first, xy) < 0.1 {
+            else if distance(spline.bounds.first, xy) < precision {
                 spline.set(point: xy, atIndex: 0)
                 currentPoint = xy
             }
-            else if distance(spline.bounds.last, xy) < 0.1 {
+            else if distance(spline.bounds.last, xy) < precision {
                 spline.set(point: xy, atIndex: spline.controlPoints.count-1)
                 currentPoint = xy
             }
             else {
                 for i in 0..<spline.curve.count {
-                    if distance(location(i, spline: spline), xy) < 0.05 {
+                    if distance(location(i, spline: spline), xy) < precision {
                         spline.add(points: [xy])
                         currentPoint = xy
                         break
@@ -311,42 +317,40 @@ public class IMPCurvesView: IMPViewBase {
         if !info.isActive { return }
         
         
-        let boldPathColor = backgroundColor ?? IMPColor.blackColor()
-
-        let boldPath = NSBezierPath()
-        boldPath.lineWidth = lineWidth.cgfloat
-
-        let pathColor = colorOf(info)
-        let path = NSBezierPath()
-        path.fill()
-        path.lineWidth = lineWidth.cgfloat
-
         let cp = currentPoint ?? float2(-1)
         
+        let markerSizeHere = (markerSize).cgfloat
+
         for p in spline.controlPoints {
-        
+
+            let boldPathColor = backgroundColor ?? IMPColor.blackColor()
+            let pathColor     = colorOf(info)
+
+            let boldPath = NSBezierPath()
+            boldPath.lineWidth = lineWidth.cgfloat
+            
+            let path = NSBezierPath()
+            path.lineWidth = lineWidth.cgfloat
+
             let isClosennes = spline.closeness(one: cp, two: p)
             
-            let markerSizeHere = (markerSize).cgfloat
-            let markerSizeBold = (markerSize).cgfloat * 0.8
-            
             var np = NSPoint(x:p.x.cgfloat*dirtyRect.size.width, y:p.y.cgfloat*dirtyRect.size.height)
-            let aspect = dirtyRect.size.height/dirtyRect.size.width
+            let ms = (markerSize+lineWidth).cgfloat/2
             
-            if np.x < markerSize.cgfloat/2 {
-                np.x = markerSize.cgfloat/2
+            if np.x < ms {
+                np.x = ms
             }
 
-            if np.y < (markerSize.cgfloat * aspect)/2 {
-                np.y = (markerSize.cgfloat * aspect) / 2
+            if np.y < ms {
+                np.y = ms
             }
             
-            if np.x > dirtyRect.size.width-markerSize.cgfloat/2 {
-                np.x = dirtyRect.size.width - markerSize.cgfloat/2
+            if np.x > dirtyRect.size.width-ms {
+                np.x = dirtyRect.size.width - ms
             }
             
-            if np.y > dirtyRect.size.height - (markerSize.cgfloat * aspect)/2 {
-                np.y = dirtyRect.size.height - (markerSize.cgfloat * aspect) / 2
+            if np.y > dirtyRect.size.height - ms {
+                np.y = dirtyRect.size.height - ms
             }
 
             let rect = NSRect(
@@ -354,27 +358,23 @@ public class IMPCurvesView: IMPViewBase {
                 y: np.y-markerSizeHere/2,
                 width: markerSizeHere, height: markerSizeHere)
 
-            let rectBold = NSRect(
-                x: np.x-markerSizeBold/2,
-                y: np.y-markerSizeBold/2,
-                width: markerSizeBold, height: markerSizeBold)
-
             if  isClosennes  {
                 pathColor.set()
-                path.stroke()
-
-                NSBezierPath.fillRect(rect)
+                
+                path.appendBezierPathWithRect(rect)
                 boldPath.appendBezierPathWithRect(rect)
-                boldPath.stroke()
+
+                path.stroke()
+                boldPath.fill()
             }
-            else {
+            else {                
+                boldPathColor.set()
+                boldPath.appendBezierPathWithRect(rect)
+                boldPath.fill()
+
                 pathColor.set()
                 path.appendBezierPathWithRect(rect)
                 path.stroke()
-
-                boldPathColor.set()
-                NSBezierPath.fillRect(rectBold)
-                boldPath.stroke()
 
             }
         }
