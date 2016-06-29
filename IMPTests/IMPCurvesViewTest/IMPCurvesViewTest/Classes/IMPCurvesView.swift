@@ -187,7 +187,7 @@ public class IMPCurvesView: IMPViewBase {
                     let y = spline.curve[i]
                     let p = float2(x,y)
                     if distance(p, xy) < 0.05 {
-                        spline <- xy
+                        spline.add(points: [xy])
                         currentPoint = xy
                         break
                     }
@@ -223,21 +223,21 @@ public class IMPCurvesView: IMPViewBase {
         bPath.stroke()
     }
     
-    func drawCurve(dirtyRect: NSRect, info:CurveInfo){
-        
-        guard let spline = info.spline else { return }
-        
-        let path = NSBezierPath()
-        
+    func colorOf(info:CurveInfo) -> IMPColor {
         var a = info.color.alphaComponent
         if !info.isActive {
             a *= 0.5
         }
-        let color = IMPColor(red: info.color.redComponent,   green: info.color.greenComponent, blue: info.color.blueComponent, alpha: a)
-
-        let fillColor = color
+        return IMPColor(red: info.color.redComponent,   green: info.color.greenComponent, blue: info.color.blueComponent, alpha: a)
+    }
+    
+    func drawCurve(dirtyRect: NSRect, info:CurveInfo){
         
-        fillColor.set()
+        guard let spline = info.spline else { return }
+        
+        colorOf(info).set()
+
+        let path = NSBezierPath()
         path.fill()
         path.lineWidth = 1
         
@@ -247,25 +247,57 @@ public class IMPCurvesView: IMPViewBase {
             let x = CGFloat(i) * dirtyRect.size.width / CGFloat(255)
             let y = spline.curve[i].cgfloat*dirtyRect.size.height
 
-            let xy = float2((x/dirtyRect.size.width).float,(y/dirtyRect.size.height).float)
+            //let xy = float2((x/dirtyRect.size.width).float,(y/dirtyRect.size.height).float)
             
-            if spline.indexOf(point: xy) != nil {
-                let p = xy
-                
-                let rect = NSRect(
-                    x: p.x.cgfloat * dirtyRect.size.width-2.5,
-                    y: p.y.cgfloat * dirtyRect.size.height-2.5,
-                    width: 5, height: 5)
-                
-                if  currentPoint != nil && distance(currentPoint!, xy) < 0.05  {
-                    NSBezierPath.fillRect(rect)
-                }
-                else {
-                    path.appendBezierPathWithRect(rect)
-                }
-            }
+//            if spline.indexOf(point: xy) != nil {
+//                let p = xy
+//                
+//                let rect = NSRect(
+//                    x: p.x.cgfloat * dirtyRect.size.width-2.5,
+//                    y: p.y.cgfloat * dirtyRect.size.height-2.5,
+//                    width: 5, height: 5)
+//                
+//                if  currentPoint != nil && distance(currentPoint!, xy) < 0.05  {
+//                    NSBezierPath.fillRect(rect)
+//                }
+//                else {
+//                    path.appendBezierPathWithRect(rect)
+//                }
+//            }
             
             path.lineToPoint(NSPoint(x: x, y: y))
+        }
+        
+        path.stroke()
+    }
+    
+    func drawControlPoints(dirtyRect: NSRect, info:CurveInfo) {
+        
+        guard let spline = info.spline else { return }
+        
+        if !info.isActive { return }
+        
+        colorOf(info).set()
+        
+        let path = NSBezierPath()
+        path.fill()
+        path.lineWidth = 1
+
+        let cp = currentPoint ?? float2(-1)
+
+        for p in spline.controlPoints {
+            
+            let rect = NSRect(
+                x: p.x.cgfloat * dirtyRect.size.width-2.5,
+                y: p.y.cgfloat * dirtyRect.size.height-2.5,
+                width: 5, height: 5)
+            
+            if  spline.closeness(one: cp, two: p)  {
+                NSBezierPath.fillRect(rect)
+            }
+            else {
+                path.appendBezierPathWithRect(rect)
+            }
         }
         
         path.stroke()
@@ -277,6 +309,7 @@ public class IMPCurvesView: IMPViewBase {
         drawGrid(dirtyRect)
         for i in list {
             drawCurve(dirtyRect, info: i)
+            drawControlPoints(dirtyRect, info: i)
         }
     }
   

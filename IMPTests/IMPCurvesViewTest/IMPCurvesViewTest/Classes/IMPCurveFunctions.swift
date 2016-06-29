@@ -139,19 +139,27 @@ public class IMPSpline {
         reset()
         updateCurve()
     }
-
-    func indexOf(point point:float2?, dist:Float = 0.05) -> Int? {
+    
+    public func indexOf(point point:float2?) -> Int? {
         
         guard let p = point else { return  nil}
         
         for i in 0..<_controlPoints.count {
-            if distance(_controlPoints[i], p) < dist {
+            if closeness(one: _controlPoints[i], two: p) {
                 return i
             }
         }
         return nil
     }
 
+    public func closeness(one one: float2, two: float2) -> Bool {
+        return distance(one, two) < closeDistance
+    }
+    
+    var closeDistance:Float {
+        return 1/Float(size/2)
+    }
+    
     private func reset() {
         _controlPoints.removeAll()
         _controlPoints.append(bounds.first)
@@ -183,7 +191,7 @@ public class IMPSpline {
         guard let p = point else { return  nil}
         
         for i in 0..<_controlPoints.count {
-            if abs(_controlPoints[i].x - p.x) < 1/Float(size/2) {
+            if abs(_controlPoints[i].x - p.x) < closeDistance {
                 return i
             }
         }

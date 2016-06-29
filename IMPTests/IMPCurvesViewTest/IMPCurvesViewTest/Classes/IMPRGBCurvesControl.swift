@@ -41,12 +41,15 @@ public class IMPRGBCurvesControl: IMPViewBase {
         for i in curvesView.list {
             i.isActive = false
         }
-        let el = curvesView.list[currentCurveIndex]
-        el.isActive = true
         currentCurveIndex = sender.indexOfSelectedItem
     }
     
-    var currentCurveIndex:Int = 0
+    var currentCurveIndex:Int = 0 {
+        didSet {
+            curvesView.list[currentCurveIndex].isActive = true
+        }
+    }
+    
     var initial = true
     override public func updateLayer() {
         if initial {
