@@ -41,34 +41,13 @@ public class IMPSplinesProvider: IMPImageProvider {
 }
 
 public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
-    
-    public var x:IMPSpline {
-        get {
-            return curves.splines[0]
-        }
-        set {
-            curves.splines[0] = newValue
-        }
-    }
-    
-    public var y:IMPSpline {
-        get {
-            return curves.splines[1]
-        }
-        set {
-            curves.splines[1] = newValue
-        }
-    }
 
-    public var z:IMPSpline {
-        get {
-            return curves.splines[2]
-        }
-        set {
-            curves.splines[2] = newValue
-        }
-    }
-
+    
+    public var x:IMPSpline  { return _x }
+    public var y:IMPSpline  { return _y }
+    public var z:IMPSpline  { return _z }
+    public var w:IMPSpline  { return _w }
+    
     public static let defaultAdjustment = IMPAdjustment(
         blending: IMPBlending(mode: IMPBlendingMode.LUMNINOSITY, opacity: 1))
     
@@ -107,27 +86,76 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
     
     public var curveFunction:IMPCurveFunction! {
         didSet{
-            xChannel = curveFunction.spline
-            yChannel = curveFunction.spline
-            zChannel = curveFunction.spline
-            curves  = IMPSplinesProvider(context: self.context, splines: [self.xChannel,self.yChannel,self.zChannel])
+            _x = curveFunction.spline
+            _y = curveFunction.spline
+            _z = curveFunction.spline
+            _w = curveFunction.spline
+            identity = curveFunction.spline
         }
     }
     
-    private var xChannel:IMPSpline!
-    private var yChannel:IMPSpline!
-    private var zChannel:IMPSpline!
-    private var curves:IMPSplinesProvider!
+    private var channels:[IMPSpline] {
+        return [x,y,z]
+    }
+    
+    var _x:IMPSpline = IMPCurveFunction.Cubic.spline {
+        didSet{
+            _x.addUpdateObserver { (spline) in
+                if self.doNotUpdate {return}
+                self.curves.update(self.channels)
+                self.dirty = true
+            }
+        }
+    }
+    
+    var _y:IMPSpline = IMPCurveFunction.Cubic.spline {
+        didSet{
+            _y.addUpdateObserver { (spline) in
+                if self.doNotUpdate {return}
+                self.curves.update(self.channels)
+                self.dirty = true
+            }
+        }
+    }
+    
+    var _z:IMPSpline = IMPCurveFunction.Cubic.spline {
+        didSet{
+            _z.addUpdateObserver { (spline) in
+                if self.doNotUpdate {return}
+                self.curves.update(self.channels)
+                self.dirty = true
+            }
+        }
+    }
+
+    var doNotUpdate = false
+    var _w:IMPSpline = IMPCurveFunction.Cubic.spline {
+        didSet{
+            _w.addUpdateObserver { (spline) in
+                self.doNotUpdate = true
+                self._x <- self._w.controlPoints
+                self._y <- self._w.controlPoints
+                self._z <- self._w.controlPoints
+                self.curves.update(self.channels)
+                self.doNotUpdate = false
+                self.dirty = true
+            }
+        }
+    }
+    
+    var identity = IMPCurveFunction.Cubic.spline
+    
+    private lazy var curves:IMPSplinesProvider = IMPSplinesProvider(context: self.context, splines: self.channels)
 }
 
 public class IMPRGBCurvesFilter:IMPXYZCurvesFilter {
     
     public required convenience init(context: IMPContext, curveFunction:IMPCurveFunction) {
-        self.init(context: context, name: "kernel_adjustRGBCurve", curveFunction:curveFunction)
+        self.init(context: context, name: "kernel_adjustRGBWCurve", curveFunction:curveFunction)
     }
     
     public required convenience init(context: IMPContext) {
-        self.init(context: context, name: "kernel_adjustRGBCurve", curveFunction:.Cubic)
+        self.init(context: context, name: "kernel_adjustRGBWCurve", curveFunction:.Cubic)
     }
 }
 

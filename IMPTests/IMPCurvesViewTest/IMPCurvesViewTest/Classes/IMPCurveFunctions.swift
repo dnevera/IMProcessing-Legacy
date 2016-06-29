@@ -41,8 +41,7 @@ public class IMPSpline {
     
     public static var bezierFunction:FunctionType = { (controls, segments) -> [Float] in
         return segments.cubicBezierSpline(controls)
-    }
-    
+    }    
     
     public let function:FunctionType
     public var bounds:BoundsType { return _bounds }

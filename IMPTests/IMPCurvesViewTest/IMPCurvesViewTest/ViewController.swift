@@ -50,7 +50,10 @@ class ViewController: NSViewController {
         
         v.curvesView.didControlPointsUpdate = { (info) in
             
-            if info.id == "Red" {
+            if info.id == "RGB" {
+                self.curves.w <- info.controlPoints
+            }
+            else if info.id == "Red" {
                 self.curves.x <- info.controlPoints
             }
             else if info.id == "Green" {

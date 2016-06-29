@@ -106,7 +106,10 @@ public class IMPCurvesView: IMPViewBase {
         var _spline:IMPSpline? {
             didSet {
                 _spline?.addUpdateObserver({ (spline) in
-                    self.view.needsDisplay = true
+                    dispatch_async(dispatch_get_main_queue(), { 
+                        self.view.needsDisplay = true
+                    })
+                    self.view.executeUpdate(self)
                 })
             }
         }
@@ -172,6 +175,12 @@ public class IMPCurvesView: IMPViewBase {
                 }
             }
             return nil
+        }
+    }
+    
+    func executeUpdate(info:CurveInfo)  {
+        if let o = didControlPointsUpdate {
+            o(CurveInfo: info)
         }
     }
     
@@ -367,7 +376,7 @@ public class IMPCurvesView: IMPViewBase {
                 path.stroke()
                 boldPath.fill()
             }
-            else {                
+            else {
                 boldPathColor.set()
                 boldPath.appendBezierPathWithRect(rect)
                 boldPath.fill()
