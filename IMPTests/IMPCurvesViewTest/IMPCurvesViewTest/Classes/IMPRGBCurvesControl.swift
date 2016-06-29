@@ -75,7 +75,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
             curvesView <- IMPCurvesView.CurveInfo(name: "RGB",   color:  IMPColor(red: 1,   green: 1, blue: 1, alpha: 0.8))
             curvesView <- IMPCurvesView.CurveInfo(name: "Red",   color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
             curvesView <- IMPCurvesView.CurveInfo(name: "Green", color:  IMPColor(red: 0,   green: 1,   blue: 0,   alpha: 0.6))
-            curvesView <- IMPCurvesView.CurveInfo(name: "Blue",  color:  IMPColor(red: 0.2, green: 0.2, blue: 1,   alpha: 0.8))
+            curvesView <- IMPCurvesView.CurveInfo(name: "Blue",  color:  IMPColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.8))
             
             for el in curvesView.list {
                 curvesSelector.addItemWithTitle(el.name)

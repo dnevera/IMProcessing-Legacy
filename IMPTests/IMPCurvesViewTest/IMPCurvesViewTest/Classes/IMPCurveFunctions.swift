@@ -45,22 +45,24 @@ public class IMPSpline {
     
     
     public let function:FunctionType
-    public let bounds:BoundsType
+    public var bounds:BoundsType { return _bounds }
     public let size:Int
     public let maxControlPoints:Int
     public let segments:[Float]
     public var controlPoints:[float2] { return _controlPoints }
     
+    public var _bounds:BoundsType
+
     public var curve:[Float] {
         return _curve
     }
     
     public required init(bounds:BoundsType=(float2(0),float2(1)), size:Int=256, maxControlPoints:Int=32, function:FunctionType=IMPSpline.cubicFunction){
         self.function = function
-        self.bounds = bounds
+        self._bounds = bounds
         self.size = size
         self.maxControlPoints = maxControlPoints
-        self.segments = Float.range(start: self.bounds.first.x, step: self.bounds.last.x/Float(self.size), end: self.bounds.last.x)
+        self.segments = Float.range(start: self._bounds.first.x, step: self._bounds.last.x/Float(self.size), end: self._bounds.last.x)
         defer {
             _controlPoints.append(bounds.first)
             _controlPoints.append(bounds.last)
@@ -69,7 +71,7 @@ public class IMPSpline {
     }
     
     public func isBounds(point p:float2) -> Bool {
-        return (abs(p.x-bounds.first.x) <= FLT_EPSILON || abs(p.x-bounds.last.x) <= FLT_EPSILON)
+        return (abs(p.x-bounds.first.x) <= closeDistance || abs(p.x-bounds.last.x) <= closeDistance)
     }
     
     public func addUpdateObserver(observer:UpdateHandlerType){
@@ -105,9 +107,7 @@ public class IMPSpline {
             }
             return (one.x < two.x) && (one.y < two.y)
         })
-        updateCurve()
-        
-        print(_controlPoints)
+        updateCurve()        
     }
     
     public func remove(points points: [float2]){
@@ -122,12 +122,56 @@ public class IMPSpline {
         updateCurve()
     }
     
-    public func set(point point: float2, atIndex:Int){
-        if isBounds(point: point) {
-            return
+    public func set(point point: float2, atIndex:Int) -> float2? {
+        var point = point
+        
+        if atIndex == 0 || atIndex == _controlPoints.count-1 {
+            
+            if point.x<bounds.first.x {
+                point.x = bounds.first.x
+            }
+
+            if point.x>bounds.last.x {
+                point.x = bounds.last.x
+            }
+
+            if point.y<bounds.first.y {
+                point.y = bounds.first.y
+            }
+            
+            if point.y>bounds.last.y {
+                point.y = bounds.last.y
+            }
+
+            _controlPoints[atIndex] = point
+            updateCurve()
+            return point
         }
-        _controlPoints[atIndex] = point
+        
+        var result:float2? = nil
+        
+        if atIndex < _controlPoints.count {
+            
+            let cp = _controlPoints[atIndex]
+            
+            
+            if outOfBounds(point:point) {
+                if !isBounds(point: cp) {
+                    _controlPoints.removeAtIndex(atIndex)
+                }
+            }
+            else {
+                result = point
+            }
+        }
+
+        if let p = result {
+            _controlPoints[atIndex] = p
+        }
+        
         updateCurve()
+        
+        return result
     }
     
     public func set(points points: [float2]){
@@ -153,7 +197,12 @@ public class IMPSpline {
     }
 
     public func closeness(one one: float2, two: float2) -> Bool {
-        return distance(one, two) < closeDistance
+        return distance(one, two) <= closeDistance
+    }
+    
+    public func outOfBounds(point point: float2) -> Bool {
+        return (point.x < bounds.first.x || point.x > bounds.last.x ||
+            point.y < bounds.first.y || point.y > bounds.last.y)
     }
     
     var closeDistance:Float {
@@ -180,7 +229,6 @@ public class IMPSpline {
     }
     
     private func executeObservers()  {
-        print("executeObservers \(controlPoints)")
         for o in observers {
             o(spline: self)
         }

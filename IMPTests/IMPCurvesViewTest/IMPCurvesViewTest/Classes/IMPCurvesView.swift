@@ -27,6 +27,37 @@ public class IMPCurvesView: IMPViewBase {
     
     public typealias ControlPointsUpdateHandler = ((CurveInfo:CurveInfo) -> Void)
 
+    public var backgroundColor:IMPColor = IMPColor.clearColor(){
+        didSet{
+            wantsLayer = true
+            layer?.backgroundColor = backgroundColor.CGColor
+        }
+    }
+    
+    public var markerSize:Float = 5 {
+        didSet{
+            needsDisplay = true
+        }
+    }
+    
+    public var lineWidth:Float = 1 {
+        didSet{
+            needsDisplay = true
+        }
+    }
+
+    public var gridWidth:Float = 0.5 {
+        didSet{
+            needsDisplay = true
+        }
+    }
+
+    public var gridColor = NSColor(red: 1, green: 1, blue: 1, alpha: 0.3) {
+        didSet{
+            needsDisplay = true
+        }
+    }
+
     public var curveFunction:IMPCurveFunction = .Cubic {
         didSet{
             for l in list {
@@ -52,7 +83,6 @@ public class IMPCurvesView: IMPViewBase {
         public var isActive = false {
             didSet {
                 view.needsDisplay = true
-                view.displayIfNeeded()
             }
         }
         
@@ -71,7 +101,6 @@ public class IMPCurvesView: IMPViewBase {
             didSet {
                 _spline?.addUpdateObserver({ (spline) in
                     self.view.needsDisplay = true
-                    self.view.displayIfNeeded()
                 })
             }
         }
@@ -167,7 +196,7 @@ public class IMPCurvesView: IMPViewBase {
     
             guard let index = currentPointIndex else { return }
             
-            curve.spline?.set(point: xy, atIndex: index)
+            currentPoint = curve.spline?.set(point: xy, atIndex: index)
         }
     }
     
@@ -175,18 +204,40 @@ public class IMPCurvesView: IMPViewBase {
         let xy = covertPoint(event)
         
         currentPointIndex = nil
+        currentPoint = nil
+        
+        func location(i:Int, spline:IMPSpline) -> float2 {
+            let x = i.float/spline.curve.count.float
+            let y = spline.curve[i]
+            return float2(x,y)
+        }
         
         if let spline = activeCurve?.spline {
-            if let i = spline.indexOf(point: xy) {
+            if spline.maxControlPoints == spline.controlPoints.count {
+                for i in 0..<spline.controlPoints.count {
+                    let p = spline.controlPoints[i]
+                    if distance(p, xy) < 0.05 {
+                        currentPoint = xy
+                        spline.set(point: xy, atIndex: i)
+                        break
+                    }
+                }
+            }
+            else if let i = spline.indexOf(point: xy) {
                 spline.set(point: xy, atIndex: i)
+                currentPoint = xy
+            }
+            else if distance(spline.bounds.first, xy) < 0.1 {
+                spline.set(point: xy, atIndex: 0)
+                currentPoint = xy
+            }
+            else if distance(spline.bounds.last, xy) < 0.1 {
+                spline.set(point: xy, atIndex: spline.controlPoints.count-1)
                 currentPoint = xy
             }
             else {
                 for i in 0..<spline.curve.count {
-                    let x = i.float/spline.curve.count.float
-                    let y = spline.curve[i]
-                    let p = float2(x,y)
-                    if distance(p, xy) < 0.05 {
+                    if distance(location(i, spline: spline), xy) < 0.05 {
                         spline.add(points: [xy])
                         currentPoint = xy
                         break
@@ -197,9 +248,8 @@ public class IMPCurvesView: IMPViewBase {
     }
     
     func drawGrid(dirtyRect: NSRect)  {
-        let blackColor = NSColor(red: 1, green: 1, blue: 1, alpha: 0.3)
         
-        blackColor.set()
+        gridColor.set()
         let noHLines = 4
         let noVLines = 4
         
@@ -207,7 +257,9 @@ public class IMPCurvesView: IMPViewBase {
         let hSpacing = dirtyRect.size.width / CGFloat(noVLines)
         
         let bPath:NSBezierPath = NSBezierPath()
-        bPath.lineWidth = 0.5
+        
+        bPath.lineWidth = gridWidth.cgfloat
+        
         for i in 1..<noHLines{
             let yVal = CGFloat(i) * vSpacing
             bPath.moveToPoint(NSMakePoint(0, yVal))
@@ -239,32 +291,13 @@ public class IMPCurvesView: IMPViewBase {
 
         let path = NSBezierPath()
         path.fill()
-        path.lineWidth = 1
+        path.lineWidth = lineWidth.cgfloat
         
         path.moveToPoint(NSPoint(x:0, y:0))
         
         for i in 0..<spline.curve.count {
             let x = CGFloat(i) * dirtyRect.size.width / CGFloat(255)
             let y = spline.curve[i].cgfloat*dirtyRect.size.height
-
-            //let xy = float2((x/dirtyRect.size.width).float,(y/dirtyRect.size.height).float)
-            
-//            if spline.indexOf(point: xy) != nil {
-//                let p = xy
-//                
-//                let rect = NSRect(
-//                    x: p.x.cgfloat * dirtyRect.size.width-2.5,
-//                    y: p.y.cgfloat * dirtyRect.size.height-2.5,
-//                    width: 5, height: 5)
-//                
-//                if  currentPoint != nil && distance(currentPoint!, xy) < 0.05  {
-//                    NSBezierPath.fillRect(rect)
-//                }
-//                else {
-//                    path.appendBezierPathWithRect(rect)
-//                }
-//            }
-            
             path.lineToPoint(NSPoint(x: x, y: y))
         }
         
@@ -277,30 +310,74 @@ public class IMPCurvesView: IMPViewBase {
         
         if !info.isActive { return }
         
-        colorOf(info).set()
         
+        let boldPathColor = backgroundColor ?? IMPColor.blackColor()
+
+        let boldPath = NSBezierPath()
+        boldPath.lineWidth = lineWidth.cgfloat
+
+        let pathColor = colorOf(info)
         let path = NSBezierPath()
         path.fill()
-        path.lineWidth = 1
+        path.lineWidth = lineWidth.cgfloat
 
         let cp = currentPoint ?? float2(-1)
-
+        
         for p in spline.controlPoints {
+        
+            let isClosennes = spline.closeness(one: cp, two: p)
             
+            let markerSizeHere = (markerSize).cgfloat
+            let markerSizeBold = (markerSize).cgfloat * 0.8
+            
+            var np = NSPoint(x:p.x.cgfloat*dirtyRect.size.width, y:p.y.cgfloat*dirtyRect.size.height)
+            let aspect = dirtyRect.size.height/dirtyRect.size.width
+            
+            if np.x < markerSize.cgfloat/2 {
+                np.x = markerSize.cgfloat/2
+            }
+
+            if np.y < (markerSize.cgfloat * aspect)/2 {
+                np.y = (markerSize.cgfloat * aspect) / 2
+            }
+            
+            if np.x > dirtyRect.size.width-markerSize.cgfloat/2 {
+                np.x = dirtyRect.size.width - markerSize.cgfloat/2
+            }
+            
+            if np.y > dirtyRect.size.height - (markerSize.cgfloat * aspect)/2 {
+                np.y = dirtyRect.size.height - (markerSize.cgfloat * aspect) / 2
+            }
+
             let rect = NSRect(
-                x: p.x.cgfloat * dirtyRect.size.width-2.5,
-                y: p.y.cgfloat * dirtyRect.size.height-2.5,
-                width: 5, height: 5)
-            
-            if  spline.closeness(one: cp, two: p)  {
+                x: np.x-markerSizeHere/2,
+                y: np.y-markerSizeHere/2,
+                width: markerSizeHere, height: markerSizeHere)
+
+            let rectBold = NSRect(
+                x: np.x-markerSizeBold/2,
+                y: np.y-markerSizeBold/2,
+                width: markerSizeBold, height: markerSizeBold)
+
+            if  isClosennes  {
+                pathColor.set()
+                path.stroke()
+
                 NSBezierPath.fillRect(rect)
+                boldPath.appendBezierPathWithRect(rect)
+                boldPath.stroke()
             }
             else {
+                pathColor.set()
                 path.appendBezierPathWithRect(rect)
+                path.stroke()
+
+                boldPathColor.set()
+                NSBezierPath.fillRect(rectBold)
+                boldPath.stroke()
+
             }
         }
-        
-        path.stroke()
     }
     
     override public func drawRect(dirtyRect: NSRect)
@@ -309,6 +386,8 @@ public class IMPCurvesView: IMPViewBase {
         drawGrid(dirtyRect)
         for i in list {
             drawCurve(dirtyRect, info: i)
+        }
+        for i in list {
             drawControlPoints(dirtyRect, info: i)
         }
     }
