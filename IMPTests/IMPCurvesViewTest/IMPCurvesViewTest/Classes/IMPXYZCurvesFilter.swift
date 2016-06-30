@@ -90,10 +90,11 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
     }
     
     private var channels:[[Float]] {
-        let xx = matchMaster(x._curve)
-        let yy = matchMaster(y._curve)
-        let zz = matchMaster(z._curve)
-        return [xx ?? x.curve, yy ?? y.curve, zz ?? z.curve]
+        let xx = matchMaster(x._curve) ?? x.curve
+        let yy = matchMaster(y._curve) ?? y.curve
+        let zz = matchMaster(z._curve) ?? z.curve
+        print("curve_g = \(yy);")
+        return [xx, yy, zz]
     }
     
     var _x:IMPSpline = IMPCurveFunction.Cubic.spline {

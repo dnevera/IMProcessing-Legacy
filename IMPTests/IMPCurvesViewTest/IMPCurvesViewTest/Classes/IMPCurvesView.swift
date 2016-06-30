@@ -68,7 +68,9 @@ public class IMPCurvesView: IMPViewBase {
         didSet{
             for l in list {
                 l._spline = curveFunction.spline
+                executeUpdate(l)
             }
+            needsDisplay = true
         }
     }
     
@@ -121,6 +123,13 @@ public class IMPCurvesView: IMPViewBase {
     }
 
     var list = [CurveInfo]()
+    
+    public func reset() {
+        for l in list {
+            l._spline?.removeAll()
+        }
+        needsDisplay  = true
+    }
     
     public subscript(id:String) -> CurveInfo? {
         get{
@@ -216,6 +225,7 @@ public class IMPCurvesView: IMPViewBase {
     }
     
     override public func mouseDown(event: NSEvent) {
+        
         let xy = covertPoint(event)
         
         currentPointIndex = nil
@@ -239,8 +249,14 @@ public class IMPCurvesView: IMPViewBase {
                 }
             }
             else if let i = spline.indexOf(point: xy, distance: precision) {
-                spline.set(point: xy, atIndex: i)
-                currentPoint = xy
+                if event.clickCount == 2 {
+                    let p = spline.controlPoints[i]
+                    spline.remove(points: [p])
+                }
+                else {
+                    spline.set(point: xy, atIndex: i)
+                    currentPoint = xy
+                }
             }
             else if distance(spline.bounds.first, xy) < precision {
                 spline.set(point: xy, atIndex: 0)

@@ -260,10 +260,10 @@ public class IMPSpline {
     }
 }
 
-public enum IMPCurveFunction {
-
-    case Cubic
-    case Bezier
+public enum IMPCurveFunction: String {
+    
+    case Cubic  = "Cubic"
+    case Bezier = "Bezier"
     
     public var spline:IMPSpline {
         switch self {

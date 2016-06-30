@@ -48,19 +48,18 @@ class ViewController: NSViewController {
         v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
         v.curvesView.curveFunction = .Cubic
         
-        v.curvesView.didControlPointsUpdate = { (info) in
-            
-            if info.id == "RGB" {
-                self.curves.w <- info.controlPoints
-            }
-            else if info.id == "Red" {
-                self.curves.x <- info.controlPoints
-            }
-            else if info.id == "Green" {
-                self.curves.y <- info.controlPoints
-            }
-            else if info.id == "Blue" {
-                self.curves.z <- info.controlPoints
+        v.curvesView.didControlPointsUpdate = { (info) in            
+            if let t = IMPCurvesRGBChannelType(rawValue: info.id){
+                switch  t {
+                case .RGB:
+                    self.curves.w <- info.controlPoints
+                case .Red:
+                    self.curves.x <- info.controlPoints
+                case .Green:
+                    self.curves.y <- info.controlPoints
+                case .Blue:
+                    self.curves.z <- info.controlPoints
+                }
             }
         }
         
