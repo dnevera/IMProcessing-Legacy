@@ -109,18 +109,18 @@ public class IMPRGBCurvesControl: IMPViewBase {
     }()
 
     @objc private func resetHandler(sender:NSButton)  {
-        currentAutoRanges = nil
+        currentRanges = nil
         curvesView.reset()
     }
     
-    var currentAutoRanges:AutoRangesType? {
+    public var currentRanges:AutoRangesType? {
         didSet{
             updateAutoRanges()
         }
     }
     
     func updateAutoRanges() {
-        if let ranges = currentAutoRanges {
+        if let ranges = currentRanges {
             for i in 0..<ranges.count {
                 let low = ranges[i].low
                 let high = ranges[i].high
@@ -135,7 +135,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
     
     @objc private func autoHandler(sender:NSButton)  {
         if let f = autoCorrection {
-            currentAutoRanges = f()
+            currentRanges = f()
         }
     }
 

@@ -71,33 +71,42 @@ class ViewController: NSViewController {
         }
         
         v.autoCorrection = { () -> [(low:float2,high:float2)] in
-            
-            self.analyzer.source = self.filter.source
-            
-            let lowlimit:Float = 0.15
-            let highlimit:Float = 0.85
-            let f:Float = v.curvesView.curveFunction == .Cubic ? 1 : sqrt(2)
-
-            var ranges = [(low:float2,high:float2)]()
-            ranges.append((low:float2(0),high:float2(1)))
-            
-            for i in 0..<3 {
-                var m = self.rangeSolver.minimum[i] * f
-                var M = 1 - (1-self.rangeSolver.maximum[i]) * f
-                
-                m = m < 0 ? 0 : m > highlimit ? highlimit : m
-                M = M < lowlimit ? lowlimit : M > 1 ? 1 : M
-
-                ranges.append((low:float2(m,0),high:float2(M,1)))
-            }
-            
-            return ranges
+            return self.computeRanges()
         }
         
         return v
     }()
     
-    var rangeSolver = IMPHistogramRangeSolver()
+    var autoRagnesDegree:Float = 1
+    func computeRanges()  -> [(low:float2,high:float2)] {
+        self.analyzer.source = self.filter.source
+        
+        let lowlimit:Float = 0.15
+        let highlimit:Float = 0.85
+        let f:Float = curvesControl.curvesView.curveFunction == .Cubic ? 1 : 2 * autoRagnesDegree
+        
+        var ranges = [(low:float2,high:float2)]()
+        ranges.append((low:float2(0),high:float2(1)))
+        
+        for i in 0..<3 {
+            var m = self.rangeSolver.minimum[i] * f
+            var M = 1 - (1-self.rangeSolver.maximum[i]) * f
+            
+            m = m < 0 ? 0 : m > highlimit ? highlimit : m
+            M = M < lowlimit ? lowlimit : M > 1 ? 1 : M
+            
+            ranges.append((low:float2(m,0),high:float2(M,1)))
+        }
+
+        return ranges
+    }
+    
+    lazy var rangeSolver:IMPHistogramRangeSolver = {
+        let r = IMPHistogramRangeSolver()
+        r.clipping.shadows = 3.5/100.0
+        r.clipping.highlights = 0.5/100.0
+        return r
+    }()
     
     lazy var analyzer:IMPHistogramAnalyzer = {
         let a = IMPHistogramAnalyzer(context: self.context)
@@ -165,7 +174,7 @@ class ViewController: NSViewController {
         IMPDocument.sharedInstance.addDocumentObserver { (file, type) -> Void in
             
             if type == .Image {
-                if let image = loadImage(file, size: 1200) {
+                if let image = loadImage(file, size: 0) {
                     
                     self.curvesControl.curvesView.reset()
                     
@@ -307,8 +316,8 @@ class ViewController: NSViewController {
     lazy var toolBar:IMPToolBar = {
         let t = IMPToolBar(frame: NSRect(x: 0,y: 0,width: 100,height: 40))
         
-        //t.shadows = self.contrast.shadows
-        //t.highlights = self.contrast.highlights
+        t.shadows = self.rangeSolver.clipping.shadows
+        t.highlights = self.rangeSolver.clipping.highlights
         
         t.enableFilterHandler = { (flag) in
             self.filter.enabled = flag
@@ -319,16 +328,19 @@ class ViewController: NSViewController {
         }
         
         t.slideHandler = { (step) in
-            //self.contrast.autoContrastEnabled = true
-            //self.contrast.degree = step.float/100
+            self.autoRagnesDegree = step.float/100
+            self.curvesControl.currentRanges = self.computeRanges()
+
         }
         
         t.shadowsHandler = { (value) in
-            //self.contrast.shadows = value
+            self.rangeSolver.clipping.shadows = value
+            self.curvesControl.currentRanges = self.computeRanges()
         }
         
         t.highlightsHandler = { (value) in
-            //self.contrast.highlights = value
+            self.rangeSolver.clipping.highlights = value
+            self.curvesControl.currentRanges = self.computeRanges()
         }
 
         t.resetHandler = {
