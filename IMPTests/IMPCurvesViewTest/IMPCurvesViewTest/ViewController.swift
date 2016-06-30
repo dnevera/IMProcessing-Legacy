@@ -54,15 +54,18 @@ class ViewController: NSViewController {
         v.curvesView.didControlPointsUpdate = { (info) in
             
             if let t = IMPCurvesRGBChannelType(rawValue: info.id){
+                
+                guard let spline = info.spline else { return }
+                
                 switch  t {
                 case .RGB:
-                    self.curves.w <- info.controlPoints
+                    self.curves.w = spline
                 case .Red:
-                    self.curves.x <- info.controlPoints
+                    self.curves.x = spline
                 case .Green:
-                    self.curves.y <- info.controlPoints
+                    self.curves.y = spline
                 case .Blue:
-                    self.curves.z <- info.controlPoints
+                    self.curves.z = spline
                 }
             }
         }
@@ -70,34 +73,25 @@ class ViewController: NSViewController {
         v.autoCorrection = { () -> [(low:float2,high:float2)] in
             
             self.analyzer.source = self.filter.source
-            let lowlimit:Float = 0.1
-            let highlimit:Float = 0.9
-            let f:Float = v.curvesView.curveFunction == .Cubic ? 1 : 2
+            
+            let lowlimit:Float = 0.15
+            let highlimit:Float = 0.85
+            let f:Float = v.curvesView.curveFunction == .Cubic ? 1 : sqrt(2)
 
-            var r = self.rangeSolver.minimum.r * f
-            var R = 1 - (1-self.rangeSolver.maximum.r) * f
+            var ranges = [(low:float2,high:float2)]()
+            ranges.append((low:float2(0),high:float2(1)))
             
-            var g = self.rangeSolver.minimum.g * f
-            var G = 1 - (1-self.rangeSolver.maximum.g) * f
+            for i in 0..<3 {
+                var m = self.rangeSolver.minimum[i] * f
+                var M = 1 - (1-self.rangeSolver.maximum[i]) * f
+                
+                m = m < 0 ? 0 : m > highlimit ? highlimit : m
+                M = M < lowlimit ? lowlimit : M > 1 ? 1 : M
+
+                ranges.append((low:float2(m,0),high:float2(M,1)))
+            }
             
-            var b = self.rangeSolver.minimum.b * f
-            var B = 1 - (1-self.rangeSolver.maximum.b) * f
-            
-            r = r < 0 ? 0 : r > highlimit ? highlimit : r
-            R = R < lowlimit ? lowlimit : R > 1 ? 1 : R
-            
-            g = g < 0 ? 0 : g > highlimit ? highlimit : g
-            G = G < lowlimit ? lowlimit : G > 1 ? 1 : G
-            
-            b = b < 0 ? 0 : b > highlimit ? highlimit : b
-            B = B < lowlimit ? lowlimit : B > 1 ? 1 : B
-            
-            return [
-                (low:float2(0),high:float2(1)),
-                (low:float2(r,0),high:float2(R,1)),
-                (low:float2(g,0),high:float2(G,1)),
-                (low:float2(b,0),high:float2(B,1)),
-            ]
+            return ranges
         }
         
         return v

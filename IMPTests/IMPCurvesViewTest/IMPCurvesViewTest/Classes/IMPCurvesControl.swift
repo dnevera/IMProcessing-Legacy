@@ -55,8 +55,8 @@ public class IMPRGBCurvesControl: IMPViewBase {
         guard let item = sender.titleOfSelectedItem else {return}
         if let t = IMPCurveFunction(rawValue: item) {
             if curvesView.curveFunction != t {
+                curvesView.reset()
                 curvesView.curveFunction = t
-                updateAutoRanges()
             }
         }
     }
