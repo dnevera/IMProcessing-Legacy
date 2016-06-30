@@ -8,34 +8,29 @@
 
 import Foundation
 import IMProcessing
+import Accelerate
 
 public class IMPSplinesProvider: IMPImageProvider {
 
-    public var splines:[IMPSpline]! {
+    public var splines:[[Float]]! {
         didSet{
             update(splines)
         }
     }
     
-    public convenience init(context: IMPContext, splines:[IMPSpline]) {
+    public convenience init(context: IMPContext, splines:[[Float]]) {
         self.init(context: context)
         defer {
             self.splines = splines
         }
     }
     
-    public func update(splines:[IMPSpline]){
-        var channelCurves = [[Float]]()
-        
-        for c in splines {
-            channelCurves.append(c.curve)
-        }
-        
+    public func update(splines:[[Float]]){
         if texture == nil {
-            texture = context.device.texture1DArray(channelCurves)
+            texture = context.device.texture1DArray(splines)
         }
         else {
-            texture?.update(channelCurves)
+            texture?.update(splines)
         }
     }
 }
@@ -94,14 +89,16 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
         }
     }
     
-    private var channels:[IMPSpline] {
-        return [x,y,z]
+    private var channels:[[Float]] {
+        let xx = matchMaster(x._curve)
+        let yy = matchMaster(y._curve)
+        let zz = matchMaster(z._curve)
+        return [xx ?? x.curve, yy ?? y.curve, zz ?? z.curve]
     }
     
     var _x:IMPSpline = IMPCurveFunction.Cubic.spline {
         didSet{
             _x.addUpdateObserver { (spline) in
-                if self.doNotUpdate {return}
                 self.curves.update(self.channels)
                 self.dirty = true
             }
@@ -111,7 +108,6 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
     var _y:IMPSpline = IMPCurveFunction.Cubic.spline {
         didSet{
             _y.addUpdateObserver { (spline) in
-                if self.doNotUpdate {return}
                 self.curves.update(self.channels)
                 self.dirty = true
             }
@@ -121,29 +117,35 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
     var _z:IMPSpline = IMPCurveFunction.Cubic.spline {
         didSet{
             _z.addUpdateObserver { (spline) in
-                if self.doNotUpdate {return}
                 self.curves.update(self.channels)
                 self.dirty = true
             }
         }
     }
 
-    var doNotUpdate = false
     var _w:IMPSpline = IMPCurveFunction.Cubic.spline {
         didSet{
             _w.addUpdateObserver { (spline) in
-                self.doNotUpdate = true
-                self._x <- self._w.controlPoints
-                self._y <- self._w.controlPoints
-                self._z <- self._w.controlPoints
                 self.curves.update(self.channels)
-                self.doNotUpdate = false
                 self.dirty = true
             }
         }
     }
     
     var identity = IMPCurveFunction.Cubic.spline
+    
+    func matchMaster(in_out:[Float]) -> [Float]? {
+        
+        guard in_out.count > 0 else { return nil }
+        
+        var diff = [Float](count:in_out.count, repeatedValue: 0)
+        var one:Float = 1
+        let sz = vDSP_Length(in_out.count)
+        
+        vDSP_vsmsb(_w.curve, 1, &one, identity.curve, 1, &diff, 1, sz)
+        vDSP_vsma(in_out, 1, &one, diff, 1, &diff, 1, sz)
+        return diff
+    }
     
     private lazy var curves:IMPSplinesProvider = IMPSplinesProvider(context: self.context, splines: self.channels)
 }
