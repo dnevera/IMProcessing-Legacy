@@ -47,8 +47,12 @@ class ViewController: NSViewController {
         
         v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
         v.curvesView.curveFunction = .Cubic
+        v.curvesView.didCurveFunctionUpdate = { (function) -> Void in
+            self.curves.curveFunction = function
+        }
         
-        v.curvesView.didControlPointsUpdate = { (info) in            
+        v.curvesView.didControlPointsUpdate = { (info) in
+            
             if let t = IMPCurvesRGBChannelType(rawValue: info.id){
                 switch  t {
                 case .RGB:
@@ -63,8 +67,50 @@ class ViewController: NSViewController {
             }
         }
         
+        v.autoCorrection = { () -> [(low:float2,high:float2)] in
+            
+            self.analyzer.source = self.filter.source
+            let lowlimit:Float = 0.1
+            let highlimit:Float = 0.9
+            let f:Float = v.curvesView.curveFunction == .Cubic ? 1 : 2
+
+            var r = self.rangeSolver.minimum.r * f
+            var R = 1 - (1-self.rangeSolver.maximum.r) * f
+            
+            var g = self.rangeSolver.minimum.g * f
+            var G = 1 - (1-self.rangeSolver.maximum.g) * f
+            
+            var b = self.rangeSolver.minimum.b * f
+            var B = 1 - (1-self.rangeSolver.maximum.b) * f
+            
+            r = r < 0 ? 0 : r > highlimit ? highlimit : r
+            R = R < lowlimit ? lowlimit : R > 1 ? 1 : R
+            
+            g = g < 0 ? 0 : g > highlimit ? highlimit : g
+            G = G < lowlimit ? lowlimit : G > 1 ? 1 : G
+            
+            b = b < 0 ? 0 : b > highlimit ? highlimit : b
+            B = B < lowlimit ? lowlimit : B > 1 ? 1 : B
+            
+            return [
+                (low:float2(0),high:float2(1)),
+                (low:float2(r,0),high:float2(R,1)),
+                (low:float2(g,0),high:float2(G,1)),
+                (low:float2(b,0),high:float2(B,1)),
+            ]
+        }
+        
         return v
     }()
+    
+    var rangeSolver = IMPHistogramRangeSolver()
+    
+    lazy var analyzer:IMPHistogramAnalyzer = {
+        let a = IMPHistogramAnalyzer(context: self.context)
+        a.addSolver(self.rangeSolver)
+        return a
+    }()
+
     
     lazy var rightPanel:NSView = {
         let v = NSView(frame: self.view.bounds)
@@ -104,7 +150,6 @@ class ViewController: NSViewController {
                 // Загружаем файл и связываем источником фильтра
                 //
                 let meta = IMPJpegProvider.metadata(file)
-                
                 var orientation = IMPExifOrientationUp
                 if let o = meta?[IMProcessing.meta.imageOrientationKey] as? NSNumber {
                     orientation = IMPExifOrientation(rawValue: o as Int)
@@ -128,7 +173,10 @@ class ViewController: NSViewController {
             if type == .Image {
                 if let image = loadImage(file, size: 1200) {
                     
+                    self.curvesControl.curvesView.reset()
+                    
                     self.imageView.filter?.source = image
+                    
                     self.currentImageFile = file
                     
                     self.asyncChanges({ () -> Void in
@@ -164,8 +212,6 @@ class ViewController: NSViewController {
                 if let image = loadImage(IMPDocument.sharedInstance.currentFile!, size: 0) {
                     
                     let filter = IMPFilter(context: IMPContext())
-                    //let contrast = IMTLAutoContrastFilter(context: self.context)
-                    //filter.addFilter(contrast)
                     
                     filter.source = image
                     
@@ -275,7 +321,7 @@ class ViewController: NSViewController {
         }
         
         t.enableNormalHandler = { (flag) in
-            //self.contrast.curvesFilter.adjustment.blending.mode = flag == false ? .LUMNINOSITY : .NORMAL
+            self.curves.adjustment.blending.mode = flag == false ? .LUMNINOSITY : .NORMAL
         }
         
         t.slideHandler = { (step) in

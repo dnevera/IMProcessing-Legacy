@@ -22,6 +22,9 @@ public class IMPRGBCurvesControl: IMPViewBase {
     
     typealias Type = IMPCurvesRGBChannelType
     
+    public typealias AutoRangesType    = [(low:float2,high:float2)]
+    public typealias AutoFunctionType  = (() -> AutoRangesType)
+    
     public var backgroundColor:IMPColor? {
         didSet{
             wantsLayer = true
@@ -32,7 +35,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
     }
 
     public var curvesView:IMPCurvesView {get{return _curvesView}}
-    
+    public var autoCorrection:AutoFunctionType?
     
     lazy var _curvesView:IMPCurvesView = {
         return IMPCurvesView(frame: self.bounds)
@@ -53,6 +56,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
         if let t = IMPCurveFunction(rawValue: item) {
             if curvesView.curveFunction != t {
                 curvesView.curveFunction = t
+                updateAutoRanges()
             }
         }
     }
@@ -89,9 +93,52 @@ public class IMPRGBCurvesControl: IMPViewBase {
         return b
     }()
 
+    lazy var autoButton:NSButton = {
+        let pstyle = NSMutableParagraphStyle()
+        pstyle.alignment = .Center
+        
+        let attributes = [ NSForegroundColorAttributeName : IMPColor.darkGrayColor(), NSParagraphStyleAttributeName : pstyle ]
+        
+        let b = NSButton()
+        b.attributedTitle = NSAttributedString(string: "Auto  ", attributes: attributes)
+        
+        b.target = self
+        b.action = #selector(self.autoHandler(_:))
+        
+        return b
+    }()
+
     @objc private func resetHandler(sender:NSButton)  {
-            curvesView.reset()
+        currentAutoRanges = nil
+        curvesView.reset()
     }
+    
+    var currentAutoRanges:AutoRangesType? {
+        didSet{
+            updateAutoRanges()
+        }
+    }
+    
+    func updateAutoRanges() {
+        if let ranges = currentAutoRanges {
+            for i in 0..<ranges.count {
+                let low = ranges[i].low
+                let high = ranges[i].high
+                if let spline = curvesView.list[i].spline {
+                    spline.removeAll()
+                    spline.set(point: low, atIndex: 0)
+                    spline.set(point: high, atIndex: 1)
+                }
+            }
+        }
+    }
+    
+    @objc private func autoHandler(sender:NSButton)  {
+        if let f = autoCorrection {
+            currentAutoRanges = f()
+        }
+    }
+
 
     var currentCurveIndex:Int = 0 {
         didSet {
@@ -107,6 +154,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
             addSubview(channelSelector)
             addSubview(splineFunctionSelector)
             addSubview(resetButton)
+            addSubview(autoButton)
             
             initial = true
             
@@ -116,9 +164,14 @@ public class IMPRGBCurvesControl: IMPViewBase {
                 make.width.greaterThanOrEqualTo(44)
             }
 
-            resetButton.snp_makeConstraints { (make) -> Void in
+            autoButton.snp_makeConstraints { (make) -> Void in
                 make.centerY.equalTo(self.channelSelector.snp_centerY).offset(0)
                 make.right.equalTo(self).offset(0)
+            }
+
+            resetButton.snp_makeConstraints { (make) -> Void in
+                make.centerY.equalTo(self.channelSelector.snp_centerY).offset(0)
+                make.right.equalTo(self.autoButton.snp_left).offset(-10)
             }
 
             splineFunctionSelector.snp_makeConstraints { (make) -> Void in
@@ -126,6 +179,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
                 make.left.equalTo(self.channelSelector.snp_right).offset(10)
                 make.right.equalTo(self.resetButton.snp_left).offset(-10)
             }
+        
             
             curvesView.snp_makeConstraints { (make) -> Void in
                 make.top.equalTo(self.channelSelector.snp_bottom).offset(5)

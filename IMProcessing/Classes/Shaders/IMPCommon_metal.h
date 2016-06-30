@@ -96,17 +96,41 @@ namespace IMProcessing
         return c;
     }
     
+//    inline float3 clipcolor(float3 c) {
+//        return clipcolor_wlum(c,lum(c));
+//    }
+//    
+//    inline float3 setlum(float3 c, float l) {
+//        float ll = lum(c);
+//        float d = l - ll;
+//        c = c + float3(d);
+//        return clipcolor_wlum(c,ll);
+//    }
+
     inline float3 clipcolor(float3 c) {
-        return clipcolor_wlum(c,lum(c));
+        float l = lum(c);
+        float n = min(min(c.r, c.g), c.b);
+        float x = max(max(c.r, c.g), c.b);
+        
+        if (n < 0.0) {
+            c.r = l + ((c.r - l) * l) / (l - n);
+            c.g = l + ((c.g - l) * l) / (l - n);
+            c.b = l + ((c.b - l) * l) / (l - n);
+        }
+        if (x > 1.0) {
+            c.r = l + ((c.r - l) * (1.0 - l)) / (x - l);
+            c.g = l + ((c.g - l) * (1.0 - l)) / (x - l);
+            c.b = l + ((c.b - l) * (1.0 - l)) / (x - l);
+        }
+        
+        return c;
     }
     
     inline float3 setlum(float3 c, float l) {
-        float ll = lum(c);
-        float d = l - ll;
+        float d = l - lum(c);
         c = c + float3(d);
-        return clipcolor_wlum(c,ll);
+        return clipcolor(c);
     }
-    
     
     inline  float sat(float3 c) {
         float n = min_component(c);

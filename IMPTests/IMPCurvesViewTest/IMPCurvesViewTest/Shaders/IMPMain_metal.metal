@@ -10,6 +10,7 @@
 #include "IMPStdlib_metal.h"
 using namespace metal;
 
+
 inline float4 adjustRGBCurve(
                           float4 inColor,
                           texture1d_array<float, access::sample> curveTexure,

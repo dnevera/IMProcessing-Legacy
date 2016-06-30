@@ -5,6 +5,13 @@
 //  Created by denis svinarchuk on 18.12.15.
 //  Copyright © 2015 IMetalling. All rights reserved.
 //
+//  Acknowledgement:
+//  http://www.sunsetlakesoftware.com/ - the famous great work for Image Processing with GPU
+//  A lot of ideas were taken from the Brad Larson project: https://github.com/BradLarson/GPUImage
+//
+//  Photoshop blending examples: https://mouaif.wordpress.com/2009/01/05/photoshop-math-with-glsl-shaders/
+//
+
 
 #ifndef IMPBlending_metal_h
 #define IMPBlending_metal_h

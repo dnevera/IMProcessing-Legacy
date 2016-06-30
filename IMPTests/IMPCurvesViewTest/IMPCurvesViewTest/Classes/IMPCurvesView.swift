@@ -26,6 +26,7 @@ public class IMPPopUpButton: NSPopUpButton {
 public class IMPCurvesView: IMPViewBase {
     
     public typealias ControlPointsUpdateHandler = ((CurveInfo:CurveInfo) -> Void)
+    public typealias CurveFunctionUpdateHandler = ((function:IMPCurveFunction)->Void)
 
     public var backgroundColor:IMPColor? = IMPColor.clearColor(){
         didSet{
@@ -66,6 +67,9 @@ public class IMPCurvesView: IMPViewBase {
     
     public var curveFunction:IMPCurveFunction = .Cubic {
         didSet{
+            if let f = didCurveFunctionUpdate {
+                f(function: curveFunction)
+            }
             for l in list {
                 l._spline = curveFunction.spline
                 executeUpdate(l)
@@ -175,6 +179,7 @@ public class IMPCurvesView: IMPViewBase {
     }
 
     public var didControlPointsUpdate:ControlPointsUpdateHandler?
+    public var didCurveFunctionUpdate:CurveFunctionUpdateHandler?
 
     var activeCurve:CurveInfo? {
         get {

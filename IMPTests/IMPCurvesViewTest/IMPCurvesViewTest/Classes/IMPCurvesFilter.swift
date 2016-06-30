@@ -30,7 +30,7 @@ public class IMPSplinesProvider: IMPImageProvider {
             texture = context.device.texture1DArray(splines)
         }
         else {
-            texture?.update(splines)
+            texture?.update1DArray(splines)
         }
     }
 }
@@ -93,7 +93,6 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
         let xx = matchMaster(x._curve) ?? x.curve
         let yy = matchMaster(y._curve) ?? y.curve
         let zz = matchMaster(z._curve) ?? z.curve
-        print("curve_g = \(yy);")
         return [xx, yy, zz]
     }
     

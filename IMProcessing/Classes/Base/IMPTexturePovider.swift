@@ -59,7 +59,7 @@ public extension MTLDevice {
         return texture
     }
 
-    public func texture1DArray(buffers:[[Float]]) -> MTLTexture {
+    public func texture1DArray(buffers:[[UInt8]]) -> MTLTexture {
         
         let width = buffers[0].count
         
@@ -74,17 +74,45 @@ public extension MTLDevice {
         textureDescriptor.width       = width
         textureDescriptor.height      = 1
         textureDescriptor.depth       = 1
-        textureDescriptor.pixelFormat = .R32Float
+        textureDescriptor.pixelFormat = .R8Unorm
         
         textureDescriptor.arrayLength = buffers.count
         textureDescriptor.mipmapLevelCount = 1
         
         let texture = self.newTextureWithDescriptor(textureDescriptor)
                 
+        texture.update1DArray(buffers)
+        
+        return texture
+    }
+    
+    public func texture1DArray(buffers:[[Float]]) -> MTLTexture {
+        
+        let width = buffers[0].count
+        
+        for i in 1 ..< buffers.count {
+            if (width != buffers[i].count) {
+                fatalError("texture buffers must have identical size...")
+            }
+        }
+        
+        let textureDescriptor = MTLTextureDescriptor()
+        textureDescriptor.textureType = .Type1DArray
+        textureDescriptor.width       = width
+        textureDescriptor.height      = 1
+        textureDescriptor.depth       = 1
+        textureDescriptor.pixelFormat = .R32Float
+        
+        textureDescriptor.arrayLength = buffers.count
+        textureDescriptor.mipmapLevelCount = 1
+        
+        let texture = self.newTextureWithDescriptor(textureDescriptor)
+        
         texture.update(buffers)
         
         return texture
     }
+
 }
 
 public extension MTLTexture {
@@ -122,6 +150,27 @@ public extension MTLTexture {
         for i in 0 ..< height {
             self.replaceRegion(MTLRegionMake2D(0, i, width, 1), mipmapLevel: 0, withBytes: buffer[i], bytesPerRow: width)
         }
+    }
+    
+    public func update1DArray(buffers:[[UInt8]]){
+        if pixelFormat != .R8Unorm {
+            fatalError("MTLTexture.update(buffer:[[UInt8]]) has wrong pixel format...")
+        }
+        
+        let region = MTLRegionMake2D(0, 0, width, 1)
+        let bytesPerRow = region.size.width * sizeof(UInt8)
+        
+        for index in 0 ..< buffers.count {
+            let curve = buffers[index]
+            if width != curve.count {
+                fatalError("MTLTexture.update(buffer:[[UInt8]]) is not equal texture size...")
+            }
+            self.replaceRegion(region, mipmapLevel:0, slice:index, withBytes:curve, bytesPerRow:bytesPerRow, bytesPerImage:0)
+        }
+    }
+
+    public func update1DArray(buffers:[[Float]]){
+        update(buffers)
     }
     
     public func update(buffers:[[Float]]){
