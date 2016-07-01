@@ -1,4 +1,4 @@
- //
+//
 //  IMPHistogramView.swift
 //  IMProcessing
 //
@@ -25,18 +25,35 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
         }
     }
     
+    public var generatorLayer:IMPHistogramGenerator.Layer {
+        set {
+            generator.layer = newValue
+        }
+        get{
+            return generator.layer
+        }
+    }
+    
+    public var visibleBins = 256 {
+        didSet{
+            generator.dirty = true
+        }
+    }
+    
     public var context: IMPContext!
         
-    public init(frame: NSRect, context contextIn: IMPContext, histogramHardware:IMPHistogramAnalyzer.Hardware) {
+    public init(context contextIn: IMPContext, frame: NSRect, histogramHardware:IMPHistogramAnalyzer.Hardware) {
         super.init(frame: frame)
         self.context = contextIn
         self.histogramHardware = histogramHardware 
         self.autoresizesSubviews = true
         addSubview(imageView)
+        self.wantsLayer = true
+        self.layer?.backgroundColor = IMPColor.clearColor().CGColor
     }
 
     public convenience init(context contextIn: IMPContext, frame: NSRect) {
-        self.init(frame: frame, context: contextIn, histogramHardware: .GPU)          
+        self.init(context: contextIn, frame: frame, histogramHardware: .GPU)
     }
 
     public required init?(coder: NSCoder) {
@@ -45,13 +62,12 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
     
     lazy var imageView:IMPView = { 
         let v = IMPView(filter: self.generator,frame: self.bounds)
-        v.autoresizesSubviews = true
         #if os(OSX)
-        v.autoresizingMask = [.ViewHeightSizable, .ViewWidthSizable]
+        v.autoresizingMask = [.ViewHeightSizable, .ViewWidthSizable, .ViewMinXMargin, .ViewMinYMargin]
         #else
         v.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
         #endif
-        v.backgroundColor = IMPColor.clearColor()
+        v.backgroundColor = IMPColor.yellowColor()
         return v
     }()
     
@@ -61,18 +77,17 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
         let a = IMPHistogramAnalyzer(context: self.context, hardware: self.histogramHardware)
         a.addUpdateObserver({ (histogram) in
             if self.type == .PDF {
-                self.generator.histogram = histogram.pdf(1)
+                self.generator.histogram = histogram.pdf(1).segment(count: self.visibleBins)
             }
             else {
-                self.generator.histogram = histogram.cdf(1)
+                self.generator.histogram = histogram.cdf(1).segment(count: self.visibleBins)
             }
         })
         return a
     }()
     
-    lazy var generator:IMPHistogramGenerator = { 
-        let f = IMPHistogramGenerator(context: self.context, size: IMPSize(width: self.bounds.width, height: self.bounds.height))          
-        return f
+    lazy var generator:IMPHistogramGenerator = {        
+        return IMPHistogramGenerator(context: self.context, size: IMPSize(width: self.bounds.width, height: self.bounds.height)*IMPView.scaleFactor)
     }()
     
     public var filter:IMPFilter?{
@@ -81,4 +96,12 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
         }
         get{ return analizer }
     }
+    
+    #if os(OSX)
+    override public func updateLayer() {
+        super.updateLayer()
+        imageView.frame = NSRect(x: 0, y: 0, width: bounds.width, height: bounds.height)
+        generator.size = IMPSize(width: self.bounds.width, height: self.bounds.height)*IMPView.scaleFactor
+    }
+    #endif
 }

@@ -885,6 +885,34 @@ public extension IMPHistogram{
     }
 }
 
+public extension IMPHistogram {
+    
+    public func segment(count c:Int) -> IMPHistogram {
+        if c>size {
+            fatalError("IMPHistogram: segments count must be less then source size")
+        }
+        let hist = IMPHistogram(size: c, type: type, distributionType: distributionType)
+        
+        for i in 0..<channels.count {
+            hist.channels[i] = segment(channels[i], count: c)
+        }
+        
+        return hist
+    }
+    
+    func segment(channel:[Float], count:Int) -> [Float] {
+        var c = [Float](count:count, repeatedValue:0)
+        let stride =  vDSP_Stride(size/count)
+        var b:Float = 0
+        for i in 0..<count{
+            let address = UnsafeMutablePointer<Float>(channel)+stride * i
+            vDSP_meanv(address, 1, &b, vDSP_Length(stride))
+            c[i] = b
+        }
+        return c
+    }
+    
+}
 
 public extension CollectionType where Generator.Element == IMPHistogram.Extremum {
     ///
