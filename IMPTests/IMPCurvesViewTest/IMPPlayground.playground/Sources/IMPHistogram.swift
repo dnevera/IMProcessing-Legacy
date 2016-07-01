@@ -9,12 +9,15 @@
 import Accelerate
 import simd
 
+let kIMP_HistogramSize = 256
+
 ///
 /// Представление гистограммы для произвольного цветового пространства
 /// с максимальным количеством каналов от одного до 4х.
 ///
 public class IMPHistogram {
     
+   
     public enum ChannelsType:Int{
         case PLANAR = 1
         case XY     = 2
@@ -178,19 +181,19 @@ public class IMPHistogram {
     ///
     ///  - parameter dataIn:
     ///  - parameter dataCount:
-    public func update(data dataIn: UnsafePointer<Void>, dataCount: Int){
-        self.clearHistogram()
-        for i in 0..<dataCount{
-            let dataIn = UnsafePointer<IMPHistogramBuffer>(dataIn)+i
-            let address = UnsafePointer<UInt32>(dataIn)
-            for c in 0..<channels.count{
-                var data:[Float] = [Float](count: Int(self.size), repeatedValue: 0)
-                self.updateChannel(&data, address: address, index: c)
-                self.addFromData(data, toChannel: &channels[c])
-                updateBinCountForChannel(c)
-            }
-        }
-    }
+//    public func update(data dataIn: UnsafePointer<Void>, dataCount: Int){
+//        self.clearHistogram()
+//        for i in 0..<dataCount{
+//            let dataIn = UnsafePointer<IMPHistogramBuffer>(dataIn)+i
+//            let address = UnsafePointer<UInt32>(dataIn)
+//            for c in 0..<channels.count{
+//                var data:[Float] = [Float](count: Int(self.size), repeatedValue: 0)
+//                self.updateChannel(&data, address: address, index: c)
+//                self.addFromData(data, toChannel: &channels[c])
+//                updateBinCountForChannel(c)
+//            }
+//        }
+//    }
     
     public func update(channel:ChannelNo, fromHistogram:IMPHistogram, fromChannel:ChannelNo) {
         if fromHistogram.size != size {
@@ -885,34 +888,6 @@ public extension IMPHistogram{
     }
 }
 
-public extension IMPHistogram {
-    
-    public func segment(count c:Int) -> IMPHistogram {
-        if c>size {
-            fatalError("IMPHistogram: segments count must be less then source size")
-        }
-        let hist = IMPHistogram(size: c, type: type, distributionType: distributionType)
-        
-        for i in 0..<channels.count {
-            hist.channels[i] = segment(channels[i], count: c)
-        }
-        
-        return hist
-    }
-    
-    func segment(channel:[Float], count:Int) -> [Float] {
-        var c = [Float](count:count, repeatedValue:0)
-        let stride =  vDSP_Stride(size/count)
-        var b:Float = 0
-        for i in 0..<count{
-            let address = UnsafeMutablePointer<Float>(channel)+stride * i
-            vDSP_meanv(address, 1, &b, vDSP_Length(stride))
-            c[i] = b
-        }
-        return c
-    }
-    
-}
 
 public extension CollectionType where Generator.Element == IMPHistogram.Extremum {
     ///

@@ -123,7 +123,20 @@ class ViewController: NSViewController {
     
     lazy var histogramView:IMPHistogramView = {
         let v = IMPHistogramView(context: self.context, frame: NSRect(x: 0, y: 0, width: 200, height: 80))
+        
+        v.generatorLayer.components = (
+            IMPHistogramLayerComponent(color: float4([1,0.2,0.2,0.3]), width: Float(UInt32.max)),
+            IMPHistogramLayerComponent(color: float4([0.2,1,0.2,0.3]), width: Float(UInt32.max)),
+            IMPHistogramLayerComponent(color: float4([0.2,0.2,1,0.3]), width: Float(UInt32.max)),
+            IMPHistogramLayerComponent(color: float4([0.9,0.9,0.9,0.7]), width: Float(UInt32.max)))
+        
+        v.generatorLayer.backgroundColor = float4(0.1,0.1,0.1,0.3)
+        v.generatorLayer.separatorWidth = 3
+        v.generatorLayer.sample = false
+        
         v.type = .PDF
+        v.visibleBins = 40
+        
         self.filter.addDestinationObserver(destination: { (destination) in
             v.filter?.source = destination
         })

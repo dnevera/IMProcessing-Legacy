@@ -2,4 +2,5 @@
 
 import Cocoa
 import simd
+import Accelerate
 

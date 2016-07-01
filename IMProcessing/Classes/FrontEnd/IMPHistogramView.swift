@@ -1,4 +1,4 @@
- //
+//
 //  IMPHistogramView.swift
 //  IMProcessing
 //
@@ -22,6 +22,21 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
     public var type:HistogramType = .PDF {
         didSet{
             filter?.dirty = true
+        }
+    }
+    
+    public var generatorLayer:IMPHistogramGenerator.Layer {
+        set {
+            generator.layer = newValue
+        }
+        get{
+            return generator.layer
+        }
+    }
+    
+    public var visibleBins = 256 {
+        didSet{
+            generator.dirty = true
         }
     }
     
@@ -62,10 +77,10 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
         let a = IMPHistogramAnalyzer(context: self.context, hardware: self.histogramHardware)
         a.addUpdateObserver({ (histogram) in
             if self.type == .PDF {
-                self.generator.histogram = histogram.pdf(1)
+                self.generator.histogram = histogram.pdf(1).segment(count: self.visibleBins)
             }
             else {
-                self.generator.histogram = histogram.cdf(1)
+                self.generator.histogram = histogram.cdf(1).segment(count: self.visibleBins)
             }
         })
         return a

@@ -12,6 +12,9 @@
     import Cocoa
 #endif
 
+//
+// Depricated. IMPHistogramGenerator is used instead of th solver 
+//
 public class IMPHistogramLayerSolver: IMPFilter, IMPHistogramSolver {
     
     public enum IMPHistogramType{
@@ -26,7 +29,10 @@ public class IMPHistogramLayerSolver: IMPFilter, IMPHistogramSolver {
             IMPHistogramLayerComponent(color: float4([0,0,1,0.7]), width: Float(UInt32.max)),
             IMPHistogramLayerComponent(color: float4([0.8,0.8,0.8,0.8]), width: Float(UInt32.max))),
         backgroundColor: float4([0.1, 0.1, 0.1, 0.7]),
-        backgroundSource: false){
+        backgroundSource: false,
+        sample: false,
+        separatorWidth: 0
+        ){
         didSet{
             memcpy(layerUniformBiffer.contents(), &layer, layerUniformBiffer.length)
         }

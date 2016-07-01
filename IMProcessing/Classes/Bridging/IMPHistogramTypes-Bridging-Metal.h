@@ -33,14 +33,16 @@ typedef struct {
 ///  @brief Histogram visualization color options
 typedef struct {
     float4 color;
-    float        width;
+    float  width;
 }IMPHistogramLayerComponent;
 
 ///  @brief Histogram layer presentation
 struct IMPHistogramLayer {
-    IMPHistogramLayerComponent  components[kIMP_HistogramMaxChannels];
-    float4                backgroundColor;
-    bool                        backgroundSource;
+    IMPHistogramLayerComponent components[kIMP_HistogramMaxChannels];
+    float4                     backgroundColor;
+    bool                       backgroundSource;
+    bool                       sample;
+    uint                       separatorWidth;
 };
 
 ///  @brief Color weights clipping preferences

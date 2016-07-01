@@ -26,6 +26,63 @@ using namespace metal;
 
 namespace IMProcessing
 {
+    kernel void kernel_histogramGenerator(texture2d<float, access::sample>      inTexture  [[texture(0)]],
+                                          texture2d<float, access::write>        outTexture [[texture(1)]],
+                                          texture1d_array<float, access::sample> histogram  [[texture(2)]],
+                                          constant IMPHistogramLayer             &layer     [[buffer(0)]],
+                                          uint2 gid [[thread_position_in_grid]])
+    {
+        
+#define IMPHOpacity(bin) (y_position>=bin || y_position<=bin-layer.components[c].width ? 0.0 : 1.0 * component.a)
+        
+        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        
+        float4 inColor = IMProcessing::sampledColor(inTexture,outTexture,gid);
+        
+        float  width             = float(outTexture.get_width());
+        float  height            = float(outTexture.get_height());
+        float  x                 = float(gid.x);
+        float  y                 = float(gid.y);
+        float  y_position        = (height-y);
+        
+        float  histogramBinPos   = clamp(x/width,0.0,1.0);   // normalize to histogram length
+        uint   histogramBinIndex = histogramBinPos * histogram.get_width();
+        uint   stride = ceil(float(width/float(histogram.get_width())));
+        float  delim = height;
+        
+        float4 result;
+        if (layer.backgroundSource){
+            result = inColor;
+        }
+        else{
+            result = layer.backgroundColor;
+        }
+        
+        if ( gid.x % stride > layer.separatorWidth ) {
+            for (int c=histogram.get_array_size()-1; c>=0; c--){
+                
+                float4 component = layer.components[c].color;
+                
+                half h  = 0;
+                
+                if (layer.sample)
+                    h = histogram.sample(s, histogramBinPos, c).x;
+                else
+                    h = histogram.read(histogramBinIndex,c).x;
+                
+                uint   bin       = uint(h*delim); // bin value
+                
+                float  opacity     = IMPHOpacity(bin);
+                
+                float4 color     = float4(component.r,component.g,component.b, opacity);
+                
+                result = IMProcessing::blendNormal(result, color);
+            }
+        }
+        
+        outTexture.write(clamp(result,0.0,1.0), gid);
+    }
+    
     kernel void kernel_histogramLayer(texture2d<float, access::sample>  inTexture   [[texture(0)]],
                                       texture2d<float, access::write>   outTexture  [[texture(1)]],
                                       constant IMPHistogramFloatBuffer  &histogram  [[buffer(0)]],
