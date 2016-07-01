@@ -14,11 +14,51 @@ import simd
 infix operator <- { associativity right precedence 90 }
 
 public func <- (left:IMPSpline, right:[float2]) {
-    left.set(points: right)
+    left._controlPoints = right
 }
 
-public func <- (left:IMPSpline, right:float2) {
-    left.set(points: [right])
+public func <- (spline:IMPSpline, xy:float2) -> float2? {
+    
+    func location(i:Int, spline:IMPSpline) -> float2 {
+        let x = i.float/spline.curve.count.float
+        let y = spline.curve[i]
+        return float2(x,y)
+    }
+    
+    var currentPoint:float2?
+    
+    if spline.maxControlPoints == spline.controlPoints.count {
+        for i in 0..<spline.controlPoints.count {
+            let p = spline.controlPoints[i]
+            if distance(p, xy) < spline.precision {
+                currentPoint = xy
+                spline.set(point: xy, atIndex: i)
+                break
+            }
+        }
+    }
+    else if let i = spline.indexOf(point: xy, distance: spline.precision) {
+        spline.set(point: xy, atIndex: i)
+        currentPoint = xy
+    }
+    else if distance(spline.bounds.first, xy) < spline.precision {
+        spline.set(point: xy, atIndex: 0)
+        currentPoint = xy
+    }
+    else if distance(spline.bounds.last, xy) < spline.precision {
+        spline.set(point: xy, atIndex: spline.controlPoints.count-1)
+        currentPoint = xy
+    }
+    else {
+        for i in 0..<spline.curve.count {
+            if distance(location(i, spline: spline), xy) < spline.precision {
+                spline.add(points: [xy])
+                currentPoint = xy
+                break
+            }
+        }
+    }    
+    return currentPoint
 }
 
 public func - (left:IMPSpline, right:[float2]) {
@@ -35,20 +75,13 @@ public class IMPSpline {
     public typealias FunctionType = ((controls:[float2], segments:[Float])-> [Float])
     public typealias BoundsType = (first:float2,last:float2)
     
-    public static var cubicFunction:FunctionType = { (controls, segments) -> [Float] in
-        return segments.cubicSpline(controls)
-    }
-    
-    public static var bezierFunction:FunctionType = { (controls, segments) -> [Float] in
-        return segments.cubicBezierSpline(controls)
-    }
-    
     public let function:FunctionType
     public var bounds:BoundsType { return _bounds }
     public let size:Int
     public let maxControlPoints:Int
     public let segments:[Float]
     public var controlPoints:[float2] { return _controlPoints }
+    public var precision:Float?
     
     public var _bounds:BoundsType
 
@@ -56,7 +89,7 @@ public class IMPSpline {
         return _curve
     }
     
-    public required init(bounds:BoundsType=(float2(0),float2(1)), size:Int=256, maxControlPoints:Int=32, function:FunctionType=IMPSpline.cubicFunction){
+    public required init(bounds:BoundsType=(float2(0),float2(1)), size:Int=256, maxControlPoints:Int=32, function:FunctionType=IMPCurveFunction.cubic){
         self.function = function
         self._bounds = bounds
         self.size = size
@@ -219,7 +252,7 @@ public class IMPSpline {
     }
     
     var closeDistance:Float {
-        return 1/Float(size/2)
+        return precision ?? 1/Float(size/2)
     }
     
     private func reset() {
@@ -228,7 +261,14 @@ public class IMPSpline {
         _controlPoints.append(bounds.last)
     }
 
-    private var _controlPoints = [float2]()
+    private var _controlPoints = [float2]() {
+        didSet{
+            if _controlPoints.count >= 2{
+                updateCurve()
+            }
+        }
+    }
+    
     internal var _curve = [Float]() {
         didSet{
             executeObservers()
@@ -262,16 +302,36 @@ public class IMPSpline {
 
 public enum IMPCurveFunction: String {
     
-    case Cubic  = "Cubic"
-    case Bezier = "Bezier"
+    case Cubic       = "Cubic"
+    case CatmullRom  = "CatmullRom"
+    case Bezier      = "Bezier"
     
     public var spline:IMPSpline {
         switch self {
+        case .CatmullRom:
+            return IMPSpline(function: IMPCurveFunction.catmullRom)
         case .Bezier:
-            return IMPSpline(maxControlPoints: 2, function: IMPSpline.bezierFunction)
+            return IMPSpline(maxControlPoints: 2, function: IMPCurveFunction.bezier)
         default:
             return IMPSpline()
         }
     }
+   
+    public static var catmullRom:IMPSpline.FunctionType = { (controls, segments) -> [Float] in
+        var c = [float2](controls)
+        if c.count == 2 {
+            c.append(float2(1))
+        }
+        return segments.catmullRomSpline(c)
+    }
+    
+    public static var cubic:IMPSpline.FunctionType = { (controls, segments) -> [Float] in
+        return segments.cubicSpline(controls)
+    }
+    
+    public static var bezier:IMPSpline.FunctionType = { (controls, segments) -> [Float] in
+        return segments.cubicBezierSpline(controls)
+    }
+
 }
 

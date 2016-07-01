@@ -12,10 +12,10 @@ import IMProcessing
 import simd
 
 public enum IMPCurvesRGBChannelType : String {
-    case RGB = "RGB"
-    case Red = "Red"
+    case RGB   = "RGB"
+    case Red   = "Red"
     case Green = "Green"
-    case Blue = "Blue"
+    case Blue  = "Blue"
 }
 
 public class IMPRGBCurvesControl: IMPViewBase {
@@ -57,6 +57,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
             if curvesView.curveFunction != t {
                 curvesView.reset()
                 curvesView.curveFunction = t
+                updateAutoRanges()
             }
         }
     }
@@ -199,7 +200,7 @@ public class IMPRGBCurvesControl: IMPViewBase {
             
             curvesView.list[0].isActive = true
             
-            splineFunctionSelector.addItemsWithTitles([IMPCurveFunction.Cubic.rawValue, IMPCurveFunction.Bezier.rawValue])
+            splineFunctionSelector.addItemsWithTitles([IMPCurveFunction.Cubic.rawValue, IMPCurveFunction.Bezier.rawValue, IMPCurveFunction.CatmullRom.rawValue])
         }
         channelSelector.selectItemAtIndex(currentCurveIndex)
     }

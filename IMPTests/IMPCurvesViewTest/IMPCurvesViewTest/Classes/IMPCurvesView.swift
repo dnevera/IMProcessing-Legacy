@@ -61,6 +61,9 @@ public class IMPCurvesView: IMPViewBase {
 
     public var precision:Float = 0.05 {
         didSet{
+            for l in list {
+                l.spline?.precision = precision
+            }
             needsDisplay = true
         }
     }
@@ -111,10 +114,8 @@ public class IMPCurvesView: IMPViewBase {
         
         var _spline:IMPSpline? {
             didSet {
+                _spline?.precision = self.view.precision
                 _spline?.addUpdateObserver({ (spline) in
-                    dispatch_async(dispatch_get_main_queue(), { 
-                        self.view.needsDisplay = true
-                    })
                     self.view.executeUpdate(self)
                 })
             }
@@ -196,6 +197,9 @@ public class IMPCurvesView: IMPViewBase {
         if let o = didControlPointsUpdate {
             o(CurveInfo: info)
         }
+        dispatch_async(dispatch_get_main_queue(), {
+            self.needsDisplay = true
+        })
     }
     
     func covertPoint(event:NSEvent) -> float2 {
@@ -236,48 +240,11 @@ public class IMPCurvesView: IMPViewBase {
         currentPointIndex = nil
         currentPoint = nil
         
-        func location(i:Int, spline:IMPSpline) -> float2 {
-            let x = i.float/spline.curve.count.float
-            let y = spline.curve[i]
-            return float2(x,y)
-        }
-        
         if let spline = activeCurve?.spline {
-            if spline.maxControlPoints == spline.controlPoints.count {
-                for i in 0..<spline.controlPoints.count {
-                    let p = spline.controlPoints[i]
-                    if distance(p, xy) < precision {
-                        currentPoint = xy
-                        spline.set(point: xy, atIndex: i)
-                        break
-                    }
-                }
-            }
-            else if let i = spline.indexOf(point: xy, distance: precision) {
-                if event.clickCount == 2 {
-                    let p = spline.controlPoints[i]
+            currentPoint = (spline <- xy)
+            if event.clickCount == 2 {
+                if let p = currentPoint {
                     spline.remove(points: [p])
-                }
-                else {
-                    spline.set(point: xy, atIndex: i)
-                    currentPoint = xy
-                }
-            }
-            else if distance(spline.bounds.first, xy) < precision {
-                spline.set(point: xy, atIndex: 0)
-                currentPoint = xy
-            }
-            else if distance(spline.bounds.last, xy) < precision {
-                spline.set(point: xy, atIndex: spline.controlPoints.count-1)
-                currentPoint = xy
-            }
-            else {
-                for i in 0..<spline.curve.count {
-                    if distance(location(i, spline: spline), xy) < precision {
-                        spline.add(points: [xy])
-                        currentPoint = xy
-                        break
-                    }
                 }
             }
         }

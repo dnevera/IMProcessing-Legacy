@@ -58,6 +58,7 @@ class ViewController: NSViewController {
                 guard let spline = info.spline else { return }
                 
                 switch  t {
+
                 case .RGB:
                     self.curves.w = spline
                 case .Red:

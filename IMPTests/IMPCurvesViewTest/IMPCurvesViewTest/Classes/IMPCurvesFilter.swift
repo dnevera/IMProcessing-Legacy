@@ -38,27 +38,37 @@ public class IMPSplinesProvider: IMPImageProvider {
 public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
 
     
-    public var x:IMPSpline  { get{return _x}
-        set {
-            _x = newValue
-        }
-    }
-    public var y:IMPSpline  { get{return _y}
-        set {
-            _y = newValue
-        }
-    }
-    public var z:IMPSpline  { get{return _z}
-        set {
-            _z = newValue
-        }
-    }
-    public var w:IMPSpline  {
-        get {return _w }
-        set {
-            _w = newValue
-        }
-    }
+//    public var x:IMPSpline?  {
+//        willSet{
+//            if x == nil {
+//                newValue = _x
+//            }
+//        }
+////        get{
+////            return _x
+////        }
+////        set {
+////            _x = newValue
+////        }
+//        didSet{
+//            _x=x
+//        }
+//    }
+//    public var y:IMPSpline  { get{return _y}
+//        set {
+//            _y = newValue
+//        }
+//    }
+//    public var z:IMPSpline  { get{return _z}
+//        set {
+//            _z = newValue
+//        }
+//    }
+//    public var w:IMPSpline  { get {return _w }
+//        set {
+//            _w = newValue
+//        }
+//    }
     
     public static let defaultAdjustment = IMPAdjustment(
         blending: IMPBlending(mode: IMPBlendingMode.LUMNINOSITY, opacity: 1))
@@ -98,10 +108,10 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
     
     public var curveFunction:IMPCurveFunction! {
         didSet{
-            _x = curveFunction.spline
-            _y = curveFunction.spline
-            _z = curveFunction.spline
-            _w = curveFunction.spline
+            x = curveFunction.spline
+            y = curveFunction.spline
+            z = curveFunction.spline
+            w = curveFunction.spline
             identity = curveFunction.spline
         }
     }
@@ -113,36 +123,36 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
         return [xx, yy, zz]
     }
     
-    var _x:IMPSpline = IMPCurveFunction.Cubic.spline {
+    public var x:IMPSpline = IMPCurveFunction.Cubic.spline {
         didSet{
-            _x.addUpdateObserver { (spline) in
+            x.addUpdateObserver { (spline) in
                 self.curves.update(self.channels)
                 self.dirty = true
             }
         }
     }
     
-    var _y:IMPSpline = IMPCurveFunction.Cubic.spline {
+    public var y:IMPSpline = IMPCurveFunction.Cubic.spline {
         didSet{
-            _y.addUpdateObserver { (spline) in
+            y.addUpdateObserver { (spline) in
                 self.curves.update(self.channels)
                 self.dirty = true
             }
         }
     }
     
-    var _z:IMPSpline = IMPCurveFunction.Cubic.spline {
+    public var z:IMPSpline = IMPCurveFunction.Cubic.spline {
         didSet{
-            _z.addUpdateObserver { (spline) in
+            z.addUpdateObserver { (spline) in
                 self.curves.update(self.channels)
                 self.dirty = true
             }
         }
     }
 
-    var _w:IMPSpline = IMPCurveFunction.Cubic.spline {
+    public var w:IMPSpline = IMPCurveFunction.Cubic.spline {
         didSet{
-            _w.addUpdateObserver { (spline) in
+            w.addUpdateObserver { (spline) in
                 self.curves.update(self.channels)
                 self.dirty = true
             }
@@ -159,7 +169,7 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
         var one:Float = 1
         let sz = vDSP_Length(in_out.count)
         
-        vDSP_vsmsb(_w.curve, 1, &one, identity.curve, 1, &diff, 1, sz)
+        vDSP_vsmsb(w.curve, 1, &one, identity.curve, 1, &diff, 1, sz)
         vDSP_vsma(in_out, 1, &one, diff, 1, &diff, 1, sz)
         return diff
     }
