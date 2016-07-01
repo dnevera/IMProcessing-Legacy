@@ -131,11 +131,11 @@ class ViewController: NSViewController {
             IMPHistogramLayerComponent(color: float4([0.9,0.9,0.9,0.7]), width: Float(UInt32.max)))
         
         v.generatorLayer.backgroundColor = float4(0.1,0.1,0.1,0.3)
-        v.generatorLayer.separatorWidth = 3
-        v.generatorLayer.sample = false
+        v.generatorLayer.separatorWidth = 0
+        v.generatorLayer.sample = true
         
         v.type = .PDF
-        v.visibleBins = 40
+        v.visibleBins = 128
         
         self.filter.addDestinationObserver(destination: { (destination) in
             v.filter?.source = destination

@@ -34,7 +34,7 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
         }
     }
     
-    public var visibleBins = 256 {
+    public var visibleBins:Int? {
         didSet{
             generator.dirty = true
         }
@@ -76,11 +76,18 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
     lazy var analizer:IMPHistogramAnalyzer = { 
         let a = IMPHistogramAnalyzer(context: self.context, hardware: self.histogramHardware)
         a.addUpdateObserver({ (histogram) in
+            var h:IMPHistogram
             if self.type == .PDF {
-                self.generator.histogram = histogram.pdf(1).segment(count: self.visibleBins)
+                 h = histogram.pdf(1)
             }
             else {
-                self.generator.histogram = histogram.cdf(1).segment(count: self.visibleBins)
+                h = histogram.cdf(1)
+            }
+            if let b = self.visibleBins {
+                self.generator.histogram = h.segment(count: b)
+            }
+            else{
+                self.generator.histogram = h
             }
         })
         return a
