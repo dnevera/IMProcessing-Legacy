@@ -20,7 +20,7 @@
 		31D1945A1D21BB830063B33C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31D194591D21BB830063B33C /* ViewController.swift */; };
 		31D1945C1D21BB830063B33C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 31D1945B1D21BB830063B33C /* Assets.xcassets */; };
 		31D1945F1D21BB830063B33C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 31D1945D1D21BB830063B33C /* Main.storyboard */; };
-		31EA2D2F1D24127000DE3CDF /* IMPCurvesControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EA2D2E1D24127000DE3CDF /* IMPCurvesControl.swift */; };
+		31EA2D2F1D24127000DE3CDF /* IMPRGBCurvesControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EA2D2E1D24127000DE3CDF /* IMPRGBCurvesControl.swift */; };
 		F1613F6D4ACD704ED7AED42E /* Pods_IMPCurvesViewTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F94E4B46C57C6C7C4DD928F /* Pods_IMPCurvesViewTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -41,7 +41,7 @@
 		31D1945B1D21BB830063B33C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		31D1945E1D21BB830063B33C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		31D194601D21BB830063B33C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		31EA2D2E1D24127000DE3CDF /* IMPCurvesControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCurvesControl.swift; sourceTree = "<group>"; };
+		31EA2D2E1D24127000DE3CDF /* IMPRGBCurvesControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPRGBCurvesControl.swift; sourceTree = "<group>"; };
 		3C5FFC9C17C9B105786DA0D2 /* Pods-IMPCurvesViewTest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCurvesViewTest.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCurvesViewTest/Pods-IMPCurvesViewTest.release.xcconfig"; sourceTree = "<group>"; };
 		99CF93E8AF50E207D8DA960A /* Pods-IMPCurvesViewTest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCurvesViewTest.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCurvesViewTest/Pods-IMPCurvesViewTest.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -63,7 +63,7 @@
 			children = (
 				31911A411D23EAFF000FDE59 /* IMPCurveFunctions.swift */,
 				317A2AA31D21BC46007085EB /* IMPCurvesView.swift */,
-				31EA2D2E1D24127000DE3CDF /* IMPCurvesControl.swift */,
+				31EA2D2E1D24127000DE3CDF /* IMPRGBCurvesControl.swift */,
 				31911A431D23EE32000FDE59 /* IMPCurvesFilter.swift */,
 				317A2AA41D21BC46007085EB /* IMPDocument.swift */,
 				317A2AA51D21BC46007085EB /* IMPLabel.swift */,
@@ -258,7 +258,7 @@
 				317A2AAB1D21BC46007085EB /* IMPDocument.swift in Sources */,
 				31911A441D23EE32000FDE59 /* IMPCurvesFilter.swift in Sources */,
 				317A2AB31D21BC4B007085EB /* IMPMain_metal.metal in Sources */,
-				31EA2D2F1D24127000DE3CDF /* IMPCurvesControl.swift in Sources */,
+				31EA2D2F1D24127000DE3CDF /* IMPRGBCurvesControl.swift in Sources */,
 				317A2AAA1D21BC46007085EB /* IMPCurvesView.swift in Sources */,
 				317A2AAF1D21BC46007085EB /* IMPToolBar.swift in Sources */,
 				31D194581D21BB830063B33C /* AppDelegate.swift in Sources */,

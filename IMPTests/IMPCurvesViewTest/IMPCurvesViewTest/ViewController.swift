@@ -53,7 +53,7 @@ class ViewController: NSViewController {
         
         v.curvesView.didControlPointsUpdate = { (info) in
             
-            if let t = IMPCurvesRGBChannelType(rawValue: info.id){
+            if let t = IMPRGBCurvesChannelType(rawValue: info.id){
                 
                 guard let spline = info.spline else { return }
                 
