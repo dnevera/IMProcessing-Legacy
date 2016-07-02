@@ -9,9 +9,6 @@ target 'IMPCurvesViewTest' do
     pod 'IMProcessing', :path => '../../'
 end
 
-#target 'PlaygroundWithDependencies' do
-#    
-#end
 
 post_install do |installer|
     installer.pods_project.targets.each do |target|
