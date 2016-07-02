@@ -35,7 +35,8 @@ public class IMPSplinesProvider: IMPImageProvider {
     }
 }
 
-public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
+
+public class IMPCurvesFilter: IMPFilter,IMPAdjustmentProtocol{
     
     public static let defaultAdjustment = IMPAdjustment(
         blending: IMPBlending(mode: IMPBlendingMode.LUMNINOSITY, opacity: 1))
@@ -72,7 +73,7 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
             command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
         }
     }
-    
+
     public var curveFunction:IMPCurveFunction! {
         didSet{
             x = curveFunction.spline
@@ -83,11 +84,13 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
         }
     }
     
-    private var channels:[[Float]] {
-        let xx = matchMaster(x._curve) ?? x.curve
-        let yy = matchMaster(y._curve) ?? y.curve
-        let zz = matchMaster(z._curve) ?? z.curve
-        return [xx, yy, zz]
+    var channels:[[Float]] {
+        get{
+            let xx = matchMaster(x._curve) ?? x.curve
+            let yy = matchMaster(y._curve) ?? y.curve
+            let zz = matchMaster(z._curve) ?? z.curve
+            return [xx, yy, zz]
+        }
     }
     
     public var x:IMPSpline = IMPCurveFunction.Cubic.spline {
@@ -141,17 +144,6 @@ public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
         return diff
     }
     
-    private lazy var curves:IMPSplinesProvider = IMPSplinesProvider(context: self.context, splines: self.channels)
-}
-
-public class IMPRGBCurvesFilter:IMPXYZCurvesFilter {
-    
-    public required convenience init(context: IMPContext, curveFunction:IMPCurveFunction) {
-        self.init(context: context, name: "kernel_adjustRGBWCurve", curveFunction:curveFunction)
-    }
-    
-    public required convenience init(context: IMPContext) {
-        self.init(context: context, name: "kernel_adjustRGBWCurve", curveFunction:.Cubic)
-    }
+    lazy var curves:IMPSplinesProvider = IMPSplinesProvider(context: self.context, splines: self.channels)
 }
 

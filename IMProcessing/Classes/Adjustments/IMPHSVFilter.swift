@@ -163,6 +163,8 @@ public extension IMPHSVAdjustment{
 /// HSV adjustment filter
 ///
 public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
+   
+    public typealias Adjustment = IMPHSVAdjustment
     
     ///  Optimization level description
     ///
@@ -176,14 +178,14 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     ///
     /// Default HSV adjustment
     ///
-    public static let defaultAdjustment = IMPHSVAdjustment(
+    public static let defaultAdjustment = Adjustment(
         master:   IMPHSVFilter.level,
         levels:  (IMPHSVFilter.level,IMPHSVFilter.level,IMPHSVFilter.level,IMPHSVFilter.level,IMPHSVFilter.level,IMPHSVFilter.level),
         blending: IMPBlending(mode: IMPBlendingMode.NORMAL, opacity: 1)
     )
     
     /// HSV adjustment levels
-    public var adjustment:IMPHSVAdjustment!{
+    public var adjustment:Adjustment!{
         didSet{
             if self.optimization == .HIGH {
                 adjustmentLut.blending = adjustment.blending
@@ -317,7 +319,7 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
                 
                 adjustmentLut.blending = adjustment.blending
                 updateBuffer(&adjustmentLutBuffer, context:context, adjustment:&adjustmentLut, size:sizeof(IMPAdjustment))
-                updateBuffer(&adjustmentBuffer, context:context_hsv3DLut, adjustment:&adjustment, size:sizeof(IMPHSVAdjustment))
+                updateBuffer(&adjustmentBuffer, context:context_hsv3DLut, adjustment:&adjustment, size:sizeof(Adjustment))
                 
                 applyHsv3DLut()
                 

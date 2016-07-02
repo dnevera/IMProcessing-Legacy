@@ -22,8 +22,13 @@ class ViewController: NSViewController {
     
     var context = IMPContext()
     
-    lazy var curves:IMPXYZCurvesFilter = {
+    lazy var curves:IMPCurvesFilter = {
         let c = IMPRGBCurvesFilter(context: self.context)
+        return c
+    }()
+   
+    lazy var hsvCurves:IMPHSVCurvesFilter = {
+        let c = IMPHSVCurvesFilter(context: self.context)
         return c
     }()
     
@@ -31,6 +36,7 @@ class ViewController: NSViewController {
         let f = IMPFilter(context: self.context)
         
         f.addFilter(self.curves)
+        f.addFilter(self.hsvCurves)
         
         return f
     }()
@@ -60,7 +66,8 @@ class ViewController: NSViewController {
                 switch  t {
 
                 case .RGB:
-                    self.curves.w = spline
+                    //self.curves.w = spline
+                    self.hsvCurves.value.blues <- spline.controlPoints
                 case .Red:
                     self.curves.x = spline
                 case .Green:
