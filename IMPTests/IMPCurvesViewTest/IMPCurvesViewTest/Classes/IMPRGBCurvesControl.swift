@@ -11,7 +11,7 @@ import SnapKit
 import IMProcessing
 import simd
 
-public enum IMPCurvesRGBChannelType : String {
+public enum IMPRGBCurvesChannelType : String {
     case RGB   = "RGB"
     case Red   = "Red"
     case Green = "Green"
@@ -20,7 +20,7 @@ public enum IMPCurvesRGBChannelType : String {
 
 public class IMPRGBCurvesControl: IMPViewBase {
     
-    typealias Type = IMPCurvesRGBChannelType
+    public typealias Type = IMPRGBCurvesChannelType
     
     public typealias AutoRangesType    = [(low:float2,high:float2)]
     public typealias AutoFunctionType  = (() -> AutoRangesType)

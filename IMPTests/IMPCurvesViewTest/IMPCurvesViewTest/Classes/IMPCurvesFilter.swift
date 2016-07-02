@@ -36,39 +36,6 @@ public class IMPSplinesProvider: IMPImageProvider {
 }
 
 public class IMPXYZCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
-
-    
-//    public var x:IMPSpline?  {
-//        willSet{
-//            if x == nil {
-//                newValue = _x
-//            }
-//        }
-////        get{
-////            return _x
-////        }
-////        set {
-////            _x = newValue
-////        }
-//        didSet{
-//            _x=x
-//        }
-//    }
-//    public var y:IMPSpline  { get{return _y}
-//        set {
-//            _y = newValue
-//        }
-//    }
-//    public var z:IMPSpline  { get{return _z}
-//        set {
-//            _z = newValue
-//        }
-//    }
-//    public var w:IMPSpline  { get {return _w }
-//        set {
-//            _w = newValue
-//        }
-//    }
     
     public static let defaultAdjustment = IMPAdjustment(
         blending: IMPBlending(mode: IMPBlendingMode.LUMNINOSITY, opacity: 1))
