@@ -66,8 +66,7 @@ class ViewController: NSViewController {
                 switch  t {
 
                 case .RGB:
-                    //self.curves.w = spline
-                    self.hsvCurves.value.blues <- spline.controlPoints
+                    self.curves.w = spline
                 case .Red:
                     self.curves.x = spline
                 case .Green:
@@ -233,7 +232,7 @@ class ViewController: NSViewController {
         
         IMPDocument.sharedInstance.addSavingObserver { (file, type) in
             if type == .Image {
-                if let image = loadImage(IMPDocument.sharedInstance.currentFile!, size: 0) {
+                if let image = loadImage(IMPDocument.sharedInstance.currentFile!, size: 1200) {
                     
                     let filter = IMPFilter(context: IMPContext())
                     

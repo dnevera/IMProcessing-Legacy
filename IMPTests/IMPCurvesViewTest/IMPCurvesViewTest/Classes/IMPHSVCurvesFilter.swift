@@ -10,8 +10,7 @@ import Foundation
 import IMProcessing
 
 public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
-    
-    
+        
     public class Splines{
 
         public init(function:IMPCurveFunction = .Cubic) {
@@ -20,18 +19,14 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
             }
         }
         
-        public var reds:IMPSpline!
-        public var yellows:IMPSpline!
-//            {
-//            didSet{
-//                print("yellows = \(yellows.curve)")
-//            }
-//        }
-        public var greens:IMPSpline!
-        public var cyans:IMPSpline!
-        public var blues:IMPSpline!
-        public var magentas:IMPSpline!
-        public var master:IMPSpline!
+        public var reds:IMPSpline!   { didSet{ update() } }
+        public var yellows:IMPSpline!{ didSet{ update() } }
+        public var greens:IMPSpline! { didSet{ update() } }
+        public var cyans:IMPSpline!  { didSet{ update() } }
+        public var blues:IMPSpline!  { didSet{ update() } }
+
+        public var magentas:IMPSpline! { didSet{ update() } }
+        public var master:IMPSpline!   { didSet{ update() } }
         
         public subscript(index:Int) -> IMPSpline {
             get{
@@ -71,35 +66,50 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
                 }
             }
         }
+        
+        func update()  {
+            if let f = self.filter {
+                for i in 0..<7 {
+                    self[i].addUpdateObserver({ (spline) in
+                        self.curves.update(self.all)
+                    })
+                }
+                f.dirty = true
+            }
+        }
+        
+        var filter:IMPHSVCurvesFilter! {
+            didSet{
+                update()
+            }
+        }
+        
+        var all:[[Float]] {
+            var v = [[Float]]()
+            for i in 0..<7 {
+                v.append(self[i].curve)
+            }
+            return v
+        }
+        
+        lazy var curves:IMPSplinesProvider = IMPSplinesProvider(context: self.filter.context, splines: self.all)
     }
     
-    public var hue        = Splines()
+    public var hue        = Splines(){
+        didSet{
+            hue.filter = self
+        }
+    }
     
     public var saturation = Splines(){
         didSet{
-            for i in 0..<7 {
-                saturation[i].addUpdateObserver({ (spline) in
-                    
-                    print(" saturation =  \(self.saturations[1])")
-                    
-                    self.saturationCurves.update(self.saturations)
-                    self.dirty = true
-                })
-            }
+            saturation.filter = self
         }
     }
     
     public var value      = Splines(){
         didSet{
-            for i in 0..<7 {
-                value[i].addUpdateObserver({ (spline) in
-                    
-                    //print(" spline =  \(self.values[1])")
-
-                    self.valueCurves.update(self.values)
-                    self.dirty = true
-                })
-            }
+            value.filter = self
         }
     }
     
@@ -115,11 +125,13 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
             hue = Splines(function: curveFunction)
             saturation = Splines(function: curveFunction)
             value = Splines(function: curveFunction)
+            hue.filter = self
+            value.filter = self
+            saturation.filter = self
         }
     }
 
-    public static let defaultAdjustment = IMPAdjustment(
-        blending: IMPBlending(mode: IMPBlendingMode.LUMNINOSITY, opacity: 1))
+    public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
     
     public var adjustment:IMPAdjustment!{
         didSet{
@@ -138,8 +150,8 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
         addFunction(kernel)
         
         defer{
+            adjustment = IMPHSVCurvesFilter.defaultAdjustment
             self.curveFunction = curveFunction
-            adjustment = IMPCurvesFilter.defaultAdjustment
         }
     }
     
@@ -150,9 +162,9 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     override public func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
             command.setTexture(hueWeights, atIndex: 2)
-            command.setTexture(hueCurves.texture, atIndex: 3)
-            command.setTexture(saturationCurves.texture, atIndex: 3)
-            command.setTexture(valueCurves.texture, atIndex: 3)
+            command.setTexture(hue.curves.texture, atIndex: 3)
+            command.setTexture(saturation.curves.texture, atIndex: 4)
+            command.setTexture(value.curves.texture, atIndex: 5)
             command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
         }
     }
@@ -160,20 +172,4 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     internal lazy var hueWeights:MTLTexture = {
         return IMPHSVFilter.defaultHueWeights(self.context, overlap: IMProcessing.hsv.hueOverlapFactor)
     }()
-    
-    func getSplinesOf(v:Splines) -> [[Float]] {
-        var v = [[Float]]()
-        for i in 0..<7 {
-            v.append(value[i].curve)
-        }
-        return v
-    }
-    
-    var hues:[[Float]] { return getSplinesOf(hue)}
-    var saturations:[[Float]] { return getSplinesOf(saturation)}
-    var values:[[Float]] { return getSplinesOf(value)}
-    
-    lazy var hueCurves:IMPSplinesProvider = IMPSplinesProvider(context: self.context, splines: self.hues)
-    lazy var saturationCurves:IMPSplinesProvider = IMPSplinesProvider(context: self.context, splines: self.saturations)
-    lazy var valueCurves:IMPSplinesProvider = IMPSplinesProvider(context: self.context, splines: self.values)
 }
