@@ -83,6 +83,38 @@ class ViewController: NSViewController {
         
         return v
     }()
+
+    lazy var hsvCurvesControl:IMPHSVCurvesControl = {
+        let v = IMPHSVCurvesControl(frame: self.view.bounds)
+        
+        v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
+        v.curvesView.curveFunction = .Cubic
+        v.curvesView.didCurveFunctionUpdate = { (function) -> Void in
+            self.curves.curveFunction = function
+        }
+        
+        v.curvesView.didControlPointsUpdate = { (info) in
+            
+            if let t = IMPHSVCurvesCircleType(rawValue: info.id){
+                
+                guard let spline = info.spline else { return }
+                
+//                switch  t {
+//                    
+//                case .RGB:
+//                    self.curves.w = spline
+//                case .Red:
+//                    self.curves.x = spline
+//                case .Green:
+//                    self.curves.y = spline
+//                case .Blue:
+//                    self.curves.z = spline
+//                }
+            }
+        }
+        
+        return v
+    }()
     
     var autoRagnesDegree:Float = 1
     func computeRanges()  -> [(low:float2,high:float2)] {
@@ -280,9 +312,17 @@ class ViewController: NSViewController {
             make.height.equalTo(200)
         }
 
+        rightPanel.addSubview(hsvCurvesControl)
+        hsvCurvesControl.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.curvesControl.snp_bottom).offset(20)
+            make.left.equalTo(self.rightPanel).offset(5)
+            make.right.equalTo(self.rightPanel).offset(-5)
+            make.height.equalTo(200)
+        }
+
         rightPanel.addSubview(histogramView)
         histogramView.snp_makeConstraints { (make) -> Void in
-            make.top.equalTo(self.curvesControl.snp_bottom).offset(20)
+            make.top.equalTo(self.hsvCurvesControl.snp_bottom).offset(20)
             make.left.equalTo(self.rightPanel).offset(5)
             make.right.equalTo(self.rightPanel).offset(5)
             make.height.equalTo(200)

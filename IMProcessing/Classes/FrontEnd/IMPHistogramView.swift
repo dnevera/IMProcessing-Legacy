@@ -48,8 +48,6 @@ public class IMPHistogramView: IMPViewBase, IMPContextProvider {
         self.histogramHardware = histogramHardware 
         self.autoresizesSubviews = true
         addSubview(imageView)
-        self.wantsLayer = true
-        self.layer?.backgroundColor = IMPColor.clearColor().CGColor
     }
 
     public convenience init(context contextIn: IMPContext, frame: NSRect) {
