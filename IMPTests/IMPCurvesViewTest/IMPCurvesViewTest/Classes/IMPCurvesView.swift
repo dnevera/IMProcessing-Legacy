@@ -20,20 +20,13 @@ public func == (left: IMPCurvesView.CurveInfo, right: IMPCurvesView.CurveInfo) -
 }
 
 public class IMPPopUpButton: NSPopUpButton {
-    public var backgroundColor:IMPColor?
+    //public var backgroundColor:IMPColor?
 }
 
 public class IMPCurvesView: IMPViewBase {
     
     public typealias ControlPointsUpdateHandler = ((CurveInfo:CurveInfo) -> Void)
     public typealias CurveFunctionUpdateHandler = ((function:IMPCurveFunction)->Void)
-
-    public var backgroundColor:IMPColor? = IMPColor.clearColor(){
-        didSet{
-            wantsLayer = true
-            layer?.backgroundColor = backgroundColor?.CGColor
-        }
-    }
     
     public var markerSize:Float = 5 {
         didSet{
@@ -239,6 +232,8 @@ public class IMPCurvesView: IMPViewBase {
         
         currentPointIndex = nil
         currentPoint = nil
+        
+        NSLog(" active = \(activeCurve?._id)")
         
         if let spline = activeCurve?.spline {
             currentPoint = (spline <- xy)

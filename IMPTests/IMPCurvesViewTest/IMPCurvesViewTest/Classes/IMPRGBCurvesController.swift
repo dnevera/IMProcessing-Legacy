@@ -18,17 +18,25 @@ public enum IMPRGBCurvesChannelType : String {
     case Blue  = "Blue"
 }
 
-public class IMPRGBCurvesControl: IMPViewBase {
+public class IMPRGBCurvesController: IMPViewBase {
+    
+    public override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        updateLayer()
+    }
+    
+    required public init?(coder: NSCoder) {
+        super.init(coder: coder)
+        updateLayer()
+    }
     
     public typealias Type = IMPRGBCurvesChannelType
     
     public typealias AutoRangesType    = [(low:float2,high:float2)]
     public typealias AutoFunctionType  = (() -> AutoRangesType)
     
-    public var backgroundColor:IMPColor? {
+    public  override var backgroundColor:IMPColor? {
         didSet{
-            wantsLayer = true
-            layer?.backgroundColor = backgroundColor?.CGColor
             channelSelector.backgroundColor = backgroundColor
             _curvesView.backgroundColor = backgroundColor
         }
@@ -57,7 +65,6 @@ public class IMPRGBCurvesControl: IMPViewBase {
             if curvesView.curveFunction != t {
                 curvesView.reset()
                 curvesView.curveFunction = t
-                updateAutoRanges()
             }
         }
     }
@@ -121,6 +128,9 @@ public class IMPRGBCurvesControl: IMPViewBase {
     }
     
     func updateAutoRanges() {
+        
+        guard curvesView.list.count == currentRanges?.count else {return}
+        
         if let ranges = currentRanges {
             for i in 0..<ranges.count {
                 let low = ranges[i].low

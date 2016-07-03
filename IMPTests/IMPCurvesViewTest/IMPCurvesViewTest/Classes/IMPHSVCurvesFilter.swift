@@ -9,8 +9,32 @@
 import Foundation
 import IMProcessing
 
+public enum IMPHSVColorsType : String {
+    case Master   = "Master"
+    case Reds     = "Reds"
+    case Yellows  = "Yellows"
+    case Greens   = "Greens"
+    case Cyans    = "Cyans"
+    case Blues    = "Blues"
+    case Magentas = "Magentas"
+    
+    public var index:Int {
+        switch self {
+        case .Reds:    return 0
+        case .Yellows: return 1
+        case .Greens:  return 2
+        case .Cyans:   return 3
+        case .Blues:   return 4
+        case .Magentas:return 5
+        case .Master:  return 6
+        }
+    }
+}
+
 public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
-        
+    
+    public typealias ColorsType = IMPHSVColorsType
+    
     public class Splines{
 
         public init(function:IMPCurveFunction = .Cubic) {
@@ -27,6 +51,15 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
 
         public var magentas:IMPSpline! { didSet{ update() } }
         public var master:IMPSpline!   { didSet{ update() } }
+        
+        public subscript(colors:IMPHSVColorsType) -> IMPSpline {
+            get{
+                return self[colors.index]
+            }
+            set{
+                self[colors.index] = newValue
+            }
+        }
         
         public subscript(index:Int) -> IMPSpline {
             get{

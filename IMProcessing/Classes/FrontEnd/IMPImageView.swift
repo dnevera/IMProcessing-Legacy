@@ -209,14 +209,16 @@ extension IMPImageView {
         public var context:IMPContext!
         
         /// View backgound
-        public var backgroundColor:IMPColor{
-            set{
-                imageView.backgroundColor = newValue
-                scrollView.backgroundColor = newValue
+        public override var backgroundColor:IMPColor?{
+            didSet{
+                imageView.backgroundColor = backgroundColor
+                if let c = backgroundColor {
+                    scrollView.backgroundColor = c
+                }
             }
-            get{
-                return imageView.backgroundColor
-            }
+//            get{
+//                return imageView.backgroundColor
+//            }
         }
         
         /// View filter
@@ -404,7 +406,7 @@ extension IMPImageView {
     
     class IMPScroller: NSScroller {
         
-        var backgroundColor = IMPColor.clearColor()
+        //var backgroundColor = IMPColor.clearColor()
         
         
         //        func drawBackground(rect:NSRect){
@@ -428,7 +430,7 @@ extension IMPImageView {
         //        }
         
         override func drawRect(dirtyRect: NSRect) {
-            backgroundColor.set()
+            backgroundColor?.set()
             NSRectFill(dirtyRect)
             drawKnob()
         }

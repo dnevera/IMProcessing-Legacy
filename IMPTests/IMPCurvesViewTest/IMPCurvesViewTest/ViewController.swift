@@ -48,8 +48,8 @@ class ViewController: NSViewController {
         return v
     }()
     
-    lazy var curvesControl:IMPRGBCurvesControl = {
-        let v = IMPRGBCurvesControl(frame: self.view.bounds)
+    lazy var curvesControl:IMPRGBCurvesController = {
+        let v = IMPRGBCurvesController(frame: self.view.bounds)
         
         v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
         v.curvesView.curveFunction = .Cubic
@@ -84,35 +84,20 @@ class ViewController: NSViewController {
         return v
     }()
 
-    lazy var hsvCurvesControl:IMPHSVCurvesControl = {
-        let v = IMPHSVCurvesControl(frame: self.view.bounds)
-        
-        v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
-        v.curvesView.curveFunction = .Cubic
-        v.curvesView.didCurveFunctionUpdate = { (function) -> Void in
-            self.curves.curveFunction = function
-        }
-        
-        v.curvesView.didControlPointsUpdate = { (info) in
-            
-            if let t = IMPHSVCurvesCircleType(rawValue: info.id){
-                
-                guard let spline = info.spline else { return }
-                
-//                switch  t {
-//                    
-//                case .RGB:
-//                    self.curves.w = spline
-//                case .Red:
-//                    self.curves.x = spline
-//                case .Green:
-//                    self.curves.y = spline
-//                case .Blue:
-//                    self.curves.z = spline
-//                }
+    lazy var hsvCurvesControl:IMPHSVCurvesController = {
+        let v = IMPHSVCurvesController(frame: self.view.bounds)
+
+        v.didCurvesUpdate = { (channel, colors, spline) in
+            switch channel {
+            case .Hue:
+                self.hsvCurves.hue[colors.index] = spline
+            case .Saturation:
+                self.hsvCurves.saturation[colors.index] = spline
+            case .Value:
+                self.hsvCurves.value[colors.index] = spline
             }
         }
-        
+              
         return v
     }()
     

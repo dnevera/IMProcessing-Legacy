@@ -18,6 +18,22 @@
     public typealias IMPViewBase = NSView
     public typealias IMPDragOperationHandler = ((files:[String]) -> Bool)
     
+    public extension IMPViewBase {
+        public var backgroundColor:IMPColor? {
+            set{
+                wantsLayer = true
+                layer?.backgroundColor = newValue?.CGColor
+            }
+            get{
+                if let c = layer?.backgroundColor {
+                    return IMPColor(CGColor: c)
+                }
+                return nil
+            }
+        }
+    }
+    
+
 #endif
 import Metal
 import GLKit.GLKMath
@@ -103,9 +119,9 @@ public class IMPView: IMPViewBase, IMPContextProvider {
     }
     
     #if os(OSX)
-    public var backgroundColor:IMPColor = IMPColor.clearColor(){
+    public override var backgroundColor:IMPColor? {
         didSet{
-            metalLayer.backgroundColor = backgroundColor.CGColor
+            metalLayer.backgroundColor = backgroundColor?.CGColor
         }
     }
     #else
@@ -159,11 +175,7 @@ public class IMPView: IMPViewBase, IMPContextProvider {
             originalBounds = self.bounds
             metalLayer.bounds = originalBounds
             
-            #if os(iOS)
-                metalLayer.backgroundColor = self.backgroundColor?.CGColor
-            #else
-                metalLayer.backgroundColor = self.backgroundColor.CGColor
-            #endif
+            metalLayer.backgroundColor = self.backgroundColor?.CGColor
             
             #if os(iOS)
                 if self.timer != nil {
@@ -361,13 +373,13 @@ public class IMPView: IMPViewBase, IMPContextProvider {
 
     var clearColor:MTLClearColor {
         get {
-            #if os(OSX)
-                let rgba = backgroundColor.rgba
-                return MTLClearColor(red: rgba.r.double,
-                                     green: rgba.g.double,
-                                     blue: rgba.b.double,
-                                     alpha: rgba.a.double)
-            #else
+//            #if os(OSX)
+//                let rgba = backgroundColor.rgba
+//                return MTLClearColor(red: rgba.r.double,
+//                                     green: rgba.g.double,
+//                                     blue: rgba.b.double,
+//                                     alpha: rgba.a.double)
+//            #else
             if let rgba = backgroundColor?.rgba {
             return MTLClearColor(red: rgba.r.double,
                                  green: rgba.g.double,
@@ -377,7 +389,7 @@ public class IMPView: IMPViewBase, IMPContextProvider {
             else {
                 return MTLClearColorMake(0, 0, 0, 0)
             }
-            #endif
+//            #endif
         }
     }
     
