@@ -190,9 +190,7 @@ public class IMPCurvesView: IMPViewBase {
         if let o = didControlPointsUpdate {
             o(CurveInfo: info)
         }
-        dispatch_async(dispatch_get_main_queue(), {
-            self.needsDisplay = true
-        })
+        needsDisplay = true
     }
     
     func covertPoint(event:NSEvent) -> float2 {
@@ -232,9 +230,7 @@ public class IMPCurvesView: IMPViewBase {
         
         currentPointIndex = nil
         currentPoint = nil
-        
-        NSLog(" active = \(activeCurve?._id)")
-        
+                
         if let spline = activeCurve?.spline {
             currentPoint = (spline <- xy)
             if event.clickCount == 2 {

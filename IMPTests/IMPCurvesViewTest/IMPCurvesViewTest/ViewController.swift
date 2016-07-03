@@ -88,6 +88,7 @@ class ViewController: NSViewController {
         let v = IMPHSVCurvesController(frame: self.view.bounds)
 
         v.didCurvesUpdate = { (channel, colors, spline) in
+                        
             switch channel {
             case .Hue:
                 self.hsvCurves.hue[colors.index] = spline
@@ -97,7 +98,7 @@ class ViewController: NSViewController {
                 self.hsvCurves.value[colors.index] = spline
             }
         }
-              
+        
         return v
     }()
     
