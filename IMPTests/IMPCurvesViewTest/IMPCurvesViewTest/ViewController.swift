@@ -436,13 +436,50 @@ class ViewController: NSViewController {
             config = IMTLConfig()
         }
         
+        curves.adjustment = config.rgbAdjustment
+        hsvCurves.adjustment = config.hsvAdjustment
+        
+        curves.curveFunction = config.rgbFunction
+        hsvCurves.curveFunction = config.hsvFunction
+        
+        curves.x <- config.rControlPoints
+        curves.y <- config.gControlPoints
+        curves.z <- config.bControlPoints
+        curves.w <- config.wControlPoints
+        
+        for i in 0..<7 {
+            hsvCurves.hue[i] <- config.hueControlPoints[i]
+        }
+        for i in 0..<7 {
+             hsvCurves.saturation[i] <- config.saturationControlPoints[i]
+        }
+        for i in 0..<7 {
+             hsvCurves.value[i] <- config.valueControlPoints[i]
+        }
     }
     
     func updateConfig() {
+        config.rgbAdjustment = curves.adjustment
+        config.hsvAdjustment = hsvCurves.adjustment
+        
+        config.rControlPoints = curves.x.controlPoints
+        config.gControlPoints = curves.y.controlPoints
+        config.gControlPoints = curves.x.controlPoints
+        config.wControlPoints = curves.w.controlPoints
+        
+        for i in 0..<7 {
+            config.hueControlPoints[i] = hsvCurves.hue[i].controlPoints
+        }
+        for i in 0..<7 {
+            config.saturationControlPoints[i] = hsvCurves.saturation[i].controlPoints
+        }
+        for i in 0..<7 {
+            config.valueControlPoints[i] = hsvCurves.value[i].controlPoints
+        }
     }
     
     func saveConfig(){
-        if let key = self.configKey {
+        if let key = configKey {
             let json =  Mapper().toJSONString(config, prettyPrint: true)
             NSUserDefaults.standardUserDefaults().setValue(json, forKey: key)
             NSUserDefaults.standardUserDefaults().synchronize()
@@ -504,11 +541,120 @@ extension IMPJpegProvider {
 ///
 ///
 public class IMTLConfig:Mappable {
+    
+    var rgbAdjustment = IMPAdjustment(blending: IMPBlending(mode: LUMINOSITY, opacity: 1))
+    var hsvAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
+
+    var rgbFunction = IMPCurveFunction.Cubic
+    var hsvFunction = IMPCurveFunction.Cubic
+
+    var rControlPoints = [float2]([float2(0),float2(1)])
+    var gControlPoints = [float2]([float2(0),float2(1)])
+    var bControlPoints = [float2]([float2(0),float2(1)])
+    var wControlPoints = [float2]([float2(0),float2(1)])
+    
+    var hueControlPoints        = [[float2]](count:7, repeatedValue:[float2]([float2(0),float2(1)]))
+    var saturationControlPoints = [[float2]](count:7, repeatedValue:[float2]([float2(0),float2(1)]))
+    var valueControlPoints      = [[float2]](count:7, repeatedValue:[float2]([float2(0),float2(1)]))
+    
     public init(){}
-    required public init?(_ map: Map) {
-    }
+    required public init?(_ map: Map) {}
+    
     public func mapping(map: Map) {
+        rgbAdjustment <- (map["rgbAdjustment"],transformAdjustment)
+        hsvAdjustment <- (map["hsvAdjustment"],transformAdjustment)
+        rgbFunction <- (map["rgbFunction"],transformFunction)
+        hsvFunction <- (map["hsvFunction"],transformFunction)
+        rControlPoints <- (map["rControlPoints"],transformPoints)
+        gControlPoints <- (map["gControlPoints"],transformPoints)
+        bControlPoints <- (map["bControlPoints"],transformPoints)
+        wControlPoints <- (map["wControlPoints"],transformPoints)
+        hueControlPoints <- (map["hueControlPoints"],transformPoints2)
+        saturationControlPoints <- (map["saturationControlPoints"],transformPoints2)
+        valueControlPoints <- (map["valueControlPoints"],transformPoints2)
     }
+    
+    
+    let transformAdjustment = TransformOf<IMPAdjustment, [String:AnyObject]>(fromJSON: { (value: [String:AnyObject]?) -> IMPAdjustment? in
+        
+        if let value = value {
+            let mode = value["mode"] as? NSNumber ?? NSNumber(unsignedInteger: 0)
+            let opacity = value["opacity"] as? NSNumber ?? 1
+            return IMPAdjustment(blending: IMPBlending(mode: IMPBlendingMode(rawValue:mode.unsignedIntValue), opacity: opacity.floatValue))
+        }
+        return nil
+        }, toJSON: { (value: IMPAdjustment?) -> [String:AnyObject]? in
+            if let adj = value {
+                let json = [
+                    "mode":  NSNumber(unsignedInt:adj.blending.mode.rawValue),
+                    "opacity": adj.blending.opacity
+                ]
+                return json
+            }
+            return nil
+    })
+
+    let transformFunction = TransformOf<IMPCurveFunction, [String:String]>(fromJSON: { (value: [String:String]?) -> IMPCurveFunction? in
+        
+        if let f = value?["function"] {
+            return IMPCurveFunction(rawValue:f)
+        }
+        return nil
+        }, toJSON: { (value: IMPCurveFunction?) -> [String:String]? in
+            if let v = value?.rawValue {
+                let json = [
+                    "function":  v
+                ]
+                return json
+            }
+            return nil
+    })
+
+    let transformPoints = TransformOf<[float2], [[Float]]>(fromJSON: { (value: [[Float]]?) -> [float2]? in
+        if let value = value {
+            var points = [float2]()
+            for p in value {
+                points.append(float2(p[0],p[1]))
+            }
+            return points
+        }
+        return nil
+        }, toJSON: { (value: [float2]?) -> [[Float]]? in
+            if let value = value {
+                var json = [[Float]]()
+                for p in value{
+                    json.append([p.x,p.y])
+                }
+                return json
+            }
+            return nil
+    })
+    
+    let transformPoints2 = TransformOf<[[float2]], [[[Float]]]>(fromJSON: { (value: [[[Float]]]?) -> [[float2]]? in
+        if let value = value {
+            var points = [[float2]](count:7, repeatedValue:[float2]())
+            for i in 0..<7{
+                for p in value[i] {
+                    points[i].append(float2(p[0],p[1]))
+                }
+            }
+            return points
+        }
+        return nil
+        }, toJSON: { (value: [[float2]]?) -> [[[Float]]]? in
+            if let value = value {
+                var json = [[[Float]]](count:7, repeatedValue:[[Float]]())
+                for i in 0..<7{
+                    for p in value[i] {
+                        json[i].append([p.x,p.y])
+                    }
+                }
+                return json
+            }
+            return nil
+    })
+
+
 }
 
 
