@@ -51,29 +51,17 @@ class ViewController: NSViewController {
     lazy var curvesControl:IMPRGBCurvesController = {
         let v = IMPRGBCurvesController(frame: self.view.bounds)
         
-        v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
-        v.curvesView.curveFunction = .Cubic
-        v.curvesView.didCurveFunctionUpdate = { (function) -> Void in
-            self.curves.curveFunction = function
-        }
-        
-        v.curvesView.didControlPointsUpdate = { (info) in
+        v.didCurvesUpdate = { (channel, spline) in
             
-            if let t = IMPRGBCurvesChannelType(rawValue: info.id){
-                
-                guard let spline = info.spline else { return }
-                
-                switch  t {
-
-                case .RGB:
-                    self.curves.w = spline
-                case .Red:
-                    self.curves.x = spline
-                case .Green:
-                    self.curves.y = spline
-                case .Blue:
-                    self.curves.z = spline
-                }
+            switch  channel {
+            case .RGB:
+                self.curves.w = spline
+            case .Red:
+                self.curves.x = spline
+            case .Green:
+                self.curves.y = spline
+            case .Blue:
+                self.curves.z = spline
             }
         }
         

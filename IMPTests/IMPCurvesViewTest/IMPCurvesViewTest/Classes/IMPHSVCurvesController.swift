@@ -35,18 +35,15 @@ public class IMPHSVCurvesController: IMPViewBase,  NSTabViewDelegate {
     public typealias ChannelType = IMPHSVCurvesChannelType
 
     public typealias CurvesUpdateHandler = ((channel:ChannelType, collors:ColorsType,  spline:IMPSpline)->Void)
+    public typealias CurveFunctionUpdateHandler = ((function:IMPCurveFunction)->Void)
     
     public typealias AutoRangesType    = [(low:float2,high:float2)]
     public typealias AutoFunctionType  = (() -> AutoRangesType)
     
-    public override var backgroundColor:IMPColor? {
-        didSet{
-            colorslSelector.backgroundColor = backgroundColor
-        }
-    }
     
     public var didCurvesUpdate:CurvesUpdateHandler?
-    
+    public var didCurveFunctionUpdate:CurveFunctionUpdateHandler?
+
     lazy var splineFunctionSelector:IMPPopUpButton = {
         let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.bounds.size.width, height: 40), pullsDown: false)
         v.autoenablesItems = false
@@ -64,6 +61,9 @@ public class IMPHSVCurvesController: IMPViewBase,  NSTabViewDelegate {
                     v.reset()
                     v.curveFunction = t
                 }
+            }
+            if let o = self.didCurveFunctionUpdate{
+                o(function:t)
             }
         }
     }

@@ -147,7 +147,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 31D194631D21BB830063B33C /* Build configuration list for PBXNativeTarget "IMPCurvesViewTest" */;
 			buildPhases = (
-				35D9B9FFEA511235A7E09198 /* 📦 Check Pods Manifest.lock */,
+				35D9B9FFEA511235A7E09198 /* [CP] Check Pods Manifest.lock */,
 				754AED152777389C2CF14D2F /* [CP] Check Pods Manifest.lock */,
 				31D194501D21BB830063B33C /* Sources */,
 				31D194511D21BB830063B33C /* Frameworks */,
@@ -227,14 +227,14 @@
 			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-IMPCurvesViewTest/Pods-IMPCurvesViewTest-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		35D9B9FFEA511235A7E09198 /* 📦 Check Pods Manifest.lock */ = {
+		35D9B9FFEA511235A7E09198 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
 			);
-			name = "📦 Check Pods Manifest.lock";
+			name = "[CP] Check Pods Manifest.lock";
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;

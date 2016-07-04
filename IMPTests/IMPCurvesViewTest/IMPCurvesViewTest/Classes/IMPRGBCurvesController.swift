@@ -30,23 +30,26 @@ public class IMPRGBCurvesController: IMPViewBase {
         updateLayer()
     }
     
-    public typealias Type = IMPRGBCurvesChannelType
-    
-    public typealias AutoRangesType    = [(low:float2,high:float2)]
-    public typealias AutoFunctionType  = (() -> AutoRangesType)
-    
-    public  override var backgroundColor:IMPColor? {
-        didSet{
-            channelSelector.backgroundColor = backgroundColor
-            _curvesView.backgroundColor = backgroundColor
-        }
-    }
+    public typealias CurvesUpdateHandler = ((channel:ChannelType,  spline:IMPSpline)->Void)
+    public typealias ChannelType         = IMPRGBCurvesChannelType
+    public typealias AutoRangesType      = [(low:float2,high:float2)]
+    public typealias AutoFunctionType    = (() -> AutoRangesType)
+    public typealias CurveFunctionUpdateHandler = ((function:IMPCurveFunction)->Void)
 
-    public var curvesView:IMPCurvesView {get{return _curvesView}}
+    public var didCurvesUpdate:CurvesUpdateHandler?
+    public var didCurveFunctionUpdate:CurveFunctionUpdateHandler?
     public var autoCorrection:AutoFunctionType?
     
-    lazy var _curvesView:IMPCurvesView = {
-        return IMPCurvesView(frame: self.bounds)
+    lazy var curvesView:IMPCurvesView = {
+        var v = IMPCurvesView(frame: self.bounds)
+        v.didControlPointsUpdate = {  (info) in
+            if let o = self.didCurvesUpdate {
+                guard let channel = ChannelType(rawValue: info.id) else {return }
+                guard let spline = info.spline else { return }
+                o(channel: channel, spline: spline)
+            }
+        }
+        return v
     }()
 
     lazy var splineFunctionSelector:IMPPopUpButton = {
@@ -65,6 +68,9 @@ public class IMPRGBCurvesController: IMPViewBase {
             if curvesView.curveFunction != t {
                 curvesView.reset()
                 curvesView.curveFunction = t
+                if let o = self.didCurveFunctionUpdate{
+                    o(function:t)
+                }
             }
         }
     }
@@ -199,10 +205,10 @@ public class IMPRGBCurvesController: IMPViewBase {
                 make.bottom.equalTo(self).offset(0)
             }
             
-            curvesView <- IMPCurvesView.CurveInfo(name: Type.RGB.rawValue,   color:  IMPColor(red: 1,   green: 1, blue: 1, alpha: 0.8))
-            curvesView <- IMPCurvesView.CurveInfo(name: Type.Red.rawValue,   color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
-            curvesView <- IMPCurvesView.CurveInfo(name: Type.Green.rawValue, color:  IMPColor(red: 0,   green: 1,   blue: 0,   alpha: 0.6))
-            curvesView <- IMPCurvesView.CurveInfo(name: Type.Blue.rawValue,  color:  IMPColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.8))
+            curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.RGB.rawValue,   color:  IMPColor(red: 1,   green: 1, blue: 1, alpha: 0.8))
+            curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Red.rawValue,   color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
+            curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Green.rawValue, color:  IMPColor(red: 0,   green: 1,   blue: 0,   alpha: 0.6))
+            curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Blue.rawValue,  color:  IMPColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.8))
             
             for el in curvesView.list {
                 channelSelector.addItemWithTitle(el.name)
