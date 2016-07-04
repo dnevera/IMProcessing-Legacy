@@ -174,9 +174,6 @@ class ViewController: NSViewController {
         func loadImage(file:String, size:Float) -> IMPImageProvider? {
             var image:IMPImageProvider? = nil
             do{
-                //
-                // Загружаем файл и связываем источником фильтра
-                //
                 let meta = IMPJpegProvider.metadata(file)
                 var orientation = IMPExifOrientationUp
                 if let o = meta?[IMProcessing.meta.imageOrientationKey] as? NSNumber {
@@ -199,7 +196,7 @@ class ViewController: NSViewController {
         IMPDocument.sharedInstance.addDocumentObserver { (file, type) -> Void in
             
             if type == .Image {
-                if let image = loadImage(file, size: 0) {
+                if let image = loadImage(file, size: 1200) {
                     
                     self.curvesControl.curvesView.reset()
                     
@@ -237,9 +234,26 @@ class ViewController: NSViewController {
         
         IMPDocument.sharedInstance.addSavingObserver { (file, type) in
             if type == .Image {
-                if let image = loadImage(IMPDocument.sharedInstance.currentFile!, size: 1200) {
+                if let image = loadImage(IMPDocument.sharedInstance.currentFile!, size: 0) {
                     
                     let filter = IMPFilter(context: IMPContext())
+                    
+                    let curves = IMPRGBCurvesFilter(context: filter.context)
+                    let hsvCurves = IMPHSVCurvesFilter(context: filter.context)
+                    
+                    curves.adjustment = self.curves.adjustment
+                    curves.x = self.curves.x
+                    curves.y = self.curves.y
+                    curves.z = self.curves.z
+                    curves.w = self.curves.w
+                    
+                    hsvCurves.adjustment = self.hsvCurves.adjustment
+                    hsvCurves.hue = self.hsvCurves.hue
+                    hsvCurves.saturation = self.hsvCurves.saturation
+                    hsvCurves.value = self.hsvCurves.value
+                    
+                    filter.addFilter(curves)
+                    filter.addFilter(hsvCurves)
                     
                     filter.source = image
                     
@@ -438,11 +452,6 @@ class ViewController: NSViewController {
     lazy var config = IMTLConfig()
 }
 
-///
-/// Всякие полезные и в целом понятные уитилитарные расширения
-///
-
-
 public extension NSRect {
     mutating func setRegion(region:IMPRegion){
         let x = region.left.cgfloat*size.width
@@ -493,7 +502,6 @@ extension IMPJpegProvider {
 
 /// https://github.com/Hearst-DD/ObjectMapper
 ///
-/// Мапинг объектов в JSON для сохранения контекста редактирования файла, просто для удобства
 ///
 public class IMTLConfig:Mappable {
     public init(){}
