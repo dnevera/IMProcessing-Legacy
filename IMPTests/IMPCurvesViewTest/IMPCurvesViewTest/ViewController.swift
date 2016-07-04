@@ -52,7 +52,6 @@ class ViewController: NSViewController {
         let v = IMPRGBCurvesController(frame: self.view.bounds)
         
         v.didCurvesUpdate = { (channel, spline) in
-            
             switch  channel {
             case .RGB:
                 self.curves.w = spline

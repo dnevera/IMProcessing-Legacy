@@ -155,12 +155,15 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     
     public var curveFunction:IMPCurveFunction! {
         didSet{
+            
             hue = Splines(function: curveFunction)
             saturation = Splines(function: curveFunction)
             value = Splines(function: curveFunction)
+            
             hue.filter = self
-            value.filter = self
             saturation.filter = self
+            value.filter = self
+            
         }
     }
 

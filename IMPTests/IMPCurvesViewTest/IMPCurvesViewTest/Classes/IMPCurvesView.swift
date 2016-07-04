@@ -50,7 +50,8 @@ public class IMPCurvesView: IMPViewBase {
         }
     }
 
-    public var precision:Float = 0.05 {
+    public var precision:Float = 0.05
+        {
         didSet{
             for l in list {
                 l.spline?.precision = precision
@@ -314,7 +315,7 @@ public class IMPCurvesView: IMPViewBase {
             let path = NSBezierPath()
             path.lineWidth = lineWidth.cgfloat
 
-            let isClosennes = spline.closeness(one: cp, two: p)
+            let isClosennes = spline.closeness(one: cp, two: p, distance: 1/Float(spline.curve.count))
             
             var np = NSPoint(x:p.x.cgfloat*dirtyRect.size.width, y:p.y.cgfloat*dirtyRect.size.height)
             let ms = (markerSize+lineWidth).cgfloat/2
