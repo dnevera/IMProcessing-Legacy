@@ -18,17 +18,7 @@ public enum IMPRGBCurvesChannelType : String {
     case Blue  = "Blue"
 }
 
-public class IMPRGBCurvesController: IMPViewBase {
-    
-    public override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        updateLayer()
-    }
-    
-    required public init?(coder: NSCoder) {
-        super.init(coder: coder)
-        updateLayer()
-    }
+public class IMPRGBCurvesController: NSViewController {
     
     public typealias CurvesUpdateHandler = ((channel:ChannelType,  spline:IMPSpline)->Void)
     public typealias ChannelType         = IMPRGBCurvesChannelType
@@ -41,7 +31,7 @@ public class IMPRGBCurvesController: IMPViewBase {
     public var autoCorrection:AutoFunctionType?
     
     lazy var curvesView:IMPCurvesView = {
-        var v = IMPCurvesView(frame: self.bounds)
+        var v = IMPCurvesView(frame: self.view.bounds)
         v.didControlPointsUpdate = {  (info) in
             if let o = self.didCurvesUpdate {
                 guard let channel = ChannelType(rawValue: info.id) else {return }
@@ -53,7 +43,7 @@ public class IMPRGBCurvesController: IMPViewBase {
     }()
 
     lazy var splineFunctionSelector:IMPPopUpButton = {
-        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.bounds.size.width, height: 40), pullsDown: false)
+        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.view.bounds.size.width, height: 40), pullsDown: false)
         v.autoenablesItems = false
         v.target = self
         v.action = #selector(self.selectSplineFunction(_:))
@@ -76,7 +66,7 @@ public class IMPRGBCurvesController: IMPViewBase {
     }
 
     lazy var channelSelector:IMPPopUpButton = {
-        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.bounds.size.width, height: 40), pullsDown: false)
+        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.view.bounds.size.width, height: 40), pullsDown: false)
         v.autoenablesItems = false
         v.target = self
         v.action = #selector(self.selectChannel(_:))
@@ -163,61 +153,62 @@ public class IMPRGBCurvesController: IMPViewBase {
         }
     }
     
-    var initial = true
-    override public func updateLayer() {
-        if initial {
-            
-            addSubview(curvesView)
-            addSubview(channelSelector)
-            addSubview(splineFunctionSelector)
-            addSubview(resetButton)
-            addSubview(autoButton)
-            
-            initial = true
-            
-            channelSelector.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.snp_top).offset(0)
-                make.left.equalTo(self).offset(0)
-                make.width.greaterThanOrEqualTo(44)
-            }
-
-            autoButton.snp_makeConstraints { (make) -> Void in
-                make.centerY.equalTo(self.channelSelector.snp_centerY).offset(0)
-                make.right.equalTo(self).offset(0)
-            }
-
-            resetButton.snp_makeConstraints { (make) -> Void in
-                make.centerY.equalTo(self.channelSelector.snp_centerY).offset(0)
-                make.right.equalTo(self.autoButton.snp_left).offset(-10)
-            }
-
-            splineFunctionSelector.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.snp_top).offset(0)
-                make.left.equalTo(self.channelSelector.snp_right).offset(10)
-                make.right.equalTo(self.resetButton.snp_left).offset(-10)
-            }
+    public override func loadView() {
+        view = NSView()
+        configure()
+    }
+    
+    func configure() {
         
-            
-            curvesView.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.channelSelector.snp_bottom).offset(5)
-                make.left.equalTo(self).offset(0)
-                make.right.equalTo(self).offset(0)
-                make.bottom.equalTo(self).offset(0)
-            }
-            
-            curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.RGB.rawValue,   color:  IMPColor(red: 1,   green: 1, blue: 1, alpha: 0.8))
-            curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Red.rawValue,   color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
-            curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Green.rawValue, color:  IMPColor(red: 0,   green: 1,   blue: 0,   alpha: 0.6))
-            curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Blue.rawValue,  color:  IMPColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.8))
-            
-            for el in curvesView.list {
-                channelSelector.addItemWithTitle(el.name)
-            }
-            
-            curvesView.list[0].isActive = true
-            
-            splineFunctionSelector.addItemsWithTitles([IMPCurveFunction.Cubic.rawValue, IMPCurveFunction.Bezier.rawValue, IMPCurveFunction.CatmullRom.rawValue])
+        view.addSubview(curvesView)
+        view.addSubview(channelSelector)
+        view.addSubview(splineFunctionSelector)
+        view.addSubview(resetButton)
+        view.addSubview(autoButton)
+        
+        channelSelector.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.view.snp_top).offset(0)
+            make.left.equalTo(self.view).offset(0)
+            make.width.greaterThanOrEqualTo(44)
         }
+        
+        autoButton.snp_makeConstraints { (make) -> Void in
+            make.centerY.equalTo(self.channelSelector.snp_centerY).offset(0)
+            make.right.equalTo(self.view).offset(0)
+        }
+        
+        resetButton.snp_makeConstraints { (make) -> Void in
+            make.centerY.equalTo(self.channelSelector.snp_centerY).offset(0)
+            make.right.equalTo(self.autoButton.snp_left).offset(-10)
+        }
+        
+        splineFunctionSelector.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.view.snp_top).offset(0)
+            make.left.equalTo(self.channelSelector.snp_right).offset(10)
+            make.right.equalTo(self.resetButton.snp_left).offset(-10)
+        }
+        
+        
+        curvesView.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.channelSelector.snp_bottom).offset(5)
+            make.left.equalTo(self.view).offset(0)
+            make.right.equalTo(self.view).offset(0)
+            make.bottom.equalTo(self.view).offset(0)
+        }
+        
+        curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.RGB.rawValue,   color:  IMPColor(red: 1,   green: 1, blue: 1, alpha: 0.8))
+        curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Red.rawValue,   color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
+        curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Green.rawValue, color:  IMPColor(red: 0,   green: 1,   blue: 0,   alpha: 0.6))
+        curvesView <- IMPCurvesView.CurveInfo(name: ChannelType.Blue.rawValue,  color:  IMPColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.8))
+        
+        for el in curvesView.list {
+            channelSelector.addItemWithTitle(el.name)
+        }
+        
+        curvesView.list[0].isActive = true
+        
+        splineFunctionSelector.addItemsWithTitles([IMPCurveFunction.Cubic.rawValue, IMPCurveFunction.Bezier.rawValue, IMPCurveFunction.CatmullRom.rawValue])
+
         channelSelector.selectItemAtIndex(currentCurveIndex)
     }
 }

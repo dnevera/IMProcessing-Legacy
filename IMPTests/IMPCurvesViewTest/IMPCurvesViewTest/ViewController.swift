@@ -49,7 +49,7 @@ class ViewController: NSViewController {
     }()
     
     lazy var curvesControl:IMPRGBCurvesController = {
-        let v = IMPRGBCurvesController(frame: self.view.bounds)
+        let v = IMPRGBCurvesController()
         
         v.didCurvesUpdate = { (channel, spline) in
             switch  channel {
@@ -72,7 +72,7 @@ class ViewController: NSViewController {
     }()
 
     lazy var hsvCurvesControl:IMPHSVCurvesController = {
-        let v = IMPHSVCurvesController(frame: self.view.bounds)
+        let v = IMPHSVCurvesController()
 
         v.didCurvesUpdate = { (channel, colors, spline) in
                         
@@ -277,17 +277,17 @@ class ViewController: NSViewController {
             make.width.equalTo(320)
         }
         
-        rightPanel.addSubview(curvesControl)
-        curvesControl.snp_makeConstraints { (make) -> Void in
+        rightPanel.addSubview(curvesControl.view)
+        curvesControl.view.snp_makeConstraints { (make) -> Void in
             make.top.equalTo(self.rightPanel.snp_top).offset(10)
             make.left.equalTo(self.rightPanel).offset(5)
             make.right.equalTo(self.rightPanel).offset(-5)
             make.height.equalTo(200)
         }
 
-        rightPanel.addSubview(hsvCurvesControl)
-        hsvCurvesControl.snp_makeConstraints { (make) -> Void in
-            make.top.equalTo(self.curvesControl.snp_bottom).offset(20)
+        rightPanel.addSubview(hsvCurvesControl.view)
+        hsvCurvesControl.view.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.curvesControl.view.snp_bottom).offset(20)
             make.left.equalTo(self.rightPanel).offset(5)
             make.right.equalTo(self.rightPanel).offset(-5)
             make.height.equalTo(200)
@@ -295,7 +295,7 @@ class ViewController: NSViewController {
 
         rightPanel.addSubview(histogramView)
         histogramView.snp_makeConstraints { (make) -> Void in
-            make.top.equalTo(self.hsvCurvesControl.snp_bottom).offset(20)
+            make.top.equalTo(self.hsvCurvesControl.view.snp_bottom).offset(20)
             make.left.equalTo(self.rightPanel).offset(5)
             make.right.equalTo(self.rightPanel).offset(5)
             make.height.equalTo(200)

@@ -17,20 +17,8 @@ public enum IMPHSVCurvesChannelType : String {
     case Value      = "Value"
 }
 
-public class IMPHSVCurvesController: IMPViewBase,  NSTabViewDelegate {
-    
-    
-    public override init(frame frameRect: NSRect) {
-        super.init(frame: frameRect)
-        updateLayer()
-    }
-    
-    required public init?(coder: NSCoder) {
-        super.init(coder: coder)
-        updateLayer()
-    }
+public class IMPHSVCurvesController: NSViewController,  NSTabViewDelegate {
 
-    
     public typealias ColorsType = IMPHSVColorsType
     public typealias ChannelType = IMPHSVCurvesChannelType
 
@@ -45,7 +33,7 @@ public class IMPHSVCurvesController: IMPViewBase,  NSTabViewDelegate {
     public var didCurveFunctionUpdate:CurveFunctionUpdateHandler?
 
     lazy var splineFunctionSelector:IMPPopUpButton = {
-        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.bounds.size.width, height: 40), pullsDown: false)
+        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.view.bounds.size.width, height: 40), pullsDown: false)
         v.autoenablesItems = false
         v.target = self
         v.action = #selector(self.selectSplineFunction(_:))
@@ -69,7 +57,7 @@ public class IMPHSVCurvesController: IMPViewBase,  NSTabViewDelegate {
     }
     
     lazy var colorslSelector:IMPPopUpButton = {
-        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.bounds.size.width, height: 40), pullsDown: false)
+        let v = IMPPopUpButton(frame:NSRect(x:10,y:10,width: self.view.bounds.size.width, height: 40), pullsDown: false)
         v.autoenablesItems = false
         v.target = self
         v.action = #selector(self.selectColors(_:))
@@ -124,7 +112,7 @@ public class IMPHSVCurvesController: IMPViewBase,  NSTabViewDelegate {
     }
     
     func prepareCurvesView() -> IMPCurvesView {
-        let v = IMPCurvesView(frame: self.bounds)
+        let v = IMPCurvesView(frame: self.view.bounds)
         
         v <- IMPCurvesView.CurveInfo(name: ColorsType.Master.rawValue,    color:  IMPColor(red: 1,   green: 1,   blue: 1,   alpha: 0.8))
         v <- IMPCurvesView.CurveInfo(name: ColorsType.Reds.rawValue,      color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
@@ -219,43 +207,43 @@ public class IMPHSVCurvesController: IMPViewBase,  NSTabViewDelegate {
         }
     }
     
-    var initial = true
-    override public func updateLayer() {
-        if initial {
-            
-            addSubview(channelsTab)
-            addSubview(colorslSelector)
-            addSubview(splineFunctionSelector)
-            addSubview(resetButton)
-            
-            initial = true
-            
-            colorslSelector.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.snp_top).offset(0)
-                make.left.equalTo(self).offset(0)
-                make.width.greaterThanOrEqualTo(44)
-            }
-            
-            resetButton.snp_makeConstraints { (make) -> Void in
-                make.centerY.equalTo(self.colorslSelector.snp_centerY).offset(0)
-                make.right.equalTo(self.snp_right).offset(-10)
-            }
-            
-            splineFunctionSelector.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.snp_top).offset(0)
-                make.left.equalTo(self.colorslSelector.snp_right).offset(10)
-                make.right.equalTo(self.resetButton.snp_left).offset(-10)
-            }
-            
-            channelsTab.snp_makeConstraints { (make) -> Void in
-                make.top.equalTo(self.colorslSelector.snp_bottom).offset(5)
-                make.left.equalTo(self).offset(0)
-                make.right.equalTo(self).offset(0)
-                make.bottom.equalTo(self).offset(0)
-            }
-            
-            splineFunctionSelector.addItemsWithTitles([IMPCurveFunction.Cubic.rawValue, IMPCurveFunction.Bezier.rawValue, IMPCurveFunction.CatmullRom.rawValue])
+    override public func loadView() {
+        view = NSView()
+        configure()
+    }
+    
+    public func configure() {
+        
+        view.addSubview(channelsTab)
+        view.addSubview(colorslSelector)
+        view.addSubview(splineFunctionSelector)
+        view.addSubview(resetButton)
+        
+        colorslSelector.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.view.snp_top).offset(0)
+            make.left.equalTo(self.view).offset(0)
+            make.width.greaterThanOrEqualTo(44)
         }
+        
+        resetButton.snp_makeConstraints { (make) -> Void in
+            make.centerY.equalTo(self.colorslSelector.snp_centerY).offset(0)
+            make.right.equalTo(self.view.snp_right).offset(-10)
+        }
+        
+        splineFunctionSelector.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.view.snp_top).offset(0)
+            make.left.equalTo(self.colorslSelector.snp_right).offset(10)
+            make.right.equalTo(self.resetButton.snp_left).offset(-10)
+        }
+        
+        channelsTab.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.colorslSelector.snp_bottom).offset(5)
+            make.left.equalTo(self.view).offset(0)
+            make.right.equalTo(self.view).offset(0)
+            make.bottom.equalTo(self.view).offset(0)
+        }
+        
+        splineFunctionSelector.addItemsWithTitles([IMPCurveFunction.Cubic.rawValue, IMPCurveFunction.Bezier.rawValue, IMPCurveFunction.CatmullRom.rawValue])
         colorslSelector.selectItemAtIndex(currentCurveIndex)
     }
 }
