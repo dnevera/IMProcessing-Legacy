@@ -19,10 +19,9 @@ public enum IMPHSVCurvesChannelType : String {
 
 public class IMPHSVCurvesController: NSViewController,  NSTabViewDelegate {
 
-    public typealias ColorsType = IMPHSVColorsType
     public typealias ChannelType = IMPHSVCurvesChannelType
 
-    public typealias CurvesUpdateHandler = ((channel:ChannelType, collors:ColorsType,  spline:IMPSpline)->Void)
+    public typealias CurvesUpdateHandler = ((channel:ChannelType, collors:IMPColorWheel,  spline:IMPSpline)->Void)
     public typealias CurveFunctionUpdateHandler = ((function:IMPCurveFunction)->Void)
     
     public typealias AutoRangesType    = [(low:float2,high:float2)]
@@ -115,13 +114,13 @@ public class IMPHSVCurvesController: NSViewController,  NSTabViewDelegate {
         let v = IMPCurvesView(frame: self.view.bounds)
         
         v.identifier = identifier
-        v <- IMPCurvesView.CurveInfo(name: ColorsType.Master.rawValue,    color:  IMPColor(red: 1,   green: 1,   blue: 1,   alpha: 0.8))
-        v <- IMPCurvesView.CurveInfo(name: ColorsType.Reds.rawValue,      color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
-        v <- IMPCurvesView.CurveInfo(name: ColorsType.Yellows.rawValue,   color:  IMPColor(red: 0.7, green: 0.7, blue: 0.2, alpha: 0.8))
-        v <- IMPCurvesView.CurveInfo(name: ColorsType.Greens.rawValue,    color:  IMPColor(red: 0,   green: 1,   blue: 0,   alpha: 0.6))
-        v <- IMPCurvesView.CurveInfo(name: ColorsType.Cyans.rawValue,     color:  IMPColor(red: 1,   green: 0.7, blue: 0.7, alpha: 0.8))
-        v <- IMPCurvesView.CurveInfo(name: ColorsType.Blues.rawValue,     color:  IMPColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.8))
-        v <- IMPCurvesView.CurveInfo(name: ColorsType.Magentas.rawValue,  color:  IMPColor(red: 0.8, green: 0.2, blue: 0.8, alpha: 0.8))
+        v <- IMPCurvesView.CurveInfo(name: IMPColorWheel.Master.rawValue,    color:  IMPColor(red: 1,   green: 1,   blue: 1,   alpha: 0.8))
+        v <- IMPCurvesView.CurveInfo(name: IMPColorWheel.Reds.rawValue,      color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
+        v <- IMPCurvesView.CurveInfo(name: IMPColorWheel.Yellows.rawValue,   color:  IMPColor(red: 0.7, green: 0.7, blue: 0.2, alpha: 0.8))
+        v <- IMPCurvesView.CurveInfo(name: IMPColorWheel.Greens.rawValue,    color:  IMPColor(red: 0,   green: 1,   blue: 0,   alpha: 0.6))
+        v <- IMPCurvesView.CurveInfo(name: IMPColorWheel.Cyans.rawValue,     color:  IMPColor(red: 1,   green: 0.7, blue: 0.7, alpha: 0.8))
+        v <- IMPCurvesView.CurveInfo(name: IMPColorWheel.Blues.rawValue,     color:  IMPColor(red: 0.2, green: 0.4, blue: 0.8, alpha: 0.8))
+        v <- IMPCurvesView.CurveInfo(name: IMPColorWheel.Magentas.rawValue,  color:  IMPColor(red: 0.8, green: 0.2, blue: 0.8, alpha: 0.8))
         
         for el in  v .list {
             colorslSelector.addItemWithTitle(el.name)
@@ -135,7 +134,7 @@ public class IMPHSVCurvesController: NSViewController,  NSTabViewDelegate {
                 guard let id = v.identifier else {return}
                 guard let channel = ChannelType(rawValue:id) else {return }
                 guard let spline = info.spline else { return }
-                if let colors = ColorsType(rawValue:info.id){
+                if let colors = IMPColorWheel(rawValue:info.id){
                     o(channel: channel, collors: colors, spline: spline)
                 }
             }

@@ -9,7 +9,7 @@
 import Foundation
 import IMProcessing
 
-public enum IMPHSVColorsType : String {
+public enum IMPColorWheel : String {
     case Master   = "Master"
     case Reds     = "Reds"
     case Yellows  = "Yellows"
@@ -31,9 +31,49 @@ public enum IMPHSVColorsType : String {
     }
 }
 
-public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
+
+public protocol IMPColorBlending: IMPContextProvider {
     
-    public typealias ColorsType = IMPHSVColorsType
+    var weights:MTLTexture! {get set}
+    
+    var didUpdate:((bending:IMPColorBlending)->Void)? {get set}
+    
+    init(context:IMPContext)
+    func  create() -> MTLTexture
+}
+
+
+public class IMPColorGaussBlending: IMPColorBlending{
+    
+    public var weights: MTLTexture!{
+        didSet{
+            if let o = didUpdate {
+                o(bending: self)
+            }
+        }
+    }
+    
+    public var context: IMPContext!
+    
+    public required init(context: IMPContext) {
+        self.context = context
+        weights = create()
+    }
+    
+    public var overlap: Float = IMProcessing.hsv.hueOverlapFactor {
+        didSet{
+            weights = create()
+        }
+    }
+    
+    public var didUpdate: ((bending: IMPColorBlending) -> Void)?
+    
+    public func create() -> MTLTexture {
+        return IMPHSVFilter.defaultHueWeights(context, overlap: overlap)
+    }
+}
+
+public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     
     public class Splines{
 
@@ -52,7 +92,7 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
         
         public var master:IMPSpline!  { didSet{ update() } }
         
-        public subscript(colors:IMPHSVColorsType) -> IMPSpline {
+        public subscript(colors:IMPColorWheel) -> IMPSpline {
             get{
                 return self[colors.index]
             }
@@ -146,10 +186,11 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
         }
     }
     
-    public var overlap:Float = IMProcessing.hsv.hueOverlapFactor {
+    public var colorBlending:IMPColorBlending! {
         didSet{
-            hueWeights = IMPHSVFilter.defaultHueWeights(self.context, overlap: overlap)
-            dirty = true
+            colorBlending.didUpdate = { (blending) in
+                self.dirty = true
+            }
         }
     }
     
@@ -187,6 +228,7 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
         
         defer{
             adjustment = IMPHSVCurvesFilter.defaultAdjustment
+            colorBlending = IMPColorGaussBlending(context: context)
             self.curveFunction = curveFunction
         }
     }
@@ -197,10 +239,11 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     
     override public func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setTexture(hueWeights, atIndex: 2)
-            command.setTexture(hue.curves.texture, atIndex: 3)
-            command.setTexture(saturation.curves.texture, atIndex: 4)
-            command.setTexture(value.curves.texture, atIndex: 5)
+            command.setTexture(colorBlending.weights,      atIndex: 2)
+            command.setTexture(hue.curves.texture,         atIndex: 3)
+            command.setTexture(saturation.curves.texture,  atIndex: 4)
+            command.setTexture(value.curves.texture,       atIndex: 5)
+            
             command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
         }
     }

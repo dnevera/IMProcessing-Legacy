@@ -54,13 +54,13 @@ class ViewController: NSViewController {
         v.didCurvesUpdate = { (channel, spline) in
             switch  channel {
             case .RGB:
-                self.curves.w <- spline.controlPoints
+                self.curves.w = spline
             case .Red:
-                self.curves.x <- spline.controlPoints
+                self.curves.x = spline
             case .Green:
-                self.curves.y <- spline.controlPoints
+                self.curves.y = spline
             case .Blue:
-                self.curves.z <- spline.controlPoints
+                self.curves.z = spline
             }
         }
         
