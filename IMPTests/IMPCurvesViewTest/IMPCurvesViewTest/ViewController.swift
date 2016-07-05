@@ -54,13 +54,13 @@ class ViewController: NSViewController {
         v.didCurvesUpdate = { (channel, spline) in
             switch  channel {
             case .RGB:
-                self.curves.w = spline
+                self.curves.w <- spline.controlPoints
             case .Red:
-                self.curves.x = spline
+                self.curves.x <- spline.controlPoints
             case .Green:
-                self.curves.y = spline
+                self.curves.y <- spline.controlPoints
             case .Blue:
-                self.curves.z = spline
+                self.curves.z <- spline.controlPoints
             }
         }
         
@@ -78,11 +78,11 @@ class ViewController: NSViewController {
                         
             switch channel {
             case .Hue:
-                self.hsvCurves.hue[colors.index] = spline
+                self.hsvCurves.hue[colors.index] <- spline.controlPoints
             case .Saturation:
-                self.hsvCurves.saturation[colors.index] = spline
+                self.hsvCurves.saturation[colors.index] <- spline.controlPoints
             case .Value:
-                self.hsvCurves.value[colors.index] = spline
+                self.hsvCurves.value[colors.index] <- spline.controlPoints
             }
         }
         
@@ -436,26 +436,26 @@ class ViewController: NSViewController {
             config = IMTLConfig()
         }
         
-        curves.adjustment = config.rgbAdjustment
-        hsvCurves.adjustment = config.hsvAdjustment
-        
-        curves.curveFunction = config.rgbFunction
-        hsvCurves.curveFunction = config.hsvFunction
-        
-        curves.x <- config.rControlPoints
-        curves.y <- config.gControlPoints
-        curves.z <- config.bControlPoints
-        curves.w <- config.wControlPoints
-        
-        for i in 0..<7 {
-            hsvCurves.hue[i] <- config.hueControlPoints[i]
-        }
-        for i in 0..<7 {
-             hsvCurves.saturation[i] <- config.saturationControlPoints[i]
-        }
-        for i in 0..<7 {
-             hsvCurves.value[i] <- config.valueControlPoints[i]
-        }
+//        curves.adjustment = config.rgbAdjustment
+//        hsvCurves.adjustment = config.hsvAdjustment
+//        
+//        curves.curveFunction = config.rgbFunction
+//        hsvCurves.curveFunction = config.hsvFunction
+//        
+//        curves.x <- config.rControlPoints
+//        curves.y <- config.gControlPoints
+//        curves.z <- config.bControlPoints
+//        curves.w <- config.wControlPoints
+//        
+//        for i in 0..<7 {
+//            hsvCurves.hue[i] <- config.hueControlPoints[i]
+//        }
+//        for i in 0..<7 {
+//             hsvCurves.saturation[i] <- config.saturationControlPoints[i]
+//        }
+//        for i in 0..<7 {
+//             hsvCurves.value[i] <- config.valueControlPoints[i]
+//        }
     }
     
     func updateConfig() {

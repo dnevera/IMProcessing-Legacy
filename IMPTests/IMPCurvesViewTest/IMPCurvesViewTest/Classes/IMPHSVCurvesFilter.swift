@@ -43,14 +43,14 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
             }
         }
         
-        public var reds:IMPSpline!   { didSet{ update() } }
-        public var yellows:IMPSpline!{ didSet{ update() } }
-        public var greens:IMPSpline! { didSet{ update() } }
-        public var cyans:IMPSpline!  { didSet{ update() } }
-        public var blues:IMPSpline!  { didSet{ update() } }
-
-        public var magentas:IMPSpline! { didSet{ update() } }
-        public var master:IMPSpline!   { didSet{ update() } }
+        public var reds:IMPSpline!    { didSet{ update() } }
+        public var yellows:IMPSpline! { didSet{ update() } }
+        public var greens:IMPSpline!  { didSet{ update() } }
+        public var cyans:IMPSpline!   { didSet{ update() } }
+        public var blues:IMPSpline!   { didSet{ update() } }
+        public var magentas:IMPSpline!{ didSet{ update() } }
+        
+        public var master:IMPSpline!  { didSet{ update() } }
         
         public subscript(colors:IMPHSVColorsType) -> IMPSpline {
             get{
@@ -105,9 +105,9 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
                 for i in 0..<7 {
                     self[i].addUpdateObserver({ (spline) in
                         self.curves.update(self.all)
+                        f.dirty = true
                     })
                 }
-                f.dirty = true
             }
         }
         

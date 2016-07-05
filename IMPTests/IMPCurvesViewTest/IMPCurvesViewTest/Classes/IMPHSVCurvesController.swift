@@ -111,9 +111,10 @@ public class IMPHSVCurvesController: NSViewController,  NSTabViewDelegate {
         }
     }
     
-    func prepareCurvesView() -> IMPCurvesView {
+    func prepareCurvesView(identifier:String) -> IMPCurvesView {
         let v = IMPCurvesView(frame: self.view.bounds)
         
+        v.identifier = identifier
         v <- IMPCurvesView.CurveInfo(name: ColorsType.Master.rawValue,    color:  IMPColor(red: 1,   green: 1,   blue: 1,   alpha: 0.8))
         v <- IMPCurvesView.CurveInfo(name: ColorsType.Reds.rawValue,      color:  IMPColor(red: 1,   green: 0.2, blue: 0.2, alpha: 0.8))
         v <- IMPCurvesView.CurveInfo(name: ColorsType.Yellows.rawValue,   color:  IMPColor(red: 0.7, green: 0.7, blue: 0.2, alpha: 0.8))
@@ -129,8 +130,10 @@ public class IMPHSVCurvesController: NSViewController,  NSTabViewDelegate {
         v.list[0].isActive = true
         
         v.didControlPointsUpdate = {(info) in
+            
             if let o = self.didCurvesUpdate {
-                guard let channel = self.currentChannel else {return }
+                guard let id = v.identifier else {return}
+                guard let channel = ChannelType(rawValue:id) else {return }
                 guard let spline = info.spline else { return }
                 if let colors = ColorsType(rawValue:info.id){
                     o(channel: channel, collors: colors, spline: spline)
@@ -142,16 +145,16 @@ public class IMPHSVCurvesController: NSViewController,  NSTabViewDelegate {
     }
     
     lazy var hueCurvesView:IMPCurvesView = {
-        return self.prepareCurvesView()
+        return self.prepareCurvesView(ChannelType.Hue.rawValue)
     }()
     
     
     lazy var saturationCurvesView:IMPCurvesView = {
-        return self.prepareCurvesView()
+        return self.prepareCurvesView(ChannelType.Saturation.rawValue)
     }()
     
     lazy var valueCurvesView:IMPCurvesView = {
-        return self.prepareCurvesView()
+        return self.prepareCurvesView(ChannelType.Value.rawValue)
     }()
     
     lazy var curvesViews:[IMPCurvesView] = [self.hueCurvesView,self.saturationCurvesView,self.valueCurvesView]
