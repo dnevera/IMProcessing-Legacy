@@ -168,6 +168,27 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         }
     }
 
+    public var scale:Float = 1 {
+        didSet{
+            if let source = copyTexture() {
+                
+                guard let pipeline = graphics.pipeline else {return}
+                
+                newTexture(source, width: Int(source.width.float*scale), height: Int(source.height.float*scale))
+                
+                guard let newTexure = texture else {return}
+                
+                transformer.scale = float3(scale)
+                
+                context.execute(complete: true) { (commandBuffer) in
+                    self.transformer.render(commandBuffer, pipelineState: pipeline, source: source, destination: newTexure)
+                }
+                
+                completeUpdate()
+            }
+        }
+    }
+    
     func transformation(source:MTLTexture, width:Int, height:Int, angle:float3, reflectMode: (horizontal:IMPRenderNode.ReflectMode, vertical:IMPRenderNode.ReflectMode)) {
 
         guard let pipeline = graphics.pipeline else {return}

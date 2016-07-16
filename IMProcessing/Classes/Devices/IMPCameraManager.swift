@@ -268,6 +268,22 @@
             return _liveView
         }
         
+        public var liveViewEnabled = true {
+            didSet{
+                
+                _liveView.filter?.enabled = liveViewEnabled
+                
+                if liveViewEnabled {
+                    clearPreviewLayer?.hidden = true
+                }
+                else {
+                    clearPreviewLayer?.hidden = false
+                }
+            }
+        }
+        
+        var containerView:UIView!
+        
         ///
         ///  Create Camera Manager instance
         ///
@@ -276,6 +292,8 @@
         public init(containerView:UIView, context:IMPContext? = nil) {
             
             super.init()
+            
+            self.containerView = containerView
             
             defer{
                 _currentCamera = backCamera
@@ -1036,6 +1054,12 @@
                         
                         updateConnection()
                         
+                        clearPreviewLayer = AVCaptureVideoPreviewLayer(session: session)
+                        clearPreviewLayer?.hidden = true
+                        clearPreviewLayer?.frame = containerView.bounds
+                        clearPreviewLayer?.videoGravity = AVLayerVideoGravityResizeAspectFill
+                        containerView.layer.addSublayer(clearPreviewLayer!)
+                        
                         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.runningNotification(_:)), name: AVCaptureSessionDidStartRunningNotification, object: session)
                         NSNotificationCenter.defaultCenter().addObserver(self, selector: #selector(self.runningNotification(_:)), name:
                             AVCaptureSessionDidStopRunningNotification, object: session)
@@ -1046,6 +1070,8 @@
                 }
             }
         }
+        
+        var clearPreviewLayer:AVCaptureVideoPreviewLayer?
         
         lazy var hasFrontCamera:Bool = {
             let devices = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo)
@@ -1167,6 +1193,8 @@
                 return queue
             }
         }()
+        
+        public var downScaleFactor:Float = 1
     }
     
     // MARK: - Capturing API
@@ -1190,6 +1218,12 @@
                     isVideoStarted = true
                     isVideoSuspended = false
                     videoObserversHandle()
+                }
+                
+                if let isClearPreviewHidden = clearPreviewLayer?.hidden {
+                    if !isClearPreviewHidden {
+                        return
+                    }
                 }
                 
                 if let previewBuffer = previewBufferQueue {
@@ -1224,6 +1258,10 @@
             }
             else {
                 imageProvider?.update(pixelBuffer: pixelBuffer)
+            }
+            
+            if abs(downScaleFactor-1) > FLT_EPSILON {
+                imageProvider?.scale = downScaleFactor
             }
             liveView.filter?.source = imageProvider
         }
