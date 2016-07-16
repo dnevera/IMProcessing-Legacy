@@ -115,6 +115,7 @@ public class IMPSpline {
     }
     
     public func add(points points: [float2]) {
+        
         for p in points {
             if isBounds(point: p) {
                 continue
@@ -126,20 +127,15 @@ public class IMPSpline {
                 _controlPoints[i] = p
                 continue
             }
-            _controlPoints.append(p)
+            if let index = (_controlPoints.indexOf { $0.x > p.x }) {
+                _controlPoints.insert(p, atIndex: index)
+            }
+            else {
+                _controlPoints.append(p)
+            }
         }
         
-        _controlPoints = [float2](_controlPoints.suffix(maxControlPoints))
-        _controlPoints = _controlPoints.sort({ (one, two) -> Bool in
-            if distance(one, bounds.first) <= FLT_EPSILON {
-                return false
-            }
-            else if distance(two, bounds.last) <= FLT_EPSILON {
-                return true
-            }
-            return (one.x < two.x) && (one.y < two.y)
-        })
-        updateCurve()        
+        updateCurve()
     }
     
     public func remove(points points: [float2]){

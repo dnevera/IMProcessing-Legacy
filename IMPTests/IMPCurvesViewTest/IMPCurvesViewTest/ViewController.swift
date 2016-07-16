@@ -48,32 +48,19 @@ class ViewController: NSViewController {
         return v
     }()
     
-    lazy var curvesControl:IMPRGBCurvesControl = {
-        let v = IMPRGBCurvesControl(frame: self.view.bounds)
+    lazy var curvesControl:IMPRGBCurvesController = {
+        let v = IMPRGBCurvesController()
         
-        v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
-        v.curvesView.curveFunction = .Cubic
-        v.curvesView.didCurveFunctionUpdate = { (function) -> Void in
-            self.curves.curveFunction = function
-        }
-        
-        v.curvesView.didControlPointsUpdate = { (info) in
-            
-            if let t = IMPRGBCurvesChannelType(rawValue: info.id){
-                
-                guard let spline = info.spline else { return }
-                
-                switch  t {
-
-                case .RGB:
-                    self.curves.w = spline
-                case .Red:
-                    self.curves.x = spline
-                case .Green:
-                    self.curves.y = spline
-                case .Blue:
-                    self.curves.z = spline
-                }
+        v.didCurvesUpdate = { (channel, spline) in
+            switch  channel {
+            case .RGB:
+                self.curves.w = spline
+            case .Red:
+                self.curves.x = spline
+            case .Green:
+                self.curves.y = spline
+            case .Blue:
+                self.curves.z = spline
             }
         }
         
@@ -84,32 +71,18 @@ class ViewController: NSViewController {
         return v
     }()
 
-    lazy var hsvCurvesControl:IMPHSVCurvesControl = {
-        let v = IMPHSVCurvesControl(frame: self.view.bounds)
-        
-        v.backgroundColor = IMPColor(color: IMPPrefs.colors.background)
-        v.curvesView.curveFunction = .Cubic
-        v.curvesView.didCurveFunctionUpdate = { (function) -> Void in
-            self.curves.curveFunction = function
-        }
-        
-        v.curvesView.didControlPointsUpdate = { (info) in
-            
-            if let t = IMPHSVCurvesCircleType(rawValue: info.id){
-                
-                guard let spline = info.spline else { return }
-                
-//                switch  t {
-//                    
-//                case .RGB:
-//                    self.curves.w = spline
-//                case .Red:
-//                    self.curves.x = spline
-//                case .Green:
-//                    self.curves.y = spline
-//                case .Blue:
-//                    self.curves.z = spline
-//                }
+    lazy var hsvCurvesControl:IMPHSVCurvesController = {
+        let v = IMPHSVCurvesController()
+
+        v.didCurvesUpdate = { (channel, colors, spline) in
+                        
+            switch channel {
+            case .Hue:
+                self.hsvCurves.hue[colors.index] <- spline.controlPoints
+            case .Saturation:
+                self.hsvCurves.saturation[colors.index] <- spline.controlPoints
+            case .Value:
+                self.hsvCurves.value[colors.index] <- spline.controlPoints
             }
         }
         
@@ -201,9 +174,6 @@ class ViewController: NSViewController {
         func loadImage(file:String, size:Float) -> IMPImageProvider? {
             var image:IMPImageProvider? = nil
             do{
-                //
-                // Загружаем файл и связываем источником фильтра
-                //
                 let meta = IMPJpegProvider.metadata(file)
                 var orientation = IMPExifOrientationUp
                 if let o = meta?[IMProcessing.meta.imageOrientationKey] as? NSNumber {
@@ -226,7 +196,7 @@ class ViewController: NSViewController {
         IMPDocument.sharedInstance.addDocumentObserver { (file, type) -> Void in
             
             if type == .Image {
-                if let image = loadImage(file, size: 0) {
+                if let image = loadImage(file, size: 1200) {
                     
                     self.curvesControl.curvesView.reset()
                     
@@ -264,9 +234,26 @@ class ViewController: NSViewController {
         
         IMPDocument.sharedInstance.addSavingObserver { (file, type) in
             if type == .Image {
-                if let image = loadImage(IMPDocument.sharedInstance.currentFile!, size: 1200) {
+                if let image = loadImage(IMPDocument.sharedInstance.currentFile!, size: 0) {
                     
                     let filter = IMPFilter(context: IMPContext())
+                    
+                    let curves = IMPRGBCurvesFilter(context: filter.context)
+                    let hsvCurves = IMPHSVCurvesFilter(context: filter.context)
+                    
+                    curves.adjustment = self.curves.adjustment
+                    curves.x = self.curves.x
+                    curves.y = self.curves.y
+                    curves.z = self.curves.z
+                    curves.w = self.curves.w
+                    
+                    hsvCurves.adjustment = self.hsvCurves.adjustment
+                    hsvCurves.hue = self.hsvCurves.hue
+                    hsvCurves.saturation = self.hsvCurves.saturation
+                    hsvCurves.value = self.hsvCurves.value
+                    
+                    filter.addFilter(curves)
+                    filter.addFilter(hsvCurves)
                     
                     filter.source = image
                     
@@ -304,17 +291,17 @@ class ViewController: NSViewController {
             make.width.equalTo(320)
         }
         
-        rightPanel.addSubview(curvesControl)
-        curvesControl.snp_makeConstraints { (make) -> Void in
+        rightPanel.addSubview(curvesControl.view)
+        curvesControl.view.snp_makeConstraints { (make) -> Void in
             make.top.equalTo(self.rightPanel.snp_top).offset(10)
             make.left.equalTo(self.rightPanel).offset(5)
             make.right.equalTo(self.rightPanel).offset(-5)
             make.height.equalTo(200)
         }
 
-        rightPanel.addSubview(hsvCurvesControl)
-        hsvCurvesControl.snp_makeConstraints { (make) -> Void in
-            make.top.equalTo(self.curvesControl.snp_bottom).offset(20)
+        rightPanel.addSubview(hsvCurvesControl.view)
+        hsvCurvesControl.view.snp_makeConstraints { (make) -> Void in
+            make.top.equalTo(self.curvesControl.view.snp_bottom).offset(20)
             make.left.equalTo(self.rightPanel).offset(5)
             make.right.equalTo(self.rightPanel).offset(-5)
             make.height.equalTo(200)
@@ -322,7 +309,7 @@ class ViewController: NSViewController {
 
         rightPanel.addSubview(histogramView)
         histogramView.snp_makeConstraints { (make) -> Void in
-            make.top.equalTo(self.hsvCurvesControl.snp_bottom).offset(20)
+            make.top.equalTo(self.hsvCurvesControl.view.snp_bottom).offset(20)
             make.left.equalTo(self.rightPanel).offset(5)
             make.right.equalTo(self.rightPanel).offset(5)
             make.height.equalTo(200)
@@ -449,13 +436,50 @@ class ViewController: NSViewController {
             config = IMTLConfig()
         }
         
+//        curves.adjustment = config.rgbAdjustment
+//        hsvCurves.adjustment = config.hsvAdjustment
+//        
+//        curves.curveFunction = config.rgbFunction
+//        hsvCurves.curveFunction = config.hsvFunction
+//        
+//        curves.x <- config.rControlPoints
+//        curves.y <- config.gControlPoints
+//        curves.z <- config.bControlPoints
+//        curves.w <- config.wControlPoints
+//        
+//        for i in 0..<7 {
+//            hsvCurves.hue[i] <- config.hueControlPoints[i]
+//        }
+//        for i in 0..<7 {
+//             hsvCurves.saturation[i] <- config.saturationControlPoints[i]
+//        }
+//        for i in 0..<7 {
+//             hsvCurves.value[i] <- config.valueControlPoints[i]
+//        }
     }
     
     func updateConfig() {
+        config.rgbAdjustment = curves.adjustment
+        config.hsvAdjustment = hsvCurves.adjustment
+        
+        config.rControlPoints = curves.x.controlPoints
+        config.gControlPoints = curves.y.controlPoints
+        config.gControlPoints = curves.x.controlPoints
+        config.wControlPoints = curves.w.controlPoints
+        
+        for i in 0..<7 {
+            config.hueControlPoints[i] = hsvCurves.hue[i].controlPoints
+        }
+        for i in 0..<7 {
+            config.saturationControlPoints[i] = hsvCurves.saturation[i].controlPoints
+        }
+        for i in 0..<7 {
+            config.valueControlPoints[i] = hsvCurves.value[i].controlPoints
+        }
     }
     
     func saveConfig(){
-        if let key = self.configKey {
+        if let key = configKey {
             let json =  Mapper().toJSONString(config, prettyPrint: true)
             NSUserDefaults.standardUserDefaults().setValue(json, forKey: key)
             NSUserDefaults.standardUserDefaults().synchronize()
@@ -464,11 +488,6 @@ class ViewController: NSViewController {
     
     lazy var config = IMTLConfig()
 }
-
-///
-/// Всякие полезные и в целом понятные уитилитарные расширения
-///
-
 
 public extension NSRect {
     mutating func setRegion(region:IMPRegion){
@@ -520,14 +539,122 @@ extension IMPJpegProvider {
 
 /// https://github.com/Hearst-DD/ObjectMapper
 ///
-/// Мапинг объектов в JSON для сохранения контекста редактирования файла, просто для удобства
 ///
 public class IMTLConfig:Mappable {
+    
+    var rgbAdjustment = IMPAdjustment(blending: IMPBlending(mode: LUMINOSITY, opacity: 1))
+    var hsvAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
+
+    var rgbFunction = IMPCurveFunction.Cubic
+    var hsvFunction = IMPCurveFunction.Cubic
+
+    var rControlPoints = [float2]([float2(0),float2(1)])
+    var gControlPoints = [float2]([float2(0),float2(1)])
+    var bControlPoints = [float2]([float2(0),float2(1)])
+    var wControlPoints = [float2]([float2(0),float2(1)])
+    
+    var hueControlPoints        = [[float2]](count:7, repeatedValue:[float2]([float2(0),float2(1)]))
+    var saturationControlPoints = [[float2]](count:7, repeatedValue:[float2]([float2(0),float2(1)]))
+    var valueControlPoints      = [[float2]](count:7, repeatedValue:[float2]([float2(0),float2(1)]))
+    
     public init(){}
-    required public init?(_ map: Map) {
-    }
+    required public init?(_ map: Map) {}
+    
     public func mapping(map: Map) {
+        rgbAdjustment <- (map["rgbAdjustment"],transformAdjustment)
+        hsvAdjustment <- (map["hsvAdjustment"],transformAdjustment)
+        rgbFunction <- (map["rgbFunction"],transformFunction)
+        hsvFunction <- (map["hsvFunction"],transformFunction)
+        rControlPoints <- (map["rControlPoints"],transformPoints)
+        gControlPoints <- (map["gControlPoints"],transformPoints)
+        bControlPoints <- (map["bControlPoints"],transformPoints)
+        wControlPoints <- (map["wControlPoints"],transformPoints)
+        hueControlPoints <- (map["hueControlPoints"],transformPoints2)
+        saturationControlPoints <- (map["saturationControlPoints"],transformPoints2)
+        valueControlPoints <- (map["valueControlPoints"],transformPoints2)
     }
+    
+    
+    let transformAdjustment = TransformOf<IMPAdjustment, [String:AnyObject]>(fromJSON: { (value: [String:AnyObject]?) -> IMPAdjustment? in
+        
+        if let value = value {
+            let mode = value["mode"] as? NSNumber ?? NSNumber(unsignedInteger: 0)
+            let opacity = value["opacity"] as? NSNumber ?? 1
+            return IMPAdjustment(blending: IMPBlending(mode: IMPBlendingMode(rawValue:mode.unsignedIntValue), opacity: opacity.floatValue))
+        }
+        return nil
+        }, toJSON: { (value: IMPAdjustment?) -> [String:AnyObject]? in
+            if let adj = value {
+                let json = [
+                    "mode":  NSNumber(unsignedInt:adj.blending.mode.rawValue),
+                    "opacity": adj.blending.opacity
+                ]
+                return json
+            }
+            return nil
+    })
+
+    let transformFunction = TransformOf<IMPCurveFunction, [String:String]>(fromJSON: { (value: [String:String]?) -> IMPCurveFunction? in
+        
+        if let f = value?["function"] {
+            return IMPCurveFunction(rawValue:f)
+        }
+        return nil
+        }, toJSON: { (value: IMPCurveFunction?) -> [String:String]? in
+            if let v = value?.rawValue {
+                let json = [
+                    "function":  v
+                ]
+                return json
+            }
+            return nil
+    })
+
+    let transformPoints = TransformOf<[float2], [[Float]]>(fromJSON: { (value: [[Float]]?) -> [float2]? in
+        if let value = value {
+            var points = [float2]()
+            for p in value {
+                points.append(float2(p[0],p[1]))
+            }
+            return points
+        }
+        return nil
+        }, toJSON: { (value: [float2]?) -> [[Float]]? in
+            if let value = value {
+                var json = [[Float]]()
+                for p in value{
+                    json.append([p.x,p.y])
+                }
+                return json
+            }
+            return nil
+    })
+    
+    let transformPoints2 = TransformOf<[[float2]], [[[Float]]]>(fromJSON: { (value: [[[Float]]]?) -> [[float2]]? in
+        if let value = value {
+            var points = [[float2]](count:7, repeatedValue:[float2]())
+            for i in 0..<7{
+                for p in value[i] {
+                    points[i].append(float2(p[0],p[1]))
+                }
+            }
+            return points
+        }
+        return nil
+        }, toJSON: { (value: [[float2]]?) -> [[[Float]]]? in
+            if let value = value {
+                var json = [[[Float]]](count:7, repeatedValue:[[Float]]())
+                for i in 0..<7{
+                    for p in value[i] {
+                        json[i].append([p.x,p.y])
+                    }
+                }
+                return json
+            }
+            return nil
+    })
+
+
 }
 
 

@@ -18,6 +18,22 @@
     public typealias IMPViewBase = NSView
     public typealias IMPDragOperationHandler = ((files:[String]) -> Bool)
     
+    public extension IMPViewBase {
+        public var backgroundColor:IMPColor? {
+            set{
+                wantsLayer = true
+                layer?.backgroundColor = newValue?.CGColor
+            }
+            get{
+                if let c = layer?.backgroundColor {
+                    return IMPColor(CGColor: c)
+                }
+                return nil
+            }
+        }
+    }
+    
+
 #endif
 import Metal
 import GLKit.GLKMath
@@ -55,7 +71,9 @@ public class IMPView: IMPViewBase, IMPContextProvider {
             })
             
             filter?.addDirtyObserver({ () -> Void in
-                self.layerNeedUpdate = true
+                if !self.layerNeedUpdate {
+                    self.layerNeedUpdate = true
+                }
             })
             
             #if os(iOS)
@@ -103,9 +121,9 @@ public class IMPView: IMPViewBase, IMPContextProvider {
     }
     
     #if os(OSX)
-    public var backgroundColor:IMPColor = IMPColor.clearColor(){
+    public override var backgroundColor:IMPColor? {
         didSet{
-            metalLayer.backgroundColor = backgroundColor.CGColor
+            metalLayer.backgroundColor = backgroundColor?.CGColor
         }
     }
     #else
@@ -159,11 +177,7 @@ public class IMPView: IMPViewBase, IMPContextProvider {
             originalBounds = self.bounds
             metalLayer.bounds = originalBounds
             
-            #if os(iOS)
-                metalLayer.backgroundColor = self.backgroundColor?.CGColor
-            #else
-                metalLayer.backgroundColor = self.backgroundColor.CGColor
-            #endif
+            metalLayer.backgroundColor = self.backgroundColor?.CGColor
             
             #if os(iOS)
                 if self.timer != nil {
@@ -361,13 +375,6 @@ public class IMPView: IMPViewBase, IMPContextProvider {
 
     var clearColor:MTLClearColor {
         get {
-            #if os(OSX)
-                let rgba = backgroundColor.rgba
-                return MTLClearColor(red: rgba.r.double,
-                                     green: rgba.g.double,
-                                     blue: rgba.b.double,
-                                     alpha: rgba.a.double)
-            #else
             if let rgba = backgroundColor?.rgba {
             return MTLClearColor(red: rgba.r.double,
                                  green: rgba.g.double,
@@ -377,76 +384,70 @@ public class IMPView: IMPViewBase, IMPContextProvider {
             else {
                 return MTLClearColorMake(0, 0, 0, 0)
             }
-            #endif
         }
     }
     
     var currentDestination:IMPImageProvider? = nil
     
-    
     internal func refresh() {
         
-        dispatch_async(dispatch_get_main_queue()) {
+        if self.layerNeedUpdate {
             
+            self.layerNeedUpdate = false
             
-            if self.layerNeedUpdate {
+            autoreleasepool({ () -> () in
                 
-                self.layerNeedUpdate = false
+                self.currentDestination = self.filter?.destination
                 
-                autoreleasepool({ () -> () in
+                if let actualImageTexture = self.currentDestination?.texture {
                     
-                    self.currentDestination = self.filter?.destination
+                    if !CGSizeEqualToSize(self.metalLayer.drawableSize, actualImageTexture.cgsize){ self.metalLayer.drawableSize = actualImageTexture.cgsize }
                     
-                    if let actualImageTexture = self.currentDestination?.texture {
+                    if let drawable = self.metalLayer.nextDrawable(){
                         
-                        if !CGSizeEqualToSize(self.metalLayer.drawableSize, actualImageTexture.cgsize){ self.metalLayer.drawableSize = actualImageTexture.cgsize }
-
-                        if let drawable = self.metalLayer.nextDrawable(){
-                                                        
-                            self.renderPassDescriptor.colorAttachments[0].texture     = drawable.texture
-                            self.renderPassDescriptor.colorAttachments[0].loadAction  = .Clear
-                            self.renderPassDescriptor.colorAttachments[0].storeAction = .Store
-                            self.renderPassDescriptor.colorAttachments[0].clearColor =  self.clearColor
+                        self.renderPassDescriptor.colorAttachments[0].texture     = drawable.texture
+                        self.renderPassDescriptor.colorAttachments[0].loadAction  = .Clear
+                        self.renderPassDescriptor.colorAttachments[0].storeAction = .Store
+                        self.renderPassDescriptor.colorAttachments[0].clearColor =  self.clearColor
+                        
+                        self.context.execute { (commandBuffer) -> Void in
                             
-                            self.context.execute { (commandBuffer) -> Void in
+                            self.context.wait()
+                            
+                            commandBuffer.addCompletedHandler({ (commandBuffer) -> Void in
+                                self.context.resume()
+                            })
+                            
+                            let encoder = commandBuffer.renderCommandEncoderWithDescriptor(self.renderPassDescriptor)
+                            
+                            //
+                            // render current texture
+                            //
+                            
+                            if let pipeline = self.renderPipeline {
                                 
-                                self.context.wait()
+                                encoder.setRenderPipelineState(pipeline)
                                 
-                                commandBuffer.addCompletedHandler({ (commandBuffer) -> Void in
-                                    self.context.resume()
-                                })
+                                encoder.setVertexBuffer(self.vertexBuffer, offset:0, atIndex:0)
+                                encoder.setFragmentTexture(actualImageTexture, atIndex:0)
                                 
-                                let encoder = commandBuffer.renderCommandEncoderWithDescriptor(self.renderPassDescriptor)
-                                
-                                //
-                                // render current texture
-                                //
-                                
-                                if let pipeline = self.renderPipeline {
-                                    
-                                    encoder.setRenderPipelineState(pipeline)
-                                    
-                                    encoder.setVertexBuffer(self.vertexBuffer, offset:0, atIndex:0)
-                                    encoder.setFragmentTexture(actualImageTexture, atIndex:0)
-                                    
-                                    encoder.drawPrimitives(.TriangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
-                                    encoder.endEncoding()
-                                }
-                                
-                                commandBuffer.presentDrawable(drawable)
-                                
-                                if self.isFirstFrame && self.viewReadyHandler !=  nil {
-                                    self.isFirstFrame = false
-                                    self.viewReadyHandler!()
-                                }
+                                encoder.drawPrimitives(.TriangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
+                                encoder.endEncoding()
+                            }
+                            
+                            commandBuffer.presentDrawable(drawable)
+                            
+                            if self.isFirstFrame && self.viewReadyHandler !=  nil {
+                                self.isFirstFrame = false
+                                self.viewReadyHandler!()
                             }
                         }
-                        else{
-                            self.context.resume()
-                        }
                     }
-                })
-            }
+                    else{
+                        self.context.resume()
+                    }
+                }
+            })
         }
     }
     
@@ -462,12 +463,12 @@ public class IMPView: IMPViewBase, IMPContextProvider {
     
     internal var layerNeedUpdate:Bool = true  {
         didSet {
-            dispatch_async(dispatch_get_main_queue()) { 
+            dispatch_async(dispatch_get_main_queue()) {
                 if self.layerNeedUpdate {
                     #if os(iOS)
                         self.updateLayer(self.isFirstFrame ? 0 : self.animationDuration)
                     #else
-                        self.updateLayer()
+                        self.tryToUpdateLayer()
                     #endif
                 }
             }
@@ -563,7 +564,7 @@ public class IMPView: IMPViewBase, IMPContextProvider {
         }
     }
 
-    override public func updateLayer(){
+    func tryToUpdateLayer()  {
         currentDestination = currentDestination ?? filter?.destination
         guard let t = currentDestination?.texture else { return }
         
@@ -573,6 +574,11 @@ public class IMPView: IMPViewBase, IMPContextProvider {
                 l.frame = CGRect(origin: CGPointZero, size:  self.bounds.size)
             })
         }
+    }
+    
+    override public func updateLayer(){
+        super.updateLayer()
+        tryToUpdateLayer()
     }
     
     public override func draggingEntered(sender: NSDraggingInfo) -> NSDragOperation {

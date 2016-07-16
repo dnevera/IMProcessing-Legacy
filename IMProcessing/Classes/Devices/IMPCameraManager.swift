@@ -1281,9 +1281,6 @@
                                         
                                         newMeta[IMProcessing.meta.versionKey]           = IMProcessing.meta.version
                                         newMeta[IMProcessing.meta.deviceOrientationKey] = deviceOrientation.rawValue
-                                        if isConnectionSupportsOrientation {
-                                            //newMeta[IMProcessing.meta.imageOrientationKey]  = 1
-                                        }
                                         
                                         newMeta[IMProcessing.meta.imageSourceExposureMode] = self.currentCamera.exposureMode.rawValue
                                         newMeta[IMProcessing.meta.imageSourceFocusMode] = self.currentCamera.focusMode.rawValue

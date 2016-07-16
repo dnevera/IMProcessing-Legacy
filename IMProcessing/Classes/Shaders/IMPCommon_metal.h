@@ -106,7 +106,7 @@ namespace IMProcessing
 //        c = c + float3(d);
 //        return clipcolor_wlum(c,ll);
 //    }
-
+//
     inline float3 clipcolor(float3 c) {
         float l = lum(c);
         float n = min(min(c.r, c.g), c.b);

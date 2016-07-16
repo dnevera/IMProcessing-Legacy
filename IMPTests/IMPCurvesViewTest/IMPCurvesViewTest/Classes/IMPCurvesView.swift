@@ -20,20 +20,11 @@ public func == (left: IMPCurvesView.CurveInfo, right: IMPCurvesView.CurveInfo) -
 }
 
 public class IMPPopUpButton: NSPopUpButton {
-    public var backgroundColor:IMPColor?
 }
 
 public class IMPCurvesView: IMPViewBase {
     
     public typealias ControlPointsUpdateHandler = ((CurveInfo:CurveInfo) -> Void)
-    public typealias CurveFunctionUpdateHandler = ((function:IMPCurveFunction)->Void)
-
-    public var backgroundColor:IMPColor? = IMPColor.clearColor(){
-        didSet{
-            wantsLayer = true
-            layer?.backgroundColor = backgroundColor?.CGColor
-        }
-    }
     
     public var markerSize:Float = 5 {
         didSet{
@@ -59,7 +50,8 @@ public class IMPCurvesView: IMPViewBase {
         }
     }
 
-    public var precision:Float = 0.05 {
+    public var precision:Float = 0.05
+        {
         didSet{
             for l in list {
                 l.spline?.precision = precision
@@ -70,9 +62,6 @@ public class IMPCurvesView: IMPViewBase {
     
     public var curveFunction:IMPCurveFunction = .Cubic {
         didSet{
-            if let f = didCurveFunctionUpdate {
-                f(function: curveFunction)
-            }
             for l in list {
                 l._spline = curveFunction.spline
                 executeUpdate(l)
@@ -180,7 +169,6 @@ public class IMPCurvesView: IMPViewBase {
     }
 
     public var didControlPointsUpdate:ControlPointsUpdateHandler?
-    public var didCurveFunctionUpdate:CurveFunctionUpdateHandler?
 
     var activeCurve:CurveInfo? {
         get {
@@ -197,9 +185,7 @@ public class IMPCurvesView: IMPViewBase {
         if let o = didControlPointsUpdate {
             o(CurveInfo: info)
         }
-        dispatch_async(dispatch_get_main_queue(), {
-            self.needsDisplay = true
-        })
+        needsDisplay = true
     }
     
     func covertPoint(event:NSEvent) -> float2 {
@@ -239,7 +225,7 @@ public class IMPCurvesView: IMPViewBase {
         
         currentPointIndex = nil
         currentPoint = nil
-        
+                
         if let spline = activeCurve?.spline {
             currentPoint = (spline <- xy)
             if event.clickCount == 2 {
@@ -329,7 +315,7 @@ public class IMPCurvesView: IMPViewBase {
             let path = NSBezierPath()
             path.lineWidth = lineWidth.cgfloat
 
-            let isClosennes = spline.closeness(one: cp, two: p)
+            let isClosennes = spline.closeness(one: cp, two: p, distance: 1/Float(spline.curve.count))
             
             var np = NSPoint(x:p.x.cgfloat*dirtyRect.size.width, y:p.y.cgfloat*dirtyRect.size.height)
             let ms = (markerSize+lineWidth).cgfloat/2
