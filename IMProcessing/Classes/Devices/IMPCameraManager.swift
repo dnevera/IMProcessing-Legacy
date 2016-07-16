@@ -312,6 +312,7 @@
                 liveView.frame = CGRect(x: 0, y: 0,
                                         width: containerView.bounds.size.width,
                                         height: containerView.bounds.size.height)
+                liveView.autoresizingMask = [.FlexibleWidth,.FlexibleHeight]
                 containerView.addSubview(liveView)
                 
                 dispatch_sync(sessionQueue, { () -> Void in
@@ -1194,7 +1195,8 @@
             }
         }()
         
-        public var downScaleFactor:Float = 1
+        /// Frame scale factor
+        public var scaleFactor:Float = 1
     }
     
     // MARK: - Capturing API
@@ -1260,8 +1262,8 @@
                 imageProvider?.update(pixelBuffer: pixelBuffer)
             }
             
-            if abs(downScaleFactor-1) > FLT_EPSILON {
-                imageProvider?.scale = downScaleFactor
+            if abs(scaleFactor-1) > FLT_EPSILON {
+                imageProvider?.scale = scaleFactor
             }
             liveView.filter?.source = imageProvider
         }

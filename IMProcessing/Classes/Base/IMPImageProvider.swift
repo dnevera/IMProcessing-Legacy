@@ -175,10 +175,11 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                 guard let pipeline = graphics.pipeline else {return}
                 
                 newTexture(source, width: Int(source.width.float*scale), height: Int(source.height.float*scale))
+                //newTexture(source, width: source.width, height: source.height)
                 
                 guard let newTexure = texture else {return}
                 
-                transformer.scale = float3(scale)
+                //transformer.scale = float3(scale,scale,1)
                 
                 context.execute(complete: true) { (commandBuffer) in
                     self.transformer.render(commandBuffer, pipelineState: pipeline, source: source, destination: newTexure)
