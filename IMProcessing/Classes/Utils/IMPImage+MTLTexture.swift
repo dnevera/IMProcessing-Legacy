@@ -138,8 +138,7 @@ public extension IMPImage{
                 let imageBuffer = provider.context.device.newBufferWithLength( imageByteCount, options: MTLResourceOptions.CPUCacheModeDefaultCache)
                 
                 //
-                // Currently, OSX does not have work version of texture.getBytes version.
-                // Use blit encoder to copy data from device memory
+                // Use blit encoder to copy data from device memory, then convert to 8bits presentation if it needs
                 //
                 provider.context.execute(closure: { (commandBuffer) in
                     
