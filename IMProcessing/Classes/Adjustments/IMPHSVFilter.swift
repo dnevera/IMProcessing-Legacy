@@ -170,7 +170,7 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     ///
     ///  - HIGH:   default optimization uses when you need to accelerate hsv adjustment
     ///  - NORMAL: hsv adjustments application without interpolation
-    public enum optimizationLevel{
+    public enum Optimization{
         case HIGH
         case NORMAL
     }
@@ -226,7 +226,7 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     ///  - parameter context:      execution context
     ///  - parameter optimization: optimization level
     ///
-    public required init(context: IMPContext, optimization:optimizationLevel) {
+    public required init(context: IMPContext, optimization:Optimization) {
         
         super.init(context: context)
         
@@ -336,7 +336,7 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     private  var adjustmentLut = IMPAdjustment(blending: IMPBlending(mode: IMPBlendingMode.NORMAL, opacity: 1))
     internal var adjustmentLutBuffer:MTLBuffer?
     
-    private var optimization:optimizationLevel!
+    private var optimization:Optimization!
 
     //
     // Convert HSV transformation to 3D-rgb lut-cube

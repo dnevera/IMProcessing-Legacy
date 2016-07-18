@@ -102,14 +102,14 @@ public class IMPAutoWBFilter:IMPFilter{
     ///
     public var colorsAnalyzeHandler:IMPAutoWBAnalyzeHandler?
     
-    lazy var optimization:IMPHSVFilter.optimizationLevel = {
+    lazy var optimization:IMPHSVFilter.Optimization = {
         return self.context.isLazy ? .HIGH : .NORMAL
     }()
     
     var histogramHardware = IMPHistogramAnalyzer.Hardware.GPU
     
     public required init(context: IMPContext,
-                         optimization:IMPHSVFilter.optimizationLevel,
+                         optimization:IMPHSVFilter.Optimization,
                          histogramHardware:IMPHistogramAnalyzer.Hardware
         ) {
         
