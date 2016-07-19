@@ -67,4 +67,13 @@ public extension IMPImageProvider{
             }
         }
     }
+    
+    public func jpegRepresentation(compression compressionQ:Float) -> NSData? {
+        if let t = texture {
+            return IMPJpegturbo.dataFromMTLTexture(t, compression: compressionQ.cgfloat)
+        }
+        else {
+            return nil
+        }
+    }
 }
