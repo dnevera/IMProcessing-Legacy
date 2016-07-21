@@ -399,8 +399,15 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         return _destination
     }
 
-    deinit {
+    public func flush() {
+        for f in filterList {
+            f.flush()
+        }
         _destination.texture = nil
         source = nil
+    }
+    
+    deinit {
+        flush()
     }
 }

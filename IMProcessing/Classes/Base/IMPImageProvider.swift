@@ -222,6 +222,13 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         texture = self.context.device.newTextureWithDescriptor(descriptor)
     }
     
+    deinit {
+        if texture != nil {
+            texture?.setPurgeableState(.Empty)
+        }
+        texture = nil
+    }
+    
     func copyTexture() -> MTLTexture? {
         
         var source:MTLTexture? = nil
