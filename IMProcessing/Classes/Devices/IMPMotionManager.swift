@@ -21,8 +21,15 @@
             let distance:Float
         }
     
-        public typealias RotationHandler = ((orientation:UIDeviceOrientation) -> Void)
-        public typealias PositionHandler = ((position:IMPMotionManager.Position) -> Void)
+        public struct RotationHandler {
+            var index:Int;
+            public let closure:((orientation:UIDeviceOrientation) -> Void)
+        }
+        
+        public struct PositionHandler {
+            var index:Int;
+            public let closure:((position:IMPMotionManager.Position) -> Void)
+        }
 
         public static let sharedInstance = IMPMotionManager()
         
@@ -30,16 +37,38 @@
         
         private var motionRotationHandlers = [RotationHandler]()
         
-        public func addRotationObserver(observer:RotationHandler){
+        public func addRotationObserver(observer:((orientation:UIDeviceOrientation) -> Void)) -> RotationHandler {
             if _motionHandler == nil {
                 self.startMotion()
             }
-            motionRotationHandlers.append(observer)
+            let h = RotationHandler(index: motionRotationHandlers.count, closure: observer)
+            motionRotationHandlers.append(h)
+            return h
+        }
+        
+        public func removeRotationObserver(observer:RotationHandler){
+            motionRotationHandlers.removeAtIndex(observer.index)
+            for i in observer.index..<motionRotationHandlers.count{
+                motionRotationHandlers[i].index -= 1
+            }
         }
         
         private var motionPositionHandlers = [PositionHandler]()
-        public func addPositionObserver(observer:PositionHandler){
-            motionPositionHandlers.append(observer)
+        
+        public func addPositionObserver(observer:((position:IMPMotionManager.Position) -> Void)) -> PositionHandler {
+            if _motionHandler == nil {
+                self.startMotion()
+            }
+            let h = PositionHandler(index: motionPositionHandlers.count, closure: observer)
+            motionPositionHandlers.append(h)
+            return h
+        }
+        
+        public func removePositionObserver(observer:PositionHandler){
+            motionPositionHandlers.removeAtIndex(observer.index)
+            for i in observer.index..<motionPositionHandlers.count{
+                motionPositionHandlers[i].index -= 1
+            }
         }
 
         private init() {
@@ -158,7 +187,7 @@
         
         func devicePositionDidChangeTo(position:Position){
             for h in motionPositionHandlers {
-                h(position: position)
+                h.closure(position: position)
             }
         }
         
@@ -170,7 +199,7 @@
             else {
                currentOrientation = lastOrientation
                 for h in motionRotationHandlers {
-                    h(orientation: lastOrientation)
+                    h.closure(orientation: lastOrientation)
                 }
             }
         }

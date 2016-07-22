@@ -283,7 +283,7 @@
         }
         
         var containerView:UIView!
-        
+        var rotationHandler:IMPMotionManager.RotationHandler!
         ///
         ///  Create Camera Manager instance
         ///
@@ -292,6 +292,10 @@
         public init(containerView:UIView, context:IMPContext? = nil) {
             
             super.init()
+            
+            rotationHandler = IMPMotionManager.sharedInstance.addRotationObserver({ (orientation) in
+                self.deviceOrientation = orientation
+            })
             
             self.containerView = containerView
             
@@ -717,6 +721,7 @@
         }
         
         deinit{
+            IMPMotionManager.sharedInstance.removeRotationObserver(rotationHandler)
             removeCameraObservers()
         }
         
@@ -1197,6 +1202,8 @@
         
         /// Frame scale factor
         public var scaleFactor:Float = 1
+        
+        var deviceOrientation = UIDevice.currentDevice().orientation
     }
     
     // MARK: - Capturing API
@@ -1283,9 +1290,6 @@
                 return
             }
             
-            let deviceOrientation = UIDevice.currentDevice().orientation
-            var isConnectionSupportsOrientation = false
-
             if let complete = complete {
                 
                 dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0)) {
@@ -1295,8 +1299,7 @@
                         connection.automaticallyAdjustsVideoMirroring = false
                         
                         if (connection.supportsVideoOrientation){
-                            connection.videoOrientation =  AVCaptureVideoOrientation(deviceOrientation: deviceOrientation)!
-                            isConnectionSupportsOrientation = true
+                            connection.videoOrientation =  AVCaptureVideoOrientation(deviceOrientation: self.deviceOrientation)!
                         }
                         
                         self.capturingPhotoInProgress = true
@@ -1320,7 +1323,7 @@
                                         let newMeta = d.mutableCopy() as! NSMutableDictionary
                                         
                                         newMeta[IMProcessing.meta.versionKey]           = IMProcessing.meta.version
-                                        newMeta[IMProcessing.meta.deviceOrientationKey] = deviceOrientation.rawValue
+                                        newMeta[IMProcessing.meta.deviceOrientationKey] = self.deviceOrientation.rawValue
                                         
                                         newMeta[IMProcessing.meta.imageSourceExposureMode] = self.currentCamera.exposureMode.rawValue
                                         newMeta[IMProcessing.meta.imageSourceFocusMode] = self.currentCamera.focusMode.rawValue

@@ -1,19 +1,80 @@
 //
-//  IMPHSVCurvesFilter.swift
+//  IMPWheelCurvesFilter.swift
 //  IMPCurvesViewTest
 //
-//  Created by Denis Svinarchuk on 02/07/16.
+//  Created by denis svinarchuk on 21.07.16.
 //  Copyright © 2016 IMProcessing. All rights reserved.
 //
 
 import Foundation
 import IMProcessing
 
+public enum IMPColorWheel : String {
+    case Master   = "Master"
+    case Reds     = "Reds"
+    case Yellows  = "Yellows"
+    case Greens   = "Greens"
+    case Cyans    = "Cyans"
+    case Blues    = "Blues"
+    case Magentas = "Magentas"
+    
+    public var index:Int {
+        switch self {
+        case .Reds:    return 0
+        case .Yellows: return 1
+        case .Greens:  return 2
+        case .Cyans:   return 3
+        case .Blues:   return 4
+        case .Magentas:return 5
+        case .Master:  return 6
+        }
+    }
+}
 
-public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
+public protocol IMPColorBlending: IMPContextProvider {
+    
+    var weights:MTLTexture! {get set}
+    
+    var didUpdate:((bending:IMPColorBlending)->Void)? {get set}
+    
+    init(context:IMPContext)
+    func  create() -> MTLTexture
+}
+
+public class IMPColorGaussBlending: IMPColorBlending{
+    
+    public var weights: MTLTexture!{
+        didSet{
+            if let o = didUpdate {
+                o(bending: self)
+            }
+        }
+    }
+    
+    public var context: IMPContext!
+    
+    public required init(context: IMPContext) {
+        self.context = context
+        weights = create()
+    }
+    
+    public var overlap: Float = IMProcessing.hsv.hueOverlapFactor {
+        didSet{
+            weights = create()
+        }
+    }
+    
+    public var didUpdate: ((bending: IMPColorBlending) -> Void)?
+    
+    public func create() -> MTLTexture {
+        return IMPHSVFilter.defaultHueWeights(context, overlap: overlap)
+    }
+}
+
+public class IMPWheelCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     
     public class Splines{
-
+        
         public init(function:IMPCurveFunction = .Cubic) {
             for i in 0..<7 {
                 self[i] = function.spline
@@ -88,7 +149,7 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
             }
         }
         
-        var filter:IMPHSVCurvesFilter! {
+        var filter:IMPWheelCurvesFilter! {
             didSet{
                 update()
             }
@@ -144,7 +205,7 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
             
         }
     }
-
+    
     public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
     
     public var adjustment:IMPAdjustment!{
@@ -157,10 +218,10 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     public var adjustmentBuffer:MTLBuffer?
     public var kernel:IMPFunction!
     
-    public required init(context: IMPContext, curveFunction:IMPCurveFunction) {
+    public required init(context: IMPContext, name:String, curveFunction:IMPCurveFunction = .Cubic) {
         super.init(context: context)
         
-        kernel = IMPFunction(context: self.context, name: "kernel_adjustHSVCurves")
+        kernel = IMPFunction(context: self.context, name: name)
         addFunction(kernel)
         
         defer{
@@ -170,9 +231,13 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
         }
     }
     
-    public convenience required init(context: IMPContext) {
-        self.init(context:context, curveFunction: .Cubic)
+    required public init(context: IMPContext) {
+        fatalError("init(context:) has not been implemented")
     }
+    
+    //public convenience required init(context: IMPContext) {
+    //self.init(context:context, curveFunction: .Cubic)
+    //}
     
     override public func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {

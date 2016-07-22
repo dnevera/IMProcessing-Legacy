@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		312306C91D27E0DB008282AD /* IMPRGBCurvesFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312306C81D27E0DB008282AD /* IMPRGBCurvesFilter.swift */; };
 		312306CB1D27E10F008282AD /* IMPHSVCurvesFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312306CA1D27E10F008282AD /* IMPHSVCurvesFilter.swift */; };
+		3151A1421D41520E00D27E02 /* IMPWheelCurvesFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151A1411D41520E00D27E02 /* IMPWheelCurvesFilter.swift */; };
 		317A2AAA1D21BC46007085EB /* IMPCurvesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317A2AA31D21BC46007085EB /* IMPCurvesView.swift */; };
 		317A2AAB1D21BC46007085EB /* IMPDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317A2AA41D21BC46007085EB /* IMPDocument.swift */; };
 		317A2AAC1D21BC46007085EB /* IMPLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317A2AA51D21BC46007085EB /* IMPLabel.swift */; };
@@ -31,6 +32,7 @@
 		1F94E4B46C57C6C7C4DD928F /* Pods_IMPCurvesViewTest.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPCurvesViewTest.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		312306C81D27E0DB008282AD /* IMPRGBCurvesFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPRGBCurvesFilter.swift; sourceTree = "<group>"; };
 		312306CA1D27E10F008282AD /* IMPHSVCurvesFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHSVCurvesFilter.swift; sourceTree = "<group>"; };
+		3151A1411D41520E00D27E02 /* IMPWheelCurvesFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPWheelCurvesFilter.swift; sourceTree = "<group>"; };
 		317A2AA31D21BC46007085EB /* IMPCurvesView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCurvesView.swift; sourceTree = "<group>"; };
 		317A2AA41D21BC46007085EB /* IMPDocument.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDocument.swift; sourceTree = "<group>"; };
 		317A2AA51D21BC46007085EB /* IMPLabel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPLabel.swift; sourceTree = "<group>"; };
@@ -70,6 +72,7 @@
 				31911A411D23EAFF000FDE59 /* IMPCurveFunctions.swift */,
 				317A2AA31D21BC46007085EB /* IMPCurvesView.swift */,
 				31911A431D23EE32000FDE59 /* IMPCurvesFilter.swift */,
+				3151A1411D41520E00D27E02 /* IMPWheelCurvesFilter.swift */,
 				312306C81D27E0DB008282AD /* IMPRGBCurvesFilter.swift */,
 				312306CA1D27E10F008282AD /* IMPHSVCurvesFilter.swift */,
 				31EA2D2E1D24127000DE3CDF /* IMPRGBCurvesController.swift */,
@@ -323,6 +326,7 @@
 				31D194581D21BB830063B33C /* AppDelegate.swift in Sources */,
 				317A2AAE1D21BC46007085EB /* IMPStepper.swift in Sources */,
 				312306CB1D27E10F008282AD /* IMPHSVCurvesFilter.swift in Sources */,
+				3151A1421D41520E00D27E02 /* IMPWheelCurvesFilter.swift in Sources */,
 				317A2AAC1D21BC46007085EB /* IMPLabel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

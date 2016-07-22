@@ -29,8 +29,6 @@ inline float3 adjust_hsvCurve(float  hue,
     return hsv;
 }
 
-
-
 inline float4 adjustHSVCurves(float4 input_color,
                               texture1d_array<float, access::sample> hueWeights,
                               texture1d_array<float, access::sample> hueCurvesTexure,
