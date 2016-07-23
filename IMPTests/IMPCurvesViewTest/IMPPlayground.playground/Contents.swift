@@ -4,8 +4,8 @@ import Cocoa
 import simd
 import Accelerate
 
-public class Curves: AnyGenerator<Int>{
-}
+//public class Curves: AnyGenerator<Int>{
+//}
 
 
 

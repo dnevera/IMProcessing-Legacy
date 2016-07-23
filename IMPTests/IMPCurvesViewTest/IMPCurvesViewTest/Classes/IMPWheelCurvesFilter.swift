@@ -75,10 +75,11 @@ public class IMPWheelCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     
     public class Splines{
         
-        public init(function:IMPCurveFunction = .Cubic) {
+        public init(function:IMPCurveFunction = .Cubic, filter:IMPWheelCurvesFilter?=nil) {
             for i in 0..<7 {
                 self[i] = function.spline
             }
+            self.filter = filter
         }
         
         public var reds:IMPSpline!    { didSet{ update() } }
@@ -166,21 +167,21 @@ public class IMPWheelCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
         lazy var curves:IMPSplinesProvider = IMPSplinesProvider(context: self.filter.context, splines: self.all)
     }
     
-    public var hue        = Splines(){
+    public var x        = Splines(){
         didSet{
-            hue.filter = self
+            x.filter = self
         }
     }
     
-    public var saturation = Splines(){
+    public var y = Splines(){
         didSet{
-            saturation.filter = self
+            y.filter = self
         }
     }
     
-    public var value      = Splines(){
+    public var z      = Splines(){
         didSet{
-            value.filter = self
+            z.filter = self
         }
     }
     
@@ -193,16 +194,10 @@ public class IMPWheelCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     }
     
     public var curveFunction:IMPCurveFunction! {
-        didSet{
-            
-            hue = Splines(function: curveFunction)
-            saturation = Splines(function: curveFunction)
-            value = Splines(function: curveFunction)
-            
-            hue.filter = self
-            saturation.filter = self
-            value.filter = self
-            
+        didSet{            
+            x = Splines(function: curveFunction, filter: self)
+            y = Splines(function: curveFunction, filter: self)
+            z = Splines(function: curveFunction, filter: self)
         }
     }
     
@@ -242,15 +237,11 @@ public class IMPWheelCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
     override public func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
             command.setTexture(colorBlending.weights,      atIndex: 2)
-            command.setTexture(hue.curves.texture,         atIndex: 3)
-            command.setTexture(saturation.curves.texture,  atIndex: 4)
-            command.setTexture(value.curves.texture,       atIndex: 5)
+            command.setTexture(x.curves.texture,         atIndex: 3)
+            command.setTexture(y.curves.texture,  atIndex: 4)
+            command.setTexture(z.curves.texture,       atIndex: 5)
             
             command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
         }
     }
-    
-    internal lazy var hueWeights:MTLTexture = {
-        return IMPHSVFilter.defaultHueWeights(self.context, overlap: IMProcessing.hsv.hueOverlapFactor)
-    }()
 }
