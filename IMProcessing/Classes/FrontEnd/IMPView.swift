@@ -533,7 +533,9 @@ public class IMPView: IMPViewBase, IMPContextProvider {
         
         guard let l = metalLayer else { return }
         if !CGRectEqualToRect(l.frame, bounds) {
-
+            if let f = filter {
+                f.dirty = true
+            }
             animateLayer(duration, closure: { (duration) in
               l.frame = bounds
             })
