@@ -21,8 +21,6 @@ Pod::Spec.new do |s|
   #
   # does not work with cocoapods 1.0.0rc2
   #
-  #s.xcconfig     =   { 'MTL_HEADER_SEARCH_PATHS' => '$(PODS_ROOT)/Headers/Private/IMProcessing', 'HEADER_SEARCH_PATHS' => '$(PODS_ROOT)/Headers/Private/IMProcessing'}
-  #
   # TODO: find solution for -OSX/-IOS enviroment variable, at the moment i don;t know what hould it be, so use paths to boths platform
   # MTL shaders has platform independent sources
   #
