@@ -20,7 +20,7 @@ inline float3 adjust_hsvCurve(float  hue,
 {
     constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
 
-    float scale =  index == kIMP_Color_Ramps ? 1 : IMProcessing::weightOf(hue, weights, index) * pow(hsv.y, 2);
+    float scale = index == kIMP_Color_Ramps ? 1 : IMProcessing::weightOf(hue, weights, index) * pow(hsv.y, 2);
     
     hsv.x = hsv.x + (hueCurvesTexure.sample(s, hsv.x, index).x        - hsv.x) * scale;
     hsv.y = hsv.y + (saturationCurvesTexure.sample(s, hsv.y, index).x - hsv.y) * scale;

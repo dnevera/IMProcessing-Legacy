@@ -183,9 +183,5 @@ public class IMPHSVCurvesFilter: IMPFilter,IMPAdjustmentProtocol {
             
             command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
         }
-    }
-    
-    internal lazy var hueWeights:MTLTexture = {
-        return IMPHSVFilter.defaultHueWeights(self.context, overlap: IMProcessing.hsv.hueOverlapFactor)
-    }()
+    }    
 }

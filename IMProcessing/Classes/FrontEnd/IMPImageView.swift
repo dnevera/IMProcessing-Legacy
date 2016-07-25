@@ -119,10 +119,6 @@ extension IMPImageView {
             imageView.setOrientation(orientation, animate: animate)
         }
         
-//        internal func updateLayer(){
-//            imageView.updateLayer()
-//        }
-        
         private func configure(){
             
             scrollView = IMPScrollView(frame: bounds)
@@ -136,10 +132,11 @@ extension IMPImageView {
             scrollView?.minimumZoomScale = 1
             scrollView?.zoomScale = 1
             scrollView?.delegate = self
+            
+            scrollView.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
             self.addSubview(scrollView)
             
             imageView = IMPView(context: self.context, frame: self.bounds)
-            //imageView.updateLayerHandler = updateLayer
             imageView.autoresizingMask = [.FlexibleWidth, .FlexibleHeight]
             imageView.backgroundColor = IMPColor.clearColor()
             
@@ -166,12 +163,10 @@ extension IMPImageView {
             }
         }
         
-        public func sizeFit(){
-        }
+        public func sizeFit(){}
         
         ///  Present image in oroginal size
-        public func sizeOriginal(){
-        }
+        public func sizeOriginal(){}
         
         public func viewForZoomingInScrollView(scrollView: UIScrollView) -> UIView? {
             return imageView
@@ -216,13 +211,9 @@ extension IMPImageView {
                     scrollView.backgroundColor = c
                 }
             }
-//            get{
-//                return imageView.backgroundColor
-//            }
         }
         
-        /// View filter
-        
+        /// View filter        
         public var filter:IMPFilter?{
             didSet{
                 imageView?.filter = filter
