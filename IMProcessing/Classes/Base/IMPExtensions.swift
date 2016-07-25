@@ -42,7 +42,7 @@ public enum IMProcessing{
     }
     
     public struct names {
-        static let prefix = "com.improcessing."
+        public static let prefix = "com.improcessing."
     }
     
     public struct colors {

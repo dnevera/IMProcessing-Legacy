@@ -6,8 +6,8 @@
 //  Copyright © 2016 Dehancer.photo. All rights reserved.
 //
 
-#ifndef IMPGraphics_metal_h
-#define IMPGraphics_metal_h
+#ifndef IMPGeometry_metal_h
+#define IMPGeometry_metal_h
 
 #ifdef __METAL_VERSION__
 
@@ -273,4 +273,4 @@ fragment float4 fragment_passview(
 
 #endif
 
-#endif /* IMPGraphics_metal_h */
+#endif /* IMPGeometry_metal_h */
