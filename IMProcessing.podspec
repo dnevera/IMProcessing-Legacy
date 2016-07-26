@@ -16,17 +16,15 @@ Pod::Spec.new do |s|
   s.source_files        = 'IMProcessing/Classes/**/*.{h,swift,m}', 'IMProcessing/Classes/*.{swift}', 'IMProcessing/Classes/**/*.h','IMProcessing/Classes/Shaders/*.h', 'vendor/libjpeg-turbo/include/*'
   s.public_header_files = 'IMProcessing/Classes/**/*.h','IMProcessing/Classes/Shaders/*.h'
   s.vendored_libraries  = 'vendor/libjpeg-turbo/lib/libturbojpeg.a'
-
+  s.header_dir   = 'IMProcessing'
   s.frameworks   = 'Metal'
   #
   # does not work with cocoapods 1.0.0rc2
   #
-  #s.xcconfig     =   { 'MTL_HEADER_SEARCH_PATHS' => '$(PODS_ROOT)/Headers/Private/IMProcessing', 'HEADER_SEARCH_PATHS' => '$(PODS_ROOT)/Headers/Private/IMProcessing'}
-  #
   # TODO: find solution for -OSX/-IOS enviroment variable, at the moment i don;t know what hould it be, so use paths to boths platform
   # MTL shaders has platform independent sources
   #
-  s.xcconfig     =   { 'MTL_HEADER_SEARCH_PATHS' => '$(TARGET_BUILD_DIR)/IMProcessing/IMProcessing.framework/Headers $(TARGET_BUILD_DIR)/IMProcessing-OSX/IMProcessing.framework/Headers $(TARGET_BUILD_DIR)/IMProcessing-IOS/IMProcessing.framework/Headers'}
+  s.xcconfig = { 'MTL_HEADER_SEARCH_PATHS' => '$(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing/IMProcessing.framework/Headers $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing-OSX/IMProcessing.framework/Headers $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing-iOS/IMProcessing.framework/Headers'}
 
   s.requires_arc = true
 

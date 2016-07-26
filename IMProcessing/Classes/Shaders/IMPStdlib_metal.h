@@ -28,7 +28,7 @@
 #include "IMPRandomNoise_metal.h"
 #include "IMPFilmGrain_metal.h"
 #include "IMPDithering_metal.h"
-#include "IMPGraphics_metal.h"
+#include "IMPGeometry_metal.h"
 #include "IMPVignette_metal.h"
 
 #ifdef __cplusplus
@@ -43,14 +43,6 @@ namespace IMProcessing
         outTexture.write(inColor, gid);
     }
     
-    kernel void kernel_view(texture2d<float, access::sample> inTexture [[texture(0)]],
-                            texture2d<float, access::write> outTexture [[texture(1)]],
-                            uint2 gid [[thread_position_in_grid]])
-    {
-        float4 inColor = sampledColor(inTexture,outTexture,gid);
-        outTexture.write(inColor, gid);
-    }
-
     kernel void kernel_desaturate(texture2d<float, access::sample> inTexture [[texture(0)]],
                                   texture2d<float, access::write> outTexture [[texture(1)]],
                                   uint2 gid [[thread_position_in_grid]])
