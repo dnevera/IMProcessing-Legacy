@@ -16,12 +16,6 @@
 #include "IMPExif.h"
 #include "IMPJpegturbo.h"
 
-#else
-
-
 #endif
-
-#define IMPSTD_PASS_KERNEL "kernel_passthrough"
-#define IMPSTD_VIEW_KERNEL "kernel_view"
 
 #endif //IMProcessing_Bridging_Metal_h

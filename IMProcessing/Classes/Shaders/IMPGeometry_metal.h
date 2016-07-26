@@ -237,38 +237,6 @@ typedef struct {
 } VertexOut;
 
 
-/**
- * View rendering vertex
- */
-vertex VertexOut vertex_passview(
-                                 device VertexIn*   verticies [[ buffer(0) ]],
-                                 unsigned int        vid       [[ vertex_id ]]
-                                 ) {
-    VertexOut out;
-    
-    device VertexIn& v = verticies[vid];
-    
-    float3 position = float3(float2(v.position) , 0.0);
-    
-    out.position = float4(position, 1.0);
-    
-    out.texcoord = float2(v.texcoord);
-    
-    return out;
-}
-
-/**
- *  Pass through fragment
- *
- */
-fragment float4 fragment_passview(
-                                  VertexOut in [[ stage_in ]],
-                                  texture2d<float, access::sample> texture [[ texture(0) ]]
-                                  ) {
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
-    float3 rgb = texture.sample(s, in.texcoord).rgb;
-    return float4(rgb, 1.0);
-}
 #endif
 
 #endif

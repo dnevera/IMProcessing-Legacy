@@ -187,6 +187,7 @@
 		313B95431D465F310005821A /* IMPTransformModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTransformModel.swift; sourceTree = "<group>"; };
 		313B95441D465F310005821A /* IMPVertices.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPVertices.swift; sourceTree = "<group>"; };
 		313B95451D465F310005821A /* IMPWarpFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPWarpFilter.swift; sourceTree = "<group>"; };
+		31CFE52A1D47530400C15EC8 /* IMProcessing_metal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IMProcessing_metal.h; sourceTree = "<group>"; };
 		31E97DD11CCA1A88004560DF /* IMProcessing.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = IMProcessing.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		31E97DD21CCA1A88004560DF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -419,6 +420,7 @@
 				313B94A11D4658C00005821A /* IMPHistogramLayer_metal.h */,
 				313B94A21D4658C00005821A /* IMPRandomNoise_metal.h */,
 				313B94A31D4658C00005821A /* IMPStdlib_metal.h */,
+				31CFE52A1D47530400C15EC8 /* IMProcessing_metal.h */,
 				313B94A41D4658C00005821A /* IMPSwift-Bridging-Metal.h */,
 				313B94A51D4658C00005821A /* IMPVignette_metal.h */,
 			);
