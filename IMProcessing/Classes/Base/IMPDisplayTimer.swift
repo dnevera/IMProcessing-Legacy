@@ -59,10 +59,11 @@ public enum IMPTimingCurve: Float {
         var curveFunction:IMPMediaTimingFunction
         
         switch self {
+        case .Linear:
+            return {(t) in return t}
         case .Default:
             curveFunction = IMPMediaTimingFunction.Default
-        case .Linear:
-            curveFunction = IMPMediaTimingFunction.Linear
+            
         case .EaseIn:
             curveFunction = IMPMediaTimingFunction.EaseIn
         case .EaseOut:
@@ -173,14 +174,8 @@ public class IMPDisplayTimer:NSObject {
                 }
                 
                 self.timeElapsed +=  NSTimeInterval(duration)/NSTimeInterval(IMPRTTimer.nanos_per_sec)
-                
                 let atTime = (self.timeElapsed/self.duration).float
-                
-                let t = NSTimeInterval(self.timingFunction(t: atTime > 1 ? 1 : atTime))
-                
-                //dispatch_async(dispatch_get_main_queue()) {
-                    self.updateHandler(atTime:  t)
-                //}
+                self.updateHandler(atTime:  NSTimeInterval(self.timingFunction(t: atTime > 1 ? 1 : atTime)))
             })
             
             self.timer?.start()
@@ -201,4 +196,3 @@ public class IMPDisplayTimer:NSObject {
         }
     }
 }
-//#endif

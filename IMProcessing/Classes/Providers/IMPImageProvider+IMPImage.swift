@@ -17,43 +17,25 @@ public extension IMPExifOrientation{
 
 public extension IMPImageProvider{
     
-    public convenience init(context: IMPContext, image: IMPImage, maxSize: Float = 0) {
+    public convenience init(context: IMPContext, image: IMPImage, maxSize: Float = 0, orientation: IMPImageOrientation? = nil) {
         self.init(context: context)
-        self.update(image: image, maxSize: maxSize)
+        self.update(image: image, maxSize: maxSize, orientation: orientation)
     }
     
-    public func update(image image:IMPImage, maxSize: Float = 0){
-        texture = image.newTexture(context, maxSize: maxSize)
-        #if os(iOS)
-            self.orientation = image.imageOrientation
-            
-//            var orientation = IMPExifOrientationUp
-//            
-//            switch image.imageOrientation {
-//            case .Down:
-//                orientation = IMPExifOrientationLeft180
-//            case .DownMirrored:
-//                orientation = IMPExifOrientationVerticalFlipped
-//            case .Left:
-//                orientation = IMPExifOrientationLeft90
-//            case .LeftMirrored:
-//                orientation = IMPExifOrientationLeft90HorizontalFlipped
-//            case .Right:
-//                orientation = IMPExifOrientationRight90
-//            case .RightMirrored:
-//                orientation = IMPExifOrientationLeft90VertcalFlipped
-//            case .UpMirrored:
-//                orientation = IMPExifOrientationVerticalFlipped
-//            default:
-//                orientation = IMPExifOrientationUp
-//            }
-//            
-//            print(" image oriention = \(image.imageOrientation.rawValue), exif = \(orientation)")
-//            
-//            texture = transform(source!, orientation: orientation)
-//            
-//            self.orientation = .Up
-            
+    public func update(image image:IMPImage, maxSize: Float = 0, orientation: IMPImageOrientation? = nil){
+        #if os(OSX)
+            texture = image.newTexture(context, maxSize: maxSize)
+        #else 
+            if let source = image.newTexture(context, maxSize: maxSize){
+                if let orientation = orientation {
+                    texture = transform(source, orientation: orientation)
+                    self.orientation = orientation
+                }
+                else {
+                    texture = transform(source, orientation: image.imageOrientation)
+                    self.orientation = .Up
+                }
+            }
         #endif
         completeUpdate()
     }

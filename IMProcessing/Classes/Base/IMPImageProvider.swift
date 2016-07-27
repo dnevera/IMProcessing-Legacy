@@ -42,7 +42,7 @@ public extension IMPImageOrientation {
     // 88          88      88  88
     // 88          88  888888  888888
 
-    //                              EXIF orientation
+    //                                  EXIF orientation
     //    case Up             // 0, < - (1), default orientation
     //    case Down           // 1, < - (3), UIImage, 180 deg rotation
     //    case Left           // 2, < - (8), UIImage, 90 deg CCW
@@ -55,23 +55,48 @@ public extension IMPImageOrientation {
     init?(exifValue: IMPImageOrientation.RawValue) {
         switch exifValue {
         case 1:
-            self.init(rawValue: IMPImageOrientation.Up.rawValue)
+            self.init(rawValue: IMPImageOrientation.Up.rawValue)            // IMPExifOrientationUp
         case 2:
-            self.init(rawValue: IMPImageOrientation.UpMirrored.rawValue)
+            self.init(rawValue: IMPImageOrientation.UpMirrored.rawValue)    // IMPExifOrientationHorizontalFlipped
         case 3:
-            self.init(rawValue: IMPImageOrientation.Down.rawValue)
+            self.init(rawValue: IMPImageOrientation.Down.rawValue)          // IMPExifOrientationLeft180
         case 4:
-            self.init(rawValue: IMPImageOrientation.DownMirrored.rawValue)
+            self.init(rawValue: IMPImageOrientation.DownMirrored.rawValue)  // IMPExifOrientationVerticalFlipped
         case 5:
-            self.init(rawValue: IMPImageOrientation.LeftMirrored.rawValue)
+            self.init(rawValue: IMPImageOrientation.LeftMirrored.rawValue)  // IMPExifOrientationLeft90VertcalFlipped
         case 6:
-            self.init(rawValue: IMPImageOrientation.Right.rawValue)
+            self.init(rawValue: IMPImageOrientation.Right.rawValue)         // IMPExifOrientationLeft90
         case 7:
-            self.init(rawValue: IMPImageOrientation.RightMirrored.rawValue)
+            self.init(rawValue: IMPImageOrientation.RightMirrored.rawValue) // IMPExifOrientationLeft90HorizontalFlipped
         case 8:
-            self.init(rawValue: IMPImageOrientation.Left.rawValue)
+            self.init(rawValue: IMPImageOrientation.Left.rawValue)          // IMPExifOrientationRight90
         default:
             self.init(rawValue: IMPImageOrientation.Up.rawValue)
+        }
+    }
+}
+
+public extension IMPExifOrientation {
+    init?(imageOrientationValue: IMPImageOrientation) {
+        switch imageOrientationValue {
+        case .Up:
+            self.init(rawValue: IMPExifOrientationUp.rawValue)
+        case .UpMirrored:
+            self.init(rawValue: IMPExifOrientationHorizontalFlipped.rawValue)
+        case .Down:
+            self.init(rawValue: IMPExifOrientationLeft180.rawValue)
+        case .DownMirrored:
+            self.init(rawValue: IMPExifOrientationVerticalFlipped.rawValue)
+        case .LeftMirrored:
+            self.init(rawValue: IMPExifOrientationLeft90VertcalFlipped.rawValue)
+        case .Right:
+            self.init(rawValue: IMPExifOrientationLeft90.rawValue)
+        case .RightMirrored:
+            self.init(rawValue: IMPExifOrientationLeft90HorizontalFlipped.rawValue)
+        case .Left:
+            self.init(rawValue: IMPExifOrientationRight90.rawValue)
+        default:
+            self.init(rawValue: IMPExifOrientationUp.rawValue)
         }
     }
 }
@@ -175,11 +200,8 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                 guard let pipeline = graphics.pipeline else {return}
                 
                 newTexture(source, width: Int(source.width.float*scale), height: Int(source.height.float*scale))
-                //newTexture(source, width: source.width, height: source.height)
                 
                 guard let newTexure = texture else {return}
-                
-                //transformer.scale = float3(scale,scale,1)
                 
                 context.execute(complete: true) { (commandBuffer) in
                     self.transformer.render(commandBuffer, pipelineState: pipeline, source: source, destination: newTexure)
@@ -351,6 +373,73 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         }
         
         return texture
+    }
+    
+    internal func transform(source:MTLTexture, orientation:IMPImageOrientation) -> MTLTexture? {
+        
+        guard let pipeline = graphics.pipeline else {return nil}
+        
+        var width  = source.width
+        var height = source.height
+        
+        
+        func swapSize() {
+            width  = source.height
+            height = source.width
+        }
+        
+        switch orientation {
+            
+        case .UpMirrored:
+            transformer.reflectMode = (horizontal:.None, vertical:.Mirroring)
+            
+        case .Down:
+            transformer.angle = IMPTransfromModel.degrees180
+
+        case .DownMirrored:
+            transformer.angle = IMPTransfromModel.degrees180
+            transformer.reflectMode = (horizontal:.Mirroring, vertical:.None)
+
+        case .Left:
+            transformer.angle = IMPTransfromModel.left
+
+        case .LeftMirrored:
+            transformer.angle = IMPTransfromModel.left
+            transformer.reflectMode = (horizontal:.None, vertical:.Mirroring)
+
+        case .Right:
+            transformer.angle = IMPTransfromModel.right
+
+        case .RightMirrored:
+            transformer.angle = IMPTransfromModel.right
+            transformer.reflectMode = (horizontal:.None, vertical:.Mirroring)
+            
+        default:
+            return source
+        }
+        
+        
+        if width != texture?.width || height != texture?.height{
+            let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
+                source.pixelFormat,
+                width: width, height: height,
+                mipmapped: false)
+            
+            if texture != nil {
+                texture?.setPurgeableState(.Empty)
+            }
+            
+            texture = self.context.device.newTextureWithDescriptor(descriptor)
+        }
+        
+        guard let destination = texture else { return nil}
+        
+        context.execute(complete: true) { (commandBuffer) in
+            self.transformer.render(commandBuffer, pipelineState: pipeline, source: source, destination: destination)
+        }
+        
+        return texture
+
     }
     
     internal lazy var graphics:IMPGraphics = {
