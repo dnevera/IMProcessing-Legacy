@@ -59,7 +59,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 _destination.orientation =  s.orientation
             }
             executeNewSourceObservers(source)
-            dirty = true
+            if !dirty {
+                dirty = true
+            }
         }
     }
     
@@ -87,25 +89,53 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public var dirty:Bool{
-        set(newDirty){
+    public var _dirty:Bool = false
+
+    public var dirty:Bool {
+        get {return _dirty }
+        
+        set(newValue){
             
-            context.dirty = newDirty
+            _dirty = newValue
+
             
-            for f in filterList{
-                f.dirty = newDirty
+            if let r = _root {
+                if r.dirty != newValue {
+                    r.dirty = newValue
+                }
             }
             
-            if newDirty == true /*&& context.dirty != true*/ {
+            for f in filterList{
+                if f.dirty != newValue {
+                    f.dirty = newValue
+                }
+            }
+            
+            if newValue == true {
                 for o in dirtyHandlers{
                     o()
                 }
             }
+        
         }
         
-        get{
-            return  context.dirty
-        }
+//        set(newDirty){
+//            
+//            context.dirty = newDirty
+//            
+//            for f in filterList{
+//                f.dirty = newDirty
+//            }
+//            
+//            if newDirty == true  /*&& context.dirty != true*/ {
+//                for o in dirtyHandlers{
+//                    o()
+//                }
+//            }
+//        }
+//        get{
+//            return  context.dirty
+//        }
     }
     
     required public init(context: IMPContext) {
@@ -144,7 +174,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     func updateNewFilterHandlers(filter:IMPFilter)  {
-        filter._root = self
+        //filter._root = self
         for o in dirtyHandlers{
             filter.addDirtyObserver(o)
         }
@@ -158,6 +188,13 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     public final func addFilter(filter:IMPFilter){
+        if filter._root != nil {
+            fatalError("\(filter) already added to \(filter._root)")
+            return
+        }
+
+        filter._root = self
+        
         if filterList.contains(filter) == false {
             filterList.append(filter)
             updateNewFilterHandlers(filter)
@@ -165,6 +202,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     public final func removeFilter(filter:IMPFilter){
+        filter._root = nil
         if let index = filterList.indexOf(filter) {
             removeFilterHandlers(filterList.removeAtIndex(index) as IMPFilter)
         }
@@ -177,6 +215,13 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     public final func insertFilter(filter:IMPFilter, index:Int){
+        
+        if filter._root != nil {
+            fatalError("\(filter) already added to \(filter._root)")
+            return
+        }
+        
+        filter._root = root
         if filterList.contains(filter) == false {
             var i = index
             if i >= filterList.count {
@@ -188,6 +233,13 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     public final func insertFilter(filter:IMPFilter, before:IMPFilter){
+        if filter._root != nil {
+            fatalError("\(filter) already added to \(filter._root)")
+            return
+        }
+
+        filter._root = self
+        
         if filterList.contains(filter) == false {
             if let index = filterList.indexOf(before) {
                 filterList.insert(filter, atIndex: index)
@@ -359,8 +411,8 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             //
             for filter in filterList {
                 filter.source = currrentProvider
-                currentFilter = filter
-                currrentProvider = currentFilter.destination!
+                //currentFilter = filter
+                currrentProvider = filter.destination!
             }
         }
         

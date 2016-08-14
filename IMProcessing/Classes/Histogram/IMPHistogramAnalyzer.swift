@@ -402,13 +402,15 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     lazy var _vImage_hist:UnsafeMutablePointer<_vImagePointer> = UnsafeMutablePointer<_vImagePointer>(self._vImage_rgba)
     
     public func executeSolverObservers(texture:MTLTexture) {
-        for s in solvers {
-            let size = CGSizeMake(CGFloat(texture.width), CGFloat(texture.height))
-            s.analizerDidUpdate(self, histogram: self.histogram, imageSize: size)
-        }
-        
-        for o in analizerUpdateHandlers{
-            o(histogram: histogram)
+        if observersEnabled {
+            for s in solvers {
+                let size = CGSizeMake(CGFloat(texture.width), CGFloat(texture.height))
+                s.analizerDidUpdate(self, histogram: self.histogram, imageSize: size)
+            }
+            
+            for o in analizerUpdateHandlers{
+                o(histogram: histogram)
+            }
         }
     }
     

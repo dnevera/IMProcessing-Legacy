@@ -201,5 +201,5 @@ public class IMPContext {
     ///
     /// Dirty-trigger should be set when inherits object change stat of theirs processing
     ///
-    public var dirty:Bool = true
+    //public var dirty:Bool = true
 }
