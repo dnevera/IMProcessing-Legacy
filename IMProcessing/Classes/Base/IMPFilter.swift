@@ -21,6 +21,17 @@ public protocol IMPFilterProtocol:IMPContextProvider {
     func apply() -> IMPImageProvider
 }
 
+
+private extension Array {
+    mutating func swap(ind1: Int, _ ind2: Int){
+        var temp: Element
+        temp = self[ind1]
+        self[ind1] = self[ind2]
+        self[ind2] = temp
+    }
+    
+}
+
 public class IMPFilter: NSObject,IMPFilterProtocol {
     
     public typealias SourceHandler = ((source:IMPImageProvider) -> Void)
@@ -36,6 +47,14 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     public var context:IMPContext!
+    
+    public var snapshotEnabled = false {
+        didSet{
+            if snapshotEnabled == false {
+                dirty = true
+            }
+        }
+    }
     
     public var enabled = true {
         didSet{
@@ -92,18 +111,22 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     public var _dirty:Bool = false
 
     public var dirty:Bool {
+        
         get {return _dirty }
         
         set(newValue){
-            
-            _dirty = newValue
-
+        
+            if snapshotEnabled && _destination.texture != nil {
+                return
+            }
             
             if let r = _root {
                 if r.dirty != newValue {
                     r.dirty = newValue
                 }
             }
+
+            _dirty = newValue
             
             for f in filterList{
                 if f.dirty != newValue {
@@ -175,9 +198,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     
     func updateNewFilterHandlers(filter:IMPFilter)  {
         //filter._root = self
-        for o in dirtyHandlers{
-            filter.addDirtyObserver(o)
-        }
+        //for o in dirtyHandlers{
+        //    filter.addDirtyObserver(o)
+        //}
         dirty = true
     }
     
@@ -211,6 +234,15 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     public final func removeFromStack() {
         if _root != nil {
             _root?.removeFilter(self)
+        }
+    }
+    
+    public final func swapFilters(first first:IMPFilter, second:IMPFilter){
+        if let index1 = filterList.indexOf(first) {
+            if let index2 = filterList.indexOf(second){
+                filterList.swap(index1, index2)
+                dirty = true
+            }
         }
     }
     
@@ -271,9 +303,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     
     public final func addDirtyObserver(observer:DirtyHandler){
         dirtyHandlers.append(observer)
-        for f in filterList{
-            f.addDirtyObserver(observer)
-        }
+        //for f in filterList{
+        //    f.addDirtyObserver(observer)
+        //}
     }
     
     public func configure(function:IMPFunction, command:MTLComputeCommandEncoder){}
@@ -306,8 +338,6 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    var passThroughKernel:IMPFunction?
-    
     public func apply() -> IMPImageProvider {
         return doApply()
     }
@@ -316,12 +346,12 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
 
         var width  = input.width
         var height = input.height
-        
-        if let s = self.destinationSize {
+
+        if let s = destinationSize {
             width = s.width
             height = s.height
         }
-
+        
         if provider.texture?.width != width || provider.texture?.height != height
             ||
         provider === source
@@ -337,7 +367,6 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             return (context.device.newTextureWithDescriptor(descriptor), width, height)
         }
         else {
-
             return (provider.texture!, provider.texture!.width, provider.texture!.height)
         }
     }
@@ -364,6 +393,8 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 
                 provider.texture = texture
                 
+               // print("\n newDestinationtexture[\(self)] size = \(provider.texture?.size, width,height)")
+
                 if let output = provider.texture {
                     
                     //
@@ -424,6 +455,10 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }()
 
     func doApply() -> IMPImageProvider {
+        
+        if snapshotEnabled && _destination.texture != nil {
+            return _destination
+        }
         
         if let s = self.source{
             if dirty {
