@@ -78,9 +78,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 _destination.orientation =  s.orientation
             }
             executeNewSourceObservers(source)
-            if !dirty {
+            //if !dirty {
                 dirty = true
-            }
+            //}
         }
     }
     
@@ -198,9 +198,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     
     func updateNewFilterHandlers(filter:IMPFilter)  {
         //filter._root = self
-        //for o in dirtyHandlers{
-        //    filter.addDirtyObserver(o)
-        //}
+        for o in dirtyHandlers{
+            filter.addDirtyObserver(o)
+        }
         dirty = true
     }
     
@@ -303,9 +303,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     
     public final func addDirtyObserver(observer:DirtyHandler){
         dirtyHandlers.append(observer)
-        //for f in filterList{
-        //    f.addDirtyObserver(observer)
-        //}
+        for f in filterList{
+            f.addDirtyObserver(observer)
+        }
     }
     
     public func configure(function:IMPFunction, command:MTLComputeCommandEncoder){}
