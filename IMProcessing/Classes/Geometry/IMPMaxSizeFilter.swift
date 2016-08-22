@@ -14,6 +14,7 @@ public class IMPMaxSizeFilter: IMPFilter {
     
     public required init(context: IMPContext) {
         super.init(context: context)
+        addFunction(IMPFunction(context: context, name: "kernel_passthrough"))
         addSourceObserver { (source) -> Void in
             if self.size != nil {
                 if let sz = source.texture?.cgsize {
