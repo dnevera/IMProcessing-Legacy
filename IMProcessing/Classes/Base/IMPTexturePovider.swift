@@ -21,6 +21,13 @@ public extension IMPTextureProvider {
     public var depth:Int? { return texture?.depth }
 }
 
+public extension IMPTextureProvider {
+    public var label:String? {
+        set { texture?.label = newValue }
+        get { return texture?.label}
+    }
+}
+
 public extension MTLDevice {
     
     public func texture1D(buffer:[Float]) -> MTLTexture {
