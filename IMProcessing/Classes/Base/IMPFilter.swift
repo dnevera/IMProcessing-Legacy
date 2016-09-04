@@ -76,11 +76,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             if let s = source{
                 s.filter=self
                 _destination.orientation =  s.orientation
-            }
-            executeNewSourceObservers(source)
-            //if !dirty {
+                executeNewSourceObservers(source)
                 dirty = true
-            //}
+            }
         }
     }
     
@@ -490,6 +488,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         for f in filterList {
             f.flush()
         }
+        _destination.texture?.setPurgeableState(.Empty)
         _destination.texture = nil
         source = nil
     }
