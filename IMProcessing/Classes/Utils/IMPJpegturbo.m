@@ -171,14 +171,14 @@ static GLOBAL(void) jpeg_mem_dest_dp(j_compress_ptr cinfo, NSData* data)
      * jpeg_read_header(), so we do nothing here.
      */
     
-    float scale = 1.0;
+    float scale = 16.0;
     
-    if (maxSize>0.0 && maxSize<fmin(cinfo.image_width,cinfo.image_height) ) {
-        scale = fmin(maxSize/cinfo.image_width,maxSize/cinfo.image_height) ;
+    if (maxSize>0.0 && maxSize<fmax(cinfo.image_width,cinfo.image_height) ) {
+        scale = (fmin((float)(maxSize)/(float)(cinfo.image_width),(float)(maxSize)/(float)(cinfo.image_height))) * 16 ;
     }
     
-    cinfo.scale_num   = scale<1.0f?1:scale;
-    cinfo.scale_denom = scale<1.0f?(unsigned int)floor(1.0f/scale):1;
+    cinfo.scale_num   = scale<1.0f?16:scale;
+    cinfo.scale_denom = 16; //scale<1.0f?(unsigned int)floor(scale/8.0):1;
     
     /* Step 5: Start decompressor */
     

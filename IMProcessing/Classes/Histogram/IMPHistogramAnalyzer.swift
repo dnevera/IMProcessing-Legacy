@@ -244,17 +244,13 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     }
     
     func applyKernel(texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer, commandBuffer:MTLCommandBuffer) {
-        #if os(iOS)
-            var blitEncoder = commandBuffer.blitCommandEncoder()
-            blitEncoder.fillBuffer(buffer, range: NSMakeRange(0, buffer.length), value: 0)
-            blitEncoder.endEncoding()
-        #else
-            var blitEncoder = commandBuffer.blitCommandEncoder()
+
+        var blitEncoder = commandBuffer.blitCommandEncoder()
+        #if os(OSX)
             blitEncoder.synchronizeResource(texture)
-            blitEncoder.fillBuffer(buffer, range: NSMakeRange(0, buffer.length), value: 0)
-            blitEncoder.endEncoding()
-//            memset(buffer.contents(), 0, buffer.length)
         #endif
+        blitEncoder.fillBuffer(buffer, range: NSMakeRange(0, buffer.length), value: 0)
+        blitEncoder.endEncoding()
         
         let commandEncoder = commandBuffer.computeCommandEncoder()
         
@@ -460,7 +456,7 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
             
             executeSolverObservers(texture)
         }
-        
+    
         return source!
     }
 }

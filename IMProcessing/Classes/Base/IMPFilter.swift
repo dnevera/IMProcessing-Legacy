@@ -13,6 +13,29 @@
 #endif
 import Metal
 
+
+public func report_memory() -> String {
+    var info = task_basic_info()
+    var count = mach_msg_type_number_t(sizeofValue(info))/4
+    
+    let kerr: kern_return_t = withUnsafeMutablePointer(&info) {
+        
+        task_info(mach_task_self_,
+                  task_flavor_t(TASK_BASIC_INFO),
+                  task_info_t($0),
+                  &count)
+        
+    }
+    
+    if kerr == KERN_SUCCESS {
+        return "\(info.resident_size/1024/1024)Mb, \(info.virtual_size/1024/1024)Mb)"
+    }
+    else {
+        return "Error with task_info(): " + (String.fromCString(mach_error_string(kerr)) ?? "unknown error")
+    }
+}
+
+
 public protocol IMPFilterProtocol:IMPContextProvider {
     var source:IMPImageProvider? {get set}
     var destination:IMPImageProvider? {get}
@@ -391,8 +414,6 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 
                 provider.texture = texture
                 
-               // print("\n newDestinationtexture[\(self)] size = \(provider.texture?.size, width,height)")
-
                 if let output = provider.texture {
                     
                     //
@@ -440,7 +461,6 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             //
             for filter in filterList {
                 filter.source = currrentProvider
-                //currentFilter = filter
                 currrentProvider = filter.destination!
             }
         }
@@ -461,16 +481,6 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         if let s = self.source{
             if dirty {
                 
-                if functionList.count == 0 && filterList.count == 0 {
-                    
-                    //
-                    // copy source to destination
-                    //
-                    
-                    //passThroughKernel = passThroughKernel ?? IMPFunction(context: self.context, name: IMPSTD_PASS_KERNEL)
-                    //addFunction(passThroughKernel!)
-                }
-                
                 executeSourceObservers(source)
                 
                 _destination = internal_main(source:  s, destination: _destination)
@@ -480,7 +490,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
         
         dirty = false
-        
+    
         return _destination
     }
 
