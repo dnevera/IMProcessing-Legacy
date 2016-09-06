@@ -249,6 +249,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
             texture?.setPurgeableState(.Empty)
         }
         texture = nil
+        videoCache.flush()
     }
     
     func copyTexture() -> MTLTexture? {

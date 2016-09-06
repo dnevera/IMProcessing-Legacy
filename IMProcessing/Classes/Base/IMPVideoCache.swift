@@ -30,11 +30,12 @@ public class IMPVideoTextureCache {
         }
     }
     
-    var videoTextureCache: Unmanaged<CVMetalTextureCache>?
+    var videoTextureCache: Unmanaged<CVMetalTextureCache>? = nil
     
     deinit {
         if videoTextureCache != nil {
             videoTextureCache?.release()
+            videoTextureCache = nil
         }
     }
 }

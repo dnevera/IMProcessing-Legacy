@@ -382,7 +382,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 width: width, height: height, mipmapped: false)
             
             if provider.texture != nil {
-                provider.texture?.setPurgeableState(MTLPurgeableState.Empty)
+                provider.texture?.setPurgeableState(.Empty)
             }
             
             return (context.device.newTextureWithDescriptor(descriptor), width, height)
@@ -401,6 +401,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         var currentFilter = self
         
         var currrentProvider:IMPImageProvider = source
+        var previouseTexture:MTLTexture? = nil
 
         if var input = source.texture {
             
@@ -444,7 +445,12 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                             
                         }
                         
-                            input = output
+                        previouseTexture = input
+                        input = output
+                        
+                        if previouseTexture !== source.texture {
+                            previouseTexture?.setPurgeableState(.Volatile)
+                        }
                     }
                     
                     currrentProvider = provider
@@ -459,9 +465,12 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             //
             // Filter chains...
             //
+            var previousProvider:IMPImageProvider? = nil
             for filter in filterList {
                 filter.source = currrentProvider
+                previousProvider = currrentProvider
                 currrentProvider = filter.destination!
+                previousProvider?.texture?.setPurgeableState(.Volatile)
             }
         }
         

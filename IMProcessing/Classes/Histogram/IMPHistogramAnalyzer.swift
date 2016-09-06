@@ -301,8 +301,8 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         histogram.update(data: buffer.contents())
     }
     
-    private var analizeTexture:MTLTexture?
-    private var imageBuffer:MTLBuffer?
+    private var analizeTexture:MTLTexture? = nil
+    private var imageBuffer:MTLBuffer? = nil
     
     func applyVImageKernel(texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer!) {
         
@@ -456,7 +456,10 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
             
             executeSolverObservers(texture)
         }
-    
+        
+        self.analizeTexture?.setPurgeableState(.Empty)
+        self.imageBuffer?.setPurgeableState(.Volatile)
+        
         return source!
     }
 }
