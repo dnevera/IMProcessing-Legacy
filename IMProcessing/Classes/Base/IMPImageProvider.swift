@@ -250,7 +250,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         }
         texture = nil
         videoCache.flush()
-    }
+        }
     
     func copyTexture() -> MTLTexture? {
         
