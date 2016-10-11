@@ -148,31 +148,25 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         filter?.dirty = true
     }
     
-    public func rotateLeft() {
+    public func rotate(degrees degrees:float3){
         if let source = copyTexture() {
             transformation(source, width: source.height, height: source.width,
-                           angle: IMPTransfromModel.left,
+                           angle: degrees,
                            reflectMode: (horizontal: .None, vertical: .None)
             )
         }
+    }
+    
+    public func rotateLeft() {
+        rotate(degrees: IMPTransfromModel.left)
     }
 
     public func rotateRight() {
-        if let source = copyTexture() {
-            transformation(source, width: source.height, height: source.width,
-                           angle: IMPTransfromModel.right,
-                           reflectMode: (horizontal: .None, vertical: .None)
-            )
-        }
+        rotate(degrees: IMPTransfromModel.right)
     }
 
     public func rotate180() {
-        if let source = copyTexture() {
-            transformation(source, width: source.width, height: source.height,
-                           angle: IMPTransfromModel.degrees180,
-                           reflectMode: (horizontal: .None, vertical: .None)
-            )
-        }
+        rotate(degrees: IMPTransfromModel.degrees180)
     }
 
     public func reflectHorizontal() {
