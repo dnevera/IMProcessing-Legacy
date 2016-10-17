@@ -45,6 +45,8 @@ public struct IMPTransfromModel{
     public static let left       = float3(0,0,-90.float.radians)
     public static let right      = float3(0,0,90.float.radians)
     public static let degrees180 = float3(0,0,180.float.radians)
+    public static let plus270    = float3(0,0,270.float.radians)
+    public static let minus270   = float3(0,0,-270.float.radians)
     public static let right45    = float3(0,0,45.float.radians)
     public static let left45     = float3(0,0,-45.float.radians)
 
