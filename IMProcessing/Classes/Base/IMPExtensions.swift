@@ -138,6 +138,24 @@ public extension IMPRegion{
                          top:   top.lerp(   final: final.top,   t: t),
                          bottom:bottom.lerp(final: final.bottom,t: t) )
     }
+    
+    public init(region rect: NSRect, inbox box:NSRect) {
+        left   = Float((rect.origin.x - box.origin.x)/box.size.width)
+        top    = Float((rect.origin.y - box.origin.y)/box.size.height)
+        
+        right  = Float((box.size.width + box.origin.x) - (rect.size.width + rect.origin.x))/Float(box.size.width)
+        bottom = Float((box.size.height + box.origin.y) - (rect.size.height + rect.origin.y))/Float(box.size.height)
+    }
+}
+
+public extension NSRect {
+    public  init(region region:IMPRegion, inbox box:NSRect) {
+        self = NSRect()
+        self.origin.x = box.size.width * region.left.cgfloat + box.origin.x
+        self.origin.y = box.size.height * region.top.cgfloat + box.origin.y
+        self.size.width = box.size.width - box.size.width * region.right.cgfloat - origin.x + box.origin.x
+        self.size.height = box.size.height - box.size.height * region.bottom.cgfloat - origin.y + box.origin.y
+    }
 }
 
 public func + (left:IMPRegion, right:IMPRegion) -> IMPRegion {
