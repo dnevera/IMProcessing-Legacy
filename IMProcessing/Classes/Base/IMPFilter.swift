@@ -472,7 +472,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 previousProvider = currrentProvider
                 currrentProvider = filter.destination!
                 if index < filterList.count - 1 {
-                    previousProvider?.texture?.setPurgeableState(.Volatile)
+                    //previousProvider?.texture?.setPurgeableState(.Volatile)
                 }
             }
         }
