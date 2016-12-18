@@ -457,8 +457,8 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
             executeSolverObservers(texture)
         }
         
-        self.analizeTexture?.setPurgeableState(.Empty)
-        self.imageBuffer?.setPurgeableState(.Volatile)
+        //self.analizeTexture?.setPurgeableState(.Empty)
+        //self.imageBuffer?.setPurgeableState(.Volatile)
         
         return source!
     }

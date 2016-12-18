@@ -227,7 +227,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
     func newTexture(source:MTLTexture, width:Int, height:Int){
         
         if texture != nil {
-            texture?.setPurgeableState(.Empty)
+            texture?.setPurgeableState(.Volatile)
         }
         
         let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
@@ -244,7 +244,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         }
         texture = nil
         videoCache.flush()
-        }
+    }
     
     func copyTexture() -> MTLTexture? {
         
@@ -355,7 +355,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                 mipmapped: false)
             
             if texture != nil {
-                texture?.setPurgeableState(.Empty)
+                texture?.setPurgeableState(.Volatile)
             }
             
             texture = self.context.device.newTextureWithDescriptor(descriptor)
@@ -421,7 +421,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                 mipmapped: false)
             
             if texture != nil {
-                texture?.setPurgeableState(.Empty)
+                texture?.setPurgeableState(.Volatile)
             }
             
             texture = self.context.device.newTextureWithDescriptor(descriptor)

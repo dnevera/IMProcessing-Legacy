@@ -137,7 +137,7 @@ public class IMPContext {
     ///  - parameter closure: execution context
     ///
     public final func execute(complete complete :Bool = false, closure: IMPContextExecution) {
-        //dispatch_sync(dispatchQueue) { () -> Void in
+       //dispatch_sync(dispatchQueue) { () -> Void in
             if let commandBuffer = self.commandBuffer {
                 autoreleasepool { () -> () in
                     closure(commandBuffer: commandBuffer)
@@ -148,7 +148,7 @@ public class IMPContext {
                     }
                 }
             }
-        //}
+       // }
     }
     
     /// Get the maximum supported devices texture size.
