@@ -64,6 +64,14 @@ public class IMPContext {
     /// Current device is used in the current context
     public let device:MTLDevice! = MTLCreateSystemDefaultDevice()
     
+    public var coreImage:CIContext? {
+        if #available(iOS 9.0, *) {
+            return _ciContext
+        } else {
+            return nil
+        }
+    }
+    
     /// Current command queue uses the current device
     public let commandQueue:MTLCommandQueue?
     
@@ -116,6 +124,9 @@ public class IMPContext {
             fatalError("The system does not support any MTL devices...")
         }
     }
+    
+    @available(iOS 9.0, *)
+    lazy var _ciContext:CIContext = CIContext(MTLDevice: self.device)
     
     public lazy var supportsGPUv2:Bool = {
         #if os(iOS)

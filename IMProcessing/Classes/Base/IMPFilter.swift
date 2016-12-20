@@ -187,12 +187,14 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     private var functionList:[IMPFunction] = [IMPFunction]()
-    private var filterList:[IMPFilter] = [IMPFilter]()
     private var newSourceObservers:[SourceHandler] = [SourceHandler]()
     private var sourceObservers:[SourceHandler] = [SourceHandler]()
     private var destinationObservers:[DestinationHandler] = [DestinationHandler]()
     private var dirtyHandlers:[DirtyHandler] = [DirtyHandler]()
     
+    private var filterList:[IMPFilter] = [IMPFilter]()
+    private var coreImageFilterList:[CIFilter] = [CIFilter]()
+
     public final func addFunction(function:IMPFunction){
         if functionList.contains(function) == false {
             functionList.append(function)
@@ -252,6 +254,21 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
+    
+    public final func addFilter(ciFilter filter:CIFilter){
+        if coreImageFilterList.contains(filter) == false {
+            coreImageFilterList.append(filter)
+            dirty = true
+        }
+    }
+    
+    public final func removeFilter(ciFilter filter:CIFilter){
+        if let index = coreImageFilterList.indexOf(filter) {
+            coreImageFilterList.removeAtIndex(index)
+            dirty = true
+        }
+    }
+
     public final func removeFromStack() {
         if _root != nil {
             _root?.removeFilter(self)
@@ -475,10 +492,73 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                     //previousProvider?.texture?.setPurgeableState(.Volatile)
                 }
             }
+            
+            if #available(iOS 9.0, *) {
+                
+                if coreImageFilterList.count > 0 {
+                    
+                    guard let t = currrentProvider.texture else {
+                        return currrentProvider
+                    }
+                    
+                    
+                    //
+                    // create core image from current texture
+                    //
+                    var inputImage = CIImage(MTLTexture: t, options: nil)
+                    
+                    //
+                    // apply CIFilter chains
+                    //
+                    for filter in coreImageFilterList {
+                        filter.setValue(inputImage, forKey: kCIInputImageKey)
+                        inputImage = filter.outputImage!
+                    }
+                    
+                    let imageSize = inputImage.extent.size
+                    
+                    //
+                    // render image to texture back
+                    //
+                    self.context.execute{ (commandBuffer) in
+                        
+                        var width  = Int(imageSize.width)
+                        var height = Int(imageSize.height)
+                        
+                        //
+                        // prepare new texture
+                        //
+                        if currrentProvider.texture?.width != width || currrentProvider.texture?.height != height
+                        {
+                            let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
+                                input.pixelFormat,
+                                width: width, height: height, mipmapped: false)
+                            
+                            if currrentProvider.texture != nil {
+                                currrentProvider.texture?.setPurgeableState(.Volatile)
+                            }
+                            
+                            currrentProvider.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                        }
+                        
+                        
+                        //
+                        // render image to new texture
+                        //
+                        self.context.coreImage?.render(inputImage,
+                            toMTLTexture: currrentProvider.texture!,
+                            commandBuffer: commandBuffer,
+                            bounds: inputImage.extent,
+                            colorSpace: self.colorSpace)
+                    }
+                }
+            }
         }
         
         return  currrentProvider
     }
+    
+    let colorSpace = CGColorSpaceCreateDeviceRGB()!
     
     private lazy var _destination:IMPImageProvider = {
         return IMPImageProvider(context: self.context)
