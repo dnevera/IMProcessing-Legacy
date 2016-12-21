@@ -140,8 +140,8 @@ public extension IMPRegion{
     }
     
     public init(region rect: NSRect, inbox box:NSRect) {
-        left   = Float((rect.origin.x - box.origin.x)/box.size.width)
-        top    = Float((rect.origin.y - box.origin.y)/box.size.height)
+        left   = Float((-box.origin.x + rect.origin.x)/box.size.width)
+        top    = Float((-box.origin.y + rect.origin.y)/box.size.height)
         
         right  = Float((box.size.width + box.origin.x) - (rect.size.width + rect.origin.x))/Float(box.size.width)
         bottom = Float((box.size.height + box.origin.y) - (rect.size.height + rect.origin.y))/Float(box.size.height)

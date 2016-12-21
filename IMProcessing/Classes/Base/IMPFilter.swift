@@ -398,7 +398,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 input.pixelFormat,
                 width: width, height: height, mipmapped: false)
             
-            if provider.texture != nil {
+            if provider.texture != nil && provider.texture !== source {
                 provider.texture?.setPurgeableState(.Volatile)
             }
             
@@ -417,7 +417,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         
         var currentFilter = self
         
-        var currrentProvider:IMPImageProvider = source
+        var currrentProvider:IMPImageProvider? = nil  //= source
         var previouseTexture:MTLTexture? = nil
 
         if var input = source.texture {
@@ -466,7 +466,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                         input = output
                         
                         if previouseTexture !== source.texture {
-                            previouseTexture?.setPurgeableState(.Volatile)
+                            //previouseTexture?.setPurgeableState(.Volatile)
                         }
                     }
                     
@@ -475,7 +475,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             }
             
             
-            if let p = main(source: currrentProvider, destination: provider) {
+            if let p = main(source: currrentProvider == nil ? source : currrentProvider!, destination: provider) {
                 currrentProvider = p
             }
             
@@ -485,8 +485,8 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             var previousProvider:IMPImageProvider? = nil
             let index = 0
             for filter in filterList {
-                filter.source = currrentProvider
-                previousProvider = currrentProvider
+                filter.source = currrentProvider == nil ? source : currrentProvider!
+                previousProvider = currrentProvider == nil ? source : currrentProvider!
                 currrentProvider = filter.destination!
                 if index < filterList.count - 1 {
                     //previousProvider?.texture?.setPurgeableState(.Volatile)
@@ -497,8 +497,8 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 
                 if coreImageFilterList.count > 0 {
                     
-                    guard let t = currrentProvider.texture else {
-                        return currrentProvider
+                    guard let t = currrentProvider?.texture == nil ? source.texture! : currrentProvider?.texture! else {
+                        return source
                     }
                     
                     
@@ -528,17 +528,19 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                         //
                         // prepare new texture
                         //
-                        if currrentProvider.texture?.width != width || currrentProvider.texture?.height != height
+                        if currrentProvider?.texture?.width != width || currrentProvider?.texture?.height != height
                         {
                             let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
                                 input.pixelFormat,
                                 width: width, height: height, mipmapped: false)
                             
-                            if currrentProvider.texture != nil {
-                                currrentProvider.texture?.setPurgeableState(.Volatile)
+                            if currrentProvider?.texture != nil {
+                                currrentProvider?.texture?.setPurgeableState(.Volatile)
                             }
                             
-                            currrentProvider.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                            currrentProvider = IMPImageProvider(context: self.context)
+                            
+                            currrentProvider?.texture = self.context.device.newTextureWithDescriptor(descriptor)
                         }
                         
                         
@@ -546,7 +548,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                         // render image to new texture
                         //
                         self.context.coreImage?.render(inputImage,
-                            toMTLTexture: currrentProvider.texture!,
+                            toMTLTexture: currrentProvider!.texture!,
                             commandBuffer: commandBuffer,
                             bounds: inputImage.extent,
                             colorSpace: self.colorSpace)
@@ -555,7 +557,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             }
         }
         
-        return  currrentProvider
+        return  currrentProvider == nil ? source : currrentProvider!
     }
     
     let colorSpace = CGColorSpaceCreateDeviceRGB()!
