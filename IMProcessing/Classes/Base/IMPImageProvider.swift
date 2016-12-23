@@ -149,8 +149,25 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
     }
     
     public func rotate(degrees degrees:float3){
+        
+        if degrees == float3(0) {
+            return
+        }
+        
         if let source = copyTexture() {
-            transformation(source, width: source.height, height: source.width,
+            
+            var w = source.width
+            var h = source.height
+            
+            if fabs(fabs(degrees.z) - M_PI_2.float) < FLT_EPSILON
+                ||
+                fabs(fabs(degrees.z) - 3 * M_PI_2.float) < FLT_EPSILON
+            {
+                w = h
+                h = source.width
+            }
+            
+            transformation(source, width: w, height: h,
                            angle: degrees,
                            reflectMode: (horizontal: .None, vertical: .None)
             )
