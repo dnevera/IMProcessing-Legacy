@@ -161,3 +161,21 @@ public struct IMPTransfromModel{
         }
     }
 }
+
+public extension IMPQuad{
+    public func transform(model model: IMPTransfromModel) -> IMPQuad {
+        var quad = IMPQuad()
+        
+        for i in 0..<4 {
+            quad[i] = point_transform(self[i], model: model)
+        }
+        
+        return quad
+    }
+    
+    func point_transform(point: float2, model: IMPTransfromModel) -> float2 {
+        let xyzw = float4(point.x, point.y,0,1)
+        let result = model.matrix * xyzw
+        return result.xy
+    }
+}

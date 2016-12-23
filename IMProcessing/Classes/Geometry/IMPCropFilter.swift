@@ -34,11 +34,11 @@ public class IMPCropFilter: IMPFilter {
                 let h = texture.height
                 let d = texture.depth
                 
-                let oroginSource = MTLOrigin(x: (self.region.left * w.float).int, y: (self.region.top * h.float).int, z: 0)
+                let oroginSource = MTLOrigin(x: (floor(self.region.left * w.float + 0.5)).int, y: (floor(self.region.top * h.float + 0.5)).int, z: 0)
                 
                 let destinationSize = MTLSize(
-                    width: (self.region.width * w.float).int,
-                    height: (self.region.height * h.float).int, depth: d)                
+                    width: (floor(self.region.width * w.float + 0.5)).int,
+                    height: (floor(self.region.height * h.float) + 0.5).int, depth: d)
                 
                 if destinationSize.width != provider.texture?.width || destinationSize.height != provider.texture?.height{
                     

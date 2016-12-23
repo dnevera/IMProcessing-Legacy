@@ -137,6 +137,15 @@ public class IMPPhotoPlate: IMPVertices{
         q.aspect = aspect
         return q
     }
+   
+    public func quad() -> IMPQuad {
+        var q = IMPQuad(left_bottom: vertices[1].position.xy,
+                        left_top: vertices[0].position.xy,
+                        right_bottom: vertices[2].position.xy,
+                        right_top: vertices[5].position.xy)
+        q.aspect = aspect
+        return q
+    }
     
     public init(aspect a:Float = 1, region r:IMPRegion = IMPRegion()){
         aspect = a

@@ -256,6 +256,21 @@ public struct IMPQuad {
             }
             return right_bottom
         }
+        
+        set {
+            let i = index < 0 ? (4-abs(index))%4 : index%4
+            
+            if i == 0 {
+                left_bottom = newValue
+            }
+            else if i == 1 {
+                left_top = newValue
+            }
+            else if i == 2 {
+                right_top = newValue
+            }
+            right_bottom = newValue
+        }
     }
     
     public init(){}
@@ -564,3 +579,25 @@ public func + (left:IMPQuad,right:IMPQuad) -> IMPQuad {
     return IMPQuad(left_bottom: left_bottom, left_top: left_top, right_bottom: right_bottom, right_top: right_top)
 }
 
+public extension IMPRegion{
+    public init(region quad: IMPQuad, // angle must be == 0
+                       inquad box:IMPQuad) {
+        
+        self = IMPRegion()
+        
+        let leftx   = fmin(box.left_bottom.x, box.left_top.x)
+        let bottomy = fmin(box.left_bottom.y, box.right_bottom.y)
+        
+        let rightx   = fmax(box.right_bottom.x, box.right_top.x)
+        let topy     = fmax(box.left_top.y, box.right_top.y)
+        
+        let w = rightx - leftx
+        let h = topy - bottomy
+        
+        self.left   = fabs(leftx - quad.left_bottom.x)/w
+        self.bottom = fabs(bottomy - quad.left_bottom.y)/h
+        
+        self.right = fabs(rightx - quad.right_top.x)/w
+        self.top   = fabs(topy - quad.right_top.y)/h        
+    }
+}
