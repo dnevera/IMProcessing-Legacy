@@ -156,7 +156,7 @@ public class IMPContext {
                     
                     if !self.isLazy || complete {
                         commandBuffer.waitUntilCompleted()
-                    }
+                    }                    
                 }
             }
        // }
