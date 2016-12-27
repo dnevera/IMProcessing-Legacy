@@ -461,13 +461,11 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                             commandEncoder.endEncoding()
                             
                         }
-                        
+
+                        previouseTexture?.setPurgeableState(.Volatile)
                         previouseTexture = input
                         input = output
                         
-                        if previouseTexture !== source.texture {
-                            //previouseTexture?.setPurgeableState(.Volatile)
-                        }
                     }
                     
                     currrentProvider = provider
@@ -485,12 +483,12 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             var previousProvider:IMPImageProvider? = nil
             let index = 0
             for filter in filterList {
+                
                 filter.source = currrentProvider == nil ? source : currrentProvider!
-                previousProvider = currrentProvider == nil ? source : currrentProvider!
                 currrentProvider = filter.destination!
-                if index < filterList.count - 1 {
-                    //previousProvider?.texture?.setPurgeableState(.Volatile)
-                }
+
+                previousProvider?.texture?.setPurgeableState(.Volatile)
+                previousProvider = currrentProvider 
             }
             
             if #available(iOS 9.0, *) {

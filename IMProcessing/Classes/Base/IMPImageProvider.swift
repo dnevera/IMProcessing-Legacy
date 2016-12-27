@@ -257,7 +257,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
     
     deinit {
         if texture != nil {
-            texture?.setPurgeableState(.Empty)
+            texture?.setPurgeableState(.Volatile)
         }
         texture = nil
         videoCache.flush()
