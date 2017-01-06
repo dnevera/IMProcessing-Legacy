@@ -49,9 +49,7 @@ public class IMPCropFilter: IMPFilter {
                     
                     provider.texture = self.context.device.newTextureWithDescriptor(descriptor)
                 }
-                
-                print("Crop = \(oroginSource, destinationSize)")
-                
+                                
                 blit.copyFromTexture(
                     texture,
                     sourceSlice: 0,
