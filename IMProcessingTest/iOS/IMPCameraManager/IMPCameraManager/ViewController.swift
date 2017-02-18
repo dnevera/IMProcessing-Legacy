@@ -29,6 +29,55 @@ func CGRectMake(_ x: CGFloat, _ y: CGFloat, _ width: CGFloat, _ height: CGFloat)
 
 public class TestFilter: IMPFilter {
     
+    public var blurRadius:Float = 1 {
+        didSet{
+            if context.supportsGPUv2 {
+                blurFilter.sigma = blurRadius
+            }
+            else {
+                ciBlurFilter.setValue(blurRadius, forKey: "inputRadius")
+            }
+            dirty = true
+        }
+    }
+    
+    public var inputEV:Float = 1 {
+        didSet{
+            dirty = true
+        }
+    }
+    
+
+    lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
+    lazy var kernelEV:IMPFunction = {
+        let f = IMPFunction(context: self.context, name: "kernel_EV")
+        f.optionsHandler = { (kernel,commandEncoder) in
+            var value  = self.inputEV
+            var buffer = self.kernelEVBuffer
+            memcpy(buffer.contents(), &value, buffer.length)
+            commandEncoder.setBuffer(buffer, offset: 0, at: 0)
+        }
+        return f
+    }()
+    
+    override public func configure(_ withName: String?) {
+        super.configure("Test filter")
+        add(function: kernelEV)
+        
+        if context.supportsGPUv2 {
+            add(mps: blurFilter)
+        }
+        else {
+            add(filter: ciBlurFilter)
+        }
+        
+        inputEV = 2
+        blurRadius = 20
+    }
+    
+    private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
+    private lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
+    
     class BlurFilter: IMPMPSUnaryKernelProvider {
         var name: String { return "BlurFilter" }
         func mps(device:MTLDevice) -> MPSUnaryImageKernel? {
@@ -41,71 +90,7 @@ public class TestFilter: IMPFilter {
         }
     }
     
-    
     lazy var blurFilter:BlurFilter = BlurFilter(context:self.context)
-    
-    public var blurRadius:Float = 1 {
-        didSet{
-            blurFilter.sigma = blurRadius
-            dirty = true
-        }
-    }
-    
-//    public var inputEV:Float = 1 {
-//        didSet{
-//            dirty = true
-//        }
-//    }
-    
-    public var ci_inputEV:Float = 1 {
-        didSet{
-            exposureFilter.setValue(ci_inputEV, forKey: "inputEV")
-            dirty = true
-        }
-    }
-    
-//    public var redAmount:Float = 1 {
-//        didSet{
-//            dirty = true
-//        }
-//    }
-//    
-//    lazy var kernelRedBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
-//    lazy var kernelRed:IMPFunction = {
-//        let f = IMPFunction(context: self.context, name: "kernel_red")
-//        f.optionsHandler = { (kernel,commandEncoder) in
-//            var value  = self.redAmount
-//            var buffer = self.kernelRedBuffer
-//            memcpy(buffer.contents(), &value, buffer.length)
-//            commandEncoder.setBuffer(buffer, offset: 0, at: 0)
-//        }
-//        return f
-//    }()
-//    
-//    lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
-//    lazy var kernelEV:IMPFunction = {
-//        let f = IMPFunction(context: self.context, name: "kernel_EV")
-//        f.optionsHandler = { (kernel,commandEncoder) in
-//            var value  = self.inputEV
-//            var buffer = self.kernelEVBuffer
-//            memcpy(buffer.contents(), &value, buffer.length)
-//            commandEncoder.setBuffer(buffer, offset: 0, at: 0)
-//        }
-//        return f
-//    }()
-    
-    override public func configure(_ withName: String?) {
-        super.configure("Test filter")
-        //add(function: kernelRed)
-        //add(function: kernelEV)
-        add(filter: exposureFilter)
-        add(mps: blurFilter)
-        
-        ci_inputEV = 0.5
-        blurRadius = 50
-    }
-    
-    private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
 }
 
 

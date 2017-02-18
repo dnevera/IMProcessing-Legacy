@@ -10,6 +10,9 @@
 //  A lot of ideas were taken from the Brad Larson project: https://github.com/BradLarson/GPUImage
 //
 //  Photoshop blending examples: https://mouaif.wordpress.com/2009/01/05/photoshop-math-with-glsl-shaders/
+//  W3C: https://www.w3.org/TR/compositing-1/
+//
+//
 //
 
 
