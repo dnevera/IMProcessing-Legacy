@@ -18,7 +18,7 @@ public class IMPVideoTextureCache {
     }
     
     init(context:IMPContext) {
-        let textureCacheError = CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, context.device, nil, &videoTextureCache);
+        let textureCacheError = CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, context.device, nil, &videoTextureCache)
         if textureCacheError != kCVReturnSuccess {
             fatalError("IMPVideoTextureCache error: couldn't create a texture cache...");
         }
