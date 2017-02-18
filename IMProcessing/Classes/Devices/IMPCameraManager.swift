@@ -10,6 +10,7 @@
     
     import UIKit
     import AVFoundation
+    import CoreImage
     import CoreMedia
     import CoreMedia.CMBufferQueue
     
@@ -221,7 +222,6 @@
                 }
             }
         }
-
         
         public typealias AccessHandler = ((Bool) -> Void)
         public typealias CameraCompleteBlockType    = ((_ camera:IMPCameraManager)->Void)
@@ -267,14 +267,18 @@
         }
         
         /// Live video viewport
-        //public var liveView:IMPView {
-        //    return _liveView
-        //}
+        public var liveView:IMPView {
+            return _liveView
+        }
+        
+        public var deviceOrientation:UIDeviceOrientation{
+            return _deviceOrientation
+        }
         
         public var liveViewEnabled = true {
             didSet{
                 
-                //_liveView.filter?.enabled = liveViewEnabled
+                _liveView.filter?.enabled = liveViewEnabled
                 
                 if liveViewEnabled {
                     //clearPreviewLayer?.isHidden = true
@@ -284,8 +288,6 @@
                 }
             }
         }
-        
-        var _context:IMPContext!
         
         var containerView:UIView!
         var rotationHandler:IMPMotionManager.RotationHandler!
@@ -299,13 +301,12 @@
             super.init()
             
             rotationHandler = IMPMotionManager.sharedInstance.addRotationObserver(observer: { (orientation) in
-                //self.deviceOrientation = orientation
+                self._deviceOrientation = orientation
             })
             
             self.containerView = containerView
             
             defer{
-                //_currentCamera = backCamera
                 
                 if context == nil {
                     self._context = IMPContext(lazy: true)
@@ -314,46 +315,106 @@
                     self._context = context!
                 }
                 
-                //liveView.frame = CGRect(x: 0, y: 0,
-                //                        width: containerView.bounds.size.width,
-                //                        height: containerView.bounds.size.height)
-                //liveView.autoresizingMask = [.flexibleWidth,.flexibleHeight]
-                //containerView.addSubview(liveView)
+                containerView.addSubview(liveView)
                 
-                //initSession()
+                _currentCamera = cameraSession.defaultCamera(type: .builtInWideAngleCamera, position: .back)
+
+                session.set(currentCamera: _currentCamera)
+                
             }
         }
         
-        var session:AVCaptureSession!
+        ///  Check access to camera
+        ///
+        ///  - parameter complete: complete hanlder
+        ///
+        public func requestAccess(complete:@escaping AccessHandler) {
+            AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeVideo, completionHandler: {
+                (granted: Bool) -> Void in
+                complete(granted)
+            });
+        }
 
         
-//        ///
-//        ///  Start camera manager capturing video frames
-//        ///
-//        ///  - parameter access: access handler
-//        ///
-//        public func start(access:AccessHandler?=nil) {
-//            requestAccess(complete: { (granted) -> Void in
-//                if granted {
-//                    
-//                    //
-//                    // start...
-//                    //
-//                    
-//                    if !self.session.isRunning {
-//                        self.isVideoStarted = false
-//                        self.sessionQueue.async(execute: { () -> Void in
-//                            self.isVideoPaused = false
-//                            self.session.startRunning()
-//                        })
-//                    }
-//                }
-//                if let a = access {
-//                    a(granted)
-//                }
-//            })
-//        }
-//        
+        ///
+        ///  Start camera manager capturing video frames
+        ///
+        ///  - parameter access: access handler
+        ///
+        public func start(access:AccessHandler?=nil) {
+            requestAccess(complete: { (granted) -> Void in
+                if granted {
+                    
+                    //
+                    // start...
+                    //
+                    
+                    if !self.session.isRunning {
+                        //self.isVideoStarted = false
+                        //self.sessionQueue.async(execute: { () -> Void in
+                        //    self.isVideoPaused = false
+                        //    self.session.startRunning()
+                        //})
+                        self.session.queue.async {
+                            self.session.startRunning()
+                        }
+                    }
+                }
+                if let a = access {
+                    a(granted)
+                }
+            })
+        }
+        
+        public var availableCameras:[AVCaptureDevice] {
+            return cameraSession.devices
+        }
+        
+        
+        
+        var _context:IMPContext!
+        
+        lazy var _liveView:IMPView = {
+            let container = self.containerView.bounds
+            let frame = CGRect(x: 0, y: 0,
+                               width: container.size.width,
+                               height: container.size.height)
+            let v = IMPView(frame: frame, device: self.context.device)
+            v.autoresizingMask = [.flexibleWidth,.flexibleHeight]
+            return v
+        }()
+        
+        lazy var _deviceOrientation:UIDeviceOrientation = .unknown
+        
+        lazy var cameraSession:IMPCameraSession = IMPCameraSession()
+        
+        lazy var session:IMPAVSession = IMPAVSession(sampleBufferDelegate: self)
+        
+        public func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
+            session.queue.async {
+                self.updateProvider(buffer:sampleBuffer)
+            }
+        }
+
+        var imageProvider:IMPImage? {
+            didSet{
+                if imageProvider == nil {
+                    liveView.filter?.flush()
+                }
+            }
+        }
+        
+        func updateProvider(buffer: CMSampleBuffer)  {
+            if let image =  imageProvider {
+                image.update(buffer)
+            }
+            else {
+                imageProvider = IMPImage(context: context, image: buffer)
+            }
+            liveView.filter?.source = imageProvider
+        }
+
+//
 //        public func reset(complete:((Void)->Void)? = nil){
 //            dispatch_async(sessionQueue) {
 //                if (self.currentCamera == self.backCamera){
@@ -768,61 +829,61 @@
 //            removeCameraObservers()
 //        }
 //        
-//        public var frameRate:Int {
-//            get {
-//                return currentFrameRate
-//            }
-//            set {
-//                resetFrameRate(frameRate: newValue)
-//            }
-//        }
-//        
-//        var  currentFrameRate:Int = 30
-//        
-//        func resetFrameRate(frameRate:Int){
-//            
-//            currentFrameRate = frameRate
-//            
-//            let activeCaptureFormat = self.currentCamera.activeFormat
-//            
-//            for rate in activeCaptureFormat?.videoSupportedFrameRateRanges as! [AVFrameRateRange] {
-//                if( frameRate >= rate.minFrameRate.int && frameRate <= rate.maxFrameRate.int ) {
-//                    do{
-//                        try currentCamera.lockForConfiguration()
-//                        
-//                        currentCamera.activeVideoMinFrameDuration = CMTimeMake(1, Int32(frameRate))
-//                        currentCamera.activeVideoMaxFrameDuration = CMTimeMake(1, Int32(frameRate))
-//                        
-//                        currentCamera.unlockForConfiguration()
-//                    }
-//                    catch let error as NSError {
-//                        NSLog("IMPCameraManager error: \(error): \(#file):\(#line)")
-//                    }
-//                }
-//            }
-//        }
+        public var frameRate:Int {
+            get {
+                return currentFrameRate
+            }
+            set {
+                resetFrameRate(frameRate: newValue)
+            }
+        }
+        
+        var  currentFrameRate:Int = 30
+        
+        func resetFrameRate(frameRate:Int){
+            
+            currentFrameRate = frameRate
+            
+            let activeCaptureFormat = self.currentCamera.activeFormat
+            
+            for rate in activeCaptureFormat?.videoSupportedFrameRateRanges as! [AVFrameRateRange] {
+                if( frameRate >= rate.minFrameRate.int && frameRate <= rate.maxFrameRate.int ) {
+                    do{
+                        try currentCamera.lockForConfiguration()
+                        
+                        currentCamera.activeVideoMinFrameDuration = CMTimeMake(1, Int32(frameRate))
+                        currentCamera.activeVideoMaxFrameDuration = CMTimeMake(1, Int32(frameRate))
+                        
+                        currentCamera.unlockForConfiguration()
+                    }
+                    catch let error as NSError {
+                        NSLog("IMPCameraManager error: \(error): \(#file):\(#line)")
+                    }
+                }
+            }
+        }
 //
 //        
 //        //
 //        // Internal utils and vars
 //        //
 //        
-//        // Get current camera
-//        var currentCamera:AVCaptureDevice!{
-//            return _currentCamera
-//        }
-//
-//        var _currentCamera:AVCaptureDevice! {
-//            willSet{
-//                if (_currentCamera != nil) {
-//                    removeCameraObservers()
-//                }
-//            }
-//            didSet{
-//                addCameraObservers()
-//                resetFrameRate(frameRate: currentFrameRate)
-//            }
-//        }
+        // Get current camera
+        var currentCamera:AVCaptureDevice!{
+            return _currentCamera
+        }
+
+        var _currentCamera:AVCaptureDevice! {
+            willSet{
+                if (_currentCamera != nil) {
+                    removeCameraObservers()
+                }
+            }
+            didSet{
+                addCameraObservers()
+                resetFrameRate(frameRate: currentFrameRate)
+            }
+        }
 //
 //        // Live view
 //        private lazy var _liveView:IMPView = {
@@ -954,20 +1015,29 @@
 //        
 //        var zomingCompleteQueue = [CompleteZomingFunction]()
 //
-//        func addCameraObservers() {
-//            self.currentCamera.addObserver(self, forKeyPath: "videoZoomFactor", options: [.new,.old], context: nil)
-//            self.currentCamera.addObserver(self, forKeyPath: "adjustingFocus", options: [.new,.old], context: nil)
-//            self.currentCamera.addObserver(self, forKeyPath: "adjustingExposure", options: [.new,.old], context: nil)
-//            self.currentCamera.addObserver(self, forKeyPath: "exposureMode", options: [.new,.old], context: nil)
-//        }
-//        
-//        func removeCameraObservers() {
-//            self.currentCamera.removeObserver(self, forKeyPath: "videoZoomFactor", context: nil)
-//            self.currentCamera.removeObserver(self, forKeyPath: "adjustingFocus", context: nil)
-//            self.currentCamera.removeObserver(self, forKeyPath: "adjustingExposure", context: nil)
-//            self.currentCamera.removeObserver(self, forKeyPath: "exposureMode", context: nil)
-//        }
-//        
+
+        func addCameraObservers() {
+            self.currentCamera.addObserver(self, forKeyPath: "videoZoomFactor", options: [.new,.old], context: nil)
+            self.currentCamera.addObserver(self, forKeyPath: "adjustingFocus", options: [.new,.old], context: nil)
+            self.currentCamera.addObserver(self, forKeyPath: "adjustingExposure", options: [.new,.old], context: nil)
+            self.currentCamera.addObserver(self, forKeyPath: "exposureMode", options: [.new,.old], context: nil)
+        }
+        
+        func removeCameraObservers() {
+            self.currentCamera.removeObserver(self, forKeyPath: "videoZoomFactor", context: nil)
+            self.currentCamera.removeObserver(self, forKeyPath: "adjustingFocus", context: nil)
+            self.currentCamera.removeObserver(self, forKeyPath: "adjustingExposure", context: nil)
+            self.currentCamera.removeObserver(self, forKeyPath: "exposureMode", context: nil)
+        }
+        
+        public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+            
+            print("change = \(change?[.oldKey])")
+            print("change = \(change?[.newKey])")
+            
+        }
+        
+//
 //        override public func observeValueForKeyPath(keyPath: String?, ofObject object: AnyObject?, change: [String : AnyObject]?, context: UnsafeMutableRawPointer) {
 //            
 //                if keyPath == "adjustingFocus"{
@@ -1279,14 +1349,7 @@
 //            return videoConnection;
 //        }
 //        
-//        var imageProvider:IMPImageProvider? {
-//            didSet{
-//                if imageProvider == nil {
-//                    liveView.filter?.flush()
-//                }
-//            }
-//        }
-//        
+//
 //        lazy var previewBufferQueue:CMBufferQueue? = {
 //            var queue : CMBufferQueue?
 //            var err : OSStatus = CMBufferQueueCreate(kCFAllocatorDefault, 1, CMBufferQueueGetCallbacksForUnsortedSampleBuffers(), &queue)
@@ -1303,9 +1366,11 @@
 //        
 //        /// Frame scale factor
 //        public var scaleFactor:Float = 1
-//        
-//        var deviceOrientation = UIDevice.current.orientation
+//
     }
+    
+    
+    
 //
 //    // MARK: - Capturing API
 //    public extension IMPCameraManager {
@@ -1361,21 +1426,8 @@
 //                }
 //            }
 //        }
-//        
-//        func updateProvider(pixelBuffer: CVImageBuffer)  {
-//            if imageProvider == nil {
-//                imageProvider = IMPImageProvider(context: liveView.context, pixelBuffer: pixelBuffer)
-//            }
-//            else {
-//                imageProvider?.update(pixelBuffer: pixelBuffer)
-//            }
-//            
-//            if abs(scaleFactor-1) > FLT_EPSILON {
-//                imageProvider?.scale = scaleFactor
-//            }
-//            liveView.filter?.source = imageProvider
-//        }
-//        
+//
+//
 //        ///  Capture image to file
 //        ///
 //        ///  - parameter file:     file path. Path can be nil, in this case photo captures to Camera Roll

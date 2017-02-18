@@ -143,10 +143,11 @@
             framebufferOnly = false
             autoResizeDrawable = false
             contentMode = .scaleAspectFit
-            enableSetNeedsDisplay = true
+            enableSetNeedsDisplay = false
             isPaused = false
             colorPixelFormat = .bgra8Unorm
             delegate = self
+            preferredFramesPerSecond = 30
         }
         
         private var isFirstFrame = true

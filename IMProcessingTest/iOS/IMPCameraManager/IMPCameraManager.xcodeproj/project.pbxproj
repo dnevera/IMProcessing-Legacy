@@ -14,6 +14,7 @@
 		3161D19E1E58517C00273F0D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3161D19D1E58517C00273F0D /* Assets.xcassets */; };
 		3161D1A11E58517C00273F0D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3161D19F1E58517C00273F0D /* LaunchScreen.storyboard */; };
 		316A3CD61E585857005BB909 /* IMPCamera_main.metal in Sources */ = {isa = PBXBuildFile; fileRef = 316A3CD51E585857005BB909 /* IMPCamera_main.metal */; };
+		316A3D111E586FD8005BB909 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 316A3D101E586FD8005BB909 /* Images.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,6 +28,7 @@
 		3161D1A21E58517C00273F0D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		316A3CD51E585857005BB909 /* IMPCamera_main.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = IMPCamera_main.metal; path = Shaders/IMPCamera_main.metal; sourceTree = "<group>"; };
 		316A3CDB1E586BF5005BB909 /* IMPBaseOperations.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPBaseOperations.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		316A3D101E586FD8005BB909 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		832E7C664916882581B6B378 /* Pods_IMPCameraManager.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPCameraManager.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3B5B9CF809540FC64CCEC2B /* Pods-IMPCameraManager.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCameraManager.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCameraManager/Pods-IMPCameraManager.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -77,6 +79,7 @@
 				3161D1981E58517C00273F0D /* ViewController.swift */,
 				3161D19A1E58517C00273F0D /* Main.storyboard */,
 				3161D19D1E58517C00273F0D /* Assets.xcassets */,
+				316A3D101E586FD8005BB909 /* Images.xcassets */,
 				3161D19F1E58517C00273F0D /* LaunchScreen.storyboard */,
 				3161D1A21E58517C00273F0D /* Info.plist */,
 			);
@@ -195,6 +198,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				3161D1A11E58517C00273F0D /* LaunchScreen.storyboard in Resources */,
+				316A3D111E586FD8005BB909 /* Images.xcassets in Resources */,
 				3161D19E1E58517C00273F0D /* Assets.xcassets in Resources */,
 				3161D19C1E58517C00273F0D /* Main.storyboard in Resources */,
 			);
@@ -394,8 +398,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = TCA85S5T49;
+				GCC_STRICT_ALIASING = NO;
 				INFOPLIST_FILE = IMPCameraManager/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MTL_OPTIMIZATION_LEVEL = 0;
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCameraManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
@@ -408,8 +414,12 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				DEVELOPMENT_TEAM = TCA85S5T49;
+				GCC_FAST_MATH = YES;
 				INFOPLIST_FILE = IMPCameraManager/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				LLVM_LTO = NO;
+				MTL_FAST_MATH = YES;
+				MTL_OPTIMIZATION_LEVEL = s;
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCameraManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
@@ -470,6 +480,7 @@
 				316A3CEB1E586BF5005BB909 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

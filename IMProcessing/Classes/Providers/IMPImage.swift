@@ -15,6 +15,8 @@
 import CoreImage
 import simd
 import Metal
+import AVFoundation
+
 
 public class IMPImage: IMPImageProvider {
     
@@ -28,6 +30,8 @@ public class IMPImage: IMPImageProvider {
 }
 
 public extension IMPImage {
+    
+    //CMSampleBuffer
     
     public convenience init(context: IMPContext, provider: IMPImageProvider, maxSize: CGFloat = 0){
         self.init(context:context)
@@ -49,6 +53,16 @@ public extension IMPImage {
         self.image = prepareImage(image: CIImage(cgImage: image), maxSize: maxSize)
     }
     
+    public convenience init(context: IMPContext, image: CMSampleBuffer, maxSize: CGFloat = 0){
+        self.init(context:context)
+        self.update(image)
+    }
+    
+    public convenience init(context: IMPContext, image: CVImageBuffer, maxSize: CGFloat = 0){
+        self.init(context:context)
+        self.update(image)
+    }
+
     public func update(_ inputImage:CIImage){
         image = inputImage
     }
@@ -61,6 +75,16 @@ public extension IMPImage {
         image = CIImage(image: inputImage)
     }
     
+    public func update(_ buffer:CMSampleBuffer){
+        if let pixelBuffer = CMSampleBufferGetImageBuffer(buffer) {
+            image = CIImage(cvPixelBuffer: pixelBuffer)
+        }
+    }
+
+    public func update(_ buffer:CVImageBuffer){
+        image = CIImage(cvPixelBuffer: buffer)
+    }
+
     func prepareImage(image originImage: CIImage?, maxSize: CGFloat)  -> CIImage? {
         
         guard let image = originImage else { return originImage }
