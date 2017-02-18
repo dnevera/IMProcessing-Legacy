@@ -1,9 +1,9 @@
 //
 //  IMPExif.h
-//  IMProcessing
+//  IMPCoreImageMTLKernel
 //
-//  Created by denis svinarchuk on 21.05.16.
-//  Copyright © 2016 Dehancer.photo. All rights reserved.
+//  Created by denis svinarchuk on 11.02.17.
+//  Copyright © 2017 Dehancer. All rights reserved.
 //
 
 #ifndef IMPExif_h

@@ -1,17 +1,17 @@
 Pod::Spec.new do |s|
 
   s.name         = 'IMProcessing'
-  s.version      = '0.6.1'
+  s.version      = '2.0.1'
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
   s.author       = { 'denn nevera' => 'denn.nevera@gmail.com' }
   s.homepage     = 'http://degradr.photo'
   s.summary      = 'IMProcessing is an image processing framework based on Apple Metal'
   s.description  = 'IMProcessing is an image processing framework provides original effect image/photo. It can be called "masterwork" image processing.'
 
-  s.source       = { :git => 'https://bitbucket.org/degrader/improcessing.git', :tag => '0.6.1'}
+  s.source       = { :git => 'https://bitbucket.org/degrader/improcessing.git', :tag => '2.0.1'}
 
-  s.osx.deployment_target = "10.11"
-  s.ios.deployment_target = "8.0"
+  s.osx.deployment_target = "10.12"
+  s.ios.deployment_target = "10.0"
   
   s.source_files        = 'IMProcessing/Classes/**/*.{h,swift,m}', 'IMProcessing/Classes/*.{swift}', 'IMProcessing/Classes/**/*.h','IMProcessing/Classes/Shaders/*.h', 'vendor/libjpeg-turbo/include/*'
   s.public_header_files = 'IMProcessing/Classes/**/*.h','IMProcessing/Classes/Shaders/*.h'
