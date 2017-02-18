@@ -29,13 +29,16 @@ func CGRectMake(_ x: CGFloat, _ y: CGFloat, _ width: CGFloat, _ height: CGFloat)
 
 public class TestFilter: IMPFilter {
     
+    lazy var impBlurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    
     public var blurRadius:Float = 1 {
         didSet{
             if context.supportsGPUv2 {
                 blurFilter.sigma = blurRadius
             }
             else {
-                ciBlurFilter.setValue(blurRadius, forKey: "inputRadius")
+                //ciBlurFilter.setValue(blurRadius, forKey: "inputRadius")
+                impBlurFilter.radius = blurRadius.int
             }
             dirty = true
         }
@@ -68,7 +71,8 @@ public class TestFilter: IMPFilter {
             add(mps: blurFilter)
         }
         else {
-            add(filter: ciBlurFilter)
+            //add(filter: ciBlurFilter)
+            add(filter: impBlurFilter)
         }
         
         inputEV = 2

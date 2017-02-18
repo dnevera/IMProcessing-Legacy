@@ -65,21 +65,22 @@ namespace IMProcessing
                                                        texture2d<float, access::write>  outTexture        [[texture(1)]],
                                                        texture1d<float, access::sample> weights           [[texture(2)]],
                                                        texture1d<float, access::sample> offsets           [[texture(3)]],
-                                                       texture2d<float, access::sample> sourceTexture     [[texture(4)]],
-                                                       constant IMPAdjustment           &adjustment       [[buffer(0)]],
+                                                       //texture2d<float, access::sample> sourceTexture     [[texture(4)]],
+                                                       //constant IMPAdjustment           &adjustment       [[buffer(0)]],
                                                        uint2 gid [[thread_position_in_grid]]){
         
         float3 color = kernel_gaussianSampledBlur(inTexture,outTexture,weights,offsets,float2(0,1),gid);
         
-        float4 result = IMProcessing::sampledColor(sourceTexture,outTexture,gid);
+        //float4 result = IMProcessing::sampledColor(sourceTexture,outTexture,gid);
         
-        if (adjustment.blending.mode == 0)
-            result = IMProcessing::blendLuminosity(result, float4(color, adjustment.blending.opacity));
-        else
-            result = IMProcessing::blendNormal(result, float4(color, adjustment.blending.opacity));
+        //if (adjustment.blending.mode == 0)
+        //    result = IMProcessing::blendLuminosity(result, float4(color, adjustment.blending.opacity));
+        //else
+        //    result = IMProcessing::blendNormal(result, float4(color, adjustment.blending.opacity));
         
-        outTexture.write(result,gid);
-    }    
+        //outTexture.write(result,gid);
+        outTexture.write(float4(color,1),gid);
+    }
 }
 
 #endif

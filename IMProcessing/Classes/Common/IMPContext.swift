@@ -126,7 +126,7 @@ open class IMPContext {
     }()
     
     var commandBuffer:MTLCommandBuffer?  {
-        return self.commandQueue?.makeCommandBufferWithUnretainedReferences() //makeCommandBuffer()
+        return self.commandQueue?.makeCommandBuffer() //makeCommandBufferWithUnretainedReferences() //makeCommandBuffer()
     }
     
     ///  The main idea context execution: all filters should put commands in context queue within the one execution.

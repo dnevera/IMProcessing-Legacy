@@ -51,7 +51,7 @@ public class IMPFunction: IMPContextProvider, Equatable {
     
     private lazy var _pipeline:MTLComputePipelineState? = {
         if self.kernel == nil {
-            fatalError(" *** IMPFunction: \(self.name) has not foumd...")
+            fatalError(" *** IMPFunction: \(self.name) has not found...")
         }
         do{
             return try self.context.device.makeComputePipelineState(function: self.kernel!)
