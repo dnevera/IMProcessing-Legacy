@@ -26,6 +26,7 @@
 		3161D1A01E58517C00273F0D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		3161D1A21E58517C00273F0D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		316A3CD51E585857005BB909 /* IMPCamera_main.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; name = IMPCamera_main.metal; path = Shaders/IMPCamera_main.metal; sourceTree = "<group>"; };
+		316A3CDB1E586BF5005BB909 /* IMPBaseOperations.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPBaseOperations.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		832E7C664916882581B6B378 /* Pods_IMPCameraManager.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPCameraManager.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3B5B9CF809540FC64CCEC2B /* Pods-IMPCameraManager.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCameraManager.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCameraManager/Pods-IMPCameraManager.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -36,6 +37,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				2C46FA4E6F180CB336946925 /* Pods_IMPCameraManager.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		316A3CD81E586BF5005BB909 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -56,6 +64,7 @@
 			isa = PBXGroup;
 			children = (
 				3161D1931E58517C00273F0D /* IMPCameraManager.app */,
+				316A3CDB1E586BF5005BB909 /* IMPBaseOperations.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -122,6 +131,23 @@
 			productReference = 3161D1931E58517C00273F0D /* IMPCameraManager.app */;
 			productType = "com.apple.product-type.application";
 		};
+		316A3CDA1E586BF5005BB909 /* IMPBaseOperations */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 316A3CEC1E586BF5005BB909 /* Build configuration list for PBXNativeTarget "IMPBaseOperations" */;
+			buildPhases = (
+				316A3CD71E586BF5005BB909 /* Sources */,
+				316A3CD81E586BF5005BB909 /* Frameworks */,
+				316A3CD91E586BF5005BB909 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IMPBaseOperations;
+			productName = IMPBaseOperations;
+			productReference = 316A3CDB1E586BF5005BB909 /* IMPBaseOperations.app */;
+			productType = "com.apple.product-type.application";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -133,6 +159,11 @@
 				ORGANIZATIONNAME = Dehancer;
 				TargetAttributes = {
 					3161D1921E58517C00273F0D = {
+						CreatedOnToolsVersion = 8.2.1;
+						DevelopmentTeam = TCA85S5T49;
+						ProvisioningStyle = Automatic;
+					};
+					316A3CDA1E586BF5005BB909 = {
 						CreatedOnToolsVersion = 8.2.1;
 						DevelopmentTeam = TCA85S5T49;
 						ProvisioningStyle = Automatic;
@@ -153,6 +184,7 @@
 			projectRoot = "";
 			targets = (
 				3161D1921E58517C00273F0D /* IMPCameraManager */,
+				316A3CDA1E586BF5005BB909 /* IMPBaseOperations */,
 			);
 		};
 /* End PBXProject section */
@@ -165,6 +197,13 @@
 				3161D1A11E58517C00273F0D /* LaunchScreen.storyboard in Resources */,
 				3161D19E1E58517C00273F0D /* Assets.xcassets in Resources */,
 				3161D19C1E58517C00273F0D /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		316A3CD91E586BF5005BB909 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -226,6 +265,13 @@
 				3161D1991E58517C00273F0D /* ViewController.swift in Sources */,
 				316A3CD61E585857005BB909 /* IMPCamera_main.metal in Sources */,
 				3161D1971E58517C00273F0D /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		316A3CD71E586BF5005BB909 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -370,6 +416,32 @@
 			};
 			name = Release;
 		};
+		316A3CEA1E586BF5005BB909 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = TCA85S5T49;
+				INFOPLIST_FILE = IMPBaseOperations/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPBaseOperations;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Debug;
+		};
+		316A3CEB1E586BF5005BB909 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = TCA85S5T49;
+				INFOPLIST_FILE = IMPBaseOperations/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPBaseOperations;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -390,6 +462,14 @@
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
+		};
+		316A3CEC1E586BF5005BB909 /* Build configuration list for PBXNativeTarget "IMPBaseOperations" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				316A3CEA1E586BF5005BB909 /* Debug */,
+				316A3CEB1E586BF5005BB909 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
 	};
