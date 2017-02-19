@@ -40,7 +40,7 @@ public class TestFilter: IMPFilter {
     public var blurRadius:Float = 1 {
         didSet{
             //blurFilter.sigma = blurRadius
-            blurFilter.radius = blurRadius.int
+            blurFilter.radius = blurRadius
             dirty = true
         }
     }
@@ -234,7 +234,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
 
     func blurHandler(slider:UISlider)  {
         DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
-            self.testFilter.blurRadius = slider.value * 200
+            self.testFilter.blurRadius = slider.value * 50
         }
     }
 

@@ -40,10 +40,8 @@ public class IMPFunction: IMPContextProvider, Equatable {
     }
     
     public static func == (lhs: IMPFunction, rhs: IMPFunction) -> Bool {
-        //return lhs.name == rhs.name && lhs.context.device === rhs.context.device
         return lhs.uid == rhs.uid
     }
-    
     
     private lazy var _kernel:MTLFunction? = {
         return self.library.makeFunction(name: self.name)

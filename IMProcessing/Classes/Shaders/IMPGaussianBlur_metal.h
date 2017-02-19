@@ -28,13 +28,14 @@ namespace IMProcessing
                                              texture2d<float, access::write>  outTexture,
                                              texture1d<float, access::sample> weights,
                                              texture1d<float, access::sample> offsets,
+                                             float  downsamplingFactor,
                                              float2 offsetPixel,
                                              uint2 gid){
         
         //constexpr sampler p(address::clamp_to_edge, filter::linear, coord::pixel);
         constexpr sampler p(address::clamp_to_edge, filter::linear, coord::normalized);
         
-        float2 texelSize = float2(float(1)/float(inTexture.get_width()),float(1)/float(inTexture.get_height()));
+        float2 texelSize = float2(downsamplingFactor/float(inTexture.get_width()),downsamplingFactor/float(inTexture.get_height()));
         float2 texCoord  = float2(gid);
         
         float3 color(0);
@@ -56,10 +57,12 @@ namespace IMProcessing
                                                          texture2d<float, access::write>  outTexture        [[texture(1)]],
                                                          texture1d<float, access::sample> weights           [[texture(2)]],
                                                          texture1d<float, access::sample> offsets           [[texture(3)]],
+                                                         constant float  &downsamplingFactor [[buffer(0)]],
                                                          uint2 gid [[thread_position_in_grid]]){
         
-        float3 color = kernel_gaussianSampledBlur(inTexture,outTexture,weights,offsets,float2(1,0),gid);
-        outTexture.write(float4(color,1),gid);
+        float3 color = kernel_gaussianSampledBlur(inTexture,outTexture,weights,offsets,downsamplingFactor,float2(1,0),gid);
+        float2 texCoord  = float2(gid) * downsamplingFactor;
+        outTexture.write(float4(color,1),uint2(texCoord));
     }
     
     kernel void kernel_gaussianSampledBlurVerticalPass(
@@ -67,11 +70,12 @@ namespace IMProcessing
                                                        texture2d<float, access::write>  outTexture        [[texture(1)]],
                                                        texture1d<float, access::sample> weights           [[texture(2)]],
                                                        texture1d<float, access::sample> offsets           [[texture(3)]],
+                                                       constant float  &downsamplingFactor [[buffer(0)]],
                                                        //texture2d<float, access::sample> sourceTexture     [[texture(4)]],
                                                        //constant IMPAdjustment           &adjustment       [[buffer(0)]],
                                                        uint2 gid [[thread_position_in_grid]]){
         
-        float3 color = kernel_gaussianSampledBlur(inTexture,outTexture,weights,offsets,float2(0,1),gid);
+        float3 color = kernel_gaussianSampledBlur(inTexture,outTexture,weights,offsets,downsamplingFactor,float2(0,1),gid);
         
         //float4 result = IMProcessing::sampledColor(sourceTexture,outTexture,gid);
         
@@ -81,7 +85,9 @@ namespace IMProcessing
         //    result = IMProcessing::blendNormal(result, float4(color, adjustment.blending.opacity));
         
         //outTexture.write(result,gid);
-        outTexture.write(float4(color,1),gid);
+        //outTexture.write(float4(color,1),gid);
+        float2 texCoord  = float2(gid) * downsamplingFactor;
+        outTexture.write(float4(color,1),uint2(texCoord));
     }
 }
 

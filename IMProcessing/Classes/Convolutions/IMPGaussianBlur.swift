@@ -29,7 +29,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
     }
     
-    public var radius:Int!{
+    public var radius:Float!{
         didSet{
             update()
             dirty = true
@@ -44,23 +44,42 @@ public class IMPGaussianBlurFilter: IMPFilter {
   
     var sigma:Float {
         get {
-            return radiusLimit
+            return radiusLimit > radius ? radius : radiusLimit
         }
     }
     
-    var downsamplingFactor:Float {
-        return round(Float(radius)) / radiusLimit
+    var pixelRadius:Int {
+        let samplingArea:Float = 1.0 / 256.0
+        var newRadius:Int = 0
+        if sigma >= 1.0 {
+            newRadius = Int(floor(sqrt(-2.0 * pow(sigma, 2.0) * log(samplingArea * sqrt(2.0 * .pi * pow(sigma, 2.0))) )))
+            newRadius += newRadius % 2
+        }
+        return newRadius
     }
+    
+    var downsamplingFactor:Float {
+        return  radiusLimit > radius ? 1 : round(Float(radius)) / radiusLimit
+    }
+    
+
     
     var adjustmentBuffer:MTLBuffer!
     var empty = true
     func update(){
-        let kernel: [Float] = radius.gaussianKernel
-        let inputs: [Float] = kernel.gaussianInputs
         
-        let weights:[Float] = inputs.gaussianWeights
-        let offsets:[Float] = inputs.gaussianOffsets(weights: weights)
+        var factor = downsamplingFactor
+        memcpy(downsamplingFactorBuffer.contents(), &factor, downsamplingFactorBuffer.length)
         
+        //let kernel: [Float] = radius.gaussianKernel
+        //let inputs: [Float] = kernel.gaussianInputs
+        
+        //let weights:[Float] = inputs.gaussianWeights
+        //let offsets:[Float] = inputs.gaussianOffsets(weights: weights)
+
+        let weights:[Float] = optimizedWeights(pixelRadius, sigma: sigma)
+        let offsets:[Float] = optimizedOffsets(pixelRadius, sigma: sigma)
+
         if weights.count>0{
             if empty {
                 empty = false
@@ -70,8 +89,8 @@ public class IMPGaussianBlurFilter: IMPFilter {
             weightsTexure =  context.device.texture1D(buffer:weights)
             offsetsTexture = context.device.texture1D(buffer:offsets)
             
-            print("weights = \(weights)")
-            print("offsets = \(offsets)")
+            NSLog("weights[\(radius, pixelRadius, sigma, downsamplingFactor)] = \(weights)")
+            NSLog("offsets = \(offsets)")
         }
         else{
             empty = true
@@ -80,6 +99,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
     }
 
+    lazy var downsamplingFactorBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     var weightsTexure:MTLTexture!
     var offsetsTexture:MTLTexture!
     
@@ -89,6 +109,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
         f.optionsHandler = { (kernel,commandEncoder) in
             commandEncoder.setTexture(self.weightsTexure, at: 2)
             commandEncoder.setTexture(self.offsetsTexture, at: 3)
+            commandEncoder.setBuffer(self.downsamplingFactorBuffer, offset:0, at: 0)
         }
         
         return f
@@ -100,12 +121,67 @@ public class IMPGaussianBlurFilter: IMPFilter {
         f.optionsHandler = { (kernel,commandEncoder) in
             commandEncoder.setTexture(self.weightsTexure, at: 2)
             commandEncoder.setTexture(self.offsetsTexture, at: 3)
+            commandEncoder.setBuffer(self.downsamplingFactorBuffer, offset: 0, at:0)
             //commandEncoder.setTexture(source?.texture, atIndex: 4)
             //commandEncoder.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
         }
 
         return f
     }()
+    
+    
+    func gaussianWeights(_ radius:Int, sigma:Float) -> [Float] {
+        var weights = [Float]()
+        var sumOfWeights:Float = 0.0
+        
+        for index in 0...radius {
+            let weight:Float = (1.0 / sqrt(2.0 * .pi * pow(sigma, 2.0))) * exp(-pow(Float(index), 2.0) / (2.0 * pow(sigma, 2.0)))
+            weights.append(weight)
+            if (index == 0) {
+                sumOfWeights += weight
+            } else {
+                sumOfWeights += (weight * 2.0)
+            }
+        }
+        return weights.map{$0 / sumOfWeights}
+    }
+    
+    func optimizedOffsets(_ radius:Int, sigma:Float) -> [Float] {
+        
+        let standardWeights = gaussianWeights(radius, sigma:sigma)
+        let count = min(radius / 2 + (radius % 2), 7)
+        
+        var optimizedOffsets = [Float]()
+        optimizedOffsets.append(0)
+        
+        for index in 0..<count {
+            let firstWeight = Float(standardWeights[Int(index * 2 + 1)])
+            let secondWeight = Float(standardWeights[Int(index * 2 + 2)])
+            let optimizedWeight = firstWeight + secondWeight
+            
+            optimizedOffsets.append((firstWeight * (Float(index) * 2.0 + 1.0) + secondWeight * (Float(index) * 2.0 + 2.0)) / optimizedWeight)
+        }
+        
+        return optimizedOffsets
+    }
+    
+    func optimizedWeights(_ radius:Int, sigma:Float) -> [Float] {
+        let standardWeights = gaussianWeights(radius, sigma:sigma)
+        let count = min(radius / 2 + (radius % 2), 7)
+        let trueNumberOfOptimizedOffsets = radius / 2 + (radius % 2)
+
+        var optimizedWeights = [Float]()
+        optimizedWeights.append(standardWeights[0])
+
+        for index in 0..<count {
+            let firstWeight = standardWeights[Int(index * 2 + 1)]
+            let secondWeight = standardWeights[Int(index * 2 + 2)]
+            let optimizedWeight = firstWeight + secondWeight
+            optimizedWeights.append(optimizedWeight)
+        }
+        
+        return optimizedWeights
+    }
 }
 
 
