@@ -67,7 +67,7 @@ public class TestFilter: IMPFilter {
     lazy var kernelRedBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     lazy var kernelRed:IMPFunction = {
         let f = IMPFunction(context: self.context, name: "kernel_red")
-        f.optionsHandler = { (kernel,commandEncoder) in
+        f.optionsHandler = { (kernel,commandEncoder, input, output) in
             var value  = self.redAmount
             var buffer = self.kernelRedBuffer
             memcpy(buffer.contents(), &value, buffer.length)
@@ -79,7 +79,7 @@ public class TestFilter: IMPFilter {
     lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     lazy var kernelEV:IMPFunction = {
         let f = IMPFunction(context: self.context, name: "kernel_EV")
-        f.optionsHandler = { (kernel,commandEncoder) in
+        f.optionsHandler = { (kernel,commandEncoder, input, output) in
             var value  = self.inputEV
             var buffer = self.kernelEVBuffer
             memcpy(buffer.contents(), &value, buffer.length)
@@ -246,7 +246,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     func ci_evHandler(slider:UISlider)  {
         DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
-            self.testFilter.ci_inputEV = slider.value * 3
+            self.testFilter.ci_inputEV = slider.value
         }
     }
 

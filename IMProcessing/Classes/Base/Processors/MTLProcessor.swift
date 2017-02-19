@@ -110,15 +110,13 @@ class IMPCoreImageMTLKernel: IMPCIFilter{
         input:MTLTexture,
         output:MTLTexture
         )  {
-        let commandEncoder = commandBuffer.makeComputeCommandEncoder()
-        
-        commandEncoder.setComputePipelineState(kernel.pipeline!)
+        let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
         
         commandEncoder.setTexture(input, at:0)
         commandEncoder.setTexture(output, at:1)
         
         if let handler = kernel.optionsHandler {
-            handler(kernel, commandEncoder)
+            handler(kernel, commandEncoder, input, output)
         }
         
         commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadsPerThreadgroup)

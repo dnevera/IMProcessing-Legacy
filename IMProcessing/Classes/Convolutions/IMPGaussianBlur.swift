@@ -59,7 +59,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     }
     
     var downsamplingFactor:Float {
-        return  radiusLimit > radius ? 1 : round(Float(radius)) / radiusLimit
+        return  1 //radiusLimit > radius ? 1 : round(Float(radius)) / radiusLimit
     }
     
 
@@ -71,14 +71,14 @@ public class IMPGaussianBlurFilter: IMPFilter {
         var factor = downsamplingFactor
         memcpy(downsamplingFactorBuffer.contents(), &factor, downsamplingFactorBuffer.length)
         
-        //let kernel: [Float] = radius.gaussianKernel
-        //let inputs: [Float] = kernel.gaussianInputs
+        let kernel: [Float] = radius.int.gaussianKernel
+        let inputs: [Float] = kernel.gaussianInputs
         
-        //let weights:[Float] = inputs.gaussianWeights
-        //let offsets:[Float] = inputs.gaussianOffsets(weights: weights)
+        let weights:[Float] = inputs.gaussianWeights
+        let offsets:[Float] = inputs.gaussianOffsets(weights: weights)
 
-        let weights:[Float] = optimizedWeights(pixelRadius, sigma: sigma)
-        let offsets:[Float] = optimizedOffsets(pixelRadius, sigma: sigma)
+        //let weights:[Float] = optimizedWeights(pixelRadius, sigma: sigma)
+        //let offsets:[Float] = optimizedOffsets(pixelRadius, sigma: sigma)
 
         if weights.count>0{
             if empty {
@@ -102,11 +102,13 @@ public class IMPGaussianBlurFilter: IMPFilter {
     lazy var downsamplingFactorBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     var weightsTexure:MTLTexture!
     var offsetsTexture:MTLTexture!
+    var sourceTexture:MTLTexture?
     
     lazy var horizontal_pass_kernel:IMPFunction = {
         let f = IMPFunction(context: self.context, name: "kernel_gaussianSampledBlurHorizontalPass")
         
-        f.optionsHandler = { (kernel,commandEncoder) in
+        f.optionsHandler = { (kernel,commandEncoder, input, output) in
+            self.sourceTexture = input
             commandEncoder.setTexture(self.weightsTexure, at: 2)
             commandEncoder.setTexture(self.offsetsTexture, at: 3)
             commandEncoder.setBuffer(self.downsamplingFactorBuffer, offset:0, at: 0)
@@ -118,12 +120,13 @@ public class IMPGaussianBlurFilter: IMPFilter {
     lazy var vertical_pass_kernel:IMPFunction   = {
         let f = IMPFunction(context: self.context,name: "kernel_gaussianSampledBlurVerticalPass")
 
-        f.optionsHandler = { (kernel,commandEncoder) in
+        f.optionsHandler = { (kernel,commandEncoder, input, output) in
             commandEncoder.setTexture(self.weightsTexure, at: 2)
             commandEncoder.setTexture(self.offsetsTexture, at: 3)
+            commandEncoder.setTexture(self.sourceTexture, at: 4)
+            
             commandEncoder.setBuffer(self.downsamplingFactorBuffer, offset: 0, at:0)
-            //commandEncoder.setTexture(source?.texture, atIndex: 4)
-            //commandEncoder.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+            commandEncoder.setBuffer(self.adjustmentBuffer, offset: 0, at: 1)
         }
 
         return f

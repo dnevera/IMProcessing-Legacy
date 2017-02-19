@@ -31,15 +31,46 @@ extension IMPShaderProvider{
     }
 }
 
-public class IMPShader: IMPContextProvider, Equatable {
-    
+public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
+   
+    public var backgroundColor: NSColor = NSColor.clear
     public let vertexName:String
     public let fragmentName:String
     public var uid:String {return _uid}
     public var context:IMPContext
+    public var name:String {
+        return _name
+    }
     
-    public var optionsHandler:((_ function:IMPShader, _ command:MTLRenderCommandEncoder)->Void)? = nil
+    public var verticesBuffer:MTLBuffer {
+        return _vertexBuffer
+    }
+    
+    public var vertices:IMPVertices! {
+        didSet{
+            _vertexBuffer = context.device.makeBuffer(bytes: vertices.raw, length: vertices.length, options: [])
+        }
+    }
+    
+    public func commandEncoder(from buffer: MTLCommandBuffer, width destination: MTLTexture?) -> MTLRenderCommandEncoder {
+        
+        renderPassDescriptor.colorAttachments[0].texture     = destination
+        renderPassDescriptor.colorAttachments[0].loadAction  = .clear
+        renderPassDescriptor.colorAttachments[0].clearColor  = self.clearColor
+        renderPassDescriptor.colorAttachments[0].storeAction = .store
+        let encoder = buffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
+        encoder.setRenderPipelineState(pipeline!)
+        return encoder
+    }
 
+    
+    public var optionsHandler:((
+        _ function:IMPShader,
+        _ command:MTLRenderCommandEncoder,
+        _ inputTexture:MTLTexture?,
+        _ outputTexture:MTLTexture?)->Void)? = nil
+    
+    
     public var library:MTLLibrary {
         return self.context.defaultLibrary
     }
@@ -66,6 +97,9 @@ public class IMPShader: IMPContextProvider, Equatable {
         self.vertexName = vertex
         self.fragmentName = fragment
         self._vertexDescriptor = vertexDescriptor
+        defer {
+            vertices = IMPPhotoPlate()
+        }
     }
     
     public static func == (lhs: IMPShader, rhs: IMPShader) -> Bool {
@@ -90,5 +124,11 @@ public class IMPShader: IMPContextProvider, Equatable {
         return _vertexDescriptor ?? _defaultVertexDescriptor
     }
     
-    private lazy var _uid:String = self.context.uid + ":" + self.vertexName + ":" + self.fragmentName
+    lazy var renderPassDescriptor:MTLRenderPassDescriptor = {
+        return MTLRenderPassDescriptor()
+    }()
+
+    private lazy var _name:String = self.vertexName + ":" + self.fragmentName
+    private lazy var _uid:String = self.context.uid + ":" + self._name
+    var _vertexBuffer: MTLBuffer!
 }

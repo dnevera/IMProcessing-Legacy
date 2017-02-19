@@ -32,7 +32,18 @@ public class IMPFunction: IMPContextProvider, Equatable {
     public var pipeline:MTLComputePipelineState? { return _pipeline }
     public var uid:String {return _uid}
     
-    public var optionsHandler:((_ function:IMPFunction, _ command:MTLComputeCommandEncoder)->Void)? = nil
+    public func commandEncoder(from buffer: MTLCommandBuffer) -> MTLComputeCommandEncoder {
+        let encoder = buffer.makeComputeCommandEncoder()
+        encoder.setComputePipelineState(pipeline!)
+        return encoder
+    }
+    
+    
+    public var optionsHandler:((
+        _ function:IMPFunction,
+        _ command:MTLComputeCommandEncoder,
+        _ inputTexture:MTLTexture?,
+        _ outputTexture:MTLTexture?)->Void)? = nil
     
     public required init(context:IMPContext, name:String) {
         self.context = context
