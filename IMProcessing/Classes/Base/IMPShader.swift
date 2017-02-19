@@ -43,12 +43,12 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
     }
     
     public var verticesBuffer:MTLBuffer {
-        return _vertexBuffer
+        return _verticesBuffer
     }
     
     public var vertices:IMPVertices! {
         didSet{
-            _vertexBuffer = context.device.makeBuffer(bytes: vertices.raw, length: vertices.length, options: [])
+            _verticesBuffer = context.device.makeBuffer(bytes: vertices.raw, length: vertices.length, options: [])
         }
     }
     
@@ -59,6 +59,7 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
         renderPassDescriptor.colorAttachments[0].clearColor  = self.clearColor
         renderPassDescriptor.colorAttachments[0].storeAction = .store
         let encoder = buffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
+        encoder.setCullMode(.front)
         encoder.setRenderPipelineState(pipeline!)
         return encoder
     }
@@ -92,11 +93,18 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
         }
     }()
     
-    public required init(context:IMPContext, vertex:String, fragment:String, vertexDescriptor:MTLVertexDescriptor? = nil) {
+    public required init(context:IMPContext,
+                         vertex:String,
+                         fragment:String,
+                         withName:String? = nil,
+                         vertexDescriptor:MTLVertexDescriptor? = nil) {
         self.context = context
         self.vertexName = vertex
         self.fragmentName = fragment
         self._vertexDescriptor = vertexDescriptor
+        if withName != nil {
+            self._name = withName!
+        }
         defer {
             vertices = IMPPhotoPlate()
         }
@@ -130,5 +138,5 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
 
     private lazy var _name:String = self.vertexName + ":" + self.fragmentName
     private lazy var _uid:String = self.context.uid + ":" + self._name
-    var _vertexBuffer: MTLBuffer!
+    var _verticesBuffer: MTLBuffer!
 }

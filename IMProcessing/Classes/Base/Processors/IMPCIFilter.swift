@@ -135,7 +135,7 @@ extension IMPCIFilter {
             
             command(commandBuffer, threadgroups, threadsPerThreadgroup, self.input, self.output)
             
-            self.input?.setPurgeableState(.empty)
+            self.input?.setPurgeableState(.volatile)
         }
         
         if let result = output {

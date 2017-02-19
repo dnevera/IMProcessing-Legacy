@@ -90,6 +90,10 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         }
     }
     
+    public var chain:[FilterContainer] {
+        return coreImageFilterList
+    }
+    
     open func configure(_ withName: String?){
         name = withName
     }
@@ -221,12 +225,23 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
     }
    
+    public func add(shader: IMPShader,
+                    fail: FailHandler?=nil,
+                    complete: CompleteHandler?=nil) {
+        let filter = IMPCoreImageMTLShader.register(shader: shader)
+        appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    }
+
     public func add(function name: String,
                     fail: FailHandler?=nil,
                     complete: CompleteHandler?=nil) {
-        let function = IMPFunction(context: context, name: name)
-        let filter = IMPCoreImageMTLKernel.register(function: function)
-        appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+        add(function: IMPFunction(context: context, name: name), fail: fail, complete: complete)
+    }
+
+    public func add(vertex: String, fragment: String,
+                    fail: FailHandler?=nil,
+                    complete: CompleteHandler?=nil) {
+        add(shader: IMPShader(context: context, vertex: vertex, fragment: fragment), fail: fail, complete: complete)
     }
     
     public func add(filter: CIFilter,
@@ -267,14 +282,28 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
     }
     
+    public func insert(shader: IMPShader,
+                       at index: Int,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        let filter = IMPCoreImageMTLShader.register(shader: shader)
+        insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    }
+    
     public func insert(function name: String,
                        at index: Int,
                        fail: FailHandler?=nil,
                        complete: CompleteHandler?=nil) {
-        
-        let function = IMPFunction(context: context, name: name)
-        let filter = IMPCoreImageMTLKernel.register(function: function)
-        insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+        insert(function: IMPFunction(context:context, name:name),
+               at: index, fail: fail, complete: complete)
+    }
+    
+    public func insert(vertex: String, fragment: String,
+                       at index: Int,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        insert(shader: IMPShader(context:context, vertex: vertex, fragment:fragment),
+               at: index, fail: fail, complete: complete)
     }
     
     public func insert(filter: CIFilter,
@@ -341,6 +370,15 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         let filter = IMPCoreImageMTLKernel.register(function: function)
         insert(filter: filter, after: filterName, fail: fail, complete: complete)
     }
+ 
+    // Insert IMPFunction before/after
+    public func insert(shader: IMPShader,
+                       after filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        let filter = IMPCoreImageMTLShader.register(shader: shader)
+        insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    }
     
     public func insert(function: IMPFunction,
                        before filterName: String,
@@ -350,6 +388,14 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         insert(filter: filter, before: filterName, fail: fail, complete: complete)
     }
     
+    public func insert(shader: IMPShader,
+                       before filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        let filter = IMPCoreImageMTLShader.register(shader: shader)
+        insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    }
+
     // Insert IMPFunction by name before/after
     public func insert(function name: String,
                        after filterName: String,
@@ -359,7 +405,15 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         let filter = IMPCoreImageMTLKernel.register(function: function)
         insert(filter: filter, after: filterName, fail: fail, complete: complete)
     }
-    
+
+    public func insert(vertex: String, fragment: String,
+                       after filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        insert(shader: IMPShader(context:context, vertex:vertex, fragment:fragment),
+               after: filterName, fail: fail, complete: complete)
+    }
+
     public func insert(function name: String,
                        before filterName: String,
                        fail: FailHandler?=nil,
@@ -368,7 +422,15 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         let filter = IMPCoreImageMTLKernel.register(function: function)
         insert(filter: filter, before: filterName, fail: fail, complete: complete)
     }
-    
+
+    public func insert(vertex: String, fragment: String,
+                       before filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        insert(shader: IMPShader(context:context, vertex:vertex, fragment:fragment),
+               before: filterName, fail: fail, complete: complete)
+    }
+
     // Insert MPS before/after
     public func insert(mps: MPSUnaryImageKernel, withName: String? = nil,
                        after filterName: String,
@@ -420,7 +482,11 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
     public func remove(function: IMPFunction) {
         remove(filter: function.name)
     }
-    
+
+    public func remove(shader: IMPShader) {
+        remove(filter: shader.name)
+    }
+
     public func remove(filter name: String){
         var index = 0
         for f in coreImageFilterList{
@@ -468,6 +534,10 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
             }
             index += 1
         }
+    }
+    
+    public func removeAll(){
+        coreImageFilterList.removeAll()
     }
     
     //
@@ -523,7 +593,7 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
 
     private var coreImageFilterList:[FilterContainer] = [FilterContainer]()
 
-    private struct FilterContainer: Equatable {
+    public struct FilterContainer: Equatable {
         
         var cifilter:CIFilter?        = nil
         var filter:IMPFilter?         = nil

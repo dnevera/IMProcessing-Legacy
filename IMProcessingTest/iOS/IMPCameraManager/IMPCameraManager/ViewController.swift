@@ -33,13 +33,8 @@ public class TestFilter: IMPFilter {
     
     public var blurRadius:Float = 1 {
         didSet{
-            if context.supportsGPUv2 {
-                blurFilter.sigma = blurRadius
-            }
-            else {
-                //ciBlurFilter.setValue(blurRadius, forKey: "inputRadius")
-                impBlurFilter.radius = blurRadius.int
-            }
+            //ciBlurFilter.setValue(blurRadius, forKey: "inputRadius")
+            impBlurFilter.radius = blurRadius
             dirty = true
         }
     }
@@ -54,7 +49,7 @@ public class TestFilter: IMPFilter {
     lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     lazy var kernelEV:IMPFunction = {
         let f = IMPFunction(context: self.context, name: "kernel_EV")
-        f.optionsHandler = { (kernel,commandEncoder) in
+        f.optionsHandler = { (kernel,commandEncoder,input,output) in
             var value  = self.inputEV
             var buffer = self.kernelEVBuffer
             memcpy(buffer.contents(), &value, buffer.length)
@@ -67,34 +62,34 @@ public class TestFilter: IMPFilter {
         super.configure("Test filter")
         add(function: kernelEV)
         
-        if context.supportsGPUv2 {
-            add(mps: blurFilter)
-        }
-        else {
+//        if context.supportsGPUv2 {
+//            add(mps: blurFilter)
+//        }
+//        else {
             //add(filter: ciBlurFilter)
             add(filter: impBlurFilter)
-        }
+//        }
         
         inputEV = 2
-        blurRadius = 20
+        blurRadius = 5
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
-    private lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
+//    private lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
     
-    class BlurFilter: IMPMPSUnaryKernelProvider {
-        var name: String { return "BlurFilter" }
-        func mps(device:MTLDevice) -> MPSUnaryImageKernel? {
-            return MPSImageGaussianBlur(device: device, sigma: sigma)
-        }
-        var sigma:Float = 1
-        var context: IMPContext?
-        init(context:IMPContext?) {
-            self.context = context
-        }
-    }
-    
-    lazy var blurFilter:BlurFilter = BlurFilter(context:self.context)
+//    class BlurFilter: IMPMPSUnaryKernelProvider {
+//        var name: String { return "BlurFilter" }
+//        func mps(device:MTLDevice) -> MPSUnaryImageKernel? {
+//            return MPSImageGaussianBlur(device: device, sigma: sigma)
+//        }
+//        var sigma:Float = 1
+//        var context: IMPContext?
+//        init(context:IMPContext?) {
+//            self.context = context
+//        }
+//    }
+//    
+//    lazy var blurFilter:BlurFilter = BlurFilter(context:self.context)
 }
 
 

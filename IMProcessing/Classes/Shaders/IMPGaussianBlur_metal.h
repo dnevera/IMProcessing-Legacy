@@ -23,72 +23,40 @@ using namespace metal;
 
 namespace IMProcessing
 {
-    inline float3 kernel_gaussianSampledBlur(
-                                             texture2d<float, access::sample> inTexture,
-                                             texture2d<float, access::write>  outTexture,
-                                             texture1d<float, access::sample> weights,
-                                             texture1d<float, access::sample> offsets,
-                                             float  downsamplingFactor,
-                                             float2 offsetPixel,
-                                             uint2 gid){
+    
+    
+    fragment float4 fragment_gaussianSampledBlur(
+                                                 IMPVertexOut in [[stage_in]],
+                                                 texture2d<float, access::sample> texture    [[ texture(0) ]],
+                                                 texture1d<float, access::sample> weights    [[ texture(1) ]],
+                                                 texture1d<float, access::sample> offsets    [[ texture(2) ]],
+                                                 texture1d<float, access::sample> eWeights   [[ texture(3) ]],
+                                                 texture1d<float, access::sample> eOffsets   [[ texture(4) ]],
+                                                 const device   float2           &texelSize  [[ buffer(0)  ]],
+                                                 const device   bool             &exceeds    [[ buffer(1)  ]]
+                                                 ) {
+        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         
-        //constexpr sampler p(address::clamp_to_edge, filter::linear, coord::pixel);
-        constexpr sampler p(address::clamp_to_edge, filter::linear, coord::normalized);
+        float2 texCoord = in.texcoord.xy;
+
+        float3 color  = texture.sample(s, texCoord).rgb * weights.read(uint(0)).x;
         
-        float2 texelSize = float2(downsamplingFactor/float(inTexture.get_width()),downsamplingFactor/float(inTexture.get_height()));
-        float2 texCoord  = float2(gid);
-        
-        float3 color(0);
-        
-        for( uint i = 0; i < weights.get_width(); i++ )
-        {
-            float2 texCoordOffset = offsets.read(i).x * offsetPixel;
-            float3 pixel          = inTexture.sample(p, (texCoord - texCoordOffset) * texelSize).rgb;
-            pixel += inTexture.sample(p, (texCoord + texCoordOffset) * texelSize).rgb;
-            color += weights.read(i).x * pixel;
+        for( uint i = 1; i < weights.get_width(); i++ ){
+            
+            float2 texCoordOffset =  texelSize * offsets.read(i).x;
+            color += texture.sample(s, (texCoord + texCoordOffset)).rgb * weights.read(i).x;
+            color += texture.sample(s, (texCoord - texCoordOffset)).rgb * weights.read(i).x;
+            
         }
         
-        return color;
-    }
-    
-    
-    kernel void kernel_gaussianSampledBlurHorizontalPass(
-                                                         texture2d<float, access::sample> inTexture         [[texture(0)]],
-                                                         texture2d<float, access::write>  outTexture        [[texture(1)]],
-                                                         texture1d<float, access::sample> weights           [[texture(2)]],
-                                                         texture1d<float, access::sample> offsets           [[texture(3)]],
-                                                         constant float  &downsamplingFactor                [[buffer(0)]],
-                                                         uint2 gid [[thread_position_in_grid]]){
+        if (exceeds == true){
+            for( uint i = 0; i < eWeights.get_width(); i++ ){
+                color  += texture.sample(s, texCoord + texelSize * eOffsets.read(i).x).rgb * eWeights.read(i).x;
+                color  += texture.sample(s, texCoord - texelSize * eOffsets.read(i).x).rgb * eWeights.read(i).x;
+            }
+        }
         
-        float3 color = kernel_gaussianSampledBlur(inTexture,outTexture,weights,offsets,downsamplingFactor,float2(1,0),gid);
-        float2 texCoord  = float2(gid) * downsamplingFactor;
-        outTexture.write(float4(color,1),uint2(texCoord));
-    }
-    
-    kernel void kernel_gaussianSampledBlurVerticalPass(
-                                                       texture2d<float, access::sample> inTexture         [[texture(0)]],
-                                                       texture2d<float, access::write>  outTexture        [[texture(1)]],
-                                                       texture1d<float, access::sample> weights           [[texture(2)]],
-                                                       texture1d<float, access::sample> offsets           [[texture(3)]],
-                                                       constant float  &downsamplingFactor                [[buffer(0)]],
-                                                       texture2d<float, access::sample> sourceTexture     [[texture(4)]],
-                                                       constant IMPAdjustment           &adjustment       [[buffer(1)]],
-                                                       uint2 gid [[thread_position_in_grid]]){
-        
-        float3 color = kernel_gaussianSampledBlur(inTexture,outTexture,weights,offsets,downsamplingFactor,float2(0,1),gid);
-        
-        float4 result = IMProcessing::sampledColor(sourceTexture,outTexture,gid);
-        
-        if (adjustment.blending.mode == 0)
-            result = IMProcessing::blendLuminosity(result, float4(color, adjustment.blending.opacity));
-        else
-            result = IMProcessing::blendNormal(result, float4(color, adjustment.blending.opacity));
-        
-        outTexture.write(result,gid);
-        //outTexture.write(float4(color,1),gid);
-
-        //float2 texCoord  = float2(gid) * downsamplingFactor;
-        //outTexture.write(float4(color,1),uint2(texCoord));
+        return float4(color,1);
     }
 }
 

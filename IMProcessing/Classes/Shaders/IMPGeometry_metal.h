@@ -100,7 +100,7 @@ namespace IMProcessing
                                          texture2d<float, access::sample> texture [[ texture(0) ]]
                                          ) {
         constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
-        return texture.sample(s, in.texcoord.xy);
+        return  texture.sample(s, in.texcoord.xy);
     }
     
     fragment float4 fragment_gridGenerator(

@@ -66,10 +66,23 @@ class IMPCoreImageMTLShader: IMPCIFilter{
                             (commandBuffer, threadgroups, threadsPerThreadgroup, input, output) in
                             
                             if let sourceTexture      = input,
-                                let destinationTexture = output{
-                             
+                                let destinationTexture = output,
+                                let vertices = shader.vertices{
                                 
+                                let renderEncoder = shader.commandEncoder(from: commandBuffer, width: output)
                                 
+                                renderEncoder.setVertexBuffer(shader.verticesBuffer, offset: 0, at: 0)
+                                renderEncoder.setFragmentTexture(input, at:0)
+                                
+                                if let handler = shader.optionsHandler {
+                                    handler(shader, renderEncoder, input, output)
+                                }
+                                
+                                renderEncoder.drawPrimitives(type: .triangle,
+                                                             vertexStart: 0,
+                                                             vertexCount: vertices.count,
+                                                             instanceCount: vertices.count/3)
+                                renderEncoder.endEncoding()                                
                             }
             })
         }
