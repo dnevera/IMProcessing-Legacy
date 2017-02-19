@@ -22,19 +22,36 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
     }
 
+    public var radiusLimit:Float = 8 {
+        didSet{
+            update()
+            dirty = true
+        }
+    }
+    
     public var radius:Int!{
         didSet{
             update()
             dirty = true
         }
     }
-
+    
     public override func configure(_ withName: String?) {
         self.name = "IMPGaussianBlurFilter"
         adjustment = IMPGaussianBlurFilter.defaultAdjustment
         radius = 0
     }
-
+  
+    var sigma:Float {
+        get {
+            return radiusLimit
+        }
+    }
+    
+    var downsamplingFactor:Float {
+        return round(Float(radius)) / radiusLimit
+    }
+    
     var adjustmentBuffer:MTLBuffer!
     var empty = true
     func update(){
@@ -52,6 +69,9 @@ public class IMPGaussianBlurFilter: IMPFilter {
             }
             weightsTexure =  context.device.texture1D(buffer:weights)
             offsetsTexture = context.device.texture1D(buffer:offsets)
+            
+            print("weights = \(weights)")
+            print("offsets = \(offsets)")
         }
         else{
             empty = true

@@ -31,8 +31,10 @@ namespace IMProcessing
                                              float2 offsetPixel,
                                              uint2 gid){
         
-        constexpr sampler p(address::clamp_to_edge, filter::linear, coord::pixel);
+        //constexpr sampler p(address::clamp_to_edge, filter::linear, coord::pixel);
+        constexpr sampler p(address::clamp_to_edge, filter::linear, coord::normalized);
         
+        float2 texelSize = float2(float(1)/float(inTexture.get_width()),float(1)/float(inTexture.get_height()));
         float2 texCoord  = float2(gid);
         
         float3 color(0);
@@ -40,8 +42,8 @@ namespace IMProcessing
         for( uint i = 0; i < weights.get_width(); i++ )
         {
             float2 texCoordOffset = offsets.read(i).x * offsetPixel;
-            float3 pixel          = inTexture.sample(p, texCoord - texCoordOffset ).rgb;
-            pixel += inTexture.sample(p, texCoord + texCoordOffset).rgb;
+            float3 pixel          = inTexture.sample(p, (texCoord - texCoordOffset) * texelSize).rgb;
+            pixel += inTexture.sample(p, (texCoord + texCoordOffset) * texelSize).rgb;
             color += weights.read(i).x * pixel;
         }
         
