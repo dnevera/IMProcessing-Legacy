@@ -68,65 +68,81 @@
             }
             _init_()
         }
-
-        lazy var commandQueue:MTLCommandQueue   = self.device!.makeCommandQueue(maxCommandBufferCount:3)
-    
+        
+        lazy var commandQueue:MTLCommandQueue   = self.device!.makeCommandQueue()
+        
         lazy var ciContext: CIContext = { [unowned self] in
             return CIContext(mtlDevice: self.device!)
-        }()
+            }()
         
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         var frameCounter = 0
+        var renderQueue = DispatchQueue(label: "rendering.improcessing.com")
         
         func refresh(rect: CGRect)
         {
+            let t1 = Date.timeIntervalSinceReferenceDate
             guard let destination = (currentDestination ?? filter?.destination) else { return }
+            let t2 = Date.timeIntervalSinceReferenceDate
             
-            currentDestination = destination
-            
-            guard let targetTexture = currentDrawable?.texture,
-                let image = destination.image
-                else {
-                return
-            }
-
-            let commandBuffer = commandQueue.makeCommandBufferWithUnretainedReferences()
-
-            if self.isFirstFrame  {
-                commandBuffer.addCompletedHandler{ (commandBuffer) in
-                    self.frameCounter += 1
+            DispatchQueue.main.async {
+                
+                self.currentDestination = destination
+                
+                guard
+                    let drawble = self.currentDrawable,
+                    let image = destination.image
+                    else {
+                        return
                 }
-            }
-            
-            //
-            // https://github.com/FlexMonkey/CoreImageHelpers/blob/master/CoreImageHelpers/coreImageHelpers/ImageView.swift
-            //
-            let bounds = CGRect(origin: CGPoint.zero, size: drawableSize)
-            
-            let originX = image.extent.origin.x
-            let originY = image.extent.origin.y
-            
-            let scaleX = drawableSize.width /  image.extent.width
-            let scaleY = drawableSize.height / image.extent.height
-            let scale = min(scaleX, scaleY)
-            
-            let scaledImage = image
-                .applying(CGAffineTransform(translationX: -originX, y: -originY))
-                .applying(CGAffineTransform(scaleX: scale, y: scale))
-            
-            ciContext.render(scaledImage,
-                             to: targetTexture,
-                             commandBuffer: commandBuffer,
-                             bounds: bounds,
-                             colorSpace: colorSpace)
-            
-            commandBuffer.present(currentDrawable!)
-            commandBuffer.commit()
-
-            if frameCounter > 0  && isFirstFrame {
-                isFirstFrame = false
-                if viewReadyHandler !=  nil {
-                    viewReadyHandler!()
+                
+                let targetTexture = drawble.texture
+                let commandBuffer = self.commandQueue.makeCommandBufferWithUnretainedReferences()
+                
+                commandBuffer.addScheduledHandler({ (commandBuffer) in
+                })
+                
+                if self.isFirstFrame  {
+                    commandBuffer.addCompletedHandler{ (commandBuffer) in
+                        self.frameCounter += 1
+                    }
+                }
+                
+                //
+                // https://github.com/FlexMonkey/CoreImageHelpers/blob/master/CoreImageHelpers/coreImageHelpers/ImageView.swift
+                //
+                let bounds = CGRect(origin: CGPoint.zero, size: self.drawableSize)
+                
+                let originX = image.extent.origin.x
+                let originY = image.extent.origin.y
+                
+                let scaleX = self.drawableSize.width /  image.extent.width
+                let scaleY = self.drawableSize.height / image.extent.height
+                let scale = min(scaleX, scaleY)
+                
+                let scaledImage = image
+                    .applying(CGAffineTransform(translationX: -originX, y: -originY))
+                    .applying(CGAffineTransform(scaleX: scale, y: scale))
+                
+                self.ciContext.render(scaledImage,
+                                      to: targetTexture,
+                                      commandBuffer: commandBuffer,
+                                      bounds: bounds,
+                                      colorSpace: self.colorSpace
+                )
+                
+                let t3 = Date.timeIntervalSinceReferenceDate
+                
+                NSLog("Current frame time:  rendering = \(t3-t2) filtering = \(t2-t1)")
+                
+                commandBuffer.present(drawble)
+                commandBuffer.commit()
+                
+                if self.frameCounter > 0  && self.isFirstFrame {
+                    self.isFirstFrame = false
+                    if self.viewReadyHandler !=  nil {
+                        self.viewReadyHandler!()
+                    }
                 }
             }
         }
@@ -156,12 +172,17 @@
     
     
     extension IMPView: MTKViewDelegate {
+        
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+        
         public func draw(in view: MTKView) {
             
             guard needUpdateDisplay else { return }
             needUpdateDisplay = false
-            refresh(rect: view.bounds)
+            
+            renderQueue.async{
+                self.refresh(rect: view.bounds)
+            }
         }
     }
     

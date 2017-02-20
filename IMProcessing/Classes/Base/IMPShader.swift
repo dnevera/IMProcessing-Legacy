@@ -73,29 +73,47 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
     
     
     public var library:MTLLibrary {
-        return self.context.defaultLibrary
+        return _library
     }
     
     public lazy var pipeline:MTLRenderPipelineState? = {
+        return self.makePipeline()
+    }()
+    
+    let renderPipelineDescription = MTLRenderPipelineDescriptor()
+
+    func makePipeline() -> MTLRenderPipelineState? {
         do {
-            let renderPipelineDescription = MTLRenderPipelineDescriptor()
-            
             renderPipelineDescription.vertexDescriptor = self.vertexDescriptor
             
             renderPipelineDescription.colorAttachments[0].pixelFormat = IMProcessing.colors.pixelFormat
-            renderPipelineDescription.vertexFunction   = self.context.defaultLibrary.makeFunction(name: self.vertexName)
-            renderPipelineDescription.fragmentFunction = self.context.defaultLibrary.makeFunction(name: self.fragmentName)
+            renderPipelineDescription.vertexFunction   = self.library.makeFunction(name: self.vertexName)
+            renderPipelineDescription.fragmentFunction = self.library.makeFunction(name: self.fragmentName)
             
             return try self.context.device.makeRenderPipelineState(descriptor: renderPipelineDescription)
         }
         catch let error as NSError{
             fatalError(" *** IMPGraphics: \(error)")
         }
-    }()
+    }
+    
+    public func updateShader(source: String){
+        do {
+            _library = try context.makeLibrary(source: source)
+            pipeline = makePipeline()
+            guard let pl = pipeline else {
+                fatalError("IMPShader could not found function names...")
+            }
+        }
+        catch let error as Error {
+            fatalError("IMPShader could not be compiled from source: \(error)")
+        }
+    }
     
     public required init(context:IMPContext,
                          vertex:String,
                          fragment:String,
+                         shaderSource:String? = nil,
                          withName:String? = nil,
                          vertexDescriptor:MTLVertexDescriptor? = nil) {
         self.context = context
@@ -106,6 +124,9 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
             self._name = withName!
         }
         defer {
+            if let s = shaderSource  {
+                updateShader(source:s)
+            }
             vertices = IMPPhotoPlate()
         }
     }
@@ -113,6 +134,8 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
     public static func == (lhs: IMPShader, rhs: IMPShader) -> Bool {
         return lhs.uid == rhs.uid
     }
+    
+    lazy var _library:MTLLibrary = self.context.defaultLibrary
     
     lazy var _defaultVertexDescriptor:MTLVertexDescriptor = {
         var v = MTLVertexDescriptor()

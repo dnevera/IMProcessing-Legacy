@@ -168,8 +168,13 @@ extension IMPGLView: GLKViewDelegate {
     public func glkView(_ view: GLKView, drawIn rect: CGRect) {
         
         guard let image = (currentImage ?? filter?.destination.image) else { return }
-        
+
         currentImage = image
+//        currentImage = CIImage(imageProvider: image,
+//                               size: Int(image.extent.width),
+//                               Int(image.extent.height),
+//                               format: kCIFormatARGB8,
+//                               colorSpace: colorSpace, options: nil)
         
         let targetRect = image.extent.aspectFitInRect(
             target: NSRect(origin: NSPoint.zero,

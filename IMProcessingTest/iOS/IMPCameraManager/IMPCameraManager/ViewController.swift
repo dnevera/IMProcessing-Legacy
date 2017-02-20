@@ -33,7 +33,6 @@ public class TestFilter: IMPFilter {
     
     public var blurRadius:Float = 1 {
         didSet{
-            //ciBlurFilter.setValue(blurRadius, forKey: "inputRadius")
             impBlurFilter.radius = blurRadius
             dirty = true
         }
@@ -61,35 +60,13 @@ public class TestFilter: IMPFilter {
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
         add(function: kernelEV)
-        
-//        if context.supportsGPUv2 {
-//            add(mps: blurFilter)
-//        }
-//        else {
-            //add(filter: ciBlurFilter)
-            add(filter: impBlurFilter)
-//        }
-        
+        add(filter: impBlurFilter)
         inputEV = 2
-        blurRadius = 5
+        impBlurFilter.radius = 20
+        dirty = true
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
-//    private lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
-    
-//    class BlurFilter: IMPMPSUnaryKernelProvider {
-//        var name: String { return "BlurFilter" }
-//        func mps(device:MTLDevice) -> MPSUnaryImageKernel? {
-//            return MPSImageGaussianBlur(device: device, sigma: sigma)
-//        }
-//        var sigma:Float = 1
-//        var context: IMPContext?
-//        init(context:IMPContext?) {
-//            self.context = context
-//        }
-//    }
-//    
-//    lazy var blurFilter:BlurFilter = BlurFilter(context:self.context)
 }
 
 

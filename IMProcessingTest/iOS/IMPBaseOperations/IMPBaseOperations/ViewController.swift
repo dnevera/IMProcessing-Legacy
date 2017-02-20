@@ -20,26 +20,10 @@ func CGRectMake(_ x: CGFloat, _ y: CGFloat, _ width: CGFloat, _ height: CGFloat)
 
 public class TestFilter: IMPFilter {
 
-//    class BlurFilter: IMPMPSUnaryKernelProvider {
-//        var name: String { return "BlurFilter" }
-//        func mps(device:MTLDevice) -> MPSUnaryImageKernel? {
-//            return MPSImageGaussianBlur(device: device, sigma: sigma)
-//        }
-//        var sigma:Float = 1
-//        var context: IMPContext?
-//        init(context:IMPContext?) {
-//            self.context = context
-//        }
-//    }
-
-    
-//    lazy var blurFilter:BlurFilter = BlurFilter(context:self.context)
-
     lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
 
     public var blurRadius:Float = 1 {
         didSet{
-            //blurFilter.sigma = blurRadius
             blurFilter.radius = blurRadius
             dirty = true
         }
@@ -88,18 +72,12 @@ public class TestFilter: IMPFilter {
         return f
     }()
     
-//    lazy var shaderPass:IMPShader = IMPShader(context: self.context,
-//                                              vertex: "vertex_gaussianSampledBlur",
-//                                              fragment: "fragment_gaussianSampledBlur")
-    
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
-//        add(function: kernelRed)
-//        add(function: kernelEV)
-//        add(filter: exposureFilter)
-//        //add(mps: blurFilter)
+        add(function: kernelRed)
+        add(function: kernelEV)
+        add(filter: exposureFilter)
         add(filter:blurFilter)
-//        add(shader: shaderPass)
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!

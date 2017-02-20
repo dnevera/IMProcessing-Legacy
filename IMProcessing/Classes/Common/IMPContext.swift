@@ -62,6 +62,7 @@ open class IMPContext {
     /// Default library associated with current context
     open let defaultLibrary:MTLLibrary
     
+    
     /// How context execution is processed
     open let isLazy:Bool
     
@@ -74,6 +75,12 @@ open class IMPContext {
             }
             return true
         }
+    }
+    
+    open func makeLibrary(source:String) throws -> MTLLibrary {
+        let options = MTLCompileOptions()
+        options.fastMathEnabled = true
+        return try device.makeLibrary(source: source, options: options)
     }
     
     fileprivate let semaphore = DispatchSemaphore(value: 3)

@@ -5,6 +5,11 @@
 //  Created by denis svinarchuk on 18.02.17.
 //
 //
+//  Acknowledgement:
+//  http://www.sunsetlakesoftware.com/ - the famous great work for Image Processing with GPU
+//  A lot of ideas were taken from the Brad Larson project: https://github.com/BradLarson/GPUImage
+//
+//
 
 import Foundation
 import Accelerate
@@ -66,9 +71,6 @@ public class IMPGaussianBlurFilter: IMPFilter {
             add(shader: vertical_shader)
         }
     }
-  
-    
-    lazy var mpsSupported:Bool = MPSSupportsMTLDevice(self.context.device)
     
     var sigma:Float {
         get {
@@ -92,69 +94,68 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     
     var adjustmentBuffer:MTLBuffer!
-    var empty = true
     func update(){
         
-        if radius <= IMPGaussianBlurFilter.radiusRange.minimum {
-            empty = true
-            removeAll()
-            return
-        }
-
         guard  let size = source?.image?.extent.size else {return}
         
-        var
-        factor = float2(downsamplingFactor/size.width.float, 0)
-        memcpy(hTexelSizeBuffer.contents(), &factor, hTexelSizeBuffer.length)
-        
-        factor = float2(0, downsamplingFactor/size.height.float)
-        memcpy(vTexelSizeBuffer.contents(), &factor, vTexelSizeBuffer.length)
-        
-        let offsets:[Float] = optimizedOffsets(pixelRadius, sigma: sigma)
-        let (weights, extendedWeights, extendedOffsets) = optimizedWeights(pixelRadius, sigma: sigma)
-        
-        if empty {
-            empty = false
-            add(shader: horizontal_shader)
-            add(shader: vertical_shader)
+        var offsets:[Float] = [Float]()
+        var weights:[Float] = [Float]()
+        if radius > IMPGaussianBlurFilter.radiusRange.minimum {
+            var
+            factor = float2(downsamplingFactor/size.width.float, 0)
+            memcpy(hTexelSizeBuffer.contents(), &factor, hTexelSizeBuffer.length)
+            
+            factor = float2(0, downsamplingFactor/size.height.float)
+            memcpy(vTexelSizeBuffer.contents(), &factor, vTexelSizeBuffer.length)
+            
+            offsets = optimizedOffsets(pixelRadius, sigma: sigma)
+            var extendedWeights:[Float]
+            var extendedOffsets:[Float]
+            (weights, extendedWeights, extendedOffsets) = optimizedWeights(pixelRadius, sigma: sigma)
+            
+            if extendedOffsets.count > 0 {
+                for i in 0..<extendedWeights.count {
+                    weights.append(extendedWeights[i])
+                    offsets.append(extendedOffsets[i])
+                }
+            }
         }
-        weightsTexure =  context.device.texture1D(buffer:weights)
-        offsetsTexture = context.device.texture1D(buffer:offsets)
         
-        var exceeds = false
+        let newLines  = generateMSL(weights:weights,offsets:offsets)
+        let newShader = String(format:self.shaderSource,newLines)
         
-        if extendedOffsets.count > 0 {
-            extendedWeightsTexure =  context.device.texture1D(buffer:extendedWeights)
-            extendedOffsetsTexture = context.device.texture1D(buffer:extendedWeights)
-            exceeds = true
-        }
-
-        memcpy(exceedsBuffer.contents(), &exceeds, exceedsBuffer.length)
+        horizontal_shader.updateShader(source: newShader)
+        vertical_shader.updateShader(source: newShader)
+        
+        //print(newShader)
     }
 
-    var weightsTexure:MTLTexture!
-    var extendedWeightsTexure:MTLTexture!
-    var offsetsTexture:MTLTexture!
-    var extendedOffsetsTexture:MTLTexture!
+    func generateMSL(weights:[Float], offsets:[Float]) -> String {
+        var lines = String()
+        if weights.count > 0 {
+            lines += "color = texture.sample(s, (texCoord + texelSize)).rgb * \(weights[0]);" + "\n"
+            for i in 1..<weights.count{
+                lines += "color += texture.sample(s, (texCoord + texelSize * \(offsets[i]))).rgb * \(weights[i]);" + "\n"
+                lines += "color += texture.sample(s, (texCoord - texelSize * \(offsets[i]))).rgb * \(weights[i]);" + "\n"
+            }
+        }
+        return lines
+    }
     
     lazy var hTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
     lazy var vTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
-    lazy var exceedsBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Bool>.size, options: [])
     
     lazy var horizontal_shader:IMPShader = {
-        
+        let ss = String(format:self.shaderSource,self.fragmentBody)
+
         let s = IMPShader(context: self.context,
                           vertex: "vertex_passthrough",
                           fragment: "fragment_gaussianSampledBlur",
+                          shaderSource: ss,
                           withName: "gaussianBlurHorizontalShader")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             commandEncoder.setFragmentBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
-            commandEncoder.setFragmentBuffer(self.exceedsBuffer, offset: 0, at: 1)
-            commandEncoder.setFragmentTexture(self.weightsTexure, at:1)
-            commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
-            commandEncoder.setFragmentTexture(self.extendedWeightsTexure, at:3)
-            commandEncoder.setFragmentTexture(self.extendedOffsetsTexture, at:4)
         }
         
         return s
@@ -162,18 +163,16 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var vertical_shader:IMPShader = {
         
+        let ss = String(format:self.shaderSource,self.fragmentBody)
+
         let s = IMPShader(context: self.context,
                           vertex: "vertex_passthrough",
                           fragment: "fragment_gaussianSampledBlur",
+                          shaderSource: ss,
                           withName: "gaussianBlurVerticalShader")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             commandEncoder.setFragmentBuffer(self.vTexelSizeBuffer, offset: 0, at: 0)
-            commandEncoder.setFragmentBuffer(self.exceedsBuffer, offset: 0, at: 1)
-            commandEncoder.setFragmentTexture(self.weightsTexure, at:1)
-            commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
-            commandEncoder.setFragmentTexture(self.extendedWeightsTexure, at:3)
-            commandEncoder.setFragmentTexture(self.extendedOffsetsTexture, at:4)
         }
         
         return s
@@ -195,17 +194,22 @@ public class IMPGaussianBlurFilter: IMPFilter {
         return weights.map{$0 / sumOfWeights}
     }
     
+    
+    func count(for radius: Int) -> (count:Int,trueCount:Int) {
+        return (min(radius / 2 + (radius % 2), radiusApproximation.int-1), radius / 2 + (radius % 2))
+    }
+    
     func optimizedOffsets(_ radius:Int, sigma:Float) -> [Float] {
         
         let standardWeights = gaussianWeights(radius, sigma:sigma)
-        let count = min(radius / 2 + (radius % 2), radiusApproximation.int-1)
+        let (count, trueCount) = self.count(for: radius)
         
         var optimizedOffsets = [Float]()
         optimizedOffsets.append(0)
         
         for index in 0..<count {
-            let firstWeight = Float(standardWeights[Int(index * 2 + 1)])
-            let secondWeight = Float(standardWeights[Int(index * 2 + 2)])
+            let firstWeight     = standardWeights[Int(index * 2 + 1)]
+            let secondWeight    = standardWeights[Int(index * 2 + 2)]
             let optimizedWeight = firstWeight + secondWeight
             
             optimizedOffsets.append((firstWeight * (Float(index) * 2.0 + 1.0) + secondWeight * (Float(index) * 2.0 + 2.0)) / optimizedWeight)
@@ -217,8 +221,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     func optimizedWeights(_ radius:Int, sigma:Float) -> ([Float],[Float],[Float]) {
         
         let standardWeights = gaussianWeights(radius, sigma:sigma)
-        let count     = min(radius / 2 + (radius % 2), radiusApproximation.int-1)
-        let trueCount = radius / 2 + (radius % 2)
+        let (count, trueCount) = self.count(for: radius)
 
         var optimizedWeights = [Float]()
         optimizedWeights.append(standardWeights[0])
@@ -260,6 +263,59 @@ public class IMPGaussianBlurFilter: IMPFilter {
     }
     
     lazy var mpsBlurFilter:BlurFilter = BlurFilter(context:self.context)
+    
+    lazy var mpsSupported:Bool = false //MPSSupportsMTLDevice(self.context.device)
+    
+    let shaderTypes:String = ""   + "\n"  +
+        "#include <metal_stdlib>" + "\n"  +
+        "#include <simd/simd.h>"  + "\n"  +
+        "using namespace metal;"  + "\n"  +
+        "typedef struct {" + "\n" +
+        "packed_float3 position;" + "\n"  +
+        "packed_float3 texcoord;" + "\n"  +
+        "} IMPVertex;" + "\n"  +
+        "" + "\n"  +
+        "typedef struct {" + "\n"  +
+        "    float4 position [[position]];" + "\n"  +
+        "    float2 texcoord;" + "\n"  +
+    "} IMPVertexOut;" + "\n"   + "\n"
+    
+
+    let vertextString:String = "vertex IMPVertexOut vertex_passthrough(" + "\n" +
+        "const device IMPVertex*   vertex_array [[ buffer(0) ]]," + "\n" +
+        "unsigned int vid [[ vertex_id ]]) {" + "\n" +
+        "" + "\n" +
+        "" + "\n" +
+        "    IMPVertex in = vertex_array[vid];" + "\n" +
+        "    float3 position = float3(in.position);" + "\n" +
+        "" + "\n" +
+        "    IMPVertexOut out;" + "\n" +
+        "    out.position = float4(position,1);" + "\n" +
+        "    out.texcoord = float2(float3(in.texcoord).xy);" + "\n" +
+        "" + "\n" +
+        "    return out;}"  + "\n"  + "\n"
+    
+    let fragmentString:String = "fragment float4 fragment_gaussianSampledBlur(" + "\n" +
+        "IMPVertexOut in [[stage_in]]," + "\n" +
+        "texture2d<float, access::sample> texture    [[ texture(0) ]]," + "\n" +
+        "const device   float2           &texelSize  [[ buffer(0)  ]]" + "\n" +
+        ") {" + "\n" +
+        "constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);" + "\n" +
+        "" + "\n" +
+        "float2 texCoord = in.texcoord.xy;" + "\n" +
+        "" + "\n" +
+        "float3 color  =  texture.sample(s, texCoord).rgb;" + "\n" +
+        ""    + "\n" +
+        "%@"  + "\n" +
+        ""    + "\n" +
+        ""    + "\n" +
+        "return float4(color,1);" +
+    "}"
+    
+    lazy var shaderSource:String = self.shaderTypes + self.vertextString + self.fragmentString
+
+    lazy var fragmentBody:String = ""
+    
 }
 
 

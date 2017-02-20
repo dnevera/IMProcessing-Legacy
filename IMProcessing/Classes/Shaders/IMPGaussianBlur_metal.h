@@ -30,10 +30,7 @@ namespace IMProcessing
                                                  texture2d<float, access::sample> texture    [[ texture(0) ]],
                                                  texture1d<float, access::sample> weights    [[ texture(1) ]],
                                                  texture1d<float, access::sample> offsets    [[ texture(2) ]],
-                                                 texture1d<float, access::sample> eWeights   [[ texture(3) ]],
-                                                 texture1d<float, access::sample> eOffsets   [[ texture(4) ]],
-                                                 const device   float2           &texelSize  [[ buffer(0)  ]],
-                                                 const device   bool             &exceeds    [[ buffer(1)  ]]
+                                                 const device   float2           &texelSize  [[ buffer(0)  ]]
                                                  ) {
         constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         
@@ -44,16 +41,10 @@ namespace IMProcessing
         for( uint i = 1; i < weights.get_width(); i++ ){
             
             float2 texCoordOffset =  texelSize * offsets.read(i).x;
+            
             color += texture.sample(s, (texCoord + texCoordOffset)).rgb * weights.read(i).x;
             color += texture.sample(s, (texCoord - texCoordOffset)).rgb * weights.read(i).x;
             
-        }
-        
-        if (exceeds == true){
-            for( uint i = 0; i < eWeights.get_width(); i++ ){
-                color  += texture.sample(s, texCoord + texelSize * eOffsets.read(i).x).rgb * eWeights.read(i).x;
-                color  += texture.sample(s, texCoord - texelSize * eOffsets.read(i).x).rgb * eWeights.read(i).x;
-            }
         }
         
         return float4(color,1);
