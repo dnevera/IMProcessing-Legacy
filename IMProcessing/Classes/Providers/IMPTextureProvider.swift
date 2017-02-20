@@ -144,7 +144,7 @@ public extension MTLDevice {
         return texture
     }
     
-    public func make2DTexture(width:Int, height:Int, pixelFormat:MTLPixelFormat = .r8Unorm) -> MTLTexture {
+    public func make2DTexture(width:Int, height:Int, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture {
         return makeTexture(descriptor:
             MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
                                                      width: width,
@@ -152,7 +152,7 @@ public extension MTLDevice {
                                                      mipmapped: false))
     }
     
-    public func make2DTexture(size: NSSize, pixelFormat:MTLPixelFormat = .r8Unorm) -> MTLTexture {
+    public func make2DTexture(size: NSSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture {
         return makeTexture(descriptor:
             MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
                                                      width: Int(size.width),

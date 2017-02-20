@@ -10,8 +10,59 @@
     import UIKit
     import MetalKit
     
+    typealias TextureQueue = IMPQueue<MTLTexture>
+    
+    public class TextureCache {
+        var cache = [Int64:TextureQueue]()
+        public var device:MTLDevice
+        
+        public init(device:MTLDevice) {
+            self.device = device
+        }
+     
+        public func requestTexture(size: NSSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture? {
+            let hash = hashFor(size: size, pixelFormat: pixelFormat)
+            if let t = cache[hash]?.dequeue() {
+                return t
+            }
+            else {
+                let t = device.make2DTexture(size: size, pixelFormat: pixelFormat)
+                var q = TextureQueue()
+                q.enqueue(t)
+                cache[hash] = q
+                return cache[hash]?.dequeue()
+            }
+        }
+        
+        public func returnTexure(_ texture:MTLTexture){
+            let hash = hashFor(texture: texture)
+            if cache[hash] == nil {
+                cache[hash] =  TextureQueue()
+            }
+            cache[hash]?.enqueue(texture)
+        }
+        
+        func hashFor(size: NSSize, pixelFormat:MTLPixelFormat) -> Int64 {
+            var result:Int64 = 1
+            let prime:Int64 = 31
+            result = prime * result + Int64(size.width)
+            result = prime * result + Int64(size.height)
+            result = prime * result + Int64(pixelFormat.rawValue)
+            return result
+
+        }
+        
+        func hashFor(texture: MTLTexture) -> Int64 {
+            return hashFor(size: texture.cgsize, pixelFormat: texture.pixelFormat)
+        }
+        
+    }
+    
+    
     @available(iOS 9.0, *)
     public class IMPView: MTKView {
+        
+        lazy var textureCache:TextureCache = TextureCache(device: self.device!)
         
         public var filter:IMPFilter? = nil {
             didSet {
@@ -29,6 +80,7 @@
                 })
                 
                 filter?.addObserver(destinationUpdated: { (destination) in
+                    
                     self.currentDestination = destination
                     if !anotherPassed{
                         self.setNeedsDisplay()
@@ -85,6 +137,8 @@
             guard let destination = (currentDestination ?? filter?.destination) else { return }
             let t2 = Date.timeIntervalSinceReferenceDate
             
+            let texture = textureCache.requestTexture(size: drawableSize)
+            
             DispatchQueue.main.async {
                 
                 self.currentDestination = destination
@@ -98,6 +152,9 @@
                 
                 let targetTexture = drawble.texture
                 let commandBuffer = self.commandQueue.makeCommandBufferWithUnretainedReferences()
+                
+                NSLog(" request texture = \(texture?.cgsize) drawble.texture = \(drawble.texture.cgsize)")
+
                 
                 commandBuffer.addScheduledHandler({ (commandBuffer) in
                 })
@@ -137,6 +194,8 @@
                 
                 commandBuffer.present(drawble)
                 commandBuffer.commit()
+                
+                self.textureCache.returnTexure(texture!)
                 
                 if self.frameCounter > 0  && self.isFirstFrame {
                     self.isFirstFrame = false
