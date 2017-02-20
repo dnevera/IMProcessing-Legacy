@@ -234,8 +234,8 @@ public class IMPGaussianBlurFilter: IMPFilter {
         var extendedWeights = [Float]()
         
         for index in count..<trueCount {
-            let firstWeight = standardWeights[Int(index * 2 + 1)];
-            let secondWeight = standardWeights[Int(index * 2 + 2)];
+            let firstWeight = standardWeights[Int(index * 2 + 1)]
+            let secondWeight = standardWeights[Int(index * 2 + 2)]
             
             let optimizedWeight = firstWeight + secondWeight
             let optimizedOffset = (firstWeight * (Float(index) * 2.0 + 1.0) + secondWeight * (Float(index) * 2.0 + 2.0)) / optimizedWeight
