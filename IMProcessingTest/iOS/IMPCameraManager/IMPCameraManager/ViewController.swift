@@ -60,9 +60,9 @@ public class TestFilter: IMPFilter {
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
         add(function: kernelEV)
-        //add(filter: impBlurFilter)
+        add(filter: impBlurFilter)
         inputEV = 2
-        impBlurFilter.radius = 20
+        blurRadius = 20
         dirty = true
     }
     

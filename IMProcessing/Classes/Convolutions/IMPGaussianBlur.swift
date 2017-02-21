@@ -70,6 +70,10 @@ public class IMPGaussianBlurFilter: IMPFilter {
             add(shader: horizontal_shader)
             add(shader: vertical_shader)
         }
+        
+        addObserver(newSource: { (source) in
+            self.update()
+        })
     }
     
     var sigma:Float {
@@ -94,12 +98,21 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     
     var adjustmentBuffer:MTLBuffer!
+    var oldRadius:Float = 0
+    
     func update(){
         
         guard  let size = source?.image?.extent.size else {return}
         
+        if oldRadius == radius {
+            return
+        }
+        
+        oldRadius = radius
+        
         var offsets:[Float] = [Float]()
         var weights:[Float] = [Float]()
+        
         if radius > IMPGaussianBlurFilter.radiusRange.minimum {
             var
             factor = float2(downsamplingFactor/size.width.float, 0)
@@ -121,11 +134,19 @@ public class IMPGaussianBlurFilter: IMPFilter {
             }
         }
         
-        let newLines  = generateMSL(weights:weights,offsets:offsets)
-        let newShader = String(format:self.shaderSource,newLines)
+        if weights.count == 0 {
+            weights.append(1)
+            offsets.append(1)
+        }
         
-        horizontal_shader.updateShader(source: newShader)
-        vertical_shader.updateShader(source: newShader)
+        weightsTexture =  context.device.texture1D(buffer:weights)
+        offsetsTexture = context.device.texture1D(buffer:offsets)
+
+        //let newLines  = generateMSL(weights:weights,offsets:offsets)
+        //let newShader = String(format:self.shaderSource,newLines)
+        
+        //horizontal_shader.updateShader(source: newShader)
+        //vertical_shader.updateShader(source: newShader)
         
         //print(newShader)
     }
@@ -144,6 +165,13 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var hTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
     lazy var vTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
+    lazy var weightsTexture:MTLTexture = {
+        return self.context.device.texture1D(buffer:[Float](repeating:1, count:1))
+    }()
+    lazy var offsetsTexture:MTLTexture = {
+        return self.context.device.texture1D(buffer:[Float](repeating:1, count:1))
+    }()
+    
     
     lazy var horizontal_shader:IMPShader = {
         let ss = String(format:self.shaderSource,self.fragmentBody)
@@ -151,11 +179,14 @@ public class IMPGaussianBlurFilter: IMPFilter {
         let s = IMPShader(context: self.context,
                           vertex: "vertex_passthrough",
                           fragment: "fragment_gaussianSampledBlur",
-                          shaderSource: ss,
+                          //shaderSource: ss,
                           withName: "gaussianBlurHorizontalShader")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             commandEncoder.setFragmentBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
+            commandEncoder.setFragmentTexture(self.weightsTexture, at:1)
+            commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
+
         }
         
         return s
@@ -168,11 +199,13 @@ public class IMPGaussianBlurFilter: IMPFilter {
         let s = IMPShader(context: self.context,
                           vertex: "vertex_passthrough",
                           fragment: "fragment_gaussianSampledBlur",
-                          shaderSource: ss,
+                          //shaderSource: ss,
                           withName: "gaussianBlurVerticalShader")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             commandEncoder.setFragmentBuffer(self.vTexelSizeBuffer, offset: 0, at: 0)
+            commandEncoder.setFragmentTexture(self.weightsTexture, at:1)
+            commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
         }
         
         return s
@@ -264,7 +297,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var mpsBlurFilter:BlurFilter = BlurFilter(context:self.context)
     
-    lazy var mpsSupported:Bool = false //MPSSupportsMTLDevice(self.context.device)
+    lazy var mpsSupported:Bool = MPSSupportsMTLDevice(self.context.device)
     
     let shaderTypes:String = ""   + "\n"  +
         "#include <metal_stdlib>" + "\n"  +

@@ -23,6 +23,9 @@
                 
                 filter?.addObserver(newSource: { (source) in
                     if let size = source.image?.extent.size {
+                        let scale   = UIScreen.main.scale
+                        let newsize = self.bounds.size
+                        self.filter?.downscaleSize = NSSize(width: newsize.width * scale, height: newsize.height * scale)
                         self.drawableSize = size
                         self.processing(size: self.drawableSize)
                     }
@@ -33,7 +36,7 @@
                 })
             }
         }
-                
+        
         public var viewReadyHandler:(()->Void)?
         
         override init(frame frameRect: CGRect, device: MTLDevice? = nil) {
@@ -90,7 +93,7 @@
                 
                 guard let texture = this.textureCache.requestTexture(size:size, pixelFormat: this.colorPixelFormat) else { return }
                 
-                NSLog("requested texture.size = \(texture.size), size = \(size) image = \(image) isProcessing = \(this.isProcessing)")
+                //NSLog("requested texture.size = \(texture.size), size = \(size) image = \(image) isProcessing = \(this.isProcessing)")
                 
                 let bounds = CGRect(origin: CGPoint.zero, size: size)
                 

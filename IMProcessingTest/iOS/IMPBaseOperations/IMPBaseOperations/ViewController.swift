@@ -217,7 +217,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
 
     func blurHandler(slider:UISlider)  {
         DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
-            self.testFilter.blurRadius = slider.value * 50
+            self.testFilter.blurRadius = slider.value * 10
         }
     }
 

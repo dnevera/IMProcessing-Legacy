@@ -65,6 +65,8 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         return _destination
     }
 
+    public var downscaleSize:NSSize? = nil
+    
     public required init(context:IMPContext, name: String? = nil) {
         self.context = context
         self.name = name
@@ -106,7 +108,23 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
     
     open func apply(_ result: inout IMPImageProvider) {
         
-        result.image = source?.image
+        var scaledImage = source?.image
+        
+        if let newsize = downscaleSize,
+            let sImage = scaledImage
+            {
+                let originX = sImage.extent.origin.x
+                let originY = sImage.extent.origin.y
+                
+                let scaleX = newsize.width /  sImage.extent.width
+                let scaleY = newsize.height / sImage.extent.height
+                let scale = min(scaleX, scaleY)
+                
+                var transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
+                scaledImage = sImage.applying(transform.scaledBy(x: scale, y: scale))
+        }
+        
+        result.image = scaledImage
 
         if enabled == false {
             NSLog(" Filter is disabled ... ")
