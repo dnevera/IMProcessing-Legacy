@@ -114,14 +114,14 @@ extension IMPCIFilter {
                 1);
             
             if self.input == nil {
-                self.input = context?.device?.make2DTexture(size: size,
+                self.input = context?.device.make2DTexture(size: size,
                                                            pixelFormat: IMProcessing.colors.pixelFormat)
             }
             else {
                 self.input = self.input?.reuse(size: size)
             }
             if self.output == nil {
-                self.output = context?.device?.make2DTexture(size: size,
+                self.output = context?.device.make2DTexture(size: size,
                                                             pixelFormat: IMProcessing.colors.pixelFormat)
             }
             else{

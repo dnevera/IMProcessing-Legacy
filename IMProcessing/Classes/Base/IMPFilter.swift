@@ -75,6 +75,7 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
     
     public var enabled: Bool = true {
         didSet{
+            dirty = true
             executeEnablingObservers(filter: self)
         }
     }
@@ -106,12 +107,12 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
     open func apply(_ result: inout IMPImageProvider) {
         
         result.image = source?.image
-        
+
         if enabled == false {
             NSLog(" Filter is disabled ... ")
             return
         }
-        
+
         //
         // apply CIFilter chains
         //

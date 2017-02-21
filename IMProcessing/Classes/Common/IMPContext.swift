@@ -44,7 +44,9 @@ open class IMPContext {
     public typealias Execution = ((_ commandBuffer:MTLCommandBuffer) -> Void)
     
     /// Current device is used in the current context
-    open let device:MTLDevice! = MTLCreateSystemDefaultDevice()
+    open var device:MTLDevice {
+        return _device!
+    }
     
     open var coreImage:CIContext? {
         if #available(iOS 9.0, *) {
@@ -100,26 +102,39 @@ open class IMPContext {
     ///
     ///  - returns: context instanc
     ///
-    required public init(lazy:Bool = false) {
-        isLazy = lazy
-        if let device = self.device{
-            
-            commandQueue = device.makeCommandQueue()
-            #if DEBUG
-                commandQueue?.insertDebugCaptureBoundary()
-            #endif
-            
-            if let library = device.newDefaultLibrary(){
-                defaultLibrary = library
-            }
-            else{
-                fatalError("Default Metal library could not be found...")
-            }
+    required public init(device: MTLDevice? = nil,  lazy:Bool = false) {
+        if device != nil {
+            self._device = device
         }
-        else{
+        else {
+            _device = MTLCreateSystemDefaultDevice()
+        }
+        
+        if self._device == nil {
             fatalError("The system does not support any MTL devices...")
         }
+        
+        isLazy = lazy
+        
+        if let commandQ = _device?.makeCommandQueue() {
+            commandQueue = commandQ
+        }
+        else {
+            fatalError("Default Metal command queue could not be created...")
+        }
+        #if DEBUG
+            commandQueue?.insertDebugCaptureBoundary()
+        #endif
+        
+        if let library = _device?.newDefaultLibrary(){
+            defaultLibrary = library
+        }
+        else{
+            fatalError("Default Metal library could not be found...")
+        }
     }
+    
+    var _device:MTLDevice?
     
     @available(iOS 9.0, *)
     lazy var _ciContext:CIContext = CIContext(mtlDevice: self.device)
@@ -133,7 +148,7 @@ open class IMPContext {
     }()
     
     var commandBuffer:MTLCommandBuffer?  {
-        return self.commandQueue?.makeCommandBuffer() //makeCommandBufferWithUnretainedReferences() //makeCommandBuffer()
+        return self.commandQueue?.makeCommandBuffer() 
     }
     
     ///  The main idea context execution: all filters should put commands in context queue within the one execution.
