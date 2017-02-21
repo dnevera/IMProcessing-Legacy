@@ -24,6 +24,12 @@ public class IMPImage: IMPImageProvider {
     public var texture: MTLTexture?
     public var image: CIImage?
     
+    public lazy var videoCache:IMPVideoTextureCache = {
+        return IMPVideoTextureCache(context: self.context)
+    }()
+    
+    public var colorSpace = CGColorSpaceCreateDeviceRGB()
+    
     public required init(context: IMPContext) {
         self.context = context
     }
@@ -31,7 +37,6 @@ public class IMPImage: IMPImageProvider {
 
 public extension IMPImage {
     
-    //CMSampleBuffer
     
     public convenience init(context: IMPContext, provider: IMPImageProvider, maxSize: CGFloat = 0){
         self.init(context:context)
@@ -77,12 +82,53 @@ public extension IMPImage {
     
     public func update(_ buffer:CMSampleBuffer){
         if let pixelBuffer = CMSampleBufferGetImageBuffer(buffer) {
-            image = CIImage(cvPixelBuffer: pixelBuffer)
+            update(pixelBuffer)
         }
     }
 
     public func update(_ buffer:CVImageBuffer){
-        image = CIImage(cvPixelBuffer: buffer)
+        
+        let t1 = Date.timeIntervalSinceReferenceDate
+        let width = CVPixelBufferGetWidth(buffer)
+        let height = CVPixelBufferGetHeight(buffer)
+
+        var textureRef:CVMetalTexture?
+
+        guard let vcache = videoCache.videoTextureCache else {
+            fatalError("IMPImageProvider error: couldn't create video cache... )")
+        }
+        
+        let error = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                  vcache,
+                                                  buffer, nil,
+                                                  .bgra8Unorm,
+                                                  width,
+                                                  height,
+                                                  0,
+                                                  &textureRef)
+        
+        let t2 = Date.timeIntervalSinceReferenceDate
+        
+        if error != kCVReturnSuccess {
+            fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
+        }
+        
+        if let ref = textureRef,
+            let texture = CVMetalTextureGetTexture(ref) {
+            image = CIImage(mtlTexture: texture, options: [kCIImageColorSpace: colorSpace])
+        }
+        else {
+            fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
+        }
+
+        let t3 = Date.timeIntervalSinceReferenceDate
+//
+//        image = CIImage(cvPixelBuffer: buffer)
+//
+//        let t4 = Date.timeIntervalSinceReferenceDate
+        
+        //print(" cameraFrame update time: caching time = \(t3-t1)")
+        
     }
 
     func prepareImage(image originImage: CIImage?, maxSize: CGFloat)  -> CIImage? {

@@ -278,7 +278,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
@@ -351,11 +351,14 @@
 			baseConfigurationReference = 0B11A808AF1BADA2F66ADBAB /* Pods-IMPCameraManager.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEAD_CODE_STRIPPING = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = TCA85S5T49;
 				GCC_STRICT_ALIASING = NO;
 				INFOPLIST_FILE = IMPCameraManager/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MTL_OPTIMIZATION_LEVEL = 0;
+				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" -g -DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCameraManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;
@@ -367,6 +370,7 @@
 			baseConfigurationReference = C3B5B9CF809540FC64CCEC2B /* Pods-IMPCameraManager.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEAD_CODE_STRIPPING = NO;
 				DEVELOPMENT_TEAM = TCA85S5T49;
 				GCC_FAST_MATH = YES;
 				INFOPLIST_FILE = IMPCameraManager/Info.plist;
@@ -374,6 +378,7 @@
 				LLVM_LTO = NO;
 				MTL_FAST_MATH = YES;
 				MTL_OPTIMIZATION_LEVEL = s;
+				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" -g -DDEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCameraManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 3.0;

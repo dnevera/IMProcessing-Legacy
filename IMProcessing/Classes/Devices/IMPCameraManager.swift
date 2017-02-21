@@ -350,11 +350,6 @@
                     //
                     
                     if !self.session.isRunning {
-                        //self.isVideoStarted = false
-                        //self.sessionQueue.async(execute: { () -> Void in
-                        //    self.isVideoPaused = false
-                        //    self.session.startRunning()
-                        //})
                         self.session.queue.async {
                             self.session.startRunning()
                         }
@@ -369,8 +364,6 @@
         public var availableCameras:[AVCaptureDevice] {
             return cameraSession.devices
         }
-        
-        
         
         var _context:IMPContext!
         
@@ -391,9 +384,16 @@
         lazy var session:IMPAVSession = IMPAVSession(sampleBufferDelegate: self)
         
         public func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
+            
+            guard session.frameSemaphore.wait(timeout:DispatchTime.now()) == DispatchTimeoutResult.success else { return }
+
+            let cameraFrame = CMSampleBufferGetImageBuffer(sampleBuffer)!
+            CVPixelBufferLockBaseAddress(cameraFrame, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
             session.queue.async {
-                self.updateProvider(buffer:sampleBuffer)
+                self.updateProvider(buffer:cameraFrame)
             }
+            CVPixelBufferUnlockBaseAddress(cameraFrame, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
+            session.frameSemaphore.signal()
         }
 
         var imageProvider:IMPImage? {
@@ -404,7 +404,7 @@
             }
         }
         
-        func updateProvider(buffer: CMSampleBuffer)  {
+        func updateProvider(buffer: CVImageBuffer)  {
             if let image =  imageProvider {
                 image.update(buffer)
             }
@@ -1032,8 +1032,8 @@
         
         public override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
             
-            print("change = \(change?[.oldKey])")
-            print("change = \(change?[.newKey])")
+            //print("change = \(change?[.oldKey])")
+            //print("change = \(change?[.newKey])")
             
         }
         

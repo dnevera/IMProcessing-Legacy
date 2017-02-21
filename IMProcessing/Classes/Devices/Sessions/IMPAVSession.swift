@@ -11,7 +11,9 @@ import AVFoundation
 
 class IMPAVSession:AVCaptureSession {
     
-    let queue:DispatchQueue = DispatchQueue(label: "")
+    let frameSemaphore = DispatchSemaphore(value:1)
+
+    let queue:DispatchQueue = DispatchQueue(label: "avsession.improcessing.com")
     var videoInput:AVCaptureDeviceInput?
     lazy var liveViewOutput:AVCaptureVideoDataOutput = {
         var o = AVCaptureVideoDataOutput()

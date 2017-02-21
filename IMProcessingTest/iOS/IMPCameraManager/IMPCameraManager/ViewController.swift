@@ -59,11 +59,11 @@ public class TestFilter: IMPFilter {
     
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
-        add(function: kernelEV)
+        //add(function: kernelEV)
         add(filter: impBlurFilter)
-        inputEV = 2
-        blurRadius = 20
-        dirty = true
+        //inputEV = 2
+        //blurRadius = 20
+        //dirty = true
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!

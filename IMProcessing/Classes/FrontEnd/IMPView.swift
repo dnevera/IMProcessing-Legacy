@@ -82,6 +82,7 @@
             }
             
             func processing(size: NSSize)  {
+                let t1 = Date.timeIntervalSinceReferenceDate
                 
                 unowned var this = self.view
                 
@@ -91,6 +92,8 @@
                 
                 guard let image = filter.destination.image else { return }
                 
+                let t2 = Date.timeIntervalSinceReferenceDate
+
                 guard let texture = this.textureCache.requestTexture(size:size, pixelFormat: this.colorPixelFormat) else { return }
                 
                 //NSLog("requested texture.size = \(texture.size), size = \(size) image = \(image) isProcessing = \(this.isProcessing)")
@@ -116,14 +119,19 @@
                                                  colorSpace: this.colorSpace
                 )
                 
+                let t3 = Date.timeIntervalSinceReferenceDate
+
                 commandBuffer?.commit()
-                commandBuffer?.waitUntilCompleted()
                 this.textureDelay.pushBack(texture: texture)
                 
                 DispatchQueue.main.async {
                     this.setNeedsDisplay()
                 }
                 
+                let t4 = Date.timeIntervalSinceReferenceDate
+                
+                //print(" cameraFrame update time: processing = \(t2-t1) render image = \(t3-t2) buffering = \(t4-t3) sum = \(t4-t1)")
+
                 this.isProcessing = false
             }
         }
@@ -155,6 +163,8 @@
                     return
                 }
                 
+                let t1 = Date.timeIntervalSinceReferenceDate
+                
                 if let commandBuffer = self.context.commandBuffer {
                     
                     if self.isFirstFrame  {
@@ -180,11 +190,16 @@
 
                     commandBuffer.present(drawble)
                     commandBuffer.commit()
-                 
+                    //commandBuffer.waitUntilCompleted()
+
                     //
                     // https://forums.developer.apple.com/thread/64889
                     //
                     self.draw()
+
+                    let t2 = Date.timeIntervalSinceReferenceDate
+
+                    //print(" cameraFrame update time: rendering = \(t2-t1)")
 
                     if self.frameCounter > 0  && self.isFirstFrame {
                         self.isFirstFrame = false
@@ -217,7 +232,7 @@
             colorPixelFormat = .bgra8Unorm
             delegate = self
             preferredFramesPerSecond = 30
-            transform = CGAffineTransform(scaleX: 1.0, y: -1.0)
+            //transform = CGAffineTransform(scaleX: 1.0, y: -1.0)
         }
         
         private var isFirstFrame = true
@@ -227,7 +242,6 @@
     extension IMPView: MTKViewDelegate {
         
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-            transform = CGAffineTransform(scaleX: 1.0, y: -1.0)
         }
         
         public func draw(in view: MTKView) {

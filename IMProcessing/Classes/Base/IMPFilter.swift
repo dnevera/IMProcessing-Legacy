@@ -127,7 +127,6 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         result.image = scaledImage
 
         if enabled == false {
-            NSLog(" Filter is disabled ... ")
             return
         }
 
