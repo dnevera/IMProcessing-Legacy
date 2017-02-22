@@ -89,34 +89,42 @@
                 
                 this.isProcessing = true
                 
-                guard let image = filter.destination.image else { return }
+                //guard let image = filter.destination.image else { return }
+                //
+                //guard let texture = this.textureCache.requestTexture(size:size, pixelFormat: this.colorPixelFormat) else { return }
                 
-                guard let texture = this.textureCache.requestTexture(size:size, pixelFormat: this.colorPixelFormat) else { return }
+                var processedTexture:MTLTexture? = nil
                 
-                let bounds = CGRect(origin: CGPoint.zero, size: size)
+                filter.apply(&processedTexture)
                 
-                let commandBuffer = filter.context.commandBuffer
+                guard let texture = processedTexture else {
+                    return
+                }
                 
-                let originX = image.extent.origin.x
-                let originY = image.extent.origin.y
+//                let bounds = CGRect(origin: CGPoint.zero, size: size)
                 
-                let scaleX = size.width /  image.extent.width
-                let scaleY = size.height / image.extent.height
-                let scale = min(scaleX, scaleY)
+//                let commandBuffer = filter.context.commandBuffer
                 
-                let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
-                let scaledImage = image.applying(transform.scaledBy(x: scale, y: scale))
+//                let originX = image.extent.origin.x
+//                let originY = image.extent.origin.y
+//                
+//                let scaleX = size.width /  image.extent.width
+//                let scaleY = size.height / image.extent.height
+//                let scale = min(scaleX, scaleY)
+//                
+//                let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
+//                let scaledImage = image.applying(transform.scaledBy(x: scale, y: scale))
+//                
+//                filter.context.coreImage?.render(scaledImage,
+//                                                 to: texture,
+//                                                 commandBuffer: commandBuffer,
+//                                                 bounds: bounds,
+//                                                 colorSpace: this.colorSpace
+//                )
+//                
+//                commandBuffer?.commit()
                 
-                filter.context.coreImage?.render(scaledImage,
-                                                 to: texture,
-                                                 commandBuffer: commandBuffer,
-                                                 bounds: bounds,
-                                                 colorSpace: this.colorSpace
-                )
-                
-                commandBuffer?.commit()
-                
-                this.textureDelay.pushBack(texture: texture)
+                _ = this.textureDelay.pushBack(texture: texture)
                 
                 this.setNeedsDisplay()
                 
@@ -195,7 +203,7 @@
                 }
 
                 if let texture = self.textureDelay.pushFront(texture: sourceTexture) {
-                    self.textureCache.returnTexure(texture)
+                    //self.textureCache.returnTexure(texture)
                 }
             }
         }
