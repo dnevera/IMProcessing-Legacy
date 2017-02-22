@@ -65,7 +65,7 @@ public extension Float {
     ///
     ///  - returns: gaussian kernel piecewise distribution
     ///
-    public static func gaussianKernel(sigma sigma:Float, size:Int) -> [Float] {
+    public static func gaussianKernel(sigma:Float, size:Int) -> [Float] {
         
         assert(size%2==1, "gaussian kernel size must be odd number...")
         
@@ -89,7 +89,7 @@ public extension Float {
     ///
     ///  - returns: gaussian kernel piecewise distribution
     ///
-    public func gaussianKernel(size size:Int) -> [Float] {
+    public func gaussianKernel(size:Int) -> [Float] {
         return Float.gaussianKernel(sigma: self, size: size)
     }
 }

@@ -86,26 +86,16 @@ class IMPCoreImageMPSUnaryKernel: IMPCIFilter{
         return nil
     }
     
-    override func processImage(image:CIImage) -> CIImage? {
-        if let kernel = mps
-        {
-            return process(image: image,
-                           in: kernel.context,
-                           threadsPerThreadgroup: MTLSize(width: 1,height: 1,depth: 1),
-                           command: {
-                            (commandBuffer, threadgroups, threadsPerThreadgroup, input, output) in
-                            
-                            if let sourceTexture      = input,
-                                let destinationTexture = output{
-                                
-                                IMPCoreImageMPSUnaryKernel.imageProcessor(kernel: kernel,
-                                                                     commandBuffer: commandBuffer,
-                                                                     input: sourceTexture,
-                                                                     output: destinationTexture)
-                            }
-            })
+    override func textureProcessor(_ commandBuffer: MTLCommandBuffer, _ threadgroups: MTLSize, _ threadsPerThreadgroup: MTLSize, _ input: MTLTexture?, _ output: MTLTexture?) {
+        if let sourceTexture      = input,
+            let kernel = mps,
+            let destinationTexture = output{
+            
+            IMPCoreImageMPSUnaryKernel.imageProcessor(kernel: kernel,
+                                                      commandBuffer: commandBuffer,
+                                                      input: sourceTexture,
+                                                      output: destinationTexture)
         }
-        return nil
     }
     
     class func imageProcessor (

@@ -23,9 +23,9 @@
                 
                 filter?.addObserver(newSource: { (source) in
                     if let size = source.image?.extent.size {
-                        let scale   = UIScreen.main.scale
-                        let newsize = self.bounds.size
-                        self.filter?.downscaleSize = NSSize(width: newsize.width * scale, height: newsize.height * scale)
+                        //let scale   = UIScreen.main.scale
+                        //let newsize = self.bounds.size
+                        //self.filter?.downscaleSize = NSSize(width: newsize.width * scale, height: newsize.height * scale)
                         self.drawableSize = size
                         self.processing(size: self.drawableSize)
                     }
@@ -82,9 +82,8 @@
             }
             
             func processing(size: NSSize)  {
-                let t1 = Date.timeIntervalSinceReferenceDate
                 
-                unowned var this = self.view
+                unowned let this = self.view
                 
                 guard let filter = this.filter else { return }
                 
@@ -92,11 +91,7 @@
                 
                 guard let image = filter.destination.image else { return }
                 
-                let t2 = Date.timeIntervalSinceReferenceDate
-
                 guard let texture = this.textureCache.requestTexture(size:size, pixelFormat: this.colorPixelFormat) else { return }
-                
-                //NSLog("requested texture.size = \(texture.size), size = \(size) image = \(image) isProcessing = \(this.isProcessing)")
                 
                 let bounds = CGRect(origin: CGPoint.zero, size: size)
                 
@@ -109,7 +104,7 @@
                 let scaleY = size.height / image.extent.height
                 let scale = min(scaleX, scaleY)
                 
-                var transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
+                let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
                 let scaledImage = image.applying(transform.scaledBy(x: scale, y: scale))
                 
                 filter.context.coreImage?.render(scaledImage,
@@ -119,19 +114,12 @@
                                                  colorSpace: this.colorSpace
                 )
                 
-                let t3 = Date.timeIntervalSinceReferenceDate
-
                 commandBuffer?.commit()
+                
                 this.textureDelay.pushBack(texture: texture)
                 
-                DispatchQueue.main.async {
-                    this.setNeedsDisplay()
-                }
+                this.setNeedsDisplay()
                 
-                let t4 = Date.timeIntervalSinceReferenceDate
-                
-                //print(" cameraFrame update time: processing = \(t2-t1) render image = \(t3-t2) buffering = \(t4-t3) sum = \(t4-t1)")
-
                 this.isProcessing = false
             }
         }
@@ -163,7 +151,6 @@
                     return
                 }
                 
-                let t1 = Date.timeIntervalSinceReferenceDate
                 
                 if let commandBuffer = self.context.commandBuffer {
                     
@@ -196,8 +183,6 @@
                     // https://forums.developer.apple.com/thread/64889
                     //
                     self.draw()
-
-                    let t2 = Date.timeIntervalSinceReferenceDate
 
                     //print(" cameraFrame update time: rendering = \(t2-t1)")
 

@@ -21,8 +21,37 @@ import AVFoundation
 public class IMPImage: IMPImageProvider {
     
     public var context: IMPContext
-    public var texture: MTLTexture?
-    public var image: CIImage?
+    public var texture: MTLTexture? {
+        get{
+            if _texture == nil {
+                self.render(to: &_texture)
+            }
+            return _texture
+        }
+        set{
+            _texture = newValue
+            if _texture != nil {
+                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+            }
+            else {
+                _image = nil
+            }
+        }
+    }
+    public var image: CIImage? {
+        set{
+            _texture?.setPurgeableState(.empty)
+            _texture = nil
+            _image = newValue
+        }
+        get {
+            return _image
+        }
+    }
+    
+    
+    fileprivate var _image:CIImage? = nil
+    fileprivate var _texture:MTLTexture? = nil
     
     public lazy var videoCache:IMPVideoTextureCache = {
         return IMPVideoTextureCache(context: self.context)
@@ -88,7 +117,7 @@ public extension IMPImage {
 
     public func update(_ buffer:CVImageBuffer){
         
-        let t1 = Date.timeIntervalSinceReferenceDate
+        //let t1 = Date.timeIntervalSinceReferenceDate
         let width = CVPixelBufferGetWidth(buffer)
         let height = CVPixelBufferGetHeight(buffer)
 
@@ -107,7 +136,7 @@ public extension IMPImage {
                                                   0,
                                                   &textureRef)
         
-        let t2 = Date.timeIntervalSinceReferenceDate
+        //let t2 = Date.timeIntervalSinceReferenceDate
         
         if error != kCVReturnSuccess {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
@@ -121,7 +150,7 @@ public extension IMPImage {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
         }
 
-        let t3 = Date.timeIntervalSinceReferenceDate
+//        let t3 = Date.timeIntervalSinceReferenceDate
 //
 //        image = CIImage(cvPixelBuffer: buffer)
 //

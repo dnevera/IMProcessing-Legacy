@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import IMProcessing
+//import IMProcessing
 import SnapKit
 import MetalPerformanceShaders
 
@@ -59,9 +59,9 @@ public class TestFilter: IMPFilter {
     
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
-        //add(function: kernelEV)
+        add(function: kernelEV)
         add(filter: impBlurFilter)
-        //inputEV = 2
+        inputEV = 5
         //blurRadius = 20
         //dirty = true
     }
@@ -125,7 +125,7 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+                
         view.backgroundColor = NSColor.black
         self.view.insertSubview(containerView, at: 0)
 

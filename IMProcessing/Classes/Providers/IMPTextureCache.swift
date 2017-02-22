@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Metal
 
 typealias IMPTextureQueue = IMPDequeue<MTLTexture>
 

@@ -120,7 +120,7 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
                 let scaleY = newsize.height / sImage.extent.height
                 let scale = min(scaleX, scaleY)
                 
-                var transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
+                let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
                 scaledImage = sImage.applying(transform.scaledBy(x: scale, y: scale))
         }
         
@@ -148,6 +148,39 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         dirty = false
         
         executeDestinationObservers(destination: result)
+    }
+    
+    open func apply(_ result: inout MTLTexture?) {
+        
+        result = source?.texture
+        
+        if enabled == false {
+            return
+        }
+
+        for c in coreImageFilterList {
+            if let filter = c.cifilter {
+                if filter.isKind(of: IMPCIFilter.self) {
+                    (filter as? IMPCIFilter)?.input  = result
+                    result = (filter as? IMPCIFilter)?.output
+                }
+                else {
+                    filter.setValue(CIImage(mtlTexture: result!, options:  [kCIImageColorSpace: _destination.colorSpace]), forKey: kCIInputImageKey)
+                    _destination.image = filter.outputImage
+                    result = _destination.texture
+                }
+            }
+            else if let filter = c.filter {
+                filter.source?.texture = result
+                filter.apply(&result)
+            }
+            _destination.texture = result
+            c.complete?(_destination)
+        }
+        
+        dirty = false
+        
+        executeDestinationObservers(destination: _destination)
     }
     
     public static func == (lhs: IMPFilter, rhs: IMPFilter) -> Bool {

@@ -52,7 +52,7 @@ public extension IMPVertices{
     ///  - parameter model: 3D matrix transformation model
     ///
     ///  - returns: x,y coordinates
-    public func xyProjection(model model:IMPTransfromModel) -> [float2] {
+    public func xyProjection(model:IMPTransfromModel) -> [float2] {
         var points = [float2]()
         for v in vertices {
             
@@ -73,7 +73,7 @@ public extension IMPVertices{
     ///  - parameter model: transformation matrix model
     ///
     ///  - returns: scale factor
-    public func scaleFactorFor(model model:IMPTransfromModel) -> Float {
+    public func scaleFactorFor(model:IMPTransfromModel) -> Float {
         let points = xyProjection(model: model)
         
         var left:Float   = 0

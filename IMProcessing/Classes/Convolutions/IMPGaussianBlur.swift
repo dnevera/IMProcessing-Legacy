@@ -235,7 +235,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     func optimizedOffsets(_ radius:Int, sigma:Float) -> [Float] {
         
         let standardWeights = gaussianWeights(radius, sigma:sigma)
-        let (count, trueCount) = self.count(for: radius)
+        let (count, _) = self.count(for: radius)
         
         var optimizedOffsets = [Float]()
         optimizedOffsets.append(0)

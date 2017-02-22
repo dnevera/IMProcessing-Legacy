@@ -28,6 +28,7 @@ class IMPCoreImageMTLShader: IMPCIFilter{
                 fatalError("IMPCoreImageMPSUnaryKernel: ios >10.0 supports only")
             }
             filter.shader = shader
+            filter.context = shader.context
             registeredFilterList[shader.uid] = filter
             return filter
         }
@@ -56,37 +57,26 @@ class IMPCoreImageMTLShader: IMPCIFilter{
             return processImage(image: image)
     }
     
-    override func processImage(image:CIImage) -> CIImage? {
-        if let shader = shader
-        {
-            return process(image: image,
-                           in: shader.context,
-                           threadsPerThreadgroup: MTLSize(width: 1,height: 1,depth: 1),
-                           command: {
-                            (commandBuffer, threadgroups, threadsPerThreadgroup, input, output) in
-                            
-                            if let sourceTexture      = input,
-                                let destinationTexture = output,
-                                let vertices = shader.vertices{
-                                
-                                let renderEncoder = shader.commandEncoder(from: commandBuffer, width: output)
-                                
-                                renderEncoder.setVertexBuffer(shader.verticesBuffer, offset: 0, at: 0)
-                                renderEncoder.setFragmentTexture(input, at:0)
-                                
-                                if let handler = shader.optionsHandler {
-                                    handler(shader, renderEncoder, input, output)
-                                }
-                                
-                                renderEncoder.drawPrimitives(type: .triangle,
-                                                             vertexStart: 0,
-                                                             vertexCount: vertices.count,
-                                                             instanceCount: vertices.count/3)
-                                renderEncoder.endEncoding()                                
-                            }
-            })
+    override func textureProcessor(_ commandBuffer: MTLCommandBuffer, _ threadgroups: MTLSize, _ threadsPerThreadgroup: MTLSize, _ input: MTLTexture?, _ output: MTLTexture?) {
+        if let _      = input,
+            let shader            = self.shader,            
+            let vertices = shader.vertices{
+            
+            let renderEncoder = shader.commandEncoder(from: commandBuffer, width: output)
+            
+            renderEncoder.setVertexBuffer(shader.verticesBuffer, offset: 0, at: 0)
+            renderEncoder.setFragmentTexture(input, at:0)
+            
+            if let handler = shader.optionsHandler {
+                handler(shader, renderEncoder, input, output)
+            }
+            
+            renderEncoder.drawPrimitives(type: .triangle,
+                                         vertexStart: 0,
+                                         vertexCount: vertices.count,
+                                         instanceCount: vertices.count/3)
+            renderEncoder.endEncoding()
         }
-        return nil
-    }
+    }    
 }
 

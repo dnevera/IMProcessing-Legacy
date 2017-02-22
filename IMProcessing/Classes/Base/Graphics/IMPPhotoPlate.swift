@@ -20,7 +20,7 @@ public class IMPPhotoPlate: IMPVertices{
     /// Processing region
     public let region:IMPRegion
     
-    public func quad(model model:IMPTransfromModel) -> IMPQuad {
+    public func quad(model:IMPTransfromModel) -> IMPQuad {
         let v = xyProjection(model: model)
         var q = IMPQuad(left_bottom: v[1], left_top: v[0], right_bottom: v[2], right_top: v[5])
         q.aspect = aspect

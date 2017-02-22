@@ -104,6 +104,7 @@ public extension IMPExifOrientation {
 
 public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
     var image:CIImage?{ get set }
+    var colorSpace:CGColorSpace {get set}
     init(context:IMPContext)
 }
 
@@ -142,19 +143,19 @@ public extension IMPImageProvider {
         }
     }
     
-    public var texture: MTLTexture? {
-        mutating get {
-            render(to: &texture)
-            return texture
-        }
-        set {
-            guard let t = newValue else {
-                return
-            }
-            let colorSpace = image?.colorSpace ?? CGColorSpaceCreateDeviceRGB()
-            image = CIImage(mtlTexture: t, options: [kCIImageColorSpace: colorSpace])
-        }
-    }
+//    public var texture: MTLTexture? {
+//        mutating get {
+//            render(to: &texture)
+//            return texture
+//        }
+//        set {
+//            guard let t = newValue else {
+//                return
+//            }
+//            let colorSpace = image?.colorSpace ?? CGColorSpaceCreateDeviceRGB()
+//            image = CIImage(mtlTexture: t, options: [kCIImageColorSpace: colorSpace])
+//        }
+//    }
     
     public var cgiImage:CGImage? {
         get {

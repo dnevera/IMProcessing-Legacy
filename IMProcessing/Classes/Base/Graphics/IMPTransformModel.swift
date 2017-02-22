@@ -10,7 +10,7 @@ import Metal
 import simd
 
 public extension IMPTransfromModel{
-    public func transform(point point:NSPoint) -> NSPoint {
+    public func transform(point:NSPoint) -> NSPoint {
         let p = transform(point: float2(point.x.float,point.y.float))
         return NSPoint(x:p.x.cgfloat,y:p.y.cgfloat)
     }
@@ -68,7 +68,7 @@ public struct IMPTransfromModel{
         }
     }
     
-    public static func with(translation translation:float3 = float3(0),
+    public static func with(translation:float3 = float3(0),
                             angle:float3 = float3(0),
                             scale:float3=float3(1),
                             projection:IMPProjectionModel = IMPProjectionModel()) -> IMPTransfromModel {
@@ -76,7 +76,7 @@ public struct IMPTransfromModel{
     }
     
     
-    public func lerp(final final:IMPTransfromModel, t:Float) -> IMPTransfromModel {
+    public func lerp(final:IMPTransfromModel, t:Float) -> IMPTransfromModel {
         var f = self
         f.translation = f.translation.lerp(final: final.translation, t: t)
         f.angle = f.angle.lerp(final: final.angle, t: t)
@@ -84,7 +84,7 @@ public struct IMPTransfromModel{
         return f
     }
     
-    public static func with(model model:IMPTransfromModel,
+    public static func with(model:IMPTransfromModel,
                             translation:float3?=nil,
                             angle:float3?=nil,
                             scale:float3?=nil,
@@ -127,11 +127,11 @@ public struct IMPTransfromModel{
         return projection.matrix * (rotationMatrix * translationMatrix * scaleMatrix)
     }
     
-    public func transform(vector vector:float3) -> float3 {
+    public func transform(vector:float3) -> float3 {
         return (matrix * float4(vector.x,vector.y,vector.z,1)).xyz
     }
     
-    public func transform(point point:float2) -> float2 {
+    public func transform(point:float2) -> float2 {
         return transform(vector: float3(point.x,point.y,0)).xy
     }
     
@@ -163,7 +163,7 @@ public struct IMPTransfromModel{
 }
 
 public extension IMPQuad{
-    public func transform(model model: IMPTransfromModel) -> IMPQuad {
+    public func transform(model: IMPTransfromModel) -> IMPQuad {
         var quad = IMPQuad()
         
         for i in 0..<4 {

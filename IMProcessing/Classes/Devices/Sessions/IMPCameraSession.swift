@@ -10,7 +10,7 @@ import AVFoundation
 
 class IMPCameraSession {
     
-    private let types = [AVCaptureDeviceType.builtInWideAngleCamera, AVCaptureDeviceType.builtInDuoCamera, AVCaptureDeviceType.builtInTelephotoCamera]
+    private let types = [AVCaptureDeviceType.builtInWideAngleCamera, AVCaptureDeviceType.builtInDualCamera, AVCaptureDeviceType.builtInTelephotoCamera]
     
     private lazy var discovery:AVCaptureDeviceDiscoverySession = AVCaptureDeviceDiscoverySession(
         deviceTypes: self.types,

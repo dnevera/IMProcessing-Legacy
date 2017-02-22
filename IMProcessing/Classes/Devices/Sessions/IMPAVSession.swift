@@ -72,7 +72,7 @@ class IMPAVSession:AVCaptureSession {
             
             updateConnection()            
         }
-        catch let error as Error {
+        catch let error {
              NSLog("IMPCameraManager error: \(error) \(#file):\(#line)")
         }
         

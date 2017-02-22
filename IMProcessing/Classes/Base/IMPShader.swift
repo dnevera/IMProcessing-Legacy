@@ -101,11 +101,11 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
         do {
             _library = try context.makeLibrary(source: source)
             pipeline = makePipeline()
-            guard let pl = pipeline else {
+            guard (pipeline != nil) else {
                 fatalError("IMPShader could not found function names...")
             }
         }
-        catch let error as Error {
+        catch let error {
             fatalError("IMPShader could not be compiled from source: \(error)")
         }
     }
