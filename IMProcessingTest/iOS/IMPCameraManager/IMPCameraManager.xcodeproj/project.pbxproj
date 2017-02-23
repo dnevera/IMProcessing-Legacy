@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		2C46FA4E6F180CB336946925 /* Pods_IMPCameraManager.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 832E7C664916882581B6B378 /* Pods_IMPCameraManager.framework */; };
+		311BDA1B1E5F62CF00299250 /* IMPMTLDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311BDA1A1E5F62CF00299250 /* IMPMTLDevice.swift */; };
+		311BDA1D1E5F633C00299250 /* IMPMTLTexture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311BDA1C1E5F633C00299250 /* IMPMTLTexture.swift */; };
 		3161D1971E58517C00273F0D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3161D1961E58517C00273F0D /* AppDelegate.swift */; };
 		3161D1991E58517C00273F0D /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3161D1981E58517C00273F0D /* ViewController.swift */; };
 		3161D19C1E58517C00273F0D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3161D19A1E58517C00273F0D /* Main.storyboard */; };
@@ -54,6 +56,8 @@
 
 /* Begin PBXFileReference section */
 		0B11A808AF1BADA2F66ADBAB /* Pods-IMPCameraManager.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCameraManager.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCameraManager/Pods-IMPCameraManager.debug.xcconfig"; sourceTree = "<group>"; };
+		311BDA1A1E5F62CF00299250 /* IMPMTLDevice.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMTLDevice.swift; sourceTree = "<group>"; };
+		311BDA1C1E5F633C00299250 /* IMPMTLTexture.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMTLTexture.swift; sourceTree = "<group>"; };
 		3161D1931E58517C00273F0D /* IMPCameraManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPCameraManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3161D1961E58517C00273F0D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3161D1981E58517C00273F0D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -310,10 +314,12 @@
 			children = (
 				31C8B8151E5DCFA2004436EA /* IMPImage.swift */,
 				31C8B8161E5DCFA2004436EA /* IMPImageProvider.swift */,
+				31C8B81A1E5DCFA2004436EA /* IMPVideoCache.swift */,
 				31C8B8171E5DCFA2004436EA /* IMPTextureCache.swift */,
 				31C8B8181E5DCFA2004436EA /* IMPTextureDelayLine.swift */,
 				31C8B8191E5DCFA2004436EA /* IMPTextureProvider.swift */,
-				31C8B81A1E5DCFA2004436EA /* IMPVideoCache.swift */,
+				311BDA1A1E5F62CF00299250 /* IMPMTLDevice.swift */,
+				311BDA1C1E5F633C00299250 /* IMPMTLTexture.swift */,
 			);
 			path = Providers;
 			sourceTree = "<group>";
@@ -496,6 +502,7 @@
 				31C8B83F1E5DCFA2004436EA /* IMPCameraManager.swift in Sources */,
 				31C8B82F1E5DCFA2004436EA /* IMPVertices.swift in Sources */,
 				31C8B84A1E5DCFA2004436EA /* IMPTextureDelayLine.swift in Sources */,
+				311BDA1B1E5F62CF00299250 /* IMPMTLDevice.swift in Sources */,
 				31C8B8461E5DCFA2004436EA /* IMPDistribution.swift in Sources */,
 				31C8B8481E5DCFA2004436EA /* IMPImageProvider.swift in Sources */,
 				31C8B8391E5DCFA2004436EA /* IMPNumericTypes.swift in Sources */,
@@ -523,6 +530,7 @@
 				31C8B8301E5DCFA2004436EA /* IMPFilter.swift in Sources */,
 				31C8B8351E5DCFA2004436EA /* MTLProcessor.swift in Sources */,
 				31C8B8361E5DCFA2004436EA /* MTLShader.swift in Sources */,
+				311BDA1D1E5F633C00299250 /* IMPMTLTexture.swift in Sources */,
 				31C8B82D1E5DCFA2004436EA /* IMPQuad.swift in Sources */,
 				31C8B8441E5DCFA2004436EA /* IMPView.swift in Sources */,
 				31C8B83B1E5DCFA2004436EA /* IMProcessing.swift in Sources */,
@@ -653,19 +661,23 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				DEAD_CODE_STRIPPING = YES;
+				DEAD_CODE_STRIPPING = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = TCA85S5T49;
 				ENABLE_BITCODE = NO;
 				GCC_STRICT_ALIASING = NO;
 				INFOPLIST_FILE = IMPCameraManager/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MTL_FAST_MATH = YES;
+				MTL_FAST_MATH = NO;
 				MTL_HEADER_SEARCH_PATHS = "../../../IMProcessing/Classes/Shaders ../../../IMProcessing/Classes/Bridging";
+				MTL_LANGUAGE_REVISION = UseDeploymentTarget;
 				MTL_OPTIMIZATION_LEVEL = 0;
+				MTL_PREPROCESSOR_DEFINITIONS = "";
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" -D DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCameraManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = "non-global";
 				SWIFT_DISABLE_SAFETY_CHECKS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "../../../IMProcessing/Classes/Bridging/IMProcessing-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -679,7 +691,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				DEAD_CODE_STRIPPING = YES;
+				DEAD_CODE_STRIPPING = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = TCA85S5T49;
 				ENABLE_BITCODE = NO;
@@ -687,12 +699,17 @@
 				INFOPLIST_FILE = IMPCameraManager/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				LLVM_LTO = NO;
-				MTL_FAST_MATH = YES;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				MTL_FAST_MATH = NO;
 				MTL_HEADER_SEARCH_PATHS = "../../../IMProcessing/Classes/Shaders ../../../IMProcessing/Classes/Bridging";
+				MTL_LANGUAGE_REVISION = UseDeploymentTarget;
 				MTL_OPTIMIZATION_LEVEL = s;
+				MTL_PREPROCESSOR_DEFINITIONS = "";
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" -D DEBUG";
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCameraManager;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRIP_INSTALLED_PRODUCT = NO;
+				STRIP_STYLE = "non-global";
 				SWIFT_DISABLE_SAFETY_CHECKS = YES;
 				SWIFT_OBJC_BRIDGING_HEADER = "../../../IMProcessing/Classes/Bridging/IMProcessing-Bridging-Header.h";
 				SWIFT_VERSION = 3.0;

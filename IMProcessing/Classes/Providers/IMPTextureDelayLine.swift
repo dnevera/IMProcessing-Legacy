@@ -16,18 +16,18 @@ public class IMPTextureDelayLine{
         return t
     }
     
-    public func pushBack(texture:MTLTexture) -> MTLTexture? {
+    public func pushBack(texture new:MTLTexture) -> MTLTexture? {
         let t = texture
-        self.texture = texture
+        texture = new
         return t
     }
     
-    public func pushFront(texture:MTLTexture) -> MTLTexture? {
-        if self.texture == nil {
-            self.texture = texture
+    public func pushFront(texture old:MTLTexture) -> MTLTexture? {
+        if texture == nil {
+            texture = old
             return nil
         }
-        return texture
+        return old
     }
 
     var texture:MTLTexture? = nil    

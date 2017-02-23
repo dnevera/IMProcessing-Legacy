@@ -23,6 +23,7 @@ public class IMPTextureCache: IMPContextProvider {
     public func requestTexture(size: NSSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture? {
         let hash = hashFor(size: size, pixelFormat: pixelFormat)
         if let t = cache[hash]?.dequeue() {
+            print("requested[\(hash)] cached texture = \(t.size) count = \(cache[hash]?.count) ")
             return t
         }
         else {
@@ -30,16 +31,20 @@ public class IMPTextureCache: IMPContextProvider {
             var q = IMPTextureQueue()
             q.enqueue(t)
             cache[hash] = q
+            print("requested[\(hash)] new texture = \(t.size) count = \(cache[hash]?.count) ")
             return cache[hash]?.dequeue()
         }
     }
     
     public func returnTexure(_ texture:MTLTexture){
-        let hash = hashFor(texture: texture)
-        if cache[hash] == nil {
-            cache[hash] =  IMPTextureQueue()
+        context.sync {
+            let hash = hashFor(texture: texture)
+            if cache[hash] == nil {
+                cache[hash] =  IMPTextureQueue()
+            }
+            print("returned[\(hash)] texture = \(texture.size)")
+            cache[hash]?.enqueue(texture)
         }
-        cache[hash]?.enqueue(texture)
     }
     
     func hashFor(size: NSSize, pixelFormat:MTLPixelFormat) -> Int64 {

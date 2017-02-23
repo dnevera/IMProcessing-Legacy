@@ -94,7 +94,9 @@ open class IMPContext {
         semaphore.signal()
     }
     
-    open var dispatchQueue = DispatchQueue(label: "com.improcessing.context")
+    private let dispatchQueue = DispatchQueue(label: "com.improcessing.context")
+    private var dispatchQueueKey:DispatchSpecificKey<Int> =  DispatchSpecificKey<Int>()
+    private  let queueKey: Int = 1837264
     
     ///  Initialize current context
     ///
@@ -103,6 +105,9 @@ open class IMPContext {
     ///  - returns: context instanc
     ///
     required public init(device: MTLDevice? = nil,  lazy:Bool = false) {
+        
+        dispatchQueue.setSpecific(key: dispatchQueueKey, value: queueKey)
+        
         if device != nil {
             self._device = device
         }
@@ -183,23 +188,67 @@ open class IMPContext {
                               fail:    (()->Void)? = nil,
                               action:  @escaping Execution) {
         
-        if let commandBuffer = self.commandBuffer {
-            
-            action(commandBuffer)
-            
-            commandBuffer.commit()
-            
-            if !self.isLazy || wait {
-                commandBuffer.waitUntilCompleted()
+        sync {
+            if let commandBuffer = self.commandBuffer {
+                action(commandBuffer)
+                
+                commandBuffer.commit()
+                
+                if !self.isLazy || wait {
+                    commandBuffer.waitUntilCompleted()
+                }
             }
+            else {
+                fail?()
+            }
+       }
+    }
+    
+    public final func sync(_ execute:() -> ()) {
+        if (DispatchQueue.getSpecific(key:dispatchQueueKey) == queueKey) {
+            execute()
         }
         else {
-            fail?()
+            dispatchQueue.sync{
+                execute()
+            }
         }
     }
     
+    public final func async(_ execute:@escaping () -> ()) {
+        dispatchQueue.async {
+            execute()
+        }
+    }
     
-    /// Get the maximum supported devices texture size.
+    public func makeCopy(texture:MTLTexture) -> MTLTexture? {
+        var newTexture:MTLTexture? = nil
+        
+        execute { (commandBuffer) in
+            
+            newTexture = self.device.make2DTexture(size: texture.cgsize, pixelFormat: texture.pixelFormat)
+            
+            let blit = commandBuffer.makeBlitCommandEncoder()
+            
+            blit.copy(
+                from: texture,
+                sourceSlice: 0,
+                sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                sourceSize: texture.size,
+                to: newTexture!,
+                destinationSlice: 0,
+                destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+            
+            blit.endEncoding()
+        }
+        
+        return newTexture
+    }
+    
+    
+    ///  the maximum supported devices texture size.
     open static var maximumTextureSize:Int{
         
         set(newMaximumTextureSize){

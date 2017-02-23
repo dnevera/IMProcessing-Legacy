@@ -71,9 +71,11 @@ public class IMPGaussianBlurFilter: IMPFilter {
             add(shader: vertical_shader)
         }
         
-        addObserver(newSource: { (source) in
-            self.update()
-        })
+        if !mpsSupported{
+            addObserver(newSource: { (source) in
+                self.update()
+            })
+        }
     }
     
     var sigma:Float {
@@ -102,7 +104,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     func update(){
         
-        guard  let size = source?.image?.extent.size else {return}
+        guard  let size = source?.size else {return}
         
         if oldRadius == radius {
             return
@@ -149,6 +151,8 @@ public class IMPGaussianBlurFilter: IMPFilter {
         //vertical_shader.updateShader(source: newShader)
         
         //print(newShader)
+        
+        print("radius .... = \(radius)")
     }
 
     func generateMSL(weights:[Float], offsets:[Float]) -> String {
@@ -288,7 +292,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
         func mps(device:MTLDevice) -> MPSUnaryImageKernel? {
             return MPSImageGaussianBlur(device: device, sigma: sigma)
         }
-        var sigma:Float = 1
+        var sigma:Float = 0
         var context: IMPContext?
         init(context:IMPContext?) {
             self.context = context

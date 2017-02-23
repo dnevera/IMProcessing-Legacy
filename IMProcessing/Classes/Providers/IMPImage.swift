@@ -21,6 +21,7 @@ import AVFoundation
 public class IMPImage: IMPImageProvider {
     
     public var context: IMPContext
+    
     public var texture: MTLTexture? {
         get{
             if _texture == nil {
@@ -30,14 +31,10 @@ public class IMPImage: IMPImageProvider {
         }
         set{
             _texture = newValue
-            if _texture != nil {
-                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
-            }
-            else {
-                _image = nil
-            }
+            _image = nil
         }
     }
+    
     public var image: CIImage? {
         set{
             _texture?.setPurgeableState(.empty)
@@ -45,10 +42,18 @@ public class IMPImage: IMPImageProvider {
             _image = newValue
         }
         get {
+            if _image == nil && _texture != nil {
+                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+            }
             return _image
         }
     }
     
+    public var size: NSSize? {
+        get{
+            return _image?.extent.size ?? _texture?.cgsize
+        }
+    }
     
     fileprivate var _image:CIImage? = nil
     fileprivate var _texture:MTLTexture? = nil
@@ -97,6 +102,12 @@ public extension IMPImage {
         self.update(image)
     }
 
+    public convenience init(context: IMPContext, texture: MTLTexture){
+        self.init(context:context)
+        self.texture = texture
+    }
+
+    
     public func update(_ inputImage:CIImage){
         image = inputImage
     }
@@ -117,7 +128,6 @@ public extension IMPImage {
 
     public func update(_ buffer:CVImageBuffer){
         
-        //let t1 = Date.timeIntervalSinceReferenceDate
         let width = CVPixelBufferGetWidth(buffer)
         let height = CVPixelBufferGetHeight(buffer)
 
@@ -131,12 +141,11 @@ public extension IMPImage {
                                                   vcache,
                                                   buffer, nil,
                                                   .bgra8Unorm,
+                                                  //.rgba8Unorm,
                                                   width,
                                                   height,
                                                   0,
                                                   &textureRef)
-        
-        //let t2 = Date.timeIntervalSinceReferenceDate
         
         if error != kCVReturnSuccess {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
@@ -144,20 +153,11 @@ public extension IMPImage {
         
         if let ref = textureRef,
             let texture = CVMetalTextureGetTexture(ref) {
-            image = CIImage(mtlTexture: texture, options: [kCIImageColorSpace: colorSpace])
+              self.texture = texture
         }
         else {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
         }
-
-//        let t3 = Date.timeIntervalSinceReferenceDate
-//
-//        image = CIImage(cvPixelBuffer: buffer)
-//
-//        let t4 = Date.timeIntervalSinceReferenceDate
-        
-        //print(" cameraFrame update time: caching time = \(t3-t1)")
-        
     }
 
     func prepareImage(image originImage: CIImage?, maxSize: CGFloat)  -> CIImage? {

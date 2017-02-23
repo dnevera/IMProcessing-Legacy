@@ -38,8 +38,10 @@ public class TestFilter: IMPFilter {
         }
     }
     
-    public var inputEV:Float = 1 {
+    public var inputEV:Float = 0 {
         didSet{
+            //exposureFilter.setValue(inputEV * 2, forKey: "inputEV")
+            impBlurFilter.radius = inputEV * 10
             dirty = true
         }
     }
@@ -47,7 +49,7 @@ public class TestFilter: IMPFilter {
 
     lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     lazy var kernelEV:IMPFunction = {
-        let f = IMPFunction(context: self.context, name: "kernel_EV")
+        let f = IMPFunction(context: self.context, name: /*"kernel_Red"*/ "kernel_EV")
         f.optionsHandler = { (kernel,commandEncoder,input,output) in
             var value  = self.inputEV
             var buffer = self.kernelEVBuffer
@@ -59,9 +61,10 @@ public class TestFilter: IMPFilter {
     
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
-        add(function: kernelEV)
-        //add(filter: impBlurFilter)
-        inputEV = 5
+        //add(function: kernelEV)
+        //add(filter: exposureFilter)
+        add(filter: impBlurFilter)
+        inputEV = 1
         //blurRadius = 20
         //dirty = true
     }
@@ -123,6 +126,9 @@ class ViewController: UIViewController {
         return f
     }()
     
+    
+    let slider = UISlider()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
                 
@@ -146,6 +152,16 @@ class ViewController: UIViewController {
             make.centerX.equalTo(view.snp.centerX).offset(0)
         }
         
+        view.addSubview(slider)
+        slider.value = 0
+        slider.snp.makeConstraints { (make) -> Void in
+            make.bottom.equalTo(view).offset(-10)
+            make.left.equalTo(view.snp.left).offset(20)
+            make.right.equalTo(view.snp.right).offset(-10)
+        }
+
+        slider.addTarget(self, action: #selector(slideHandler(slider:)), for: .valueChanged)
+
         cameraManager.liveView.filter = liveViewFilter
         
         NSLog("starting ...")
@@ -180,6 +196,12 @@ class ViewController: UIViewController {
                     self.present(alert, animated: true, completion: nil)
                 }
             }
+        }
+    }
+    
+    func slideHandler(slider:UISlider)  {
+        DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
+            self.liveViewFilter.inputEV = slider.value
         }
     }
     

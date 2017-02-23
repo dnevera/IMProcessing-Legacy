@@ -15,27 +15,38 @@
     public class IMPView: MTKView {
         
         lazy var textureDelay:IMPTextureDelayLine = IMPTextureDelayLine()
-        lazy var textureCache:IMPTextureCache = IMPTextureCache(context:self.context)
+        var textureCache:IMPTextureCache? = nil
         
         public var filter:IMPFilter? = nil {
             didSet {
+            
+                if let context = filter?.context {
+                    textureCache = IMPTextureCache(context:context)
+                }
+                
                 self.processing(size: self.drawableSize)
                 
                 filter?.addObserver(newSource: { (source) in
-                    if let size = source.image?.extent.size {
+                    if let size = source.size {
                         //let scale   = UIScreen.main.scale
                         //let newsize = self.bounds.size
                         //self.filter?.downscaleSize = NSSize(width: newsize.width * scale, height: newsize.height * scale)
                         self.drawableSize = size
-                        self.processing(size: self.drawableSize)
+                        //self.processing(size: self.drawableSize)
+                        self.needProcessing = true
                     }
                 })
                 
                 filter?.addObserver(dirty: { (filter, source, destintion) in
-                    self.processing(size: self.drawableSize)
+                    //if self.isPaused {
+                    //    self.processing(size: self.drawableSize)
+                    //}
+                    self.needProcessing = true
                 })
             }
         }
+        
+        var needProcessing = true
         
         public var viewReadyHandler:(()->Void)?
         
@@ -65,8 +76,6 @@
         var frameCounter = 0
         var renderQueue = DispatchQueue(label: "rendering.improcessing.com")
         
-        var isProcessing = false
-        
         class ProcessingOperation: Operation {
             
             let size:NSSize
@@ -87,48 +96,47 @@
                 
                 guard let filter = this.filter else { return }
                 
-                this.isProcessing = true
-                
                 //guard let image = filter.destination.image else { return }
                 //
-                //guard let texture = this.textureCache.requestTexture(size:size, pixelFormat: this.colorPixelFormat) else { return }
                 
-                var processedTexture:MTLTexture? = nil
-                
-                filter.apply(&processedTexture)
-                
-                guard let texture = processedTexture else {
-                    return
-                }
-                
-//                let bounds = CGRect(origin: CGPoint.zero, size: size)
-                
-//                let commandBuffer = filter.context.commandBuffer
-                
-//                let originX = image.extent.origin.x
-//                let originY = image.extent.origin.y
-//                
-//                let scaleX = size.width /  image.extent.width
-//                let scaleY = size.height / image.extent.height
-//                let scale = min(scaleX, scaleY)
-//                
-//                let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
-//                let scaledImage = image.applying(transform.scaledBy(x: scale, y: scale))
-//                
-//                filter.context.coreImage?.render(scaledImage,
-//                                                 to: texture,
-//                                                 commandBuffer: commandBuffer,
-//                                                 bounds: bounds,
-//                                                 colorSpace: this.colorSpace
-//                )
-//                
-//                commandBuffer?.commit()
-                
-                _ = this.textureDelay.pushBack(texture: texture)
-                
-                this.setNeedsDisplay()
-                
-                this.isProcessing = false
+                //filter.context.async {
+                    guard let texture = this.textureCache?.requestTexture(size:size, pixelFormat: this.colorPixelFormat) else { return }
+                    
+                filter.apply(to: texture)
+                    
+                    //                guard let texture = processedTexture else {
+                    //                    return
+                    //                }
+                    
+                    //                let bounds = CGRect(origin: CGPoint.zero, size: size)
+                    
+                    //                let commandBuffer = filter.context.commandBuffer
+                    
+                    //                let originX = image.extent.origin.x
+                    //                let originY = image.extent.origin.y
+                    //
+                    //                let scaleX = size.width /  image.extent.width
+                    //                let scaleY = size.height / image.extent.height
+                    //                let scale = min(scaleX, scaleY)
+                    //
+                    //                let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
+                    //                let scaledImage = image.applying(transform.scaledBy(x: scale, y: scale))
+                    //
+                    //                filter.context.coreImage?.render(scaledImage,
+                    //                                                 to: texture,
+                    //                                                 commandBuffer: commandBuffer,
+                    //                                                 bounds: bounds,
+                    //                                                 colorSpace: this.colorSpace
+                    //                )
+                    //                
+                    //                commandBuffer?.commit()
+                    
+                    if let t = this.textureDelay.pushBack(texture: texture) {
+                        this.textureCache?.returnTexure(t)
+                    }
+                    this.needProcessing = false
+                    this.setNeedsDisplay()
+               // }
             }
         }
         
@@ -141,8 +149,11 @@
         }()
 
         func processing(size: NSSize)  {
-            processingOperationQueue.cancelAllOperations()
-            processingOperationQueue.addOperation(ProcessingOperation(view: self, size: size))
+            if needProcessing {
+                needProcessing = false
+                processingOperationQueue.cancelAllOperations()
+                processingOperationQueue.addOperation(ProcessingOperation(view: self, size: size))
+            }
         }
         
         func refresh(rect: CGRect){
@@ -150,7 +161,7 @@
             guard let drawble = self.currentDrawable else { return }
             let targetTexture = drawble.texture
             
-            context.dispatchQueue.async {
+            context.async {
 
                 guard let sourceTexture = self.textureDelay.request() else {
                     DispatchQueue.main.async {
@@ -185,14 +196,11 @@
 
                     commandBuffer.present(drawble)
                     commandBuffer.commit()
-                    //commandBuffer.waitUntilCompleted()
 
                     //
                     // https://forums.developer.apple.com/thread/64889
                     //
                     self.draw()
-
-                    //print(" cameraFrame update time: rendering = \(t2-t1)")
 
                     if self.frameCounter > 0  && self.isFirstFrame {
                         self.isFirstFrame = false
@@ -203,7 +211,7 @@
                 }
 
                 if let texture = self.textureDelay.pushFront(texture: sourceTexture) {
-                    //self.textureCache.returnTexure(texture)
+                    self.textureCache?.returnTexure(texture)
                 }
             }
         }
@@ -234,10 +242,12 @@
     
     extension IMPView: MTKViewDelegate {
         
-        public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        }
+        public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
         
         public func draw(in view: MTKView) {
+            context.async {
+                self.processing(size: self.drawableSize)
+            }
             guard needUpdateDisplay else { return }
             needUpdateDisplay = false
             refresh(rect: view.bounds)

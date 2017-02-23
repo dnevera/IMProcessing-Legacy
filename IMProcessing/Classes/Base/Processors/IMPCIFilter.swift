@@ -148,7 +148,6 @@ extension IMPCIFilter {
         var size:NSSize
         var width:Int
         var height:Int
-        //var image:CIImage? = self.inputImage
         let context = self.context
 
         if let image = self.inputImage {
@@ -207,5 +206,65 @@ extension IMPCIFilter {
         }
         
         return self._output
+    }
+    
+    
+    func process(to texture: MTLTexture, command: CommandProcessor? = nil){
+        
+        var size:NSSize
+        var width:Int
+        var height:Int
+        let context = self.context
+        
+        if let image = self.inputImage {
+            
+            size  = image.extent.size
+            width = Int(size.width)
+            height = Int(size.height)
+            
+            if self.input == nil {
+                self.input = context?.device.make2DTexture(size: size,
+                                                           pixelFormat: IMProcessing.colors.pixelFormat)
+            }
+            else {
+                self.input = self.input?.reuse(size: size)
+            }
+        }
+        else if let inputTexture = self.input {
+            size  = inputTexture.cgsize
+            width = Int(size.width)
+            height = Int(size.height)
+            needUpdateInputTexture = false
+        }
+        else {
+            return
+        }
+        
+        context?.execute { (commandBuffer) in
+            
+            let threadgroups = MTLSizeMake(
+                (width ) / self.threadsPerThreadgroup.width ,
+                (height ) / self.threadsPerThreadgroup.height,
+                1);
+            
+            if self.needUpdateInputTexture {
+                if let image = self.inputImage {
+                    context?.coreImage?.render(image, to: self.input!,
+                                               commandBuffer: commandBuffer,
+                                               bounds: image.extent,
+                                               colorSpace: self.colorSpace)
+                    self.needUpdateInputTexture = false
+                }
+            }
+            
+            if let command = command{
+                command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.input, texture)
+            }
+            else {
+                self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.input, texture)
+            }
+            
+            self.input?.setPurgeableState(.volatile)
+        }
     }
 }

@@ -104,12 +104,13 @@ public extension IMPExifOrientation {
 
 public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
     var image:CIImage?{ get set }
+    var size:NSSize? {get}
     var colorSpace:CGColorSpace {get set}
     init(context:IMPContext)
 }
 
 public extension IMPImageProvider {
-    
+        
     public func render(to texture: inout MTLTexture?) {
         
         guard  let image = image else {

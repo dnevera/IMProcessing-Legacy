@@ -150,9 +150,14 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         executeDestinationObservers(destination: result)
     }
     
-    open func apply(_ result: inout MTLTexture?) {
+    open func apply(to result: MTLTexture, from sourceTexture:MTLTexture? = nil) {
         
-        result = source?.texture
+        let source:MTLTexture? = sourceTexture ?? self.source?.texture
+        
+        guard let input = source else { return }
+        
+        resampler.input = input
+        resampler.process(to: result)
         
         if enabled == false {
             return
@@ -161,23 +166,37 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         for c in coreImageFilterList {
             if let filter = c.cifilter {
                 if filter.isKind(of: IMPCIFilter.self) {
-                    (filter as? IMPCIFilter)?.input  = result
-                    result = (filter as? IMPCIFilter)?.output
+                    let f = (filter as? IMPCIFilter)
+                    f?.input  = result
+                    f?.process(to: result)
                 }
                 else {
-                    filter.setValue(CIImage(mtlTexture: result!, options:  [kCIImageColorSpace: _destination.colorSpace]), forKey: kCIInputImageKey)
-                    _destination.image = filter.outputImage
-                    result = _destination.texture
+                    
+                    filter.setValue(CIImage(mtlTexture: result,
+                                            options:  [kCIImageColorSpace: _destination.colorSpace]),
+                                    forKey: kCIInputImageKey)
+                    
+                    guard let image = filter.outputImage else { continue }
+                    
+                    context.execute(wait: true, fail: {
+                        print("Rendering filter: \(filter.name) failed ... ")
+                    }, action: { (commandBuffer) in
+                        self.context.coreImage?.render(image,
+                                                       to: result,
+                                                       commandBuffer: commandBuffer,
+                                                       bounds: image.extent,
+                                                       colorSpace: self._destination.colorSpace)
+                    })
                 }
             }
             else if let filter = c.filter {
-                filter.source?.texture = result
-                filter.apply(&result)
+                if let texture = context.makeCopy(texture: result) {
+                    filter.source = IMPImage(context: context, texture: texture)
+                    filter.apply(to: result, from: input)
+                }
             }
-            _destination.texture = result
-            c.complete?(_destination)
         }
-        
+    
         dirty = false
         
         executeDestinationObservers(destination: _destination)
@@ -711,4 +730,11 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         }
         return (index,true)
     }
+    
+    lazy var resampleShader:IMPShader = IMPShader(context: self.context,
+                                                  vertex: "vertex_passthrough",
+                                                  fragment: "fragment_passthrough",
+                                                  withName: "__resample_shader__")
+    
+    lazy var resampler:IMPCoreImageMTLShader = IMPCoreImageMTLShader.register(shader: self.resampleShader)
 }
