@@ -14,13 +14,18 @@
 import Metal
 import simd
 
-public class IMPFunction: IMPContextProvider, Equatable {
+public protocol IMPDestinationSizeProvider {
+    var destinationSize:NSSize? {get set}
+}
+
+public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equatable {
     
     public struct GroupSize {
         public var width:Int  = 16
         public var height:Int = 16
     }
     
+    public var destinationSize: NSSize?
     public let name:String
     public var context:IMPContext
     public var groupSize:GroupSize = GroupSize()

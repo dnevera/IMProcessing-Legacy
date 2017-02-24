@@ -113,10 +113,73 @@ public extension IMPImageProvider {
         
     public func render(to texture: inout MTLTexture?) {
         
-        guard  let image = image else {
-            return
-        }
+        guard  let image = image else { return }
+//
+//        let width = Int(image.extent.size.width)
+//        let height = Int(image.extent.size.height)
+//        
+//        if texture?.width != width  || texture?.height != height
+//        {
+//            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+//                pixelFormat: IMProcessing.colors.pixelFormat,
+//                width: width, height: height, mipmapped: false)
+//            
+//            if texture != nil {
+//                texture?.setPurgeableState(.volatile)
+//            }
+//            
+//            texture = self.context.device.makeTexture(descriptor: descriptor)
+//        }
+
+        texture = checkTexture(texture: texture)
         
+        if let t = texture {
+            context.execute(wait: true) { (commandBuffer) in
+                self.context.coreImage?.render(image,
+                                               to: t,
+                                               commandBuffer: commandBuffer,
+                                               bounds: image.extent,
+                                               colorSpace: image.colorSpace ?? CGColorSpaceCreateDeviceRGB())
+            }
+        }
+    }
+    
+    public func render(to texture: inout MTLTexture?, with commandBuffer: MTLCommandBuffer) {
+        
+        guard  let image = image else {  return }
+        
+//        let width = Int(image.extent.size.width)
+//        let height = Int(image.extent.size.height)
+//        
+//        if texture?.width != width  || texture?.height != height
+//        {
+//            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+//                pixelFormat: IMProcessing.colors.pixelFormat,
+//                width: width, height: height, mipmapped: false)
+//            
+//            if texture != nil {
+//                texture?.setPurgeableState(.volatile)
+//            }
+//            
+//            texture = self.context.device.makeTexture(descriptor: descriptor)
+//        }
+//        
+        texture = checkTexture(texture: texture)
+
+        if let t = texture {
+            self.context.coreImage?.render(image,
+                                           to: t,
+                                           commandBuffer: commandBuffer,
+                                           bounds: image.extent,
+                                           colorSpace: image.colorSpace ?? CGColorSpaceCreateDeviceRGB())
+        }
+    }
+
+    
+    func checkTexture(texture:MTLTexture?) -> MTLTexture? {
+
+        guard  let image = image else {  return nil }
+
         let width = Int(image.extent.size.width)
         let height = Int(image.extent.size.height)
         
@@ -130,33 +193,11 @@ public extension IMPImageProvider {
                 texture?.setPurgeableState(.volatile)
             }
             
-            texture = self.context.device.makeTexture(descriptor: descriptor)
+            return self.context.device.makeTexture(descriptor: descriptor)
         }
         
-        if let t = texture {
-            context.execute(wait: true) { (commandBuffer) in
-                self.context.coreImage?.render(image,
-                                               to: t,
-                                               commandBuffer: commandBuffer,
-                                               bounds: image.extent,
-                                               colorSpace: image.colorSpace ?? CGColorSpaceCreateDeviceRGB())
-            }
-        }
+        return texture
     }
-    
-//    public var texture: MTLTexture? {
-//        mutating get {
-//            render(to: &texture)
-//            return texture
-//        }
-//        set {
-//            guard let t = newValue else {
-//                return
-//            }
-//            let colorSpace = image?.colorSpace ?? CGColorSpaceCreateDeviceRGB()
-//            image = CIImage(mtlTexture: t, options: [kCIImageColorSpace: colorSpace])
-//        }
-//    }
     
     public var cgiImage:CGImage? {
         get {
@@ -181,56 +222,3 @@ public extension IMPImageProvider {
         }
     }
 }
-
-
-//class IMPCoreImage: CIImage {
-//    
-//}
-//
-//public class IMPImageProvider: IMPTextureProvider, IMPContextProvider {
-//    
-//    public var orientation = IMPImageOrientation.up
-//    
-//    public var context:IMPContext
-//    public var texture:MTLTexture?
-//    public var image:CIImage?
-//    
-//    public var width:Float {
-//        get {
-//            guard texture != nil else { return 0 }
-//            return texture!.width.float
-//        }
-//    }
-//    
-//    public var height:Float {
-//        get {
-//            guard texture != nil else { return 0 }
-//            return texture!.height.float
-//        }
-//    }
-//    
-//    public lazy var videoCache:IMPVideoTextureCache = {
-//        return IMPVideoTextureCache(context: self.context)
-//    }()
-//    
-//    
-//    public required init(context: IMPContext) {
-//        self.context = context
-//    }
-//    
-//    public required init(context: IMPContext, orientation:IMPImageOrientation) {
-//        self.context = context
-//        self.orientation = orientation
-//    }
-//    
-//    public convenience init(context: IMPContext, texture:MTLTexture, orientation:IMPImageOrientation = .up){
-//        self.init(context: context)
-//        self.texture = texture
-//        self.orientation = orientation
-//    }
-//    
-//    required public init?(coder aDecoder: NSCoder) {
-//        fatalError("init(coder:) has not been implemented")
-//    }
-//    
-//}

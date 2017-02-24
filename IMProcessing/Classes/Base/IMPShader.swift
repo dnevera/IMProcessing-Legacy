@@ -14,7 +14,7 @@
 import Metal
 import simd
 
-public protocol IMPShaderProvider {
+public protocol IMPShaderProvider: IMPDestinationSizeProvider {
     var backgroundColor:NSColor {get set}
 }
 
@@ -32,6 +32,8 @@ extension IMPShaderProvider{
 }
 
 public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
+   
+    public var destinationSize: NSSize?
    
     public var backgroundColor: NSColor = NSColor.clear
     public let vertexName:String

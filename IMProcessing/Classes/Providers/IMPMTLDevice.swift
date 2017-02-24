@@ -107,6 +107,14 @@ public extension MTLDevice {
                                                      height: height,
                                                      mipmapped: false))
     }
+ 
+    public func make2DTexture(size: MTLSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture {
+        return makeTexture(descriptor:
+            MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
+                                                     width: size.width,
+                                                     height: size.height,
+                                                     mipmapped: false))
+    }
     
     public func make2DTexture(size: NSSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture {
         return makeTexture(descriptor:

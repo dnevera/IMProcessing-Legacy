@@ -41,7 +41,7 @@ public class TestFilter: IMPFilter {
     public var inputEV:Float = 0 {
         didSet{
             //exposureFilter.setValue(inputEV * 2, forKey: "inputEV")
-            impBlurFilter.radius = inputEV * 10
+            impBlurFilter.radius = inputEV * 50
             dirty = true
         }
     }
@@ -200,9 +200,11 @@ class ViewController: UIViewController {
     }
     
     func slideHandler(slider:UISlider)  {
-        DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
+        //DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
+        self.liveViewFilter.context.async {
             self.liveViewFilter.inputEV = slider.value
         }
+        //}
     }
     
     func pressHandler(gesture:UIPanGestureRecognizer) {

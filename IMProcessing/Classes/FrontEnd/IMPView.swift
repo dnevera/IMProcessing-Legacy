@@ -20,9 +20,7 @@
         public var filter:IMPFilter? = nil {
             didSet {
             
-                if let context = filter?.context {
-                    textureCache = IMPTextureCache(context:context)
-                }
+                textureCache = filter?.context.textureCache
                 
                 self.processing(size: self.drawableSize)
                 
@@ -96,47 +94,20 @@
                 
                 guard let filter = this.filter else { return }
                 
-                //guard let image = filter.destination.image else { return }
-                //
-                
-                //filter.context.async {
-                    guard let texture = this.textureCache?.requestTexture(size:size, pixelFormat: this.colorPixelFormat) else { return }
+                this.context.async {
                     
-                filter.apply(to: texture)
+                    var texture = this.textureCache?.requestTexture(size:size, pixelFormat: this.colorPixelFormat)
                     
-                    //                guard let texture = processedTexture else {
-                    //                    return
-                    //                }
+                    filter.apply(to: &texture)
                     
-                    //                let bounds = CGRect(origin: CGPoint.zero, size: size)
-                    
-                    //                let commandBuffer = filter.context.commandBuffer
-                    
-                    //                let originX = image.extent.origin.x
-                    //                let originY = image.extent.origin.y
-                    //
-                    //                let scaleX = size.width /  image.extent.width
-                    //                let scaleY = size.height / image.extent.height
-                    //                let scale = min(scaleX, scaleY)
-                    //
-                    //                let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
-                    //                let scaledImage = image.applying(transform.scaledBy(x: scale, y: scale))
-                    //
-                    //                filter.context.coreImage?.render(scaledImage,
-                    //                                                 to: texture,
-                    //                                                 commandBuffer: commandBuffer,
-                    //                                                 bounds: bounds,
-                    //                                                 colorSpace: this.colorSpace
-                    //                )
-                    //                
-                    //                commandBuffer?.commit()
-                    
-                    if let t = this.textureDelay.pushBack(texture: texture) {
+                    if let result = texture,
+                        let t = this.textureDelay.pushBack(texture: result) {
                         this.textureCache?.returnTexure(t)
                     }
+                    
                     this.needProcessing = false
                     this.setNeedsDisplay()
-               // }
+                }
             }
         }
         
@@ -196,6 +167,7 @@
 
                     commandBuffer.present(drawble)
                     commandBuffer.commit()
+                    commandBuffer.waitUntilCompleted()
 
                     //
                     // https://forums.developer.apple.com/thread/64889

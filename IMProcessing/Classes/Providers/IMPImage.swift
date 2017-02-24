@@ -70,8 +70,7 @@ public class IMPImage: IMPImageProvider {
 }
 
 public extension IMPImage {
-    
-    
+        
     public convenience init(context: IMPContext, provider: IMPImageProvider, maxSize: CGFloat = 0){
         self.init(context:context)
         self.image = prepareImage(image: provider.image?.copy() as? CIImage, maxSize: maxSize)

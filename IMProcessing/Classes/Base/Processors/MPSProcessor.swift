@@ -68,15 +68,14 @@ class IMPCoreImageMPSUnaryKernel: IMPCIFilter{
     
     var mps: IMPMPSUnaryKernelProvider?
     
-    override func processBigImage(image:CIImage, index:Int) -> CIImage? {
+    override func processBigImage(index:Int) -> CIImage? {
         do {
             if #available(iOS 10.0, *) {
-                let result = try ProcessorKernel.apply(withExtent: image.extent,
-                                                       inputs: [image],
-                                                       arguments: ["mpsIndex" : index])
-                return result
+                guard let image = inputImage else { return nil }
+                return try ProcessorKernel.apply(withExtent: image.extent, inputs: [image],
+                                                 arguments: ["mpsIndex" : index])
             } else {
-                return processImage(image: image)
+                return processImage()
             }
         }
         catch let error as NSError {
@@ -86,10 +85,14 @@ class IMPCoreImageMPSUnaryKernel: IMPCIFilter{
         return nil
     }
     
-    override func textureProcessor(_ commandBuffer: MTLCommandBuffer, _ threadgroups: MTLSize, _ threadsPerThreadgroup: MTLSize, _ input: MTLTexture?, _ output: MTLTexture?) {
-        if let sourceTexture      = input,
+    override func textureProcessor(_ commandBuffer: MTLCommandBuffer,
+                                   _ threadgroups: MTLSize,
+                                   _ threadsPerThreadgroup: MTLSize,
+                                   _ source: IMPImageProvider,
+                                   _ destination: IMPImageProvider) {
+        if let sourceTexture      = source.texture,
             let kernel = mps,
-            let destinationTexture = output{
+            let destinationTexture = destination.texture{
             
             IMPCoreImageMPSUnaryKernel.imageProcessor(kernel: kernel,
                                                       commandBuffer: commandBuffer,

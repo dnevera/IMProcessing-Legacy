@@ -12,6 +12,15 @@ import CoreImage
 
 class IMPCoreImageMTLKernel: IMPCIFilter{
     
+    override var destinationSize: NSSize? {
+        set{
+            function?.destinationSize = newValue
+        }
+        get{
+            return function?.destinationSize
+        }
+    }
+    
     static var registeredFunctionList:[IMPFunction] = [IMPFunction]()
     static var registeredFilterList:[String:IMPCoreImageMTLKernel] = [String:IMPCoreImageMTLKernel]()
     
@@ -61,16 +70,14 @@ class IMPCoreImageMTLKernel: IMPCIFilter{
         }
     }
     
-    override func processBigImage(image:CIImage, index:Int) -> CIImage? {
+    override func processBigImage(index:Int) -> CIImage? {
         do {
             if #available(iOS 10.0, *) {
-                let result = try ProcessorKernel.apply(withExtent: image.extent,
-                                                       inputs: [image],
+                guard let image = inputImage else { return nil }
+                return try ProcessorKernel.apply(withExtent: image.extent, inputs: [image],
                                                        arguments: ["functionIndex" : index])
-                return result
-                
             } else {
-                return processImage(image: image)
+                return processImage()
             }
         }
         catch let error as NSError {
@@ -80,10 +87,14 @@ class IMPCoreImageMTLKernel: IMPCIFilter{
         return nil
     }
         
-    override func textureProcessor(_ commandBuffer: MTLCommandBuffer, _ threadgroups: MTLSize, _ threadsPerThreadgroup: MTLSize, _ input: MTLTexture?, _ output: MTLTexture?) {
+    override func textureProcessor(_ commandBuffer: MTLCommandBuffer,
+                                   _ threadgroups: MTLSize,
+                                   _ threadsPerThreadgroup: MTLSize,
+                                   _ source: IMPImageProvider,
+                                   _ destination: IMPImageProvider) {
         if let kernel = function{
-            if let sourceTexture      = input,
-                let destinationTexture = output{
+            if let sourceTexture      = source.texture,
+                let destinationTexture = destination.texture{
                 IMPCoreImageMTLKernel.imageProcessor(kernel: kernel,
                                                      commandBuffer: commandBuffer,
                                                      threadgroups: threadgroups,

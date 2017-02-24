@@ -31,43 +31,38 @@ class IMPCIFilterConstructor: NSObject, CIFilterConstructor {
     }
 }
 
-public class IMPCIFilter: CIFilter {
+public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
     typealias CommandProcessor = ((
         _ commandBuffer:MTLCommandBuffer,
         _ threadgroups:MTLSize,
         _ threadsPerThreadgroup:MTLSize,
-        _ input:MTLTexture?,
-        _ output: MTLTexture?)->Void)
+        _ source:IMPImageProvider,
+        _ destinationTexture:IMPImageProvider)->Void)
     
-
     var context:IMPContext? = nil
     
-    public var input:MTLTexture? = nil {
-        didSet{
-            oldValue?.setPurgeableState(.empty)
-        }
-    }
+    var source:IMPImageProvider?
     
-    open var output:MTLTexture? {
-        if let processor = processor {
-            return process(command: processor)
-        }
-        return nil
-    }
+    var destination:IMPImageProvider?
     
-    fileprivate var _output:MTLTexture? = nil
-    
-    lazy var processor:CommandProcessor? = self.textureProcessor
+    public var destinationSize: NSSize? = nil
 
-    lazy var threadsPerThreadgroup:MTLSize = MTLSize(width: 16,height: 16,depth: 1)
-    
     var inputImage: CIImage? {
-        didSet{
-            needUpdateInputTexture = true
+        set{
+            if source == nil {
+                if let context = context, let image = inputImage {
+                    source = IMPImage(context: context, image: image)
+                }
+            }
+            else {
+                source?.image = inputImage
+            }
+        }
+        get{
+            return source?.image
         }
     }
-    var needUpdateInputTexture = true
     
     override public var attributes: [String : Any]
     {
@@ -90,6 +85,12 @@ public class IMPCIFilter: CIFilter {
             fatalError("extendedLinearSRGB: ios >10.0 supports only")
         }
     }()
+
+    fileprivate var _destinationTexture:MTLTexture? = nil
+    
+    lazy var processor:CommandProcessor? = self.textureProcessor
+    
+    lazy var threadsPerThreadgroup:MTLSize = MTLSize(width: 16,height: 16,depth: 1)
     
     var kernelIndex:Int? = 0
  
@@ -97,11 +98,10 @@ public class IMPCIFilter: CIFilter {
     _ commandBuffer:MTLCommandBuffer,
     _ threadgroups:MTLSize,
     _ threadsPerThreadgroup:MTLSize,
-    _ input: MTLTexture?,
-    _ output: MTLTexture?) -> Void {
+    _ source:IMPImageProvider,
+    _ destination:IMPImageProvider) -> Void {
         
     }
-    
 }
 
 
@@ -109,162 +109,81 @@ extension IMPCIFilter {
     
     override public var outputImage: CIImage? {
         
-        if let image = inputImage, let index = kernelIndex {
-            let msize = fmax(image.extent.size.width, image.extent.size.height)
+        if let size = source?.size,
+            let index = kernelIndex {
+            let msize = fmax(size.width, size.height)
             if msize > IMPContext.maximumTextureSize.cgfloat {
-                return processBigImage(image: image, index: index)
+                return processBigImage(index: index)
             }
             else {
-                return processImage(image: image)
+                return processImage()
             }
         }
         return nil
     }
     
-    func processBigImage(image:CIImage, index:Int) -> CIImage? {
+    func processBigImage(index:Int) -> CIImage? {
         guard let processor = self.processor else { return nil}
-        return process(image: image, command: processor)
+        return processCIImage(command: processor)
     }
     
-    func processImage(image:CIImage) -> CIImage? {
+    func processImage() -> CIImage? {
         guard let processor = self.processor else { return nil}
-        return process(image: image, command: processor)
+        return processCIImage(command: processor)
     }
     
-    func process(image:CIImage, command:@escaping CommandProcessor) -> CIImage? {
-                
-        if let result = process(command: command) {
-            let result = CIImage(mtlTexture: result, options: [kCIImageColorSpace: colorSpace])
-            self.input?.setPurgeableState(.volatile)
-            return result
-        }
+    func processCIImage(command:@escaping CommandProcessor) -> CIImage? {
+        return process(command: command)?.image
+    }
+    
 
+    var mtlSize:MTLSize? {
+        if let size = source?.size {
+            return MTLSize(width: Int(size.width), height: Int(size.height), depth: 1)
+        }
         return nil
     }
     
-    func process(command:@escaping CommandProcessor
-        ) -> MTLTexture? {
+    func process(command:@escaping CommandProcessor) -> IMPImageProvider? {
 
-        var size:NSSize
-        var width:Int
-        var height:Int
-        let context = self.context
+        guard let context = self.context else { return nil }
+        
+        destination = destination ?? IMPImage(context: context)
 
-        if let image = self.inputImage {
-            
-            size  = image.extent.size
-            width = Int(size.width)
-            height = Int(size.height)
-            
-            if self.input == nil {
-                self.input = context?.device.make2DTexture(size: size,
-                                                           pixelFormat: IMProcessing.colors.pixelFormat)
-            }
-            else {
-                self.input = self.input?.reuse(size: size)
-            }
-        }
-        else if let inputTexture = self.input {
-            size  = inputTexture.cgsize
-            width = Int(size.width)
-            height = Int(size.height)
-            needUpdateInputTexture = false
-        }
-        else {
-            return nil
-        }
+        process(to: destination!, command: command)
         
-        
-        context?.execute { (commandBuffer) in
-            
-            let threadgroups = MTLSizeMake(
-                (width ) / self.threadsPerThreadgroup.width ,
-                (height ) / self.threadsPerThreadgroup.height,
-                1);
-            
-            if self._output == nil {
-                self._output = context?.device.make2DTexture(size: size,
-                                                            pixelFormat: IMProcessing.colors.pixelFormat)
-            }
-            else{
-                self._output = self._output?.reuse(size: size)
-            }
-            
-            if self.needUpdateInputTexture {
-                if let image = self.inputImage {
-                    context?.coreImage?.render(image, to: self.input!,
-                                               commandBuffer: commandBuffer,
-                                               bounds: image.extent,
-                                               colorSpace: self.colorSpace)
-                    self.needUpdateInputTexture = false
-                }
-            }
-            
-            command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.input, self._output)
-            
-            self.input?.setPurgeableState(.volatile)
-        }
-        
-        return self._output
+        return destination
     }
     
     
-    func process(to texture: MTLTexture, command: CommandProcessor? = nil){
+    func process(to destinationImage: IMPImageProvider, command: CommandProcessor? = nil){
+       
+        guard let size =  destinationSize ?? source?.size else { return }
         
-        var size:NSSize
-        var width:Int
-        var height:Int
-        let context = self.context
+        guard let context = self.context else { return  }
         
-        if let image = self.inputImage {
-            
-            size  = image.extent.size
-            width = Int(size.width)
-            height = Int(size.height)
-            
-            if self.input == nil {
-                self.input = context?.device.make2DTexture(size: size,
-                                                           pixelFormat: IMProcessing.colors.pixelFormat)
-            }
-            else {
-                self.input = self.input?.reuse(size: size)
-            }
+        var destinationImage = destinationImage
+        
+        if let texture = destinationImage.texture {
+            destinationImage.texture = texture.reuse(size: size)
         }
-        else if let inputTexture = self.input {
-            size  = inputTexture.cgsize
-            width = Int(size.width)
-            height = Int(size.height)
-            needUpdateInputTexture = false
-        }
-        else {
-            return
+        else{
+            destinationImage.texture = context.device.make2DTexture(size: size,
+                                                                    pixelFormat: IMProcessing.colors.pixelFormat)
         }
         
-        context?.execute { (commandBuffer) in
-            
-            let threadgroups = MTLSizeMake(
-                (width ) / self.threadsPerThreadgroup.width ,
-                (height ) / self.threadsPerThreadgroup.height,
-                1);
-            
-            if self.needUpdateInputTexture {
-                if let image = self.inputImage {
-                    context?.coreImage?.render(image, to: self.input!,
-                                               commandBuffer: commandBuffer,
-                                               bounds: image.extent,
-                                               colorSpace: self.colorSpace)
-                    self.needUpdateInputTexture = false
-                }
-            }
-            
+        let threadgroups = MTLSizeMake(
+            Int(size.width) / self.threadsPerThreadgroup.width ,
+            Int(size.height) / self.threadsPerThreadgroup.height,
+            1);
+        
+        context.execute { (commandBuffer) in
             if let command = command{
-                command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.input, texture)
+                command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, self.destination!)
             }
             else {
-                self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.input, texture)
+                self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, self.destination!)
             }
-            
-            self.input?.setPurgeableState(.volatile)
         }
     }
 }

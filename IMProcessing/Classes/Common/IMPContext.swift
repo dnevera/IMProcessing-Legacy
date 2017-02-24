@@ -216,7 +216,7 @@ open class IMPContext {
     }
     
     public final func async(_ execute:@escaping () -> ()) {
-        dispatchQueue.async {
+        dispatchQueue.async(group: nil, qos: .background, flags: .noQoS)  {
             execute()
         }
     }
@@ -247,6 +247,9 @@ open class IMPContext {
         return newTexture
     }
     
+    public var textureCache:IMPTextureCache {
+        return _textureCache
+    }
     
     ///  the maximum supported devices texture size.
     open static var maximumTextureSize:Int{
@@ -290,6 +293,8 @@ open class IMPContext {
         return adjustedSize;
     }
     
+    private lazy var _textureCache:IMPTextureCache = { return IMPTextureCache(context: self) }()
+
     // Singleton Class
     fileprivate class sharedContainerType: NSObject {
         

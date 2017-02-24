@@ -67,8 +67,10 @@ public class IMPGaussianBlurFilter: IMPFilter {
             add(mps: mpsBlurFilter)
         }
         else {
+            add(shader: downscaleShader)
             add(shader: horizontal_shader)
             add(shader: vertical_shader)
+            add(shader: upscaleShader)
         }
         
         if !mpsSupported{
@@ -110,6 +112,12 @@ public class IMPGaussianBlurFilter: IMPFilter {
             return
         }
         
+        let newSize = NSSize(width: size.width/CGFloat(downsamplingFactor),
+                             height: size.height/CGFloat(downsamplingFactor))
+        
+        downscaleShader.destinationSize = newSize
+        upscaleShader.destinationSize = size
+        
         oldRadius = radius
         
         var offsets:[Float] = [Float]()
@@ -117,10 +125,12 @@ public class IMPGaussianBlurFilter: IMPFilter {
         
         if radius > IMPGaussianBlurFilter.radiusRange.minimum {
             var
-            factor = float2(downsamplingFactor/size.width.float, 0)
+            //factor = float2(downsamplingFactor/size.width.float, 0)
+            factor = float2(1/newSize.width.float, 0)
             memcpy(hTexelSizeBuffer.contents(), &factor, hTexelSizeBuffer.length)
             
-            factor = float2(0, downsamplingFactor/size.height.float)
+            //factor = float2(0, downsamplingFactor/size.height.float)
+            factor = float2(0, 1/newSize.height.float)
             memcpy(vTexelSizeBuffer.contents(), &factor, vTexelSizeBuffer.length)
             
             offsets = optimizedOffsets(pixelRadius, sigma: sigma)
@@ -147,18 +157,23 @@ public class IMPGaussianBlurFilter: IMPFilter {
         //let newLines  = generateMSL(weights:weights,offsets:offsets)
         //let newShader = String(format:self.shaderSource,newLines)
         
-        //horizontal_shader.updateShader(source: newShader)
-        //vertical_shader.updateShader(source: newShader)
+        //context.async {
+        //    self.horizontal_shader.updateShader(source: newShader)
+        //    self.vertical_shader.updateShader(source: newShader)
+        //}
         
         //print(newShader)
         
-        print("radius .... = \(radius)")
+        //print("radius .... = \(radius)")
     }
 
     func generateMSL(weights:[Float], offsets:[Float]) -> String {
         var lines = String()
+        lines += "float radius = \(radius); "
+        lines += "float ds = \(downsamplingFactor); "
+        lines += "float sigma = \(sigma); "
         if weights.count > 0 {
-            lines += "color = texture.sample(s, (texCoord + texelSize)).rgb * \(weights[0]);" + "\n"
+            lines += "color = texture.sample(s, texCoord).rgb * \(weights[0]);" + "\n"
             for i in 1..<weights.count{
                 lines += "color += texture.sample(s, (texCoord + texelSize * \(offsets[i]))).rgb * \(weights[i]);" + "\n"
                 lines += "color += texture.sample(s, (texCoord - texelSize * \(offsets[i]))).rgb * \(weights[i]);" + "\n"
@@ -190,11 +205,20 @@ public class IMPGaussianBlurFilter: IMPFilter {
             commandEncoder.setFragmentBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
             commandEncoder.setFragmentTexture(self.weightsTexture, at:1)
             commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
-
         }
         
         return s
     }()
+    
+    lazy var downscaleShader:IMPShader = IMPShader(context: self.context,
+                                                   vertex: "vertex_passthrough",
+                                                   fragment: "fragment_passthrough",
+                                                   withName: "__downscale_shader__")
+    
+    lazy var upscaleShader:IMPShader = IMPShader(context: self.context,
+                                                 vertex: "vertex_passthrough",
+                                                 fragment: "fragment_passthrough",
+                                                 withName: "__upscale_shader__")
     
     lazy var vertical_shader:IMPShader = {
         

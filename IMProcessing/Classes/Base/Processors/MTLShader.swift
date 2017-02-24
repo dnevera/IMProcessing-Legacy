@@ -12,6 +12,15 @@ import CoreImage
 
 class IMPCoreImageMTLShader: IMPCIFilter{
     
+    override var destinationSize: NSSize? {
+        set{
+            shader?.destinationSize = newValue
+        }
+        get{
+            return shader?.destinationSize
+        }
+    }
+
     static var registeredShaderList:[IMPShader] = [IMPShader]()
     static var registeredFilterList:[String:IMPCoreImageMTLShader] = [String:IMPCoreImageMTLShader]()
     
@@ -53,22 +62,24 @@ class IMPCoreImageMTLShader: IMPCIFilter{
         }
     }
     
-    override func processBigImage(image:CIImage, index:Int) -> CIImage? {
-            return processImage(image: image)
-    }
-    
-    override func textureProcessor(_ commandBuffer: MTLCommandBuffer, _ threadgroups: MTLSize, _ threadsPerThreadgroup: MTLSize, _ input: MTLTexture?, _ output: MTLTexture?) {
-        if let _      = input,
-            let shader            = self.shader,            
-            let vertices = shader.vertices{
+    override func textureProcessor(_ commandBuffer: MTLCommandBuffer,
+                                   _ threadgroups: MTLSize,
+                                   _ threadsPerThreadgroup: MTLSize,
+                                   _ source: IMPImageProvider,
+                                   _ destination: IMPImageProvider) {
+        if let sourceTexture = source.texture,
+            let shader   = self.shader,
+            let vertices = shader.vertices,
+            let destinationTexture = destination.texture
+            {
             
-            let renderEncoder = shader.commandEncoder(from: commandBuffer, width: output)
+            let renderEncoder = shader.commandEncoder(from: commandBuffer, width: destinationTexture)
             
             renderEncoder.setVertexBuffer(shader.verticesBuffer, offset: 0, at: 0)
-            renderEncoder.setFragmentTexture(input, at:0)
+            renderEncoder.setFragmentTexture(sourceTexture, at:0)
             
             if let handler = shader.optionsHandler {
-                handler(shader, renderEncoder, input, output)
+                handler(shader, renderEncoder, sourceTexture, destinationTexture)
             }
             
             renderEncoder.drawPrimitives(type: .triangle,

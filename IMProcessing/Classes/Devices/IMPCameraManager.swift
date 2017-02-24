@@ -389,7 +389,7 @@
 
             let cameraFrame = CMSampleBufferGetImageBuffer(sampleBuffer)!
             CVPixelBufferLockBaseAddress(cameraFrame, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
-            session.queue.async {
+            session.queue.async(group: nil, qos: .background, flags: .noQoS) {
                 self.updateProvider(buffer:cameraFrame)
             }
             CVPixelBufferUnlockBaseAddress(cameraFrame, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
