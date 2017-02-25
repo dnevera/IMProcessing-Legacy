@@ -167,7 +167,6 @@
 
                     commandBuffer.present(drawble)
                     commandBuffer.commit()
-                    commandBuffer.waitUntilCompleted()
 
                     //
                     // https://forums.developer.apple.com/thread/64889

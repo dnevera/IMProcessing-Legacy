@@ -22,4 +22,3 @@ import Metal
     public typealias NSPoint  = CGPoint
     public typealias NSSize   = CGSize
 #endif
-

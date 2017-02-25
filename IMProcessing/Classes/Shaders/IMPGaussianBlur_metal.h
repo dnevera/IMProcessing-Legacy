@@ -49,6 +49,27 @@ namespace IMProcessing
         
         return float4(color,1);
     }
+    
+    fragment float4 fragment_blendSource(
+                                         IMPVertexOut in [[stage_in]],
+                                         texture2d<float, access::sample> texture [[ texture(0) ]],
+                                         texture2d<float, access::sample> source [[ texture(1) ]],
+                                         constant IMPAdjustment           &adjustment  [[buffer(0)]]
+                                         
+                                         ) {
+        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        
+        float4 inColor = source.sample(s, in.texcoord.xy);
+        float3 rgb = texture.sample(s, in.texcoord.xy).rgb;
+        
+        if (adjustment.blending.mode == 0)
+            inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
+        else // only two modes yet
+            inColor = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
+        
+        return  inColor;
+    }
+
 }
 
 #endif

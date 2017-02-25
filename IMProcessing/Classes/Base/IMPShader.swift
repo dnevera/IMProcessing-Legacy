@@ -100,21 +100,23 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
     }
     
     public func updateShader(source: String){
-        do {
-            _library = try context.makeLibrary(source: source)
-            pipeline = makePipeline()
-            guard (pipeline != nil) else {
-                fatalError("IMPShader could not found function names...")
+        context.async {
+            do {
+                self._library = try self.context.makeLibrary(source: source)
+                self.pipeline = self.makePipeline()
+                guard (self.pipeline != nil) else {
+                    fatalError("IMPShader could not found function names...")
+                }
             }
-        }
-        catch let error {
-            fatalError("IMPShader could not be compiled from source: \(error)")
+            catch let error {
+                fatalError("IMPShader could not be compiled from source: \(error)")
+            }
         }
     }
     
     public required init(context:IMPContext,
-                         vertex:String,
-                         fragment:String,
+                         vertex:String = "vertex_passthrough",
+                         fragment:String = "fragment_passthrough",
                          shaderSource:String? = nil,
                          withName:String? = nil,
                          vertexDescriptor:MTLVertexDescriptor? = nil) {
@@ -124,6 +126,9 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
         self._vertexDescriptor = vertexDescriptor
         if withName != nil {
             self._name = withName!
+        }
+        else {
+            self._name = context.uid + ":"  + String.uniqString() + ":" + self.vertexName+":"+self.fragmentName
         }
         defer {
             if let s = shaderSource  {

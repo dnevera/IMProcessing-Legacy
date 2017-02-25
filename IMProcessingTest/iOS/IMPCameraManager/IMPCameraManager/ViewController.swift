@@ -41,7 +41,9 @@ public class TestFilter: IMPFilter {
     public var inputEV:Float = 0 {
         didSet{
             //exposureFilter.setValue(inputEV * 2, forKey: "inputEV")
-            impBlurFilter.radius = inputEV * 50
+            //impBlurFilter.radius = inputEV * 50
+            impBlurFilter.adjustment.blending.opacity = inputEV
+            print("blurRadius = \(blurRadius) = impBlurFilter.adjustment.blending.opacity = \(impBlurFilter.adjustment.blending.opacity)")
             dirty = true
         }
     }
@@ -65,8 +67,9 @@ public class TestFilter: IMPFilter {
         //add(filter: exposureFilter)
         add(filter: impBlurFilter)
         inputEV = 1
-        //blurRadius = 20
-        //dirty = true
+        blurRadius = 20
+        impBlurFilter.adjustment.blending.mode = LUMINOSITY
+        dirty = true
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
