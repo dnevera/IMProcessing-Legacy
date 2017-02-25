@@ -8,6 +8,7 @@
 
 import AVFoundation
 
+@available(iOS 10.2, *)
 class IMPCameraSession {
     
     private let types = [AVCaptureDeviceType.builtInWideAngleCamera, AVCaptureDeviceType.builtInDualCamera, AVCaptureDeviceType.builtInTelephotoCamera]

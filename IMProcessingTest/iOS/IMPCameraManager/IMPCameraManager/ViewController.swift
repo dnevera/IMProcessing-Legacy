@@ -32,22 +32,19 @@ public class TestFilter: IMPFilter {
     lazy var impBlurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     
     public var blurRadius:Float = 1 {
-        didSet{
-            impBlurFilter.radius = blurRadius
-            dirty = true
-        }
+        didSet{ impBlurFilter.radius = blurRadius }
     }
     
     public var inputEV:Float = 0 {
+        didSet{ dirty = true }
+    }
+    
+    public var inputExposure:Float = 0 {
         didSet{
-            //exposureFilter.setValue(inputEV * 2, forKey: "inputEV")
-            //impBlurFilter.radius = inputEV * 50
-            impBlurFilter.adjustment.blending.opacity = inputEV
-            print("blurRadius = \(blurRadius) = impBlurFilter.adjustment.blending.opacity = \(impBlurFilter.adjustment.blending.opacity)")
+            exposureFilter.setValue(inputExposure, forKey: "inputEV")
             dirty = true
         }
     }
-    
 
     lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     lazy var kernelEV:IMPFunction = {
@@ -63,13 +60,9 @@ public class TestFilter: IMPFilter {
     
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
-        //add(function: kernelEV)
-        //add(filter: exposureFilter)
+        add(function: kernelEV)
+        add(filter: exposureFilter)
         add(filter: impBlurFilter)
-        inputEV = 1
-        blurRadius = 20
-        impBlurFilter.adjustment.blending.mode = LUMINOSITY
-        dirty = true
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
@@ -130,7 +123,9 @@ class ViewController: UIViewController {
     }()
     
     
-    let slider = UISlider()
+    let blurSlider = UISlider()
+    let evSlider = UISlider()
+    let exposureSlider = UISlider()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -155,15 +150,35 @@ class ViewController: UIViewController {
             make.centerX.equalTo(view.snp.centerX).offset(0)
         }
         
-        view.addSubview(slider)
-        slider.value = 0
-        slider.snp.makeConstraints { (make) -> Void in
-            make.bottom.equalTo(view).offset(-10)
+        view.addSubview(blurSlider)
+        blurSlider.value = 0
+        blurSlider.snp.makeConstraints { (make) -> Void in
+            make.top.equalTo(view.snp.topMargin).offset(20)
             make.left.equalTo(view.snp.left).offset(20)
             make.right.equalTo(view.snp.right).offset(-10)
         }
 
-        slider.addTarget(self, action: #selector(slideHandler(slider:)), for: .valueChanged)
+        blurSlider.addTarget(self, action: #selector(slideHandler(slider:)), for: .valueChanged)
+
+        view.addSubview(evSlider)
+        evSlider.value = 0
+        evSlider.snp.makeConstraints { (make) -> Void in
+            make.top.equalTo(view.snp.topMargin).offset(50)
+            make.left.equalTo(view.snp.left).offset(20)
+            make.right.equalTo(view.snp.right).offset(-10)
+        }
+        
+        evSlider.addTarget(self, action: #selector(slideHandler(slider:)), for: .valueChanged)
+
+        view.addSubview(exposureSlider)
+        exposureSlider.value = 0
+        exposureSlider.snp.makeConstraints { (make) -> Void in
+            make.top.equalTo(view.snp.topMargin).offset(80)
+            make.left.equalTo(view.snp.left).offset(20)
+            make.right.equalTo(view.snp.right).offset(-10)
+        }
+        
+        exposureSlider.addTarget(self, action: #selector(slideHandler(slider:)), for: .valueChanged)
 
         cameraManager.liveView.filter = liveViewFilter
         
@@ -203,11 +218,17 @@ class ViewController: UIViewController {
     }
     
     func slideHandler(slider:UISlider)  {
-        //DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
         self.liveViewFilter.context.async {
-            self.liveViewFilter.inputEV = slider.value
+            if slider === self.evSlider {
+                self.liveViewFilter.inputEV = slider.value * 3
+            }
+            else if slider === self.blurSlider {
+                self.liveViewFilter.blurRadius = slider.value * 30
+            }
+            else if slider === self.exposureSlider {
+                self.liveViewFilter.inputExposure = slider.value * 3
+            }
         }
-        //}
     }
     
     func pressHandler(gesture:UIPanGestureRecognizer) {

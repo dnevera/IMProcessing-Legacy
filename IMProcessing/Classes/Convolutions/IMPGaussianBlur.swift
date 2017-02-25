@@ -90,14 +90,20 @@ public class IMPGaussianBlurFilter: IMPFilter {
     var adjustmentBuffer:MTLBuffer!
     var oldRadius:Float = 0
     
-    func update(){
+    func update()  {
+        context.async {
+            self.updateWeights()
+        }
+    }
+    
+    func updateWeights(){
         
         guard  let size = source?.size else {return}
         
-        if oldRadius == radius {
-            dirty = true
-            return
-        }
+        //if oldRadius == radius {
+        //    dirty = true
+        //    return
+        //}
         
         let newSize = NSSize(width: size.width/CGFloat(downsamplingFactor),
                              height: size.height/CGFloat(downsamplingFactor))
@@ -136,9 +142,9 @@ public class IMPGaussianBlurFilter: IMPFilter {
             offsets.append(1)
         }
         
-        weightsTexture =  context.device.texture1D(buffer:weights)
+        weightsTexture = context.device.texture1D(buffer:weights)
         offsetsTexture = context.device.texture1D(buffer:offsets)
-        dirty = true
+        dirty = true        
     }
 
     

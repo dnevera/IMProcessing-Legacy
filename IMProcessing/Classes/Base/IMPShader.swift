@@ -31,7 +31,7 @@ extension IMPShaderProvider{
     }
 }
 
-public class IMPShader: IMPContextProvider, IMPShaderProvider, Equatable {
+public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSizeProvider, Equatable {
    
     public var destinationSize: NSSize?
    

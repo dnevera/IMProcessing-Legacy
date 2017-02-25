@@ -48,6 +48,7 @@ public class IMPImage: IMPImageProvider {
             return _image
         }
     }
+        
     
     public var size: NSSize? {
         get{
@@ -62,7 +63,17 @@ public class IMPImage: IMPImageProvider {
         return IMPVideoTextureCache(context: self.context)
     }()
     
-    public var colorSpace = CGColorSpaceCreateDeviceRGB()
+    //
+    // http://stackoverflow.com/questions/12524623/what-are-the-practical-differences-when-working-with-colors-in-a-linear-vs-a-no
+    //
+    lazy public var colorSpace:CGColorSpace = {
+        if #available(iOS 10.0, *) {
+            return  CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
+        }
+        else {
+            fatalError("extendedLinearSRGB: ios >10.0 supports only")
+        }
+    }()
     
     public required init(context: IMPContext) {
         self.context = context
@@ -83,12 +94,15 @@ public extension IMPImage {
 
     public convenience init(context: IMPContext, image: NSImage, maxSize: CGFloat = 0){
         self.init(context:context)
-        self.image = prepareImage(image: CIImage(image: image), maxSize: maxSize)
+        print("IMPImage init image orientation = \(image.imageOrientation.rawValue)")
+        self.image = prepareImage(image: CIImage(image: image, options: [kCIImageColorSpace: colorSpace]), maxSize: maxSize)
+        //self.image = self.image?.applyingOrientation(Int32(IMPExifOrientationUp.rawValue))
     }
     
     public convenience init(context: IMPContext, image: CGImage, maxSize: CGFloat = 0){
         self.init(context:context)
-        self.image = prepareImage(image: CIImage(cgImage: image), maxSize: maxSize)
+        self.image = prepareImage(image: CIImage(cgImage: image, options: [kCIImageColorSpace: colorSpace]), maxSize: maxSize)
+        //self.image = self.image?.applyingOrientation(Int32(IMPExifOrientationUp.rawValue))
     }
     
     public convenience init(context: IMPContext, image: CMSampleBuffer, maxSize: CGFloat = 0){
@@ -140,7 +154,6 @@ public extension IMPImage {
                                                   vcache,
                                                   buffer, nil,
                                                   .bgra8Unorm,
-                                                  //.rgba8Unorm,
                                                   width,
                                                   height,
                                                   0,
@@ -167,7 +180,9 @@ public extension IMPImage {
             let size       = image.extent
             let imagesize  = max(size.width, size.height)
             let scale      = min(maxSize/imagesize,1)
-            return image.applying(CGAffineTransform(scaleX: scale, y: scale))
+            let transform  = CGAffineTransform(scaleX: scale, y: scale)
+            let orientation = image.imageTransform(forOrientation: 1)
+            return image.applying(transform).applying(orientation)
         }
         
         return image

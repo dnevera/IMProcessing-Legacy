@@ -20,25 +20,18 @@
         public var filter:IMPFilter? = nil {
             didSet {
             
-                textureCache = filter?.context.textureCache
+                textureCache =  filter?.context.textureCache
                 
                 self.processing(size: self.drawableSize)
                 
                 filter?.addObserver(newSource: { (source) in
                     if let size = source.size {
-                        //let scale   = UIScreen.main.scale
-                        //let newsize = self.bounds.size
-                        //self.filter?.downscaleSize = NSSize(width: newsize.width * scale, height: newsize.height * scale)
                         self.drawableSize = size
-                        //self.processing(size: self.drawableSize)
                         self.needProcessing = true
                     }
                 })
                 
                 filter?.addObserver(dirty: { (filter, source, destintion) in
-                    //if self.isPaused {
-                    //    self.processing(size: self.drawableSize)
-                    //}
                     self.needProcessing = true
                 })
             }
@@ -70,7 +63,6 @@
             return self.context.coreImage!
             }()
         
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
         var frameCounter = 0
         var renderQueue = DispatchQueue(label: "rendering.improcessing.com")
         
@@ -96,7 +88,7 @@
                 
                 this.context.async {
                     
-                    var texture = this.textureCache?.requestTexture(size:size, pixelFormat: this.colorPixelFormat)
+                    var texture:MTLTexture? =  this.textureCache?.requestTexture(size:size, pixelFormat: this.colorPixelFormat)
                     
                     filter.apply(to: &texture)
                     
@@ -141,7 +133,6 @@
                     return
                 }
                 
-                
                 if let commandBuffer = self.context.commandBuffer {
                     
                     if self.isFirstFrame  {
@@ -152,8 +143,12 @@
 
                     let blit = commandBuffer.makeBlitCommandEncoder()
                     
+                    let source = sourceTexture.pixelFormat != self.colorPixelFormat ?
+                        sourceTexture.makeTextureView(pixelFormat: self.colorPixelFormat) :
+                        sourceTexture
+                    
                     blit.copy(
-                        from: sourceTexture,
+                        from: source,
                         sourceSlice: 0,
                         sourceLevel: 0,
                         sourceOrigin: MTLOrigin(x:0,y:0,z:0),
@@ -204,7 +199,6 @@
             colorPixelFormat = .bgra8Unorm
             delegate = self
             preferredFramesPerSecond = 30
-            //transform = CGAffineTransform(scaleX: 1.0, y: -1.0)
         }
         
         private var isFirstFrame = true

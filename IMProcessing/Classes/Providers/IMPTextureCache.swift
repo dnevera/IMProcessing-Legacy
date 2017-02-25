@@ -22,16 +22,21 @@ public class IMPTextureCache: IMPContextProvider {
 
     public func requestTexture(size: MTLSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture? {
         let hash = hashFor(size: size, pixelFormat: pixelFormat)
+        var texture:MTLTexture?
         if let t = cache[hash]?.dequeue() {
-            return t
+            texture = t
         }
         else {
             let t = context.device.make2DTexture(size: size, pixelFormat: pixelFormat)
             var q = IMPTextureQueue()
             q.enqueue(t)
             cache[hash] = q
-            return cache[hash]?.dequeue()
+            texture = cache[hash]?.dequeue()
         }
+        
+        //print(" requestTexture[\(hash)](size: \(size)) count[\(cache.count)] = \(cache[hash]?.count)")
+        
+        return texture
     }
     
     public func requestTexture(size: NSSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture? {
@@ -45,6 +50,9 @@ public class IMPTextureCache: IMPContextProvider {
     public func returnTexure(_ texture:MTLTexture){
         context.sync {
             let hash = hashFor(texture: texture)
+            
+            //print(" returnTexure[\(hash)](size: \(texture.size)) count[\(cache.count)] = \(cache[hash]?.count)")
+
             if cache[hash] == nil {
                 cache[hash] =  IMPTextureQueue()
             }

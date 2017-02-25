@@ -156,7 +156,6 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         
         guard let input = source else { return }
         
-        
         if enabled == false {
             if resultIn == nil {
                 resultIn = source
@@ -173,7 +172,9 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         
         for (_, c) in coreImageFilterList.enumerated() {
             if let filter = c.cifilter {
+                
                 if filter.isKind(of: IMPCIFilter.self) {
+                    
                     guard let f = (filter as? IMPCIFilter) else {
                         continue
                     }
@@ -210,22 +211,39 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
                 }
             }
             else if let filter = c.filter {
-                if let texture = context.makeCopy(texture: currentResult) {
-                    filter.source = IMPImage(context: context, texture: texture)
-                    var t:MTLTexture? = currentResult
-                    filter.apply(to: &t, from: currentResult)
-                    currentResult = t!
+                
+                if filter.source == nil {
+                    filter.source = IMPImage(context: context)
                 }
+                
+                filter.source?.texture = currentResult
+                filter.apply(to: &filter._destination.texture)
+                
+                currentResult = filter._destination.texture!
             }
         }
     
         dirty = false
         
-        resampler.source?.texture = currentResult
-        resampler.destination?.texture = resultIn
-        resampler.process(to: resampler.destination!)
-
-        _destination = resampler.destination!
+        if let result = resultIn {
+         
+            if result.size != currentResult.size {
+                _destination.texture = currentResult
+                resultIn = _destination.texture
+            }
+            else {
+                
+                resampler.source?.texture = currentResult
+                resampler.destination?.texture = result
+                resampler.process(to: resampler.destination!)
+                
+                _destination = resampler.destination!
+            }
+        }
+        else {
+            _destination.texture = currentResult
+            resultIn = _destination.texture
+        }
         
         executeDestinationObservers(destination: _destination)
     }
@@ -759,10 +777,7 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         return (index,true)
     }
     
-    lazy var resampleShader:IMPShader = IMPShader(context: self.context,
-                                                  vertex: "vertex_passthrough",
-                                                  fragment: "fragment_passthrough",
-                                                  withName: "__resample_shader__")
+    lazy var resampleShader:IMPShader = IMPShader(context: self.context)
     
     lazy var resampler:IMPCoreImageMTLShader = {
         let v = IMPCoreImageMTLShader.register(shader: self.resampleShader)

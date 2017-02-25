@@ -25,12 +25,13 @@ public class TestFilter: IMPFilter {
     public var blurRadius:Float = 1 {
         didSet{
             blurFilter.radius = blurRadius
-            dirty = true
         }
     }
     
     public var inputEV:Float = 1 {
         didSet{
+            print("exposure MTL EV = \(inputEV)")
+            print("exposure CI EV = \(ci_inputEV)")
             dirty = true
         }
     }
@@ -38,6 +39,8 @@ public class TestFilter: IMPFilter {
     public var ci_inputEV:Float = 1 {
         didSet{
             exposureFilter.setValue(ci_inputEV, forKey: "inputEV")
+            print("exposure MTL EV = \(inputEV)")
+            print("exposure CI EV = \(ci_inputEV)")
             dirty = true
         }
     }
@@ -210,26 +213,26 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     }
     
     func redHandler(slider:UISlider)  {
-        DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) { 
+        testFilter.context.async {
             self.testFilter.redAmount = slider.value
         }
     }
 
     func blurHandler(slider:UISlider)  {
-        DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
-            self.testFilter.blurRadius = slider.value * 10
+        testFilter.context.async {
+            self.testFilter.blurRadius = slider.value * 60
         }
     }
 
     func evHandler(slider:UISlider)  {
-        DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
-            self.testFilter.inputEV = slider.value * 3
+        testFilter.context.async {
+            self.testFilter.inputEV = slider.value * 2
         }
     }
     
     func ci_evHandler(slider:UISlider)  {
-        DispatchQueue.main.async(group: nil, qos: .userInteractive, flags: .enforceQoS) {
-            self.testFilter.ci_inputEV = slider.value
+        testFilter.context.async {
+            self.testFilter.ci_inputEV = slider.value * 2
         }
     }
 

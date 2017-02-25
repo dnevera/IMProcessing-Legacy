@@ -62,6 +62,7 @@
     }
     
     /// Camera manager
+    @available(iOS 10.2, *)
     public class IMPCameraManager: NSObject, IMPContextProvider, AVCaptureVideoDataOutputSampleBufferDelegate {
         
         
@@ -379,6 +380,7 @@
         
         lazy var _deviceOrientation:UIDeviceOrientation = .unknown
         
+        @available(iOS 10.2, *)
         lazy var cameraSession:IMPCameraSession = IMPCameraSession()
         
         lazy var session:IMPAVSession = IMPAVSession(sampleBufferDelegate: self)

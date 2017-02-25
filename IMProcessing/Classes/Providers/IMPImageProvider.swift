@@ -114,22 +114,6 @@ public extension IMPImageProvider {
     public func render(to texture: inout MTLTexture?) {
         
         guard  let image = image else { return }
-//
-//        let width = Int(image.extent.size.width)
-//        let height = Int(image.extent.size.height)
-//        
-//        if texture?.width != width  || texture?.height != height
-//        {
-//            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-//                pixelFormat: IMProcessing.colors.pixelFormat,
-//                width: width, height: height, mipmapped: false)
-//            
-//            if texture != nil {
-//                texture?.setPurgeableState(.volatile)
-//            }
-//            
-//            texture = self.context.device.makeTexture(descriptor: descriptor)
-//        }
 
         texture = checkTexture(texture: texture)
         
@@ -139,7 +123,7 @@ public extension IMPImageProvider {
                                                to: t,
                                                commandBuffer: commandBuffer,
                                                bounds: image.extent,
-                                               colorSpace: image.colorSpace ?? CGColorSpaceCreateDeviceRGB())
+                                               colorSpace: self.colorSpace)
             }
         }
     }
@@ -148,22 +132,6 @@ public extension IMPImageProvider {
         
         guard  let image = image else {  return }
         
-//        let width = Int(image.extent.size.width)
-//        let height = Int(image.extent.size.height)
-//        
-//        if texture?.width != width  || texture?.height != height
-//        {
-//            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-//                pixelFormat: IMProcessing.colors.pixelFormat,
-//                width: width, height: height, mipmapped: false)
-//            
-//            if texture != nil {
-//                texture?.setPurgeableState(.volatile)
-//            }
-//            
-//            texture = self.context.device.makeTexture(descriptor: descriptor)
-//        }
-//        
         texture = checkTexture(texture: texture)
 
         if let t = texture {
@@ -171,7 +139,7 @@ public extension IMPImageProvider {
                                            to: t,
                                            commandBuffer: commandBuffer,
                                            bounds: image.extent,
-                                           colorSpace: image.colorSpace ?? CGColorSpaceCreateDeviceRGB())
+                                           colorSpace: self.colorSpace)
         }
     }
 
@@ -202,10 +170,13 @@ public extension IMPImageProvider {
     public var cgiImage:CGImage? {
         get {
             guard let image = image else { return nil }
-            return context.coreImage?.createCGImage(image, from: image.extent)
+            let colorSpace = CGColorSpaceCreateDeviceRGB()
+            return context.coreImage?.createCGImage(image, from: image.extent,
+                                                    format: kCIFormatARGB8,
+                                                    colorSpace: colorSpace,
+                                                    deferred:true)
         }
         set {
-            let colorSpace = image?.colorSpace ?? CGColorSpaceCreateDeviceRGB()
             if let im = newValue {
                 image = CIImage(cgImage: im, options: [kCIImageColorSpace: colorSpace])
             }

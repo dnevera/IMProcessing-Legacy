@@ -31,7 +31,7 @@ class IMPCIFilterConstructor: NSObject, CIFilterConstructor {
     }
 }
 
-public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
+public class IMPCIFilter: CIFilter/*, IMPDestinationSizeProvider */{
     
     typealias CommandProcessor = ((
         _ commandBuffer:MTLCommandBuffer,
@@ -46,7 +46,7 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
     var destination:IMPImageProvider?
     
-    public var destinationSize: NSSize? = nil
+    //public var destinationSize: NSSize? = nil
 
     var inputImage: CIImage? {
         set{
@@ -86,7 +86,7 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
         }
     }()
 
-    fileprivate var _destinationTexture:MTLTexture? = nil
+    //fileprivate var _destinationTexture:MTLTexture? = nil
     
     lazy var processor:CommandProcessor? = self.textureProcessor
     
@@ -158,7 +158,7 @@ extension IMPCIFilter {
     
     func process(to destinationImage: IMPImageProvider, command: CommandProcessor? = nil){
        
-        guard let size =  destinationSize ?? source?.size else { return }
+        guard let size =  source?.size else { return }
         
         guard let context = self.context else { return  }
         
@@ -169,7 +169,7 @@ extension IMPCIFilter {
         }
         else{
             destinationImage.texture = context.device.make2DTexture(size: size,
-                                                                    pixelFormat: IMProcessing.colors.pixelFormat)
+                                                                    pixelFormat: (source?.texture?.pixelFormat)!)
         }
         
         let threadgroups = MTLSizeMake(
