@@ -121,8 +121,8 @@
         
         func refresh(rect: CGRect){
             
-            guard let drawble = self.currentDrawable else { return }
-            let targetTexture = drawble.texture
+            guard let drawable = self.currentDrawable else { return }
+            let targetTexture = drawable.texture
             
             context.async {
 
@@ -141,26 +141,26 @@
                         }
                     }
 
-                    let blit = commandBuffer.makeBlitCommandEncoder()
-                    
                     let source = sourceTexture.pixelFormat != self.colorPixelFormat ?
                         sourceTexture.makeTextureView(pixelFormat: self.colorPixelFormat) :
                         sourceTexture
-                    
-                    blit.copy(
-                        from: source,
-                        sourceSlice: 0,
-                        sourceLevel: 0,
-                        sourceOrigin: MTLOrigin(x:0,y:0,z:0),
-                        sourceSize: targetTexture.size,
-                        to: targetTexture,
-                        destinationSlice: 0,
-                        destinationLevel: 0,
-                        destinationOrigin: MTLOrigin(x:0,y:0,z:0))
-                    
-                    blit.endEncoding()
 
-                    commandBuffer.present(drawble)
+                    self.renderPassDescriptor.colorAttachments[0].texture     = targetTexture
+                    
+                    let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: self.renderPassDescriptor)
+
+                    if let pipeline = self.renderPipeline {
+                        
+                        encoder.setRenderPipelineState(pipeline)
+                        
+                        encoder.setVertexBuffer(self.vertexBuffer, offset:0, at:0)
+                        encoder.setFragmentTexture(source, at:0)
+                        
+                        encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
+                        encoder.endEncoding()
+                    }
+                    
+                    commandBuffer.present(drawable)
                     commandBuffer.commit()
 
                     //
@@ -202,6 +202,57 @@
         }
         
         private var isFirstFrame = true
+        
+        
+        lazy var renderPassDescriptor:MTLRenderPassDescriptor =  {
+            let d = MTLRenderPassDescriptor()
+            d.colorAttachments[0].loadAction  = .clear
+            d.colorAttachments[0].storeAction = .store
+            d.colorAttachments[0].clearColor  =  self.clearColor
+            return d
+        }()
+        
+        lazy var vertexBuffer:MTLBuffer = {
+            let v = self.context.device.makeBuffer(bytes: viewVertexData,
+                                                   length:MemoryLayout<Float>.size*viewVertexData.count, 
+                                                   options:[])
+            v.label = "Vertices"
+            return v
+        }()
+        
+        lazy var fragmentfunction:MTLFunction? = self.context.defaultLibrary.makeFunction(name: "fragment_passview")
+        
+        lazy var renderPipeline:MTLRenderPipelineState? = {
+            do {
+                let descriptor = MTLRenderPipelineDescriptor()
+                
+                descriptor.colorAttachments[0].pixelFormat = self.colorPixelFormat
+                
+                guard let vertex = self.context.defaultLibrary.makeFunction(name: "vertex_passview") else {
+                    fatalError("IMPView error: vertex function 'vertex_passview' is not found in: \(self.context.defaultLibrary.functionNames)")
+                }
+                
+                guard let fragment = self.context.defaultLibrary.makeFunction(name: "fragment_passview") else {
+                    fatalError("IMPView error: vertex function 'fragment_passview' is not found in: \(self.context.defaultLibrary.functionNames)")
+                }
+                
+                descriptor.vertexFunction   = vertex
+                descriptor.fragmentFunction = fragment
+                
+                return try self.context.device.makeRenderPipelineState(descriptor: descriptor)
+            }
+            catch let error as NSError {
+                NSLog("IMPView error: \(error)")
+                return nil
+            }
+        }()
+        
+        static private let viewVertexData:[Float] = [
+            -1.0,  -1.0,  0.0,  1.0,
+            1.0,  -1.0,  1.0,  1.0,
+            -1.0,   1.0,  0.0,  0.0,
+            1.0,   1.0,  1.0,  0.0,
+            ]
     }
     
     

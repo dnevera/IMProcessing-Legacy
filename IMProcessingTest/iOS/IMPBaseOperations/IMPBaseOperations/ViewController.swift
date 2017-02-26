@@ -28,7 +28,7 @@ public class TestFilter: IMPFilter {
         }
     }
     
-    public var inputEV:Float = 1 {
+    public var inputEV:Float = 0 {
         didSet{
             print("exposure MTL EV = \(inputEV)")
             print("exposure CI EV = \(ci_inputEV)")
@@ -36,7 +36,7 @@ public class TestFilter: IMPFilter {
         }
     }
     
-    public var ci_inputEV:Float = 1 {
+    public var ci_inputEV:Float = 0 {
         didSet{
             exposureFilter.setValue(ci_inputEV, forKey: "inputEV")
             print("exposure MTL EV = \(inputEV)")
@@ -280,8 +280,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         if let lastAsset: PHAsset = fetchResult.lastObject as? PHAsset {
             let manager = PHImageManager.default()
             let imageRequestOptions = PHImageRequestOptions()
-            imageRequestOptions.isNetworkAccessAllowed = true
-            imageRequestOptions.resizeMode = .exact
+            //imageRequestOptions.isNetworkAccessAllowed = true
+            //imageRequestOptions.resizeMode = .fast //.exact
             
             func progress(percent: Double, _ error: Error?, _ obj:UnsafeMutablePointer<ObjCBool>, _ options: [AnyHashable : Any]?) {
                 print("image loading progress = \(percent, error, obj, options)")
@@ -303,7 +303,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         let chosenImage:UIImage? = info[UIImagePickerControllerOriginalImage] as? UIImage
-        currentImageUrl = info[UIImagePickerControllerReferenceURL] as? NSURL
+        currentImageUrl = info[UIImagePickerControllerReferenceURL] as? NSURL            
         
         if let actualImage = chosenImage{
             let bounds = UIScreen.main.bounds

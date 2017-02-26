@@ -16,10 +16,13 @@ import CoreImage
 import simd
 import Metal
 import AVFoundation
+import ImageIO
 
 
 public class IMPImage: IMPImageProvider {
     
+    public var orientation = IMPImageOrientation.up
+
     public var context: IMPContext
     
     public var texture: MTLTexture? {
@@ -82,27 +85,40 @@ public class IMPImage: IMPImageProvider {
 
 public extension IMPImage {
         
-    public convenience init(context: IMPContext, provider: IMPImageProvider, maxSize: CGFloat = 0){
+    public convenience init(context: IMPContext,
+                            provider: IMPImageProvider,
+                            maxSize: CGFloat = 0,
+                            orientation:IMPImageOrientation? = nil){
         self.init(context:context)
-        self.image = prepareImage(image: provider.image?.copy() as? CIImage, maxSize: maxSize)
+        self.image = prepareImage(image: provider.image?.copy() as? CIImage,
+                                  maxSize: maxSize, orientation: orientation)
     }
 
-    public convenience init(context: IMPContext, image: CIImage, maxSize: CGFloat = 0){
+    public convenience init(context: IMPContext,
+                            image: CIImage,
+                            maxSize: CGFloat = 0,
+                            orientation:IMPImageOrientation? = nil){
         self.init(context:context)
-        self.image = prepareImage(image: image.copy() as? CIImage, maxSize: maxSize)
+        self.image = prepareImage(image: image.copy() as? CIImage,
+                                  maxSize: maxSize, orientation: orientation)
     }
 
-    public convenience init(context: IMPContext, image: NSImage, maxSize: CGFloat = 0){
-        self.init(context:context)
-        print("IMPImage init image orientation = \(image.imageOrientation.rawValue)")
-        self.image = prepareImage(image: CIImage(image: image, options: [kCIImageColorSpace: colorSpace]), maxSize: maxSize)
-        //self.image = self.image?.applyingOrientation(Int32(IMPExifOrientationUp.rawValue))
+
+    public convenience init(context: IMPContext,
+                            image: NSImage,
+                            maxSize: CGFloat = 0,
+                            orientation:IMPImageOrientation? = nil){
+        self.init(context:context)        
+        self.image = prepareImage(image: CIImage(cgImage: image.cgImage!, options: [kCIImageColorSpace: colorSpace]),
+                                  maxSize: maxSize, orientation: orientation ?? image.imageOrientation)
     }
     
-    public convenience init(context: IMPContext, image: CGImage, maxSize: CGFloat = 0){
+    public convenience init(context: IMPContext,
+                            image: CGImage, maxSize: CGFloat = 0,
+                            orientation:IMPImageOrientation? = nil){
         self.init(context:context)
-        self.image = prepareImage(image: CIImage(cgImage: image, options: [kCIImageColorSpace: colorSpace]), maxSize: maxSize)
-        //self.image = self.image?.applyingOrientation(Int32(IMPExifOrientationUp.rawValue))
+        self.image = prepareImage(image: CIImage(cgImage: image, options: [kCIImageColorSpace: colorSpace]),
+                                  maxSize: maxSize, orientation: orientation)
     }
     
     public convenience init(context: IMPContext, image: CMSampleBuffer, maxSize: CGFloat = 0){
@@ -172,7 +188,7 @@ public extension IMPImage {
         }
     }
 
-    func prepareImage(image originImage: CIImage?, maxSize: CGFloat)  -> CIImage? {
+    func prepareImage(image originImage: CIImage?, maxSize: CGFloat, orientation:IMPImageOrientation? = nil)  -> CIImage? {
         
         guard let image = originImage else { return originImage }
         
@@ -180,9 +196,72 @@ public extension IMPImage {
             let size       = image.extent
             let imagesize  = max(size.width, size.height)
             let scale      = min(maxSize/imagesize,1)
-            let transform  = CGAffineTransform(scaleX: scale, y: scale)
-            let orientation = image.imageTransform(forOrientation: 1)
-            return image.applying(transform).applying(orientation)
+            var transform  = CGAffineTransform(scaleX: scale, y: scale)
+            
+            var reflectHorisontalMode = false
+            var reflectVerticalMode = false
+            var angle:CGFloat = 0
+            
+            
+            if let orientation = orientation {
+                
+                self.orientation = orientation
+                
+                //
+                // CIImage render to verticaly mirrored texture
+                //
+                
+                switch orientation {
+                    
+                case .up:
+                    angle = CGFloat.pi
+                    reflectHorisontalMode = true // 0
+                    
+                case .upMirrored:
+                    reflectHorisontalMode = true
+                    reflectVerticalMode   = true // 4
+                    
+                case .down:
+                    reflectHorisontalMode = true // 1
+                    
+                case .downMirrored: break        // 5
+                    
+                case .left:
+                    angle = -CGFloat.pi/2
+                    reflectHorisontalMode = true // 2
+
+                case .leftMirrored:
+                    angle = -CGFloat.pi/2
+                    reflectVerticalMode   = true
+                    reflectHorisontalMode = true // 6
+                    
+                case .right:
+                    angle = CGFloat.pi/2
+                    reflectHorisontalMode = true // 3
+
+                case .rightMirrored:
+                    angle = CGFloat.pi/2
+                    reflectVerticalMode   = true
+                    reflectHorisontalMode = true // 7
+                    
+                default: break
+                }
+            }
+            
+            if reflectHorisontalMode {
+                transform = transform.scaledBy(x: -1, y: 1).translatedBy(x: size.width, y: 0)
+            }
+            
+            if reflectVerticalMode {
+                transform = transform.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: size.height)
+            }
+            
+            //
+            // fix orientation
+            //
+            transform = transform.rotated(by: CGFloat(angle))
+            
+            return image.applying(transform)
         }
         
         return image
