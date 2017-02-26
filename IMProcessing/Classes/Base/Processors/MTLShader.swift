@@ -12,14 +12,14 @@ import CoreImage
 
 class IMPCoreImageMTLShader: IMPCIFilter{
     
-//    override var destinationSize: NSSize? {
-//        set{
-//            shader?.destinationSize = newValue
-//        }
-//        get{
-//            return shader?.destinationSize
-//        }
-//    }
+    override var destinationSize: NSSize? {
+        set{
+            shader?.destinationSize = newValue
+        }
+        get{
+            return shader?.destinationSize
+        }
+    }
 
     static var registeredShaderList:[IMPShader] = [IMPShader]()
     static var registeredFilterList:[String:IMPCoreImageMTLShader] = [String:IMPCoreImageMTLShader]()

@@ -12,14 +12,14 @@ import CoreImage
 
 class IMPCoreImageMTLKernel: IMPCIFilter{
     
-//    override var destinationSize: NSSize? {
-//        set{
-//            function?.destinationSize = newValue
-//        }
-//        get{
-//            return function?.destinationSize
-//        }
-//    }
+    override var destinationSize: NSSize? {
+        set{
+            function?.destinationSize = newValue
+        }
+        get{
+            return function?.destinationSize
+        }
+    }
     
     static var registeredFunctionList:[IMPFunction] = [IMPFunction]()
     static var registeredFilterList:[String:IMPCoreImageMTLKernel] = [String:IMPCoreImageMTLKernel]()

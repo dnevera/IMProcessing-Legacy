@@ -150,6 +150,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         
         view.addSubview(containerView)
         
+        imageView.exactResolutionEnabled = false
         imageView.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         imageView.frame = containerView.bounds
         imageView.backgroundColor = NSColor.init(red: 0.1, green: 0.1, blue: 0.1, alpha: 1)
@@ -280,8 +281,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         if let lastAsset: PHAsset = fetchResult.lastObject as? PHAsset {
             let manager = PHImageManager.default()
             let imageRequestOptions = PHImageRequestOptions()
-            //imageRequestOptions.isNetworkAccessAllowed = true
-            //imageRequestOptions.resizeMode = .fast //.exact
+            imageRequestOptions.isNetworkAccessAllowed = true
+            imageRequestOptions.resizeMode = .exact
             
             func progress(percent: Double, _ error: Error?, _ obj:UnsafeMutablePointer<ObjCBool>, _ options: [AnyHashable : Any]?) {
                 print("image loading progress = \(percent, error, obj, options)")
@@ -303,7 +304,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
         let chosenImage:UIImage? = info[UIImagePickerControllerOriginalImage] as? UIImage
-        currentImageUrl = info[UIImagePickerControllerReferenceURL] as? NSURL            
+        currentImageUrl = info[UIImagePickerControllerReferenceURL] as? NSURL
         
         if let actualImage = chosenImage{
             let bounds = UIScreen.main.bounds

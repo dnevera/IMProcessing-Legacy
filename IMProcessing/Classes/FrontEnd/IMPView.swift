@@ -10,12 +10,15 @@
     import UIKit
     import MetalKit
     
-    
+    let screenScale = UIScreen.main.scale
+
     @available(iOS 9.0, *)
     public class IMPView: MTKView {
         
         lazy var textureDelay:IMPTextureDelayLine = IMPTextureDelayLine()
         var textureCache:IMPTextureCache? = nil
+        
+        public var exactResolutionEnabled = false
         
         public var filter:IMPFilter? = nil {
             didSet {
@@ -26,7 +29,18 @@
                 
                 filter?.addObserver(newSource: { (source) in
                     if let size = source.size {
-                        self.drawableSize = size
+                        
+                        if self.exactResolutionEnabled {
+                            self.drawableSize = size
+                        }
+                        else {
+                            // down scale targetTexture
+                            let newSize = NSSize(width: self.bounds.size.width * screenScale,
+                                                 height: self.bounds.size.height * screenScale
+                                                )
+                            let scale = fmin(fmax(newSize.width/size.width, newSize.height/size.height),1)
+                            self.drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
+                        }                                                
                         self.needProcessing = true
                     }
                 })
@@ -141,10 +155,6 @@
                         }
                     }
 
-                    let source = sourceTexture.pixelFormat != self.colorPixelFormat ?
-                        sourceTexture.makeTextureView(pixelFormat: self.colorPixelFormat) :
-                        sourceTexture
-
                     self.renderPassDescriptor.colorAttachments[0].texture     = targetTexture
                     
                     let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: self.renderPassDescriptor)
@@ -154,7 +164,7 @@
                         encoder.setRenderPipelineState(pipeline)
                         
                         encoder.setVertexBuffer(self.vertexBuffer, offset:0, at:0)
-                        encoder.setFragmentTexture(source, at:0)
+                        encoder.setFragmentTexture(sourceTexture, at:0)
                         
                         encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
                         encoder.endEncoding()
@@ -162,11 +172,12 @@
                     
                     commandBuffer.present(drawable)
                     commandBuffer.commit()
+                    commandBuffer.waitUntilCompleted()
 
                     //
                     // https://forums.developer.apple.com/thread/64889
                     //
-                    self.draw()
+                    //self.draw()
 
                     if self.frameCounter > 0  && self.isFirstFrame {
                         self.isFirstFrame = false

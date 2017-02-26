@@ -162,15 +162,29 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
             }
             else {
                 resampler.source?.texture = input
+                resampler.destinationSize = resultIn!.cgsize
                 resampler.destination?.texture = resultIn
                 resampler.process(to: resampler.destination!)
             }
             return
         }
         
-        var currentResult = input
+        var currentResult:MTLTexture = input
         
-        for (_, c) in coreImageFilterList.enumerated() {
+        if let result = resultIn {
+            if result.size != input.size {
+                resampler.source?.texture = input
+                resampler.destination?.texture = result
+                resampler.destinationSize = result.cgsize
+                resampler.process(to: resampler.destination!)
+                currentResult = (resampler.destination?.texture)!
+            }
+        }
+        
+        for (index, c) in coreImageFilterList.enumerated() {
+            
+            let renderToResult = (index == coreImageFilterList.count - 1) && resultIn != nil
+            
             if let filter = c.cifilter {
                 
                 if filter.isKind(of: IMPCIFilter.self) {
@@ -187,6 +201,10 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
                     
                     f.destination = f.destination ?? IMPImage(context: context)
                     
+                    if renderToResult {
+                        f.destination?.texture = resultIn
+                    }
+                    
                     f.process(to: f.destination!)
                     
                     currentResult = (f.destination?.texture)!
@@ -198,6 +216,10 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
                                     forKey: kCIInputImageKey)
                     
                     guard let image = filter.outputImage else { continue }
+                    
+                    if renderToResult {
+                        currentResult = resultIn!
+                    }
                     
                     context.execute(wait: true, fail: {
                         print("Rendering filter: \(filter.name) failed ... ")
@@ -217,34 +239,24 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
                 }
                 
                 filter.source?.texture = currentResult
+                
+                if renderToResult {
+                    filter._destination.texture = resultIn
+                }
+
                 filter.apply(to: &filter._destination.texture)
                 
                 currentResult = filter._destination.texture!
             }
         }
     
-        dirty = false
+        _destination.texture = currentResult
         
-        if let result = resultIn {
-         
-            if result.size != currentResult.size {
-                _destination.texture = currentResult
-                resultIn = _destination.texture
-            }
-            else {
-                
-                resampler.source?.texture = currentResult
-                resampler.destination?.texture = result
-                resampler.process(to: resampler.destination!)
-                
-                _destination = resampler.destination!
-            }
-        }
-        else {
-            _destination.texture = currentResult
+        if resultIn == nil {
             resultIn = _destination.texture
         }
         
+        dirty = false
         executeDestinationObservers(destination: _destination)
     }
     

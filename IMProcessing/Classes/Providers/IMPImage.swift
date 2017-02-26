@@ -242,9 +242,7 @@ public extension IMPImage {
                 case .rightMirrored:
                     angle = CGFloat.pi/2
                     reflectVerticalMode   = true
-                    reflectHorisontalMode = true // 7
-                    
-                default: break
+                    reflectHorisontalMode = true // 7                    
                 }
             }
             

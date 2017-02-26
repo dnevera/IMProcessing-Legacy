@@ -61,8 +61,8 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
         
         add(shader: downscaleShader, fail: fail)
-        add(shader: horizontal_shader, fail: fail)
-        add(shader: vertical_shader, fail: fail)
+        add(shader: horizontalShader, fail: fail)
+        add(shader: verticalShader, fail: fail)
         add(shader: upscaleShader, fail: fail)
     }
     
@@ -88,7 +88,6 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     
     var adjustmentBuffer:MTLBuffer!
-    var oldRadius:Float = 0
     
     func update()  {
         context.async {
@@ -100,19 +99,12 @@ public class IMPGaussianBlurFilter: IMPFilter {
         
         guard  let size = source?.size else {return}
         
-        //if oldRadius == radius {
-        //    dirty = true
-        //    return
-        //}
-        
         let newSize = NSSize(width: size.width/CGFloat(downsamplingFactor),
                              height: size.height/CGFloat(downsamplingFactor))
         
         downscaleShader.destinationSize = newSize
         upscaleShader.destinationSize = size
-        
-        oldRadius = radius
-        
+                
         var offsets:[Float] = [Float]()
         var weights:[Float] = [Float]()
         
@@ -168,11 +160,12 @@ public class IMPGaussianBlurFilter: IMPFilter {
         return s
     }()
 
-    lazy var horizontal_shader:IMPShader = {
+    lazy var horizontalShader:IMPShader = {
         let s = IMPShader(context: self.context,
                           fragment: "fragment_gaussianSampledBlur")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
+            
             commandEncoder.setFragmentBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
             commandEncoder.setFragmentTexture(self.weightsTexture, at:1)
             commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
@@ -181,12 +174,13 @@ public class IMPGaussianBlurFilter: IMPFilter {
         return s
     }()
     
-    lazy var vertical_shader:IMPShader = {
+    lazy var verticalShader:IMPShader = {
         
         let s = IMPShader(context: self.context,
                           fragment: "fragment_gaussianSampledBlur")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
+
             commandEncoder.setFragmentBuffer(self.vTexelSizeBuffer, offset: 0, at: 0)
             commandEncoder.setFragmentTexture(self.weightsTexture, at:1)
             commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
