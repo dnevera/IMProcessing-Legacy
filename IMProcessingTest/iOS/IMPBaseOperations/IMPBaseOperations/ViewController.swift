@@ -310,7 +310,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             let bounds = UIScreen.main.bounds
             let screensize = max(bounds.size.width, bounds.size.height) * UIScreen.main.scale
             
-            let source = IMPImage(context: context, image: actualImage, maxSize: screensize)
+            let source = IMPImage(context: context, image: actualImage, maxSize: 0)
         
             NSLog(" start set source with size \(actualImage.size) scaled size = \(screensize) source.size = \(source.image?.extent)")
 

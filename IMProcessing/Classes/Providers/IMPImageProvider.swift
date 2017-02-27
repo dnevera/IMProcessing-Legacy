@@ -226,77 +226,74 @@ public extension IMPImageProvider {
         
         guard let image = originImage else { return originImage }
         
-        if maxSize > 0 {
-            let size       = image.extent
-            let imagesize  = max(size.width, size.height)
-            let scale      = min(maxSize/imagesize,1)
-            var transform  = CGAffineTransform(scaleX: scale, y: scale)
+        let size       = image.extent
+        let imagesize  = max(size.width, size.height)
+        let scale      = maxSize > 0 ? min(maxSize/imagesize,1) : 1
+        
+        var transform  = scale == 1 ? CGAffineTransform.identity : CGAffineTransform(scaleX: scale, y: scale)
+        
+        var reflectHorisontalMode = false
+        var reflectVerticalMode = false
+        var angle:CGFloat = 0
+        
+        
+        if let orientation = orientation {
             
-            var reflectHorisontalMode = false
-            var reflectVerticalMode = false
-            var angle:CGFloat = 0
-            
-            
-            if let orientation = orientation {
-                
-                self.orientation = orientation
-                
-                //
-                // CIImage render to verticaly mirrored texture
-                //
-                
-                switch orientation {
-                    
-                case .up:
-                    angle = CGFloat.pi
-                    reflectHorisontalMode = true // 0
-                    
-                case .upMirrored:
-                    reflectHorisontalMode = true
-                    reflectVerticalMode   = true // 4
-                    
-                case .down:
-                    reflectHorisontalMode = true // 1
-                    
-                case .downMirrored: break        // 5
-                    
-                case .left:
-                    angle = -CGFloat.pi/2
-                    reflectHorisontalMode = true // 2
-                    
-                case .leftMirrored:
-                    angle = -CGFloat.pi/2
-                    reflectVerticalMode   = true
-                    reflectHorisontalMode = true // 6
-                    
-                case .right:
-                    angle = CGFloat.pi/2
-                    reflectHorisontalMode = true // 3
-                    
-                case .rightMirrored:
-                    angle = CGFloat.pi/2
-                    reflectVerticalMode   = true
-                    reflectHorisontalMode = true // 7
-                }
-            }
-            
-            if reflectHorisontalMode {
-                transform = transform.scaledBy(x: -1, y: 1).translatedBy(x: size.width, y: 0)
-            }
-            
-            if reflectVerticalMode {
-                transform = transform.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: size.height)
-            }
+            self.orientation = orientation
             
             //
-            // fix orientation
+            // CIImage render to verticaly mirrored texture
             //
-            transform = transform.rotated(by: CGFloat(angle))
             
-            return image.applying(transform)
+            switch orientation {
+                
+            case .up:
+                angle = CGFloat.pi
+                reflectHorisontalMode = true // 0
+                
+            case .upMirrored:
+                reflectHorisontalMode = true
+                reflectVerticalMode   = true // 4
+                
+            case .down:
+                reflectHorisontalMode = true // 1
+                
+            case .downMirrored: break        // 5
+                
+            case .left:
+                angle = -CGFloat.pi/2
+                reflectHorisontalMode = true // 2
+                
+            case .leftMirrored:
+                angle = -CGFloat.pi/2
+                reflectVerticalMode   = true
+                reflectHorisontalMode = true // 6
+                
+            case .right:
+                angle = CGFloat.pi/2
+                reflectHorisontalMode = true // 3
+                
+            case .rightMirrored:
+                angle = CGFloat.pi/2
+                reflectVerticalMode   = true
+                reflectHorisontalMode = true // 7
+            }
         }
         
-        return image
+        if reflectHorisontalMode {
+            transform = transform.scaledBy(x: -1, y: 1).translatedBy(x: size.width, y: 0)
+        }
+        
+        if reflectVerticalMode {
+            transform = transform.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: size.height)
+        }
+        
+        //
+        // fix orientation
+        //
+        transform = transform.rotated(by: CGFloat(angle))
+        
+        return image.applying(transform)
     }
 }
 
@@ -326,7 +323,7 @@ public extension IMPImageProvider {
         guard  let image = image else {  return }
         
         texture = checkTexture(texture: texture)
-                
+        
         if let t = texture {
             self.context.coreImage?.render(image,
                                            to: t,

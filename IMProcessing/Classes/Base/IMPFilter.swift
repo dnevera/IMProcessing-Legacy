@@ -56,6 +56,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     
     public var source: IMPImageProvider? = nil {
         didSet{
+            dirty = true
             executeNewSourceObservers(source: source)
         }
     }
@@ -65,7 +66,11 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         return _destination
     }
 
-    public var destinationSize:NSSize? = nil
+    public var destinationSize:NSSize? = nil {
+        didSet{
+            dirty = true
+        }
+    }
     
     public required init(context:IMPContext, name: String? = nil) {
         self.context = context
@@ -174,8 +179,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         
         executeDestinationObservers(destination: result)
     }
-    
-    
+        
     //
     // optimize processing when image < GPU SIZE
     //
