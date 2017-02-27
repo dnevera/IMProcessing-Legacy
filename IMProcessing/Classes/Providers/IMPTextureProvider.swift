@@ -27,8 +27,7 @@ public protocol IMPTextureProvider{
 }
 
 public extension IMPTextureProvider {
-    public var size:MTLSize?   { return texture?.size }
-    public var cgsize:NSSize? { return  texture?.cgsize}
+    public var cgsize:NSSize?  { return texture?.cgsize}
     public var width:Int?      { return texture?.width }
     public var height:Int?     { return texture?.height }
     public var depth:Int?      { return texture?.depth }

@@ -209,7 +209,6 @@
             isPaused = false
             colorPixelFormat = .bgra8Unorm
             delegate = self
-            preferredFramesPerSecond = 30
         }
         
         private var isFirstFrame = true

@@ -94,25 +94,19 @@ class ViewController: UIViewController {
         return v
     }()
     
+    lazy var liveView:IMPView = {
+        let container = self.containerView.bounds
+        let frame = CGRect(x: 0, y: 0,
+                           width: container.size.width,
+                           height: container.size.height)
+        let v = IMPView(frame: frame, device: self.context.device)
+        v.autoresizingMask = [.flexibleWidth,.flexibleHeight]
+        return v
+    }()
+
     
     lazy var cameraManager:IMPCameraManager = {
-        
-        let c = IMPCameraManager(containerView: self.containerView, context: IMPContext(lazy: true))
-        if !c.context.supportsGPUv2 {
-            //
-            // 5s
-            //
-            //c.frameRate = 24
-            //c.scaleFactor = DHCommon.settings[.Camera][.downScaleFactor].value
-        }
-        else {
-            //c.frameRate = 30
-        }
-        
-        //c.addLiveViewReadyObserver({ (camera) in
-         //   self.dehancerLiveViewFilter.enabled = true
-        //})
-        
+        let c = IMPCameraManager(containerView: self.containerView)
         return c
     }()
     
@@ -180,13 +174,25 @@ class ViewController: UIViewController {
         
         exposureSlider.addTarget(self, action: #selector(slideHandler(slider:)), for: .valueChanged)
 
-        cameraManager.liveView.filter = liveViewFilter
+        liveView.filter = liveViewFilter
+        
+        containerView.addSubview(liveView)
         
         NSLog("starting ...")
         
-        //cameraManager.addLiveViewReadyObserver { (camera) in
-        //    NSLog("live view is ready ...")
-        //}
+        liveView.viewReadyHandler = { () in
+            NSLog("live view is ready ...")
+        }
+        
+        cameraManager.add(streamObserver: {(camera, buffer) in
+            if var image = self.liveView.filter?.source{
+                image.update(buffer)
+                self.liveView.filter?.source = image
+            }
+            else {
+                self.liveView.filter?.source = IMPImage(context: self.liveView.context, image: buffer)
+            }
+        })
         
         cameraManager.start { (granted) -> Void in
             
@@ -215,6 +221,7 @@ class ViewController: UIViewController {
                 }
             }
         }
+        
     }
     
     func slideHandler(slider:UISlider)  {
@@ -233,10 +240,14 @@ class ViewController: UIViewController {
     
     func pressHandler(gesture:UIPanGestureRecognizer) {
         if gesture.state == .began {
+            //cameraManager.previewEnabled = true
             liveViewFilter.enabled = false
+            //liveView.isHidden = true
         }
         else if gesture.state == .ended {
+            //cameraManager.previewEnabled = false
             liveViewFilter.enabled = true
+            //liveView.isHidden = false
         }
     }
     

@@ -32,6 +32,9 @@
 import CoreImage
 import simd
 import Metal
+import AVFoundation
+import ImageIO
+
 
 public extension IMPImageOrientation {
     //
@@ -102,20 +105,208 @@ public extension IMPExifOrientation {
     }
 }
 
-public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
+public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{    
     var image:CIImage?{ get set }
     var size:NSSize? {get}
     var colorSpace:CGColorSpace {get set}
     var orientation:IMPImageOrientation {get set}
+    var videoCache:IMPVideoTextureCache {get}
     init(context:IMPContext)
 }
 
 public extension IMPImageProvider {
+    
+    public init(context: IMPContext,
+                provider: IMPImageProvider,
+                maxSize: CGFloat = 0,
+                orientation:IMPImageOrientation? = nil){
+        self.init(context:context)
+        self.image = prepareImage(image: provider.image?.copy() as? CIImage,
+                                  maxSize: maxSize, orientation: orientation)
+    }
+    
+    public init(context: IMPContext,
+                image: CIImage,
+                maxSize: CGFloat = 0,
+                orientation:IMPImageOrientation? = nil){
+        self.init(context:context)
+        self.image = prepareImage(image: image.copy() as? CIImage,
+                                  maxSize: maxSize, orientation: orientation)
+    }
+    
+    
+    public init(context: IMPContext,
+                image: NSImage,
+                maxSize: CGFloat = 0,
+                orientation:IMPImageOrientation? = nil){
+        self.init(context:context)
+        self.image = prepareImage(image: CIImage(cgImage: image.cgImage!, options: [kCIImageColorSpace: colorSpace]),
+                                  maxSize: maxSize, orientation: orientation ?? image.imageOrientation)
+    }
+    
+    public init(context: IMPContext,
+                image: CGImage,
+                maxSize: CGFloat = 0,
+                orientation:IMPImageOrientation? = nil){
+        self.init(context:context)
+        self.image = prepareImage(image: CIImage(cgImage: image, options: [kCIImageColorSpace: colorSpace]),
+                                  maxSize: maxSize, orientation: orientation)
+    }
+    
+    public init(context: IMPContext, image: CMSampleBuffer, maxSize: CGFloat = 0){
+        self.init(context:context)
+        self.update(image)
+    }
+    
+    public init(context: IMPContext, image: CVImageBuffer, maxSize: CGFloat = 0){
+        self.init(context:context)
+        self.update(image)
+    }
+    
+    public init(context: IMPContext, texture: MTLTexture){
+        self.init(context:context)
+        self.texture = texture
+    }
+    
+    
+    public mutating func update(_ inputImage:CIImage){
+        image = inputImage
+    }
+    
+    public mutating func update(_ inputImage:CGImage){
+        image = CIImage(cgImage: inputImage)
+    }
+    
+    public mutating func update(_ inputImage:NSImage){
+        image = CIImage(image: inputImage)
+    }
+    
+    public mutating func update(_ buffer:CMSampleBuffer){
+        if let pixelBuffer = CMSampleBufferGetImageBuffer(buffer) {
+            CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
+            update(pixelBuffer)
+            CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
+        }
+    }
+    
+    public mutating func update(_ buffer: CVImageBuffer) {
         
+        let width = CVPixelBufferGetWidth(buffer)
+        let height = CVPixelBufferGetHeight(buffer)
+        
+        var textureRef:CVMetalTexture?
+        
+        guard let vcache = videoCache.videoTextureCache else {
+            fatalError("IMPImageProvider error: couldn't create video cache... )")
+        }
+        
+        let error = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault,
+                                                              vcache,
+                                                              buffer, nil,
+                                                              .bgra8Unorm,
+                                                              width,
+                                                              height,
+                                                              0,
+                                                              &textureRef)
+        
+        if error != kCVReturnSuccess {
+            fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
+        }
+        
+        if let ref = textureRef,
+            let texture = CVMetalTextureGetTexture(ref) {
+            self.texture = texture
+        }
+        else {
+            fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
+        }
+    }
+    
+    mutating private func prepareImage(image originImage: CIImage?, maxSize: CGFloat, orientation:IMPImageOrientation? = nil)  -> CIImage? {
+        
+        guard let image = originImage else { return originImage }
+        
+        if maxSize > 0 {
+            let size       = image.extent
+            let imagesize  = max(size.width, size.height)
+            let scale      = min(maxSize/imagesize,1)
+            var transform  = CGAffineTransform(scaleX: scale, y: scale)
+            
+            var reflectHorisontalMode = false
+            var reflectVerticalMode = false
+            var angle:CGFloat = 0
+            
+            
+            if let orientation = orientation {
+                
+                self.orientation = orientation
+                
+                //
+                // CIImage render to verticaly mirrored texture
+                //
+                
+                switch orientation {
+                    
+                case .up:
+                    angle = CGFloat.pi
+                    reflectHorisontalMode = true // 0
+                    
+                case .upMirrored:
+                    reflectHorisontalMode = true
+                    reflectVerticalMode   = true // 4
+                    
+                case .down:
+                    reflectHorisontalMode = true // 1
+                    
+                case .downMirrored: break        // 5
+                    
+                case .left:
+                    angle = -CGFloat.pi/2
+                    reflectHorisontalMode = true // 2
+                    
+                case .leftMirrored:
+                    angle = -CGFloat.pi/2
+                    reflectVerticalMode   = true
+                    reflectHorisontalMode = true // 6
+                    
+                case .right:
+                    angle = CGFloat.pi/2
+                    reflectHorisontalMode = true // 3
+                    
+                case .rightMirrored:
+                    angle = CGFloat.pi/2
+                    reflectVerticalMode   = true
+                    reflectHorisontalMode = true // 7
+                }
+            }
+            
+            if reflectHorisontalMode {
+                transform = transform.scaledBy(x: -1, y: 1).translatedBy(x: size.width, y: 0)
+            }
+            
+            if reflectVerticalMode {
+                transform = transform.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: size.height)
+            }
+            
+            //
+            // fix orientation
+            //
+            transform = transform.rotated(by: CGFloat(angle))
+            
+            return image.applying(transform)
+        }
+        
+        return image
+    }
+}
+
+
+public extension IMPImageProvider {
+    
     public func render(to texture: inout MTLTexture?) {
         
         guard  let image = image else { return }
-
+        
         texture = checkTexture(texture: texture)
         
         if let t = texture {
@@ -137,9 +328,9 @@ public extension IMPImageProvider {
         guard  let image = image else {  return }
         
         texture = checkTexture(texture: texture)
-
+        
         print(" Render to texture = \(image.extent)")
-
+        
         if let t = texture {
             self.context.coreImage?.render(image,
                                            to: t,
@@ -148,12 +339,12 @@ public extension IMPImageProvider {
                                            colorSpace: self.colorSpace)
         }
     }
-
     
-    func checkTexture(texture:MTLTexture?) -> MTLTexture? {
-
+    
+    private func checkTexture(texture:MTLTexture?) -> MTLTexture? {
+        
         guard  let image = image else {  return nil }
-
+        
         let width = Int(image.extent.size.width)
         let height = Int(image.extent.size.height)
         
@@ -199,3 +390,5 @@ public extension IMPImageProvider {
         }
     }
 }
+
+

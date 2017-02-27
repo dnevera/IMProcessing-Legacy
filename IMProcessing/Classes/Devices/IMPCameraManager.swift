@@ -14,290 +14,55 @@
     import CoreMedia
     import CoreMedia.CMBufferQueue
     
-    
-    public extension AVCaptureVideoOrientation {
-                
-//
-//  AVCaptureVideoOrientation
-//        case Portrait            // Indicates that video should be oriented vertically, home button on the bottom.
-//        case PortraitUpsideDown  // Indicates that video should be oriented vertically, home button on the top.
-//        case LandscapeRight      // Indicates that video should be oriented horizontally, home button on the right.
-//        case LandscapeLeft       // Indicates that video should be oriented horizontally, home button on the left.
-//
-//  UIDeviceOrientation
-//        case Unknown            -> Portrait
-//        case Portrait           -> Portrait            // Device oriented vertically, home button on the bottom
-//        case PortraitUpsideDown -> PortraitUpsideDown  // Device oriented vertically, home button on the top
-//        case LandscapeLeft      -> LandscapeRight      // Device oriented horizontally, home button on the right !!!
-//        case LandscapeRight     -> LandscapeLeft       // Device oriented horizontally, home button on the left !!!
-//        case FaceUp             -> Portrait            // Device oriented flat, face up
-//        case FaceDown           -> Portrait            // Device oriented flat, face down
 
-        
-        init?(deviceOrientation:UIDeviceOrientation) {
-            switch deviceOrientation {
-            case .portraitUpsideDown:
-                self.init(rawValue: AVCaptureVideoOrientation.portraitUpsideDown.rawValue)
-            case .landscapeLeft:
-                self.init(rawValue: AVCaptureVideoOrientation.landscapeRight.rawValue)
-            case .landscapeRight:
-                self.init(rawValue: AVCaptureVideoOrientation.landscapeLeft.rawValue)
-            default:
-                self.init(rawValue: AVCaptureVideoOrientation.portrait.rawValue)
-            }
-        }
-    }
-    
-    public extension CMTime {
-  
-        /// Get exposure duration
-        public var duration:(value:Int, scale:Int) {
-            return (Int(self.value),Int(self.timescale))
-        }
-        
-        /// Create new exposure duration
-        public init(duration: (value:Int, scale:Int)){
-            self = CMTimeMake(Int64(duration.value), Int32(duration.scale))
-        }
-    }
-    
     /// Camera manager
     @available(iOS 10.2, *)
-    public class IMPCameraManager: NSObject, IMPContextProvider, AVCaptureVideoDataOutputSampleBufferDelegate {
+    public class IMPCameraManager: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate {
         
         
-        public typealias PointBlockType = ((_ camera:IMPCameraManager, _ point:CGPoint)->Void)
+        public typealias PointBlockType = IMPCameraPointBlockType
         
-        ///  Focus settings
-        ///
-        ///  - Auto:           Auto focus mode at POI with beginning and completition blocks
-        ///  - ContinuousAuto: Continuous Auto focus mode with beginning and completition blocks
-        ///  - Locked:         Locked Focus mode
-        ///  - Reset:          Reset foucus to center POI
-        public enum Focus{
-            
-            case Auto          (atPoint:CGPoint, restriction:AVCaptureAutoFocusRangeRestriction?, begin:PointBlockType?, complete:PointBlockType?)
-            case ContinuousAuto(atPoint:CGPoint, restriction:AVCaptureAutoFocusRangeRestriction?, begin:PointBlockType?, complete:PointBlockType?)
-            case Locked(position:Float?, complete:PointBlockType?)
-            case Reset(complete:PointBlockType?)
-
-            /// Device focus mode
-            public var mode: AVCaptureFocusMode {
-                switch self {
-                case .Auto(_,_,_,_): return .autoFocus
-                case .ContinuousAuto(_,_,_,_): return .continuousAutoFocus
-                case .Locked(_,_): return .locked
-                case .Reset(_): return .continuousAutoFocus
-                }
-            }
-            
-            /// Focus range restriction
-            public var restriction:AVCaptureAutoFocusRangeRestriction {
-                if let r = self.realRestriction {
-                    return r
-                }
-                else {
-                    return .none
-                }
-            }
-
-            var realRestriction:AVCaptureAutoFocusRangeRestriction? {
-                switch self {
-                case .Auto(_,let restriction,_,_): return restriction
-                case .ContinuousAuto(_,let restriction,_,_): return restriction
-                default:
-                    return .none
-                }
-            }
-
-            // Lens desired position
-            var position:Float? {
-                switch self {
-                case .Locked(let position,_): return position
-                default:
-                    return nil
-                }
-            }
-            
-            // POI of focusing
-            var poi: CGPoint? {
-                switch self {
-                case .Auto(let focusPoint,_,_,_): return focusPoint
-                case .ContinuousAuto(let focusPoint,_,_,_): return focusPoint
-                case .Locked(_,_): return nil
-                case .Reset(_): return CGPoint(x: 0.5,y: 0.5)
-                }
-            }
-
-            // Begining block calls when lens start to change its position
-            var begin: PointBlockType? {
-                switch self {
-                case .Auto(_, _, let beginBlock, _): return beginBlock
-                case .ContinuousAuto(_, _, let beginBlock, _): return beginBlock
-                case .Locked(_,_): return nil
-                case .Reset(_): return nil
-                }
-            }
-
-            // Completetion block calls when focus has adjusted
-            var complete: PointBlockType? {
-                switch self {
-                case .Auto(_,_,_, let completeBlock): return completeBlock
-                case .ContinuousAuto(_,_,_, let completeBlock): return completeBlock
-                case .Locked(_,let completeBlock): return completeBlock
-                case .Reset(let completeBlock): return completeBlock
-                }
-            }
-        }
-
-        ///  Exposure settings
-        ///
-        ///  - Custom:         Custom exposure with duration
-        ///  - Auto:           Auto exposure mode at POI with beginning and completition blocks
-        ///  - ContinuousAuto: Continuous Auto exposure mode with beginning and completition blocks
-        ///  - Locked:         Locked exposure mode
-        ///  - Reset:          Reset exposure to center POI
-        public enum Exposure {
-            
-            case Custom(duration:CMTime,iso:Float,begin:PointBlockType?,complete:PointBlockType?)
-            case Auto(atPoint:CGPoint,begin:PointBlockType?,complete:PointBlockType?)
-            case ContinuousAuto(atPoint:CGPoint,begin:PointBlockType?,complete:PointBlockType?)
-            case Locked(complete:PointBlockType?)
-            case Reset(complete:PointBlockType?)
-            
-            /// Device focus mode
-            public var mode: AVCaptureExposureMode {
-                switch self {
-                case .Custom(_,_,_,_): return .custom
-                case .Auto(_,_,_): return .autoExpose
-                case .ContinuousAuto(_,_,_): return .continuousAutoExposure
-                case .Locked(_): return .locked
-                case .Reset(_): return .continuousAutoExposure
-                }
-            }
-            
-            var duration: CMTime {
-                switch self {
-                case .Custom(let duration,_,_,_): return duration
-                default: return AVCaptureExposureDurationCurrent
-                }
-            }
-            
-            var iso:Float{
-                switch self {
-                case .Custom(_,let iso,_,_): return iso
-                default: return AVCaptureISOCurrent
-                }
-            }
-            
-            // POI of exposure
-            var poi: CGPoint? {
-                switch self {
-                case .Custom(_,_,_,_): return nil
-                case .Auto(let focusPoint,_,_): return focusPoint
-                case .ContinuousAuto(let focusPoint,_,_): return focusPoint
-                case .Locked(_): return nil
-                case .Reset(_): return CGPoint(x: 0.5,y: 0.5)
-                }
-            }
-            
-            //
-            var begin: PointBlockType? {
-                switch self {
-                case .Custom(_,_, let beginBlock, _): return beginBlock
-                case .Auto(_, let beginBlock, _): return beginBlock
-                case .ContinuousAuto(_, let beginBlock, _): return beginBlock
-                case .Locked(_): return nil
-                case .Reset(_): return nil
-                }
-            }
-            
-            // Completetion block calls when focus has adjusted
-            var complete: PointBlockType? {
-                switch self {
-                case .Custom(_,_,_, let completeBlock): return completeBlock
-                case .Auto(_,_, let completeBlock): return completeBlock
-                case .ContinuousAuto(_,_, let completeBlock): return completeBlock
-                case .Locked(let completeBlock): return completeBlock
-                case .Reset(let completeBlock): return completeBlock
-                }
-            }
-        }
+        public typealias Focus = IMPCameraFocus
+        public typealias Exposure = IMPCameraExposure
         
-        public typealias AccessHandler = ((Bool) -> Void)
         public typealias CameraCompleteBlockType    = ((_ camera:IMPCameraManager)->Void)
-        public typealias LiveViewEventBlockType     = CameraCompleteBlockType
         public typealias CameraEventBlockType       = ((_ camera:IMPCameraManager, _ ready:Bool)->Void)
         public typealias VideoEventBlockType        = ((_ camera:IMPCameraManager, _ running:Bool)->Void)
         public typealias ZomingCompleteBlockType    = ((_ camera:IMPCameraManager, _ factor:Float)->Void)
 
-        public typealias capturingCompleteBlockType = ((_ camera:IMPCameraManager, _ finished:Bool, _ file:String?, _ metadata:NSDictionary?, _ error:NSError?)->Void)
+        public typealias VideoBufferCompleteBlockType = ((_ camera:IMPCameraManager, _ buffer:CVImageBuffer)->Void)
+        public typealias CapturingCompleteBlockType = ((_ camera:IMPCameraManager, _ finished:Bool, _ file:String?, _ metadata:NSDictionary?, _ error:NSError?)->Void)
+        
         
         //
         // Public API
         //
         
-        ///  @brief Still image compression settings
-        public struct Compression {
-            public let isHardware:Bool
-            public let quality:Float
-            public init() {
-                isHardware = true
-                quality = 1
-            }
-            public init(isHardware:Bool, quality:Float){
-                self.isHardware = isHardware
-                self.quality = quality
-            }
-        }
-        
+            
         /// Test camera session state
         public var isReady:Bool {
             return session.isRunning
-        }
-        
-        /// Test camera video streaming state
-        //public var isRunning:Bool {
-        //    return !isVideoPaused
-        //}
-        
-        
-        /// Live view Metal device context
-        public var context:IMPContext {
-            return _context
-        }
-        
-        /// Live video viewport
-        public var liveView:IMPView {
-            return _liveView
         }
         
         public var deviceOrientation:UIDeviceOrientation{
             return _deviceOrientation
         }
         
-        public var liveViewEnabled = true {
+        public var previewEnabled = true {
             didSet{
-                
-                _liveView.filter?.enabled = liveViewEnabled
-                
-                if liveViewEnabled {
-                    //clearPreviewLayer?.isHidden = true
-                }
-                else {
-                    //clearPreviewLayer?.isHidden = false
-                }
+                clearPreviewLayer?.isHidden = !previewEnabled
             }
         }
         
         var containerView:UIView!
         var rotationHandler:IMPMotionManager.RotationHandler!
+        
         ///
         ///  Create Camera Manager instance
         ///
         ///  - parameter containerView: container view contains live view window
         ///
-        public init(containerView:UIView, context :IMPContext? = nil) {
+        public init(containerView:UIView) {
             
             super.init()
             
@@ -309,19 +74,23 @@
             
             defer{
                 
-                if context == nil {
-                    self._context = IMPContext(lazy: true)
-                }
-                else {
-                    self._context = context!
-                }
-                
-                containerView.addSubview(liveView)
-                
                 _currentCamera = cameraSession.defaultCamera(type: .builtInWideAngleCamera, position: .back)
 
                 session.set(currentCamera: _currentCamera)
                 
+                self.clearPreviewLayer = AVCaptureVideoPreviewLayer(session: self.session)
+                self.clearPreviewLayer.isHidden = true
+                self.clearPreviewLayer.frame = self.containerView.bounds
+                self.clearPreviewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill
+                self.containerView.layer.addSublayer(self.clearPreviewLayer)
+                
+                NotificationCenter.default.addObserver(self, selector: #selector(runningNotification(event:)),
+                                                       name: .AVCaptureSessionDidStartRunning,
+                                                       object: self.session)
+                NotificationCenter.default.addObserver(self, selector: #selector(runningNotification(event:)),
+                                                       name: .AVCaptureSessionDidStopRunning,
+                                                       object: self.session)
+
             }
         }
         
@@ -329,7 +98,7 @@
         ///
         ///  - parameter complete: complete hanlder
         ///
-        public func requestAccess(complete:@escaping AccessHandler) {
+        public func requestAccess(complete:@escaping ((Bool) -> Void)) {
             AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeVideo, completionHandler: {
                 (granted: Bool) -> Void in
                 complete(granted)
@@ -342,7 +111,7 @@
         ///
         ///  - parameter access: access handler
         ///
-        public func start(access:AccessHandler?=nil) {
+        public func start(access:((Bool) -> Void)?=nil) {
             requestAccess(complete: { (granted) -> Void in
                 if granted {
                     
@@ -362,21 +131,37 @@
             })
         }
         
+        
+        ///  Stop camera manager capturing video frames
+        public func stop(complete:((Void)->Void)? = nil) {
+            if session.isRunning {
+                self.session.queue.async {
+                    self.session.stopRunning()
+                    self.isVideoStarted = false
+                    complete?()
+                }
+            }
+        }
+        
+        ///  Pause video frames capturing and present in liveView
+        public func pause() {
+            isVideoPaused = true
+            self.videoObserversHandle()
+        }
+        
+        ///  Resume paused presentation of video frames in liveView
+        public func resume() {
+            if !isReady{
+                start()
+            }
+            else {
+                isVideoPaused = false
+            }
+        }
+
         public var availableCameras:[AVCaptureDevice] {
             return cameraSession.devices
         }
-        
-        var _context:IMPContext!
-        
-        lazy var _liveView:IMPView = {
-            let container = self.containerView.bounds
-            let frame = CGRect(x: 0, y: 0,
-                               width: container.size.width,
-                               height: container.size.height)
-            let v = IMPView(frame: frame, device: self.context.device)
-            v.autoresizingMask = [.flexibleWidth,.flexibleHeight]
-            return v
-        }()
         
         lazy var _deviceOrientation:UIDeviceOrientation = .unknown
         
@@ -387,77 +172,55 @@
         
         public func captureOutput(_ captureOutput: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
             
+            if isVideoPaused {
+                return
+            }
+
+            if !isVideoStarted || isVideoSuspended{
+                isVideoStarted = true
+                isVideoSuspended = false
+                videoObserversHandle()
+            }
+
+            if !clearPreviewLayer.isHidden {
+                return
+            }
+
             guard session.frameSemaphore.wait(timeout:DispatchTime.now()) == DispatchTimeoutResult.success else { return }
 
-            let cameraFrame = CMSampleBufferGetImageBuffer(sampleBuffer)!
-            CVPixelBufferLockBaseAddress(cameraFrame, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
-            session.queue.async(group: nil, qos: .background, flags: .noQoS) {
-                self.updateProvider(buffer:cameraFrame)
+            if let previewBuffer = previewBufferQueue {
+
+                // This is a shallow queue, so if image
+                // processing is taking too long, we'll drop this frame for preview (this
+                // keeps preview latency low).
+                
+                let err = CMBufferQueueEnqueue(previewBuffer, sampleBuffer)
+                
+                if err == 0 {
+                    session.queue.async(group: nil, qos: .background, flags: .noQoS) {
+                        if let  sbuf = CMBufferQueueGetHead(previewBuffer) {
+                            if let pixelBuffer = CMSampleBufferGetImageBuffer(sbuf as! CMSampleBuffer) {
+                                self.videoBufferObserversHandle(buffer: pixelBuffer)
+                            }
+                        }
+                        CMBufferQueueReset(self.previewBufferQueue!)
+                    }
+                }
             }
-            CVPixelBufferUnlockBaseAddress(cameraFrame, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
+            else if let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
+                CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
+                session.queue.async(group: nil, qos: .background, flags: .noQoS) {
+                    self.videoBufferObserversHandle(buffer: pixelBuffer)
+                }
+                CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
+            }
+            
             session.frameSemaphore.signal()
         }
 
-        var imageProvider:IMPImage? {
-            didSet{
-                if imageProvider == nil {
-                    liveView.filter?.flush()
-                }
-            }
-        }
-        
-        func updateProvider(buffer: CVImageBuffer)  {
-            if let image =  imageProvider {
-                image.update(buffer)
-            }
-            else {
-                imageProvider = IMPImage(context: context, image: buffer)
-            }
-            liveView.filter?.source = imageProvider
-        }
+        var clearPreviewLayer:AVCaptureVideoPreviewLayer!
 
-//
-//        public func reset(complete:((Void)->Void)? = nil){
-//            dispatch_async(sessionQueue) {
-//                if (self.currentCamera == self.backCamera){
-//                    self._backCamera = IMPCameraManager.camera(.Back)
-//                    self.changeCamera(self.backCamera)
-//                }
-//                else {
-//                    self._frontCamera = IMPCameraManager.camera(.Front)
-//                    self.changeCamera(self.frontCamera)
-//                }
-//                complete?()
-//            }
-//        }
-//        
-//        ///  Stop camera manager capturing video frames
-//        public func stop(complete:((Void)->Void)? = nil) {
-//            if session.isRunning {
-//                dispatch_async(sessionQueue, { () -> Void in
-//                    self.session.stopRunning()
-//                    self.isVideoStarted = false
-//                    complete?()
-//                })
-//            }
-//        }
-//        
-//        ///  Pause video frames capturing and present in liveView
-//        public func pause() {
-//            isVideoPaused = true
-//            self.videoObserversHandle()
-//        }
-//        
-//        ///  Resume paused presentation of video frames in liveView
-//        public func resume() {
-//            if !isReady{
-//                start()
-//            }
-//            else {
-//                isVideoPaused = false
-//            }
-//        }
-//        
+        
 //        ///  Toggling between cameras
 //        ///
 //        ///  - parameter complete: complete operations after togglinig
@@ -695,20 +458,28 @@
 //            }
 //        }
 //        
-//        ///  Add new observer calls when camera device change session state on ready to capture and vice versa.
-//        ///
-//        ///  - parameter observer: camera event block
-//        public func addCameraObserver(observer:@escaping CameraEventBlockType){
-//            cameraEventHandlers.append(observer)
-//        }
-//        
-//        ///  Add new observer calls when video capturing change video streaming state.
-//        ///
-//        ///  - parameter observer: camera event block
-//        public func addVideoObserver(observer:@escaping VideoEventBlockType){
-//            videoEventHandlers.append(observer)
-//        }
-//        
+        ///  Add new observer calls when camera device change session state on ready to capture and vice versa.
+        ///
+        ///  - parameter observer: camera event block
+        public func add(cameraObserver:@escaping CameraEventBlockType){
+            cameraEventHandlers.append(cameraObserver)
+        }
+        
+        ///  Add new observer calls when video capturing change video streaming state.
+        ///
+        ///  - parameter observer: camera event block
+        public func add(videoObserver:@escaping VideoEventBlockType){
+            videoEventHandlers.append(videoObserver)
+        }
+
+        ///  Add new observer calls when video stream get a new buffer.
+        ///
+        ///  - parameter observer: camera event block
+        public func add(streamObserver:@escaping VideoBufferCompleteBlockType){
+            videoBufferHandlers.append(streamObserver)
+        }
+        
+//
 //        ///  Add new observer calls when the first frame from video stream presents in live viewport after camera starting.
 //        ///
 //        ///  - parameter observer: camera event block
@@ -826,11 +597,12 @@
 //            }
 //        }
 //        
-//        deinit{
-//            IMPMotionManager.sharedInstance.removeRotationObserver(observer: rotationHandler)
-//            removeCameraObservers()
-//        }
-//        
+
+        deinit{
+            IMPMotionManager.sharedInstance.removeRotationObserver(observer: rotationHandler)
+            removeCameraObservers()
+        }
+        
         public var frameRate:Int {
             get {
                 return currentFrameRate
@@ -840,7 +612,7 @@
             }
         }
         
-        var  currentFrameRate:Int = 30
+        var  currentFrameRate:Int = 60
         
         func resetFrameRate(frameRate:Int){
             
@@ -864,12 +636,12 @@
                 }
             }
         }
-//
-//        
-//        //
-//        // Internal utils and vars
-//        //
-//        
+
+        
+        //
+        // Internal utils and vars
+        //
+        
         // Get current camera
         var currentCamera:AVCaptureDevice!{
             return _currentCamera
@@ -886,75 +658,40 @@
                 resetFrameRate(frameRate: currentFrameRate)
             }
         }
+
+        var isVideoStarted   = false
+        
+        var isVideoPaused    = false {
+            didSet {
+                isVideoSuspended = oldValue
+            }
+        }
+        var isVideoSuspended      = false
+
+        var cameraEventHandlers = [CameraEventBlockType]()
+        var videoEventHandlers  = [VideoEventBlockType]()
+        var videoBufferHandlers  = [VideoBufferCompleteBlockType]()
+
+        func cameraObserversHandle() {
+            for o in cameraEventHandlers {
+                o(self, isReady)
+            }
+        }
+        
+        func videoObserversHandle() {
+            for o in videoEventHandlers {
+                o(self, session.isRunning)
+            }
+        }
+
+        func videoBufferObserversHandle(buffer:CVImageBuffer) {
+            for o in videoBufferHandlers {
+                o(self, buffer)
+            }
+        }
+
+        
 //
-//        // Live view
-//        private lazy var _liveView:IMPView = {
-//            let view  = IMPView(context: self.context)
-//            view.isPaused = true
-//            view.backgroundColor = NSColor.clearColor()
-//            view.autoresizingMask = [.FlexibleLeftMargin,.FlexibleRightMargin,.FlexibleTopMargin,.FlexibleBottomMargin]
-//            view.filter = IMPFilter(context: self.context)
-//            view.ignoreDeviceOrientation = true
-//            view.animationDuration = 0
-//            view.viewReadyHandler = {
-//                self.liveViewReadyObserversHandle()
-//            }
-//            
-//            return view
-//        }()
-//        
-//        
-//        var isVideoStarted   = false {
-//            didSet{
-//                if !isVideoStarted {
-//                    imageProvider = nil
-//                }
-//            }
-//        }
-//        
-//        var isVideoPaused    = true {
-//            didSet {
-//                isVideoSuspended = oldValue
-//                if isVideoSuspended {
-//                    imageProvider = nil
-//                }
-//            }
-//        }
-//        var isVideoSuspended      = false
-//        
-//        var cameraEventHandlers = [CameraEventBlockType]()
-//        var videoEventHandlers  = [VideoEventBlockType]()
-//        var liveViewReadyHandlers = [LiveViewEventBlockType]()
-//        
-//        func cameraObserversHandle() {
-//            for o in cameraEventHandlers {
-//                o(self, isReady)
-//            }
-//        }
-//        
-//        func videoObserversHandle() {
-//            for o in videoEventHandlers {
-//                o(self, isRunning)
-//            }
-//        }
-//        
-//        func liveViewReadyObserversHandle() {
-//            for o in liveViewReadyHandlers{
-//                o(self)
-//            }
-//        }
-//        
-//        //  Check access to camera
-//        //
-//        //  - parameter complete: complete hanlder
-//        //
-//        func requestAccess(complete:AccessHandler) {
-//            AVCaptureDevice.requestAccess(forMediaType: AVMediaTypeVideo, completionHandler: {
-//                (granted: Bool) -> Void in
-//                complete(granted)
-//            });
-//        }
-//        
 //        func controlCameraFocus(atPoint point:CGPoint?, action:((_ poi:CGPoint)->Void), complete:CameraCompleteBlockType?=nil) {
 //            controlCamera(atPoint: point,
 //                          supported: self.currentCamera.isFocusPointOfInterestSupported
@@ -1137,12 +874,14 @@
 //            }
 //        }
 //        
-//        func runningNotification(event:NSNotification) {
-//            for  o in cameraEventHandlers {
-//                o(self, isReady)
-//            }
-//        }
-//        
+
+        func runningNotification(event:NSNotification) {
+            for  o in cameraEventHandlers {
+                o(self, isReady)
+            }
+        }
+
+//
 //        var sessionQueue = dispatch_queue_create(IMProcessing.names.prefix+"preview.video", DISPATCH_QUEUE_SERIAL)
 //        
 //        func updateConnection()  {
@@ -1230,8 +969,9 @@
 //            }
 //        }
 //        
-//        var clearPreviewLayer:AVCaptureVideoPreviewLayer?
-//        
+
+
+//
 //        lazy var hasFrontCamera:Bool = {
 //            let devices = AVCaptureDevice.devicesWithMediaType(AVMediaTypeVideo)
 //            for d in devices{
@@ -1352,20 +1092,21 @@
 //        }
 //        
 //
-//        lazy var previewBufferQueue:CMBufferQueue? = {
-//            var queue : CMBufferQueue?
-//            var err : OSStatus = CMBufferQueueCreate(kCFAllocatorDefault, 1, CMBufferQueueGetCallbacksForUnsortedSampleBuffers(), &queue)
-//            if err != 0 || queue == nil
-//            {
-//                //let error = NSError(domain: NSOSStatusErrorDomain, code: Int(err), userInfo: nil)
-//                return nil
-//            }
-//            else
-//            {
-//                return queue
-//            }
-//        }()
-//        
+        lazy var previewBufferQueue:CMBufferQueue? = {
+            var queue : CMBufferQueue?
+            var err : OSStatus = CMBufferQueueCreate(kCFAllocatorDefault, 1, CMBufferQueueGetCallbacksForUnsortedSampleBuffers(), &queue)
+            if err != 0 || queue == nil
+            {
+                //let error = NSError(domain: NSOSStatusErrorDomain, code: Int(err), userInfo: nil)
+                return nil
+            }
+            else
+            {
+                return queue
+            }
+        }()
+
+        //
 //        /// Frame scale factor
 //        public var scaleFactor:Float = 1
 //

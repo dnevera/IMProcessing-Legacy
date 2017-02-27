@@ -52,7 +52,8 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
         set{
             if source == nil {
                 if let context = context, let image = inputImage {
-                    source = IMPImage(context: context, image: image)
+                    source = IMPImage(context: context)
+                    source?.image = image
                 }
             }
             else {
@@ -101,7 +102,6 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
         
     }
 }
-
 
 extension IMPCIFilter {
     

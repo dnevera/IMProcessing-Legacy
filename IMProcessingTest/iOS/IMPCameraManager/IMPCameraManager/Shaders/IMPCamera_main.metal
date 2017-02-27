@@ -16,7 +16,9 @@ kernel void kernel_EV(metal::texture2d<float, metal::access::sample> inTexture [
                       metal::uint2 gid [[thread_position_in_grid]])
 {
     float4 inColor = IMProcessing::sampledColor(inTexture,outTexture,gid);
-    outTexture.write(inColor * pow(2 , value), gid);
+    float3 rgb = inColor.rgb * pow(2 , value);
+    inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,1));
+    outTexture.write(inColor, gid);
 }
 
 
