@@ -51,13 +51,13 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     var inputImage: CIImage? {
         set{
             if source == nil {
-                if let context = context, let image = inputImage {
+                if let context = context, let image = newValue {
                     source = IMPImage(context: context)
                     source?.image = image
                 }
             }
             else {
-                source?.image = inputImage
+                source?.image = newValue
             }
         }
         get{
@@ -171,8 +171,8 @@ extension IMPCIFilter {
         }
         
         let threadgroups = MTLSizeMake(
-            Int(size.width) / self.threadsPerThreadgroup.width ,
-            Int(size.height) / self.threadsPerThreadgroup.height,
+            (Int(size.width) + self.threadsPerThreadgroup.width) / self.threadsPerThreadgroup.width ,
+            (Int(size.height) + self.threadsPerThreadgroup.height) / self.threadsPerThreadgroup.height,
             1);
         
         context.execute { (commandBuffer) in

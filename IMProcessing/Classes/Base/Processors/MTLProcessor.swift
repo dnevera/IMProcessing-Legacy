@@ -153,8 +153,8 @@ class IMPCoreImageMTLKernel: IMPCIFilter{
             
             let threadsPerThreadgroup = kernel.threadsPerThreadgroup
             let threadgroups = MTLSizeMake(
-                (width) / threadsPerThreadgroup.width ,
-                (height) / threadsPerThreadgroup.height,
+                (width + threadsPerThreadgroup.width) / threadsPerThreadgroup.width ,
+                (height + threadsPerThreadgroup.width) / threadsPerThreadgroup.height,
                 1);
             
             IMPCoreImageMTLKernel.imageProcessor(kernel: kernel,

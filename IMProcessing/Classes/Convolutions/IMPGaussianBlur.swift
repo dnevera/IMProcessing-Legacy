@@ -101,7 +101,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
         
         let newSize = NSSize(width: size.width/CGFloat(downsamplingFactor),
                              height: size.height/CGFloat(downsamplingFactor))
-        
+                
         downscaleShader.destinationSize = newSize
         upscaleShader.destinationSize = size
                 

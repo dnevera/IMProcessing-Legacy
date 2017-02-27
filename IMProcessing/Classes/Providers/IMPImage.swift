@@ -25,15 +25,15 @@ public class IMPImage: IMPImageProvider {
     public var context: IMPContext
     
     public var texture: MTLTexture? {
-        get{
-            if _texture == nil {
-                self.render(to: &_texture)
-            }
-            return _texture
-        }
         set{
             _texture = newValue
             _image = nil
+        }
+        get{
+            if _texture == nil && _image != nil {
+                self.render(to: &_texture)
+            }
+            return _texture
         }
     }
     

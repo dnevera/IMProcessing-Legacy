@@ -25,13 +25,13 @@ public protocol IMPFilterProtocol:IMPContextProvider {
     var  enabled:          Bool              {get set}
     var  dirty:            Bool              {get set}
     
-    func apply(_ destination: inout IMPImageProvider)
+    func apply(_ destination: IMPImageProvider)
     
     init(context:IMPContext, name: String?)
 }
 
 
-open class IMPFilter: IMPFilterProtocol, Equatable {
+open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     
     // MARK: - Type aliases
 
@@ -61,11 +61,11 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
     }
     
     public var destination: IMPImageProvider {
-        apply(&_destination)
+        apply(_destination)
         return _destination
     }
 
-    public var downscaleSize:NSSize? = nil
+    public var destinationSize:NSSize? = nil
     
     public required init(context:IMPContext, name: String? = nil) {
         self.context = context
@@ -104,13 +104,38 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
     public func flush(){
         source?.image = nil
         _destination.image = nil
+        for c in coreImageFilterList {
+            if let f = c.filter {
+                f.flush()
+            }
+        }
     }
     
-    open func apply(_ result: inout IMPImageProvider) {
+    open func apply(_ result: IMPImageProvider) {
         
-        var scaledImage = source?.image
+        guard let source = self.source else { return }
+
+        guard let size = source.size else { return }
         
-        if let newsize = downscaleSize,
+        var result = result
+        
+        if fmax(size.width, size.height) <= IMPContext.maximumTextureSize.cgfloat {
+            
+            let newSize = (destinationSize ?? source.size) ?? size
+            
+            if result.texture == nil || result.size! != newSize {
+                result.texture = context.device.make2DTexture(size: newSize, pixelFormat: (source.texture?.pixelFormat)!)
+            }
+
+            apply(to: &result.texture)
+
+            return
+        }
+
+
+        var scaledImage = source.image
+        
+        if let newsize = destinationSize,
             let sImage = scaledImage
             {
                 let originX = sImage.extent.origin.x
@@ -135,12 +160,12 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         //
         for c in coreImageFilterList {
             if let filter = c.cifilter {
-                filter.setValue(result.image, forKey: kCIInputImageKey)
+                filter.setValue(result.image?.copy(), forKey: kCIInputImageKey)
                 result.image = filter.outputImage
             }
             else if let filter = c.filter {
-                filter.source = result
-                filter.apply(&result)
+                filter.source = IMPImage(context: filter.context, provider: result)
+                filter.apply(result)
             }
             c.complete?(result)
         }
@@ -150,7 +175,11 @@ open class IMPFilter: IMPFilterProtocol, Equatable {
         executeDestinationObservers(destination: result)
     }
     
-    open func apply(to resultIn: inout MTLTexture?, from sourceTexture:MTLTexture? = nil) {
+    
+    //
+    // optimize processing when image < GPU SIZE
+    //
+    private func apply(to resultIn: inout MTLTexture?, from sourceTexture:MTLTexture? = nil) {
         
         let source:MTLTexture? = sourceTexture ?? self.source?.texture
         

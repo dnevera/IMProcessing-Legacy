@@ -16,14 +16,11 @@
     public class IMPView: MTKView {
         
         lazy var textureDelay:IMPTextureDelayLine = IMPTextureDelayLine()
-        var textureCache:IMPTextureCache? = nil
         
         public var exactResolutionEnabled = false
         
         public var filter:IMPFilter? = nil {
             didSet {
-            
-                textureCache =  filter?.context.textureCache
                 
                 self.processing(size: self.drawableSize)
                 
@@ -102,13 +99,10 @@
                 
                 this.context.async {
                     
-                    var texture:MTLTexture? =  this.textureCache?.requestTexture(size:size, pixelFormat: this.colorPixelFormat)
+                    filter.destinationSize = size
                     
-                    filter.apply(to: &texture)
-                    
-                    if let result = texture,
-                        let t = this.textureDelay.pushBack(texture: result) {
-                        this.textureCache?.returnTexure(t)
+                    if let result = filter.destination.texture {
+                        _ = this.textureDelay.pushBack(texture: result)
                     }
                     
                     this.needProcessing = false
@@ -177,7 +171,7 @@
                     //
                     // https://forums.developer.apple.com/thread/64889
                     //
-                    //self.draw()
+                    self.draw()
 
                     if self.frameCounter > 0  && self.isFirstFrame {
                         self.isFirstFrame = false
@@ -187,9 +181,7 @@
                     }
                 }
 
-                if let texture = self.textureDelay.pushFront(texture: sourceTexture) {
-                    self.textureCache?.returnTexure(texture)
-                }
+                _ = self.textureDelay.pushFront(texture: sourceTexture)
             }
         }
         

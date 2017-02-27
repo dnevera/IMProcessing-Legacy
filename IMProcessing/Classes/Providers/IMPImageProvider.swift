@@ -312,8 +312,6 @@ public extension IMPImageProvider {
         if let t = texture {
             context.execute(wait: true) { (commandBuffer) in
                 
-                print(" Render to texture = \(image.extent)")
-                
                 self.context.coreImage?.render(image,
                                                to: t,
                                                commandBuffer: commandBuffer,
@@ -328,9 +326,7 @@ public extension IMPImageProvider {
         guard  let image = image else {  return }
         
         texture = checkTexture(texture: texture)
-        
-        print(" Render to texture = \(image.extent)")
-        
+                
         if let t = texture {
             self.context.coreImage?.render(image,
                                            to: t,

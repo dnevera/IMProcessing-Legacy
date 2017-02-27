@@ -6,7 +6,7 @@
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
-import IMProcessing
+//import IMProcessing
 import UIKit
 import Photos
 import SnapKit
@@ -221,7 +221,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
 
     func blurHandler(slider:UISlider)  {
         testFilter.context.async {
-            self.testFilter.blurRadius = slider.value * 60
+            self.testFilter.blurRadius = slider.value * 200
         }
     }
 
