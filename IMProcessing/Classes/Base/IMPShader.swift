@@ -35,7 +35,12 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
    
     public var destinationSize: NSSize?
    
-    public var backgroundColor: NSColor = NSColor.clear
+    public var backgroundColor: NSColor = NSColor.clear {
+        didSet{
+            renderPassDescriptor.colorAttachments[0].clearColor  = clearColor
+        }
+    }
+    
     public let vertexName:String
     public let fragmentName:String
     public var uid:String {return _uid}
@@ -57,9 +62,6 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     public func commandEncoder(from buffer: MTLCommandBuffer, width destination: MTLTexture?) -> MTLRenderCommandEncoder {
         
         renderPassDescriptor.colorAttachments[0].texture     = destination
-        renderPassDescriptor.colorAttachments[0].loadAction  = .clear
-        renderPassDescriptor.colorAttachments[0].clearColor  = self.clearColor
-        renderPassDescriptor.colorAttachments[0].storeAction = .store
         let encoder = buffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         encoder.setCullMode(.front)
         encoder.setRenderPipelineState(pipeline!)
@@ -100,7 +102,7 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     }
     
     public func updateShader(source: String){
-        context.async {
+        context.runOperation(.async) {
             do {
                 self._library = try self.context.makeLibrary(source: source)
                 self.pipeline = self.makePipeline()
@@ -163,7 +165,11 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     }
     
     lazy var renderPassDescriptor:MTLRenderPassDescriptor = {
-        return MTLRenderPassDescriptor()
+        let r = MTLRenderPassDescriptor()
+        r.colorAttachments[0].loadAction  = .clear
+        r.colorAttachments[0].clearColor  = self.clearColor
+        r.colorAttachments[0].storeAction = .store
+        return r
     }()
 
     private lazy var _name:String = self.vertexName + ":" + self.fragmentName

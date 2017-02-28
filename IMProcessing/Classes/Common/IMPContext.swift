@@ -40,6 +40,11 @@ extension String{
 ///
 open class IMPContext {
     
+    public enum OperationType {
+        case sync
+        case async
+    }
+    
     /// Context execution closure
     public typealias Execution = ((_ commandBuffer:MTLCommandBuffer) -> Void)
     
@@ -153,20 +158,19 @@ open class IMPContext {
     }()
     
     var commandBuffer:MTLCommandBuffer?  {
-        return self.commandQueue?.makeCommandBuffer() 
+        return self.commandQueue?.makeCommandBuffer()
     }
     
     ///  The main idea context execution: all filters should put commands in context queue within the one execution.
     ///
     ///  - parameter closure: execution context
     ///
-    public final func async_execute(wait:     Bool = false,
-                                    complete: Execution? = nil,
-                                    fail:     (() -> Void)? = nil,
-                                    action:   @escaping Execution) {
-        
-        dispatchQueue.async(group: nil, qos: .background, flags: .noQoS) {
-            
+    public final func execute(_ sync:OperationType = .sync,
+                              wait:     Bool = false,
+                              complete: Execution? = nil,
+                              fail:     (() -> Void)? = nil,
+                              action:   @escaping Execution) {
+        runOperation(sync) {
             if let commandBuffer = self.commandBuffer {
                 
                 action(commandBuffer)
@@ -184,40 +188,21 @@ open class IMPContext {
         }
     }
     
-    public final func execute(wait:    Bool = false,
-                              fail:    (()->Void)? = nil,
-                              action:  @escaping Execution) {
-        
-        sync {
-            if let commandBuffer = self.commandBuffer {
-                action(commandBuffer)
-                
-                commandBuffer.commit()
-                
-                if !self.isLazy || wait {
-                    commandBuffer.waitUntilCompleted()
-                }
-            }
-            else {
-                fail?()
-            }
-       }
-    }
-    
-    public final func sync(_ execute:() -> ()) {
-        if (DispatchQueue.getSpecific(key:dispatchQueueKey) == queueKey) {
-            execute()
-        }
-        else {
-            dispatchQueue.sync{
+    public final func runOperation(_ sync:OperationType = .sync, _ execute:@escaping () -> ()) {
+        if sync == .sync {
+            if (DispatchQueue.getSpecific(key:dispatchQueueKey) == queueKey) {
                 execute()
             }
+            else {
+                dispatchQueue.sync{
+                    execute()
+                }
+            }
         }
-    }
-    
-    public final func async(_ execute:@escaping () -> ()) {
-        dispatchQueue.async(group: nil, qos: .background, flags: .noQoS)  {
-            execute()
+        else {
+            dispatchQueue.async(group: nil, qos: .background, flags: .noQoS)  {
+                execute()
+            }
         }
     }
     
@@ -264,6 +249,7 @@ open class IMPContext {
         }
         
         get {
+            //return 1
             return IMPContext.sharedContainer.currentMaximumTextureSize
         }
     }

@@ -15,14 +15,14 @@
     @available(iOS 9.0, *)
     public class IMPView: MTKView {
         
-        lazy var textureDelay:IMPTextureDelayLine = IMPTextureDelayLine()
+        public var renderingEnabled = false
         
         public var exactResolutionEnabled = false
         
         public var filter:IMPFilter? = nil {
             didSet {
                 
-                self.processing(size: self.drawableSize)
+                self.needProcessing = true
                 
                 filter?.addObserver(newSource: { (source) in
                     if let size = source.size {
@@ -37,7 +37,7 @@
                                                 )
                             let scale = fmin(fmax(newSize.width/size.width, newSize.height/size.height),1)
                             self.drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
-                        }                                                
+                        }
                         self.needProcessing = true
                     }
                 })
@@ -48,11 +48,9 @@
             }
         }
         
-        var needProcessing = true
-        
         public var viewReadyHandler:(()->Void)?
         
-        override init(frame frameRect: CGRect, device: MTLDevice? = nil) {
+        override public init(frame frameRect: CGRect, device: MTLDevice? = nil) {
             context = IMPContext(device:device)
             super.init(frame: frameRect, device: self.context.device)
             _init_()
@@ -68,14 +66,19 @@
             _init_()
         }
         
-        var context:IMPContext
+        public let context:IMPContext
         
-        lazy var ciContext: CIContext = { [unowned self] in
-            return self.context.coreImage!
-            }()
+        var needProcessing = true {
+            didSet{
+                if needProcessing {
+                    processingOperationQueue.cancelAllOperations()
+                }
+            }
+        }
         
         var frameCounter = 0
-        var renderQueue = DispatchQueue(label: "rendering.improcessing.com")
+        
+        var currentTexture:MTLTexture? = nil
         
         class ProcessingOperation: Operation {
             
@@ -88,25 +91,22 @@
             }
             
             override func main() {
-                processing(size: self.size)
-            }
-            
-            func processing(size: NSSize)  {
                 
-                unowned let this = self.view
+                unowned let view = self.view
                 
-                guard let filter = this.filter else { return }
+                guard let filter = view.filter else { return }
                 
-                this.context.async {
+                view.context.runOperation(.async) {
+                    //let t1 = Date()
+
+                    filter.destinationSize = self.size
                     
-                    filter.destinationSize = size
+                    view.currentTexture = filter.destination.texture
                     
-                    if let result = filter.destination.texture {
-                        _ = this.textureDelay.pushBack(texture: result)
-                    }
+                    view.needProcessing = false
+                    view.setNeedsDisplay()
                     
-                    this.needProcessing = false
-                    this.setNeedsDisplay()
+                    //NSLog("procesingLinkHandler time = \(-t1.timeIntervalSinceNow)  drawableSize = \(view.drawableSize)")
                 }
             }
         }
@@ -120,24 +120,22 @@
         }()
 
         func processing(size: NSSize)  {
-            if needProcessing {
-                needProcessing = false
-                processingOperationQueue.cancelAllOperations()
-                processingOperationQueue.addOperation(ProcessingOperation(view: self, size: size))
-            }
+            self.processingOperationQueue.cancelAllOperations()
+            self.processingOperationQueue.addOperation(ProcessingOperation(view: self, size: size))
         }
         
         func refresh(rect: CGRect){
-            
-            guard let drawable = self.currentDrawable else { return }
-            let targetTexture = drawable.texture
-            
-            context.async {
+            context.runOperation(.async) {
+                //let t1 = Date()
 
-                guard let sourceTexture = self.textureDelay.request() else {
-                    DispatchQueue.main.async {
-                        self.setNeedsDisplay()
-                    }
+                guard self.needUpdateDisplay else { return }
+                self.needUpdateDisplay = false
+                
+                guard let drawable = self.currentDrawable else { return }
+                let targetTexture = drawable.texture
+                
+                guard let sourceTexture = self.currentTexture else {
+                    self.needProcessing = true
                     return
                 }
                 
@@ -148,25 +146,44 @@
                             self.frameCounter += 1
                         }
                     }
-
-                    self.renderPassDescriptor.colorAttachments[0].texture     = targetTexture
                     
-                    let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: self.renderPassDescriptor)
-
-                    if let pipeline = self.renderPipeline {
+                    
+                    if self.renderingEnabled == false &&
+                        sourceTexture.cgsize == self.drawableSize  &&
+                        sourceTexture.pixelFormat == targetTexture.pixelFormat{
+                        let encoder = commandBuffer.makeBlitCommandEncoder()
+                        encoder.copy(
+                            from: sourceTexture,
+                            sourceSlice: 0,
+                            sourceLevel: 0,
+                            sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                            sourceSize: sourceTexture.size,
+                            to: targetTexture,
+                            destinationSlice: 0,
+                            destinationLevel: 0,
+                            destinationOrigin: MTLOrigin(x:0,y:0,z:0))
                         
-                        encoder.setRenderPipelineState(pipeline)
                         
-                        encoder.setVertexBuffer(self.vertexBuffer, offset:0, at:0)
-                        encoder.setFragmentTexture(sourceTexture, at:0)
-                        
-                        encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
                         encoder.endEncoding()
                     }
-                    
+                    else {
+                        self.renderPassDescriptor.colorAttachments[0].texture     = targetTexture
+                        
+                        let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: self.renderPassDescriptor)
+                        
+                        if let pipeline = self.renderPipeline {
+                            
+                            encoder.setRenderPipelineState(pipeline)
+                            
+                            encoder.setVertexBuffer(self.vertexBuffer, offset:0, at:0)
+                            encoder.setFragmentTexture(sourceTexture, at:0)
+                            
+                            encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
+                            encoder.endEncoding()
+                        }
+                    }
                     commandBuffer.present(drawable)
                     commandBuffer.commit()
-                    commandBuffer.waitUntilCompleted()
 
                     //
                     // https://forums.developer.apple.com/thread/64889
@@ -180,8 +197,18 @@
                         }
                     }
                 }
-
-                _ = self.textureDelay.pushFront(texture: sourceTexture)
+                
+                //NSLog("refresh time = \(-t1.timeIntervalSinceNow) size = \(self.currentTexture?.size) drawableSize = \(self.drawableSize)")
+            }
+        }
+        
+        @objc private func procesingLinkHandler() {
+            context.runOperation(.async){
+                let go = self.needProcessing
+                self.needProcessing = false
+                if go {
+                    self.processing(size: self.drawableSize)
+                }
             }
         }
         
@@ -201,10 +228,18 @@
             isPaused = false
             colorPixelFormat = .bgra8Unorm
             delegate = self
+            processingLink.add(to: .current, forMode: .commonModes)            
+        }
+        
+        public override var preferredFramesPerSecond: Int {
+            didSet{
+                processingLink.preferredFramesPerSecond = preferredFramesPerSecond
+            }
         }
         
         private var isFirstFrame = true
         
+        private lazy var processingLink:CADisplayLink = CADisplayLink(target: self, selector: #selector(procesingLinkHandler))
         
         lazy var renderPassDescriptor:MTLRenderPassDescriptor =  {
             let d = MTLRenderPassDescriptor()
@@ -263,11 +298,6 @@
         public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
         
         public func draw(in view: MTKView) {
-            context.async {
-                self.processing(size: self.drawableSize)
-            }
-            guard needUpdateDisplay else { return }
-            needUpdateDisplay = false
             refresh(rect: view.bounds)
         }
     }

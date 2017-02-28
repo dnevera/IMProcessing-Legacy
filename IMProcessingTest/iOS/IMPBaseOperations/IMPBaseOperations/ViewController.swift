@@ -107,7 +107,7 @@ public class DownScaleFilter: IMPFilter {
 
 class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate{
 
-    let context = IMPContext(lazy: true)
+    let context = IMPContext(lazy: false)
     
     //lazy var imageView:IMPGLView = IMPGLView(frame: CGRect(x: 0, y: 0, width: 100, height: 100))
     
@@ -214,25 +214,25 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     }
     
     func redHandler(slider:UISlider)  {
-        testFilter.context.async {
+        testFilter.context.runOperation(.async){
             self.testFilter.redAmount = slider.value
         }
     }
 
     func blurHandler(slider:UISlider)  {
-        testFilter.context.async {
+        testFilter.context.runOperation(.async) {
             self.testFilter.blurRadius = slider.value * 200
         }
     }
 
     func evHandler(slider:UISlider)  {
-        testFilter.context.async {
+        testFilter.context.runOperation(.async) {
             self.testFilter.inputEV = slider.value * 2
         }
     }
     
     func ci_evHandler(slider:UISlider)  {
-        testFilter.context.async {
+        testFilter.context.runOperation(.async) {
             self.testFilter.ci_inputEV = slider.value * 2
         }
     }

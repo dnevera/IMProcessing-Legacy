@@ -30,6 +30,10 @@ public class IMPTextureDelayLine{
         return old
     }
 
+    public func flush() {
+        texture = nil
+    }
+    
     var texture:MTLTexture? = nil    
 }
 

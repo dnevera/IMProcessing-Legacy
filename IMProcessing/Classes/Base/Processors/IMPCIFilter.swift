@@ -43,7 +43,6 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     var context:IMPContext? = nil
     
     var source:IMPImageProvider?
-    
     var destination:IMPImageProvider?
     
     public var destinationSize: NSSize? = nil
@@ -120,6 +119,13 @@ extension IMPCIFilter {
         return nil
     }
     
+    func flush() {
+        source?.image = nil
+        source = nil
+        destination?.image = nil
+        destination = nil
+    }
+    
     func processBigImage(index:Int) -> CIImage? {
         guard let processor = self.processor else { return nil}
         return processCIImage(command: processor)
@@ -170,6 +176,7 @@ extension IMPCIFilter {
                                                                     pixelFormat: (source?.texture?.pixelFormat)!)
         }
         
+        
         let threadgroups = MTLSizeMake(
             (Int(size.width) + self.threadsPerThreadgroup.width) / self.threadsPerThreadgroup.width ,
             (Int(size.height) + self.threadsPerThreadgroup.height) / self.threadsPerThreadgroup.height,
@@ -177,10 +184,10 @@ extension IMPCIFilter {
         
         context.execute { (commandBuffer) in
             if let command = command{
-                command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, self.destination!)
+                command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
             }
             else {
-                self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, self.destination!)
+                self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
             }
         }
     }

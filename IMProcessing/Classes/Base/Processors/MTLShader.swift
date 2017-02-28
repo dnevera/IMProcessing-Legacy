@@ -67,6 +67,7 @@ class IMPCoreImageMTLShader: IMPCIFilter{
                                    _ threadsPerThreadgroup: MTLSize,
                                    _ source: IMPImageProvider,
                                    _ destination: IMPImageProvider) {
+                 
         if let sourceTexture = source.texture,
             let shader   = self.shader,
             let vertices = shader.vertices,

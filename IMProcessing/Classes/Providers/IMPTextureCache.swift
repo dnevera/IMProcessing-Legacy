@@ -48,15 +48,15 @@ public class IMPTextureCache: IMPContextProvider {
     }
     
     public func returnTexure(_ texture:MTLTexture){
-        context.sync {
-            let hash = hashFor(texture: texture)
+        context.runOperation(.sync) {
+            let hash = self.hashFor(texture: texture)
             
             //print(" returnTexure[\(hash)](size: \(texture.size)) count[\(cache.count)] = \(cache[hash]?.count)")
 
-            if cache[hash] == nil {
-                cache[hash] =  IMPTextureQueue()
+            if self.cache[hash] == nil {
+                self.cache[hash] =  IMPTextureQueue()
             }
-            cache[hash]?.enqueue(texture)
+            self.cache[hash]?.enqueue(texture)
         }
     }
     

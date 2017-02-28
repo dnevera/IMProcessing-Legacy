@@ -225,7 +225,7 @@ class ViewController: UIViewController {
     }
     
     func slideHandler(slider:UISlider)  {
-        self.liveViewFilter.context.async {
+        self.liveViewFilter.context.runOperation(.async) {
             if slider === self.evSlider {
                 self.liveViewFilter.inputEV = slider.value * 3
             }
