@@ -41,6 +41,12 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         }
     }
     
+    public var pixelFormat = IMProcessing.colors.pixelFormat{
+        didSet{
+            pipeline = makePipeline()
+        }
+    }
+    
     public let vertexName:String
     public let fragmentName:String
     public var uid:String {return _uid}
@@ -61,7 +67,10 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     
     public func commandEncoder(from buffer: MTLCommandBuffer, width destination: MTLTexture?) -> MTLRenderCommandEncoder {
         
-        renderPassDescriptor.colorAttachments[0].texture     = destination
+        renderPassDescriptor.colorAttachments[0].texture =
+            (pixelFormat != destination?.pixelFormat ?
+            destination?.makeTextureView(pixelFormat: pixelFormat) : destination)
+        
         let encoder = buffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         encoder.setCullMode(.front)
         encoder.setRenderPipelineState(pipeline!)
@@ -90,7 +99,7 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         do {
             renderPipelineDescription.vertexDescriptor = self.vertexDescriptor
             
-            renderPipelineDescription.colorAttachments[0].pixelFormat = IMProcessing.colors.pixelFormat
+            renderPipelineDescription.colorAttachments[0].pixelFormat = pixelFormat
             renderPipelineDescription.vertexFunction   = self.library.makeFunction(name: self.vertexName)
             renderPipelineDescription.fragmentFunction = self.library.makeFunction(name: self.fragmentName)
             

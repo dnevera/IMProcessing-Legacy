@@ -61,7 +61,7 @@ public class TestFilter: IMPFilter {
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
         add(function: kernelEV)
-        //add(filter: exposureFilter)
+        add(filter: exposureFilter)
         add(filter: impBlurFilter)
     }
     

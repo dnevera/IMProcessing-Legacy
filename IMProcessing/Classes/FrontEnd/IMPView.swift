@@ -182,14 +182,14 @@
                             encoder.endEncoding()
                         }
                     }
+                    
                     commandBuffer.present(drawable)
                     commandBuffer.commit()
-
                     //
                     // https://forums.developer.apple.com/thread/64889
                     //
                     self.draw()
-
+                    
                     if self.frameCounter > 0  && self.isFirstFrame {
                         self.isFirstFrame = false
                         if self.viewReadyHandler !=  nil {
