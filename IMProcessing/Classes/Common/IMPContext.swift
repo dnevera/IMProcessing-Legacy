@@ -132,9 +132,6 @@ open class IMPContext {
         else {
             fatalError("Default Metal command queue could not be created...")
         }
-        #if DEBUG
-            commandQueue?.insertDebugCaptureBoundary()
-        #endif
         
         if let library = _device?.newDefaultLibrary(){
             defaultLibrary = library
@@ -167,24 +164,36 @@ open class IMPContext {
     ///
     public final func execute(_ sync:OperationType = .sync,
                               wait:     Bool = false,
-                              complete: Execution? = nil,
+                              complete: (() -> Void)? = nil,
                               fail:     (() -> Void)? = nil,
                               action:   @escaping Execution) {
+        
+        unowned let this = self
+        
         runOperation(sync) {
-            if let commandBuffer = self.commandBuffer {
+            #if DEBUG
+                this.commandQueue?.insertDebugCaptureBoundary()
+            #endif
+
+            if let commandBuffer = this.commandBuffer {
                 
                 action(commandBuffer)
                 
                 commandBuffer.commit()
                 
-                if !self.isLazy || wait {
+                if !this.isLazy || wait {
                     commandBuffer.waitUntilCompleted()
                 }
-                complete?(commandBuffer)
+                complete?()
             }
             else {
                 fail?()
             }
+            
+            #if DEBUG
+                this.commandQueue?.insertDebugCaptureBoundary()
+            #endif
+
         }
     }
     
@@ -209,7 +218,7 @@ open class IMPContext {
     public func makeCopy(texture:MTLTexture) -> MTLTexture? {
         var newTexture:MTLTexture? = nil
         
-        execute { (commandBuffer) in
+        execute { [unowned self] (commandBuffer) in
             
             newTexture = self.device.make2DTexture(size: texture.cgsize, pixelFormat: texture.pixelFormat)
             

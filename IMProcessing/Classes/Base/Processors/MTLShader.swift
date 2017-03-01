@@ -25,7 +25,7 @@ class IMPCoreImageMTLShader: IMPCIFilter{
     static var registeredFilterList:[String:IMPCoreImageMTLShader] = [String:IMPCoreImageMTLShader]()
     
     static func register(shader:IMPShader) -> IMPCoreImageMTLShader {
-        if let filter = registeredFilterList[shader.uid] {
+        if let filter = registeredFilterList[shader.name] {
             return filter
         }
         else {
@@ -38,13 +38,13 @@ class IMPCoreImageMTLShader: IMPCIFilter{
             }
             filter.shader = shader
             filter.context = shader.context
-            registeredFilterList[shader.uid] = filter
+            registeredFilterList[shader.name] = filter
             return filter
         }
     }
     
     override func isEqual(_ object: Any?) -> Bool {
-        return self.shader?.uid == (object as? IMPCoreImageMTLShader)?.shader?.uid
+        return self.shader?.name == (object as? IMPCoreImageMTLShader)?.shader?.name
     }
     
     var shader: IMPShader? {

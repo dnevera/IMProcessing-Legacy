@@ -105,31 +105,39 @@ public extension IMPExifOrientation {
     }
 }
 
+public enum IMPImageStorageMode {
+    case shared
+    case local
+}
+
 public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{    
     var image:CIImage?{ get set }
     var size:NSSize? {get}
     var colorSpace:CGColorSpace {get set}
     var orientation:IMPImageOrientation {get set}
     var videoCache:IMPVideoTextureCache {get}
-    init(context:IMPContext)
+    var storageMode:IMPImageStorageMode {get}
+    init(context:IMPContext, storageMode:IMPImageStorageMode?)
 }
 
 public extension IMPImageProvider {
     
     public init(context: IMPContext,
                 provider: IMPImageProvider,
+                storageMode:IMPImageStorageMode? = nil,
                 maxSize: CGFloat = 0,
                 orientation:IMPImageOrientation? = nil){
-        self.init(context:context)
+        self.init(context:context, storageMode: storageMode)
         self.image = prepareImage(image: provider.image?.copy() as? CIImage,
                                   maxSize: maxSize, orientation: orientation)
     }
     
     public init(context: IMPContext,
                 image: CIImage,
+                storageMode:IMPImageStorageMode? = nil,
                 maxSize: CGFloat = 0,
                 orientation:IMPImageOrientation? = nil){
-        self.init(context:context)
+        self.init(context:context, storageMode: storageMode)
         self.image = prepareImage(image: image.copy() as? CIImage,
                                   maxSize: maxSize, orientation: orientation)
     }
@@ -137,34 +145,40 @@ public extension IMPImageProvider {
     
     public init(context: IMPContext,
                 image: NSImage,
+                storageMode:IMPImageStorageMode? = nil,
                 maxSize: CGFloat = 0,
                 orientation:IMPImageOrientation? = nil){
-        self.init(context:context)
+        self.init(context:context, storageMode: storageMode)
         self.image = prepareImage(image: CIImage(cgImage: image.cgImage!, options: [kCIImageColorSpace: colorSpace]),
                                   maxSize: maxSize, orientation: orientation ?? image.imageOrientation)
     }
     
     public init(context: IMPContext,
                 image: CGImage,
+                storageMode:IMPImageStorageMode? = nil,
                 maxSize: CGFloat = 0,
                 orientation:IMPImageOrientation? = nil){
-        self.init(context:context)
+        self.init(context:context, storageMode: storageMode)
         self.image = prepareImage(image: CIImage(cgImage: image, options: [kCIImageColorSpace: colorSpace]),
                                   maxSize: maxSize, orientation: orientation)
     }
     
-    public init(context: IMPContext, image: CMSampleBuffer, maxSize: CGFloat = 0){
-        self.init(context:context)
+    public init(context: IMPContext, image: CMSampleBuffer, storageMode:IMPImageStorageMode? = .local, maxSize: CGFloat = 0){
+        self.init(context:context, storageMode: storageMode)
         self.update(image)
     }
     
-    public init(context: IMPContext, image: CVImageBuffer, maxSize: CGFloat = 0){
-        self.init(context:context)
+    public init(context: IMPContext, image: CVImageBuffer, storageMode:IMPImageStorageMode? = .local, maxSize: CGFloat = 0){
+        self.init(context:context, storageMode: storageMode)
         self.update(image)
     }
     
     public init(context: IMPContext, texture: MTLTexture){
-        self.init(context:context)
+        var mode = IMPImageStorageMode.shared
+        if texture.storageMode == .private {
+            mode = .local
+        }
+        self.init(context:context, storageMode:mode)
         self.texture = texture
     }
     
@@ -351,6 +365,15 @@ public extension IMPImageProvider {
                 texture?.setPurgeableState(.volatile)
             }
             
+            if storageMode == .shared {
+                descriptor.storageMode = .shared
+                descriptor.usage = [.shaderRead, .shaderWrite]
+            }
+            else {
+                descriptor.storageMode = .private
+                descriptor.usage = [.shaderRead]
+            }
+
             return self.context.device.makeTexture(descriptor: descriptor)
         }
         

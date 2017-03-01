@@ -56,6 +56,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     
     public var source: IMPImageProvider? = nil {
         didSet{
+            oldValue?.texture?.setPurgeableState(.volatile)
             executeNewSourceObservers(source: source)
         }
     }
@@ -139,15 +140,18 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 return
             }
 
-            let newSize = (destinationSize ?? source.size) ?? size
+            let newSize = destinationSize ?? size
             
-            if result.texture == nil || result.size! != newSize {
+            if result.texture == nil {
                 result.texture = context.device.make2DTexture(size: newSize, pixelFormat: (source.texture?.pixelFormat)!)
             }
+            else {
+                result.texture = result.texture?.reuse(size: newSize)
+            }
             
-            apply(to: &result.texture)
-
-            //apply(to: result)
+            context.execute{ [unowned self] (commandBuffer) in
+                self.apply(to: &result.texture, commandBuffer: commandBuffer)
+            }
             
             executeDestinationObservers(destination: result)
 
@@ -201,7 +205,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     //
     // optimize processing when image < GPU SIZE
     //
-    private func apply(to resultIn: inout MTLTexture?) {
+    private func apply(to resultIn: inout MTLTexture?, commandBuffer: MTLCommandBuffer) {
         
         let source:MTLTexture? = self.source?.texture
         
@@ -212,9 +216,8 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         if let result = resultIn {
             if result.size != input.size {
                 resampler.source?.texture = input
-                resampler.destination?.texture = result
                 resampler.destinationSize = result.cgsize
-                resampler.process(to: resampler.destination!)
+                resampler.process(to: resampler.destination!, commandBuffer: commandBuffer)
                 currentResult = (resampler.destination?.texture)!
             }
         }
@@ -243,7 +246,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                         f.destination?.texture = resultIn
                     }
                     
-                    f.process(to: f.destination!)
+                    f.process(to: f.destination!, commandBuffer: commandBuffer)
                     
                     currentResult = (f.destination?.texture)!
                 }
@@ -259,15 +262,11 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                         currentResult = resultIn!
                     }
                     
-                    context.execute(wait: true, fail: {
-                        print("Rendering filter: \(filter.name) failed ... ")
-                    }, action: { (commandBuffer) in
-                        self.context.coreImage?.render(image,
-                                                       to: currentResult,
-                                                       commandBuffer: commandBuffer,
-                                                       bounds: image.extent,
-                                                       colorSpace: self._destination.colorSpace)
-                    })
+                    self.context.coreImage?.render(image,
+                                                   to: currentResult,
+                                                   commandBuffer: commandBuffer,
+                                                   bounds: image.extent,
+                                                   colorSpace: self._destination.colorSpace)
                 }
             }
             else if let filter = c.filter {
@@ -282,7 +281,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                     filter._destination.texture = resultIn
                 }
                 
-                filter.apply(to: &filter._destination.texture)
+                filter.apply(to: &filter._destination.texture, commandBuffer: commandBuffer)
                 
                 currentResult = filter._destination.texture!
             }
@@ -291,119 +290,6 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         resultIn = currentResult
     }
 
-    
-    
-    func apply_        (to resultIn:IMPImageProvider) {
-        
-        guard let source = self.source else {
-            dirty = false
-            return
-        }
-        
-        guard let size = source.size else {
-            dirty = false
-            return
-        }
-        
-        let newSize = destinationSize ?? size
-
-        var resultIn = resultIn
-        
-        let pixelFormat:MTLPixelFormat = resultIn.texture?.pixelFormat ?? source.texture?.pixelFormat ?? IMProcessing.colors.pixelFormat
-        
-        if enabled == false {
-//            if resultIn.texture == nil {
-                resultIn.texture = source.texture
-//            }
-//            else {
-//                if resultIn.texture == nil || resultIn.size! != newSize {
-//                    resultIn.texture = context.device.make2DTexture(size: newSize, pixelFormat: pixelFormat)
-//                }
-//                resampler.source = source
-//                resampler.process(to: resultIn)
-//            }
-            dirty = false
-            return
-        }
-        
-        var current:IMPImageProvider!
-
-        if coreImageFilterList.count == 0 {
-            current = resultIn
-        }
-        else {
-            current = IMPImage(context: context)
-        }
-        
-        resampler.source = self.source
-        
-        if current.texture == nil || current.size! != newSize {
-            current.texture = context.device.make2DTexture(size: newSize, pixelFormat: pixelFormat)
-        }
-
-        resampler.process(to: current)
-        
-        guard current.texture != nil else {
-            dirty = false
-            return
-        }
-        
-        for (index, c) in coreImageFilterList.enumerated() {
-            
-            let renderToResult = (index == coreImageFilterList.count - 1)
-            
-            if let filter = c.cifilter {
-                
-                if filter.isKind(of: IMPCIFilter.self) {
-                    
-                    guard let f = (filter as? IMPCIFilter) else {
-                        continue
-                    }
-                    
-                    f.source = current
-                    
-                    f.destination = renderToResult ? resultIn : f.destination ?? IMPImage(context: context)
-                    
-                    if let result = f.destination {
-                        f.process(to: result)
-                        current = result
-                    }
-                    c.complete?(current)
-                }
-                else {
-                    
-                    filter.setValue(current.image, forKey: kCIInputImageKey)
-                    
-                    guard let image = filter.outputImage else { continue }
-                    
-                    guard let texture = current.texture else { continue }
-                    
-                    context.execute(wait: true, fail: {
-                        print("Rendering filter: \(filter.name) failed ... ")
-                    }, action: { (commandBuffer) in
-                        self.context.coreImage?.render(image,
-                                                       to: texture,
-                                                       commandBuffer: commandBuffer,
-                                                       bounds: image.extent,
-                                                       colorSpace: current.colorSpace)
-                    })
-                    
-                    c.complete?(current)
-                }
-            }
-            else if let filter = c.filter {
-                
-                filter.source = current
-                
-                filter.apply_(to: resultIn)
-                
-                c.complete?(resultIn)
-            }
-        }
-          
-        dirty = false
-        executeDestinationObservers(destination: resultIn)
-    }
     
     public static func == (lhs: IMPFilter, rhs: IMPFilter) -> Bool {
         if let ln = lhs.name, let rn = rhs.name {
@@ -508,13 +394,13 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     public func add(function name: String,
                     fail: FailHandler?=nil,
                     complete: CompleteHandler?=nil) {
-        add(function: IMPFunction(context: context, name: name), fail: fail, complete: complete)
+        add(function: IMPFunction(context: context, kernelName: name), fail: fail, complete: complete)
     }
 
     public func add(vertex: String, fragment: String,
                     fail: FailHandler?=nil,
                     complete: CompleteHandler?=nil) {
-        add(shader: IMPShader(context: context, vertex: vertex, fragment: fragment), fail: fail, complete: complete)
+        add(shader: IMPShader(context: context, vertexName: vertex, fragmentName: fragment), fail: fail, complete: complete)
     }
     
     public func add(filter: CIFilter,
@@ -567,7 +453,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                        at index: Int,
                        fail: FailHandler?=nil,
                        complete: CompleteHandler?=nil) {
-        insert(function: IMPFunction(context:context, name:name),
+        insert(function: IMPFunction(context:context, kernelName:name),
                at: index, fail: fail, complete: complete)
     }
     
@@ -575,7 +461,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                        at index: Int,
                        fail: FailHandler?=nil,
                        complete: CompleteHandler?=nil) {
-        insert(shader: IMPShader(context:context, vertex: vertex, fragment:fragment),
+        insert(shader: IMPShader(context:context, vertexName: vertex, fragmentName:fragment),
                at: index, fail: fail, complete: complete)
     }
     
@@ -674,7 +560,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                        after filterName: String,
                        fail: FailHandler?=nil,
                        complete: CompleteHandler?=nil) {
-        let function = IMPFunction(context: context, name: name)
+        let function = IMPFunction(context: context, kernelName: name)
         let filter = IMPCoreImageMTLKernel.register(function: function)
         insert(filter: filter, after: filterName, fail: fail, complete: complete)
     }
@@ -683,7 +569,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                        after filterName: String,
                        fail: FailHandler?=nil,
                        complete: CompleteHandler?=nil) {
-        insert(shader: IMPShader(context:context, vertex:vertex, fragment:fragment),
+        insert(shader: IMPShader(context:context, vertexName:vertex, fragmentName:fragment),
                after: filterName, fail: fail, complete: complete)
     }
 
@@ -691,7 +577,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                        before filterName: String,
                        fail: FailHandler?=nil,
                        complete: CompleteHandler?=nil) {
-        let function = IMPFunction(context: context, name: name)
+        let function = IMPFunction(context: context, kernelName: name)
         let filter = IMPCoreImageMTLKernel.register(function: function)
         insert(filter: filter, before: filterName, fail: fail, complete: complete)
     }
@@ -700,7 +586,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                        before filterName: String,
                        fail: FailHandler?=nil,
                        complete: CompleteHandler?=nil) {
-        insert(shader: IMPShader(context:context, vertex:vertex, fragment:fragment),
+        insert(shader: IMPShader(context:context, vertexName:vertex, fragmentName:fragment),
                before: filterName, fail: fail, complete: complete)
     }
 
@@ -934,10 +820,10 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         return (index,true)
     }
     
-    lazy var resampleShader:IMPShader = IMPShader(context: self.context, withName: "IMPFilterBaseResampler")
+    lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context, name: "IMPFilterBaseResampler")
     
-    lazy var resampler:IMPCoreImageMTLShader = {
-        let v = IMPCoreImageMTLShader.register(shader: self.resampleShader)
+    lazy var resampler:IMPCoreImageMTLKernel = {
+        let v = IMPCoreImageMTLKernel.register(function: self.resampleKernel)
         v.source = IMPImage(context: self.context)
         v.destination = IMPImage(context: self.context)
         return v

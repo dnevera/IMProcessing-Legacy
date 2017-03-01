@@ -48,8 +48,8 @@ public class TestFilter: IMPFilter {
 
     lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     lazy var kernelEV:IMPFunction = {
-        let f = IMPFunction(context: self.context, name: /*"kernel_Red"*/ "kernel_EV")
-        f.optionsHandler = { (kernel,commandEncoder,input,output) in
+        let f = IMPFunction(context: self.context, kernelName: /*"kernel_Red"*/ "kernel_EV")
+        f.optionsHandler = {  [unowned self] (kernel,commandEncoder,input,output) in
             var value  = self.inputEV
             var buffer = self.kernelEVBuffer
             memcpy(buffer.contents(), &value, buffer.length)
@@ -61,7 +61,7 @@ public class TestFilter: IMPFilter {
     override public func configure(_ withName: String?) {
         super.configure("Test filter")
         add(function: kernelEV)
-        add(filter: exposureFilter)
+        //add(filter: exposureFilter)
         add(filter: impBlurFilter)
     }
     
@@ -180,11 +180,11 @@ class ViewController: UIViewController {
         
         NSLog("starting ...")
         
-        liveView.viewReadyHandler = { () in
+        liveView.viewReadyHandler = {
             NSLog("live view is ready ...")
         }
         
-        cameraManager.add(streamObserver: {(camera, buffer) in
+        cameraManager.add(streamObserver: { [unowned self] (camera, buffer) in
             if var image = self.liveView.filter?.source{
                 image.update(buffer)
                 self.liveView.filter?.source = image

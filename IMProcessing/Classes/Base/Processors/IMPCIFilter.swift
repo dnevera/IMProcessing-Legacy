@@ -160,7 +160,7 @@ extension IMPCIFilter {
     }
     
     
-    func process(to destinationImage: IMPImageProvider, command: CommandProcessor? = nil){
+    func process(to destinationImage: IMPImageProvider, commandBuffer buffer: MTLCommandBuffer? = nil, command: CommandProcessor? = nil){
        
         guard let size =  destinationSize ?? source?.size else { return }
         
@@ -175,19 +175,28 @@ extension IMPCIFilter {
             destinationImage.texture = context.device.make2DTexture(size: size,
                                                                     pixelFormat: (source?.texture?.pixelFormat)!)
         }
-        
-        
+                
         let threadgroups = MTLSizeMake(
             (Int(size.width) + self.threadsPerThreadgroup.width) / self.threadsPerThreadgroup.width ,
             (Int(size.height) + self.threadsPerThreadgroup.height) / self.threadsPerThreadgroup.height,
             1);
         
-        context.execute { (commandBuffer) in
+        if let commandBuffer = buffer {
             if let command = command{
                 command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
             }
             else {
                 self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
+            }
+        }
+        else {
+            context.execute { (commandBuffer) in
+                if let command = command{
+                    command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
+                }
+                else {
+                    self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
+                }
             }
         }
     }

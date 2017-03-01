@@ -35,7 +35,7 @@
                             let newSize = NSSize(width: self.bounds.size.width * screenScale,
                                                  height: self.bounds.size.height * screenScale
                                                 )
-                            let scale = fmin(fmax(newSize.width/size.width, newSize.height/size.height),1)
+                            let scale = fmin(fmin(newSize.width/size.width, newSize.height/size.height),1)
                             self.drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
                         }
                         self.needProcessing = true
@@ -51,13 +51,13 @@
         public var viewReadyHandler:(()->Void)?
         
         override public init(frame frameRect: CGRect, device: MTLDevice? = nil) {
-            context = IMPContext(device:device)
+            context = IMPContext(device:device, lazy: true)
             super.init(frame: frameRect, device: self.context.device)
             _init_()
         }
         
         required public init(coder: NSCoder) {
-            context = IMPContext()
+            context = IMPContext(lazy: true)
             super.init(coder: coder)
             device = self.context.device
             guard device != nil else {
@@ -97,16 +97,12 @@
                 guard let filter = view.filter else { return }
                 
                 view.context.runOperation(.async) {
-                    //let t1 = Date()
-
+                    
                     filter.destinationSize = self.size
-                    
                     view.currentTexture = filter.destination.texture
-                    
                     view.needProcessing = false
-                    view.setNeedsDisplay()
                     
-                    //NSLog("procesingLinkHandler time = \(-t1.timeIntervalSinceNow)  drawableSize = \(view.drawableSize)")
+                    view.setNeedsDisplay()
                 }
             }
         }
@@ -125,80 +121,106 @@
         }
         
         func refresh(rect: CGRect){
-            context.runOperation(.async) {
-                //let t1 = Date()
 
-                guard self.needUpdateDisplay else { return }
-                self.needUpdateDisplay = false
+            guard needUpdateDisplay else { return }
+            needUpdateDisplay = false
+            
+            context.wait()
+            
+//            context.execute(
+//                .async,
+//                
+//                complete: { [unowned self] in
+//                    
+//                    //
+//                    // https://forums.developer.apple.com/thread/64889
+//                    //
+//                    
+//                    self.draw()
+//                    
+//                },
+//                fail: { [unowned self] in
+//                    
+//                    self.context.resume()
+//                    
+//                }) { [unowned self] (commandBuffer) in
+            
+            context.runOperation(.async) { [unowned self] in
                 
-                guard let drawable = self.currentDrawable else { return }
-                let targetTexture = drawable.texture
-                
-                guard let sourceTexture = self.currentTexture else {
-                    self.needProcessing = true
+                guard let drawable = self.currentDrawable else {
+                    self.context.resume()
                     return
                 }
                 
-                if let commandBuffer = self.context.commandBuffer {
-                    
-                    if self.isFirstFrame  {
-                        commandBuffer.addCompletedHandler{ (commandBuffer) in
-                            self.frameCounter += 1
-                        }
+                guard let sourceTexture = self.currentTexture else {
+                    self.needProcessing = true
+                    self.context.resume()
+                    return
+                }                
+                
+                guard let commandBuffer = self.context.commandBuffer else {
+                    self.context.resume()
+                    return
+                }
+                
+                if self.isFirstFrame  {
+                    commandBuffer.addCompletedHandler{ (commandBuffer) in
+                        self.frameCounter += 1
                     }
+                }
+
+                let targetTexture = drawable.texture
+                
+                if self.renderingEnabled == false &&
+                    sourceTexture.cgsize == self.drawableSize  &&
+                    sourceTexture.pixelFormat == targetTexture.pixelFormat{
+                    let encoder = commandBuffer.makeBlitCommandEncoder()
+                    encoder.copy(
+                        from: sourceTexture,
+                        sourceSlice: 0,
+                        sourceLevel: 0,
+                        sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                        sourceSize: sourceTexture.size,
+                        to: targetTexture,
+                        destinationSlice: 0,
+                        destinationLevel: 0,
+                        destinationOrigin: MTLOrigin(x:0,y:0,z:0))
                     
+                    encoder.endEncoding()
+                }
+                else {
+                    self.renderPassDescriptor.colorAttachments[0].texture     = targetTexture
                     
-                    if self.renderingEnabled == false &&
-                        sourceTexture.cgsize == self.drawableSize  &&
-                        sourceTexture.pixelFormat == targetTexture.pixelFormat{
-                        let encoder = commandBuffer.makeBlitCommandEncoder()
-                        encoder.copy(
-                            from: sourceTexture,
-                            sourceSlice: 0,
-                            sourceLevel: 0,
-                            sourceOrigin: MTLOrigin(x:0,y:0,z:0),
-                            sourceSize: sourceTexture.size,
-                            to: targetTexture,
-                            destinationSlice: 0,
-                            destinationLevel: 0,
-                            destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                    let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: self.renderPassDescriptor)
+                    
+                    if let pipeline = self.renderPipeline {
                         
+                        encoder.setRenderPipelineState(pipeline)
                         
+                        encoder.setVertexBuffer(self.vertexBuffer, offset:0, at:0)
+                        encoder.setFragmentTexture(sourceTexture, at:0)
+                        
+                        encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
                         encoder.endEncoding()
-                    }
-                    else {
-                        self.renderPassDescriptor.colorAttachments[0].texture     = targetTexture
-                        
-                        let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: self.renderPassDescriptor)
-                        
-                        if let pipeline = self.renderPipeline {
-                            
-                            encoder.setRenderPipelineState(pipeline)
-                            
-                            encoder.setVertexBuffer(self.vertexBuffer, offset:0, at:0)
-                            encoder.setFragmentTexture(sourceTexture, at:0)
-                            
-                            encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
-                            encoder.endEncoding()
-                        }
-                    }
-                    
-                    commandBuffer.present(drawable)
-                    commandBuffer.commit()
-                    //
-                    // https://forums.developer.apple.com/thread/64889
-                    //
-                    self.draw()
-                    
-                    if self.frameCounter > 0  && self.isFirstFrame {
-                        self.isFirstFrame = false
-                        if self.viewReadyHandler !=  nil {
-                            self.viewReadyHandler!()
-                        }
                     }
                 }
                 
-                //NSLog("refresh time = \(-t1.timeIntervalSinceNow) size = \(self.currentTexture?.size) drawableSize = \(self.drawableSize)")
+                commandBuffer.present(drawable)
+            
+                commandBuffer.addCompletedHandler{ (commandBuffer) in
+                    self.context.resume()
+                }
+
+                commandBuffer.commit()
+            
+                self.draw()
+
+                if self.frameCounter > 0  && self.isFirstFrame {
+                    self.isFirstFrame = false
+                    if self.viewReadyHandler !=  nil {
+                        self.viewReadyHandler!()
+                    }
+                }
             }
         }
         

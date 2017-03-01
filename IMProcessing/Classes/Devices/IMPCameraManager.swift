@@ -197,7 +197,7 @@
                 let err = CMBufferQueueEnqueue(previewBuffer, sampleBuffer)
                 
                 if err == 0 {
-                    session.queue.async(group: nil, qos: .background, flags: .noQoS) {
+                    session.queue.async(group: nil, qos: .background, flags: .noQoS) { [unowned self] in
                         if let  sbuf = CMBufferQueueGetHead(previewBuffer) {
                             if let pixelBuffer = CMSampleBufferGetImageBuffer(sbuf as! CMSampleBuffer) {
                                 self.videoBufferObserversHandle(buffer: pixelBuffer)
@@ -209,7 +209,7 @@
             }
             else if let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) {
                 CVPixelBufferLockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))
-                session.queue.async(group: nil, qos: .background, flags: .noQoS) {
+                session.queue.async(group: nil, qos: .background, flags: .noQoS) { [unowned self] in
                     self.videoBufferObserversHandle(buffer: pixelBuffer)
                 }
                 CVPixelBufferUnlockBaseAddress(pixelBuffer, CVPixelBufferLockFlags(rawValue:CVOptionFlags(0)))

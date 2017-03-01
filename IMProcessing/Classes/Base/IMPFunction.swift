@@ -26,7 +26,10 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
     }
     
     public var destinationSize: NSSize?
-    public let name:String
+    public var kernelName:String
+    public var name:String {
+        return _name
+    }
     public var context:IMPContext
     public var groupSize:GroupSize = GroupSize()
     public var threadsPerThreadgroup:MTLSize {
@@ -35,7 +38,6 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
     public var kernel:MTLFunction? { return _kernel }
     public var library:MTLLibrary { return context.defaultLibrary }
     public var pipeline:MTLComputePipelineState? { return _pipeline }
-    public var uid:String {return _uid}
     
     public func commandEncoder(from buffer: MTLCommandBuffer) -> MTLComputeCommandEncoder {
         let encoder = buffer.makeComputeCommandEncoder()
@@ -43,6 +45,7 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
         return encoder
     }
     
+    let _name:String
     
     public var optionsHandler:((
         _ function:IMPFunction,
@@ -50,17 +53,26 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
         _ inputTexture:MTLTexture?,
         _ outputTexture:MTLTexture?)->Void)? = nil
     
-    public required init(context:IMPContext, name:String) {
+    public required init(context:IMPContext,
+                         kernelName:String = "kernel_passthrough",
+                         name:String? = nil) {
         self.context = context
-        self.name = name
+        self.kernelName = kernelName
+        
+        if name != nil {
+            self._name = name!
+        }
+        else {
+            self._name = context.uid + ":"  + String.uniqString() + ":" + self.kernelName
+        }
     }
     
     public static func == (lhs: IMPFunction, rhs: IMPFunction) -> Bool {
-        return lhs.uid == rhs.uid
+        return lhs.name == rhs.name
     }
     
     private lazy var _kernel:MTLFunction? = {
-        return self.library.makeFunction(name: self.name)
+        return self.library.makeFunction(name: self.kernelName)
     }()
     
     private lazy var _pipeline:MTLComputePipelineState? = {
@@ -74,6 +86,4 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
             fatalError(" *** IMPFunction: \(error)")
         }
     }()
-    
-    private lazy var _uid:String = self.context.uid + ":" + self.name
 }

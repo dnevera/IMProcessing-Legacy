@@ -49,7 +49,6 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     
     public let vertexName:String
     public let fragmentName:String
-    public var uid:String {return _uid}
     public var context:IMPContext
     public var name:String {
         return _name
@@ -69,7 +68,7 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         
         renderPassDescriptor.colorAttachments[0].texture =
             (pixelFormat != destination?.pixelFormat ?
-            destination?.makeTextureView(pixelFormat: pixelFormat) : destination)
+            destination?.makeTextureView(pixelFormat: pixelFormat) : destination)        
         
         let encoder = buffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         encoder.setCullMode(.front)
@@ -98,7 +97,6 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     func makePipeline() -> MTLRenderPipelineState? {
         do {
             renderPipelineDescription.vertexDescriptor = self.vertexDescriptor
-            
             renderPipelineDescription.colorAttachments[0].pixelFormat = pixelFormat
             renderPipelineDescription.vertexFunction   = self.library.makeFunction(name: self.vertexName)
             renderPipelineDescription.fragmentFunction = self.library.makeFunction(name: self.fragmentName)
@@ -126,17 +124,17 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     }
     
     public required init(context:IMPContext,
-                         vertex:String = "vertex_passthrough",
-                         fragment:String = "fragment_passthrough",
+                         vertexName:String = "vertex_passthrough",
+                         fragmentName:String = "fragment_passthrough",
+                         name:String? = nil,
                          shaderSource:String? = nil,
-                         withName:String? = nil,
                          vertexDescriptor:MTLVertexDescriptor? = nil) {
         self.context = context
-        self.vertexName = vertex
-        self.fragmentName = fragment
+        self.vertexName = vertexName
+        self.fragmentName = fragmentName
         self._vertexDescriptor = vertexDescriptor
-        if withName != nil {
-            self._name = withName!
+        if name != nil {
+            self._name = name!
         }
         else {
             self._name = context.uid + ":"  + String.uniqString() + ":" + self.vertexName+":"+self.fragmentName
@@ -150,7 +148,7 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     }
     
     public static func == (lhs: IMPShader, rhs: IMPShader) -> Bool {
-        return lhs.uid == rhs.uid
+        return lhs.name == rhs.name
     }
     
     lazy var _library:MTLLibrary = self.context.defaultLibrary
@@ -182,6 +180,5 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     }()
 
     private lazy var _name:String = self.vertexName + ":" + self.fragmentName
-    private lazy var _uid:String = self.context.uid + ":" + self._name
     var _verticesBuffer: MTLBuffer!
 }

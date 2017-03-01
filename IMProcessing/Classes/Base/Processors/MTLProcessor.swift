@@ -32,7 +32,7 @@ class IMPCoreImageMTLKernel: IMPCIFilter{
     //    }
     
     static func register(function:IMPFunction) -> IMPCoreImageMTLKernel {
-        if let filter = registeredFilterList[function.uid] {
+        if let filter = registeredFilterList[function.name] {
             return filter
         }
         else {
@@ -46,13 +46,13 @@ class IMPCoreImageMTLKernel: IMPCIFilter{
             filter.function = function
             filter.context = function.context
             filter.threadsPerThreadgroup = function.threadsPerThreadgroup
-            registeredFilterList[function.uid] = filter
+            registeredFilterList[function.name] = filter
             return filter
         }
     }
     
     override func isEqual(_ object: Any?) -> Bool {
-        return self.function?.uid == (object as? IMPCoreImageMTLKernel)?.function?.uid
+        return self.function?.name == (object as? IMPCoreImageMTLKernel)?.function?.name
     }
         
     var function: IMPFunction? {

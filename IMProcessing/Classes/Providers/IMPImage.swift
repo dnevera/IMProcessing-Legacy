@@ -20,6 +20,8 @@ import ImageIO
 
 public class IMPImage: IMPImageProvider {
 
+    public let storageMode: IMPImageStorageMode
+    
     public var orientation = IMPImageOrientation.up
 
     public var context: IMPContext
@@ -76,7 +78,14 @@ public class IMPImage: IMPImageProvider {
         }
     }()
     
-    public required init(context: IMPContext) {
+    public required init(context: IMPContext, storageMode:IMPImageStorageMode? = .shared) {
         self.context = context
+        
+        if storageMode != nil {
+            self.storageMode = storageMode!
+        }
+        else {
+            self.storageMode = .shared
+        }
     }
 }

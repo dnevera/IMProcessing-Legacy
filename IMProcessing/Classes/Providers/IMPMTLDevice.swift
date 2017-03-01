@@ -18,7 +18,8 @@ public extension MTLDevice {
         weightsDescription.width       = buffer.count
         weightsDescription.height      = 1
         weightsDescription.depth       = 1
-        
+        weightsDescription.usage = [.shaderRead]
+
         let texture = self.makeTexture(descriptor: weightsDescription)
         texture.update(buffer)
         return texture
@@ -32,7 +33,7 @@ public extension MTLDevice {
         weightsDescription.width       = buffer.count
         weightsDescription.height      = 1
         weightsDescription.depth       = 1
-        
+        weightsDescription.usage = [.shaderRead]
         let texture = self.makeTexture(descriptor: weightsDescription)
         texture.update(buffer)
         return texture
@@ -41,6 +42,7 @@ public extension MTLDevice {
     public func texture2D(buffer:[[UInt8]]) -> MTLTexture {
         let width = buffer[0].count
         let weightsDescription = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: width, height: buffer.count, mipmapped: false)
+        weightsDescription.usage = [.shaderRead,.shaderWrite]
         let texture = self.makeTexture(descriptor: weightsDescription)
         texture.update(buffer)
         return texture
@@ -65,7 +67,8 @@ public extension MTLDevice {
         
         textureDescriptor.arrayLength = buffers.count
         textureDescriptor.mipmapLevelCount = 1
-        
+        textureDescriptor.usage = [.shaderRead]
+
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
         texture.update1DArray(buffers)
@@ -92,7 +95,7 @@ public extension MTLDevice {
         
         textureDescriptor.arrayLength = buffers.count
         textureDescriptor.mipmapLevelCount = 1
-        
+        textureDescriptor.usage = [.shaderRead]
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
         texture.update(buffers)
@@ -100,27 +103,57 @@ public extension MTLDevice {
         return texture
     }
     
-    public func make2DTexture(width:Int, height:Int, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture {
-        return makeTexture(descriptor:
-            MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
-                                                     width: width,
-                                                     height: height,
-                                                     mipmapped: false))
+    public func make2DTexture(width:Int, height:Int,
+                              pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
+                              mode:IMPImageStorageMode = .shared) -> MTLTexture {
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
+                                                         width: width,
+                                                         height: height,
+                                                         mipmapped: false)
+        if mode == .shared {
+            d.storageMode = .shared
+            d.usage = [.shaderRead,.shaderWrite]
+        }
+        else {
+            d.storageMode = .private
+            d.usage = [.shaderRead,.shaderWrite]
+        }
+        return makeTexture(descriptor:d)
     }
  
-    public func make2DTexture(size: MTLSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture {
-        return makeTexture(descriptor:
-            MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
-                                                     width: size.width,
-                                                     height: size.height,
-                                                     mipmapped: false))
+    public func make2DTexture(size: MTLSize,
+                              pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
+                              mode:IMPImageStorageMode = .shared) -> MTLTexture {
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
+                                                         width: Int(size.width),
+                                                         height: Int(size.height),
+                                                         mipmapped: false)
+        if mode == .shared {
+            d.storageMode = .shared
+            d.usage = [.shaderRead,.shaderWrite]
+        }
+        else {
+            d.storageMode = .private
+            d.usage = [.shaderRead,.shaderWrite]
+        }
+        return makeTexture(descriptor:d)
     }
     
-    public func make2DTexture(size: NSSize, pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat) -> MTLTexture {
-        return makeTexture(descriptor:
-            MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
-                                                     width: Int(size.width),
-                                                     height: Int(size.height),
-                                                     mipmapped: false))
+    public func make2DTexture(size: NSSize,
+                              pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
+                              mode:IMPImageStorageMode = .shared) -> MTLTexture {
+        let d = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: pixelFormat,
+                                                 width: Int(size.width),
+                                                 height: Int(size.height),
+                                                 mipmapped: false)
+        if mode == .shared {
+            d.storageMode = .shared
+            d.usage = [.shaderRead,.shaderWrite]
+        }
+        else {
+            d.storageMode = .private
+            d.usage = [.shaderRead,.shaderWrite]
+        }
+        return makeTexture(descriptor:d)
     }
 }

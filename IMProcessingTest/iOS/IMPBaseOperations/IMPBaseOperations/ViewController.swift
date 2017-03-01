@@ -53,7 +53,7 @@ public class TestFilter: IMPFilter {
     
     lazy var kernelRedBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     lazy var kernelRed:IMPFunction = {
-        let f = IMPFunction(context: self.context, name: "kernel_red")
+        let f = IMPFunction(context: self.context, kernelName: "kernel_red")
         f.optionsHandler = { (kernel,commandEncoder, input, output) in
             var value  = self.redAmount
             var buffer = self.kernelRedBuffer
@@ -65,7 +65,7 @@ public class TestFilter: IMPFilter {
     
     lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
     lazy var kernelEV:IMPFunction = {
-        let f = IMPFunction(context: self.context, name: "kernel_EV")
+        let f = IMPFunction(context: self.context, kernelName: "kernel_EV")
         f.optionsHandler = { (kernel,commandEncoder, input, output) in
             var value  = self.inputEV
             var buffer = self.kernelEVBuffer
@@ -345,7 +345,7 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
     lazy var filter:IMPFilter = {
         let f = IMPFilter(context: self.context)
         
-        f.add(function: IMPFunction(context: self.context, name: "kernel_view")){ (destination) in
+        f.add(function: IMPFunction(context: self.context, kernelName: "kernel_view")){ (destination) in
             print(" function kernel_view destination = \(destination)")
         }
 
