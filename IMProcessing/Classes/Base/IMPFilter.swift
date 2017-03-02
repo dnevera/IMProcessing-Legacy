@@ -490,8 +490,10 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 filter.source = currrentProvider == nil ? source : currrentProvider!
                 currrentProvider = filter.destination!
 
-                previousProvider?.texture?.setPurgeableState(.Volatile)
-                previousProvider = currrentProvider 
+                if previouseTexture !== source.texture {
+                    previousProvider?.texture?.setPurgeableState(.Volatile)
+                }
+                previousProvider = currrentProvider
             }
             
             if #available(iOS 9.0, *) {
