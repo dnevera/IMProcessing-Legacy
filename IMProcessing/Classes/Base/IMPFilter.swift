@@ -462,7 +462,10 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                             
                         }
 
-                        previouseTexture?.setPurgeableState(.Volatile)
+                        //previouseTexture?.setPurgeableState(.Volatile)
+                        if previouseTexture !== source.texture {
+                            previouseTexture?.setPurgeableState(.Volatile)
+                        }
                         previouseTexture = input
                         input = output
                         
