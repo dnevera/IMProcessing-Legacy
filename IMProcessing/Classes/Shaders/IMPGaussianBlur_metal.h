@@ -97,7 +97,7 @@ namespace IMProcessing
     fragment float4 fragment_blendSource(
                                          IMPVertexOut in [[stage_in]],
                                          texture2d<float, access::sample> texture [[ texture(0) ]],
-                                         texture2d<float, access::sample> source [[ texture(1) ]],
+                                         texture2d<float, access::sample> source  [[ texture(1) ]],
                                          constant IMPAdjustment           &adjustment  [[buffer(0)]]
                                          
                                          ) {

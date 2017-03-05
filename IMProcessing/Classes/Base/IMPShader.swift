@@ -96,15 +96,16 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
 
     func makePipeline() -> MTLRenderPipelineState? {
         do {
-            renderPipelineDescription.vertexDescriptor = self.vertexDescriptor
-            renderPipelineDescription.colorAttachments[0].pixelFormat = pixelFormat
-            renderPipelineDescription.vertexFunction   = self.library.makeFunction(name: self.vertexName)
-            renderPipelineDescription.fragmentFunction = self.library.makeFunction(name: self.fragmentName)
             
-            return try self.context.device.makeRenderPipelineState(descriptor: renderPipelineDescription)
+            renderPipelineDescription.vertexDescriptor = vertexDescriptor
+            renderPipelineDescription.colorAttachments[0].pixelFormat = pixelFormat
+            renderPipelineDescription.vertexFunction   = library.makeFunction(name: vertexName)
+            renderPipelineDescription.fragmentFunction = library.makeFunction(name: fragmentName)
+            
+            return try context.device.makeRenderPipelineState(descriptor: renderPipelineDescription)
         }
         catch let error as NSError{
-            fatalError(" *** IMPGraphics: \(error)")
+            fatalError(" *** IMPShader: \(error)")
         }
     }
     
@@ -132,7 +133,9 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         self.context = context
         self.vertexName = vertexName
         self.fragmentName = fragmentName
-        self._vertexDescriptor = vertexDescriptor
+        if let vd = vertexDescriptor {
+            self._vertexDescriptor = vd
+        }
         if name != nil {
             self._name = name!
         }
@@ -152,8 +155,8 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     }
     
     lazy var _library:MTLLibrary = self.context.defaultLibrary
-    
-    lazy var _defaultVertexDescriptor:MTLVertexDescriptor = {
+        
+    lazy var _vertexDescriptor:MTLVertexDescriptor = {
         var v = MTLVertexDescriptor()
         v.attributes[0].format = .float3
         v.attributes[0].bufferIndex = 0
@@ -165,10 +168,9 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         
         return v
     }()
-    
-    var _vertexDescriptor:MTLVertexDescriptor?
+
     public var vertexDescriptor:MTLVertexDescriptor {
-        return _vertexDescriptor ?? _defaultVertexDescriptor
+        return _vertexDescriptor
     }
     
     lazy var renderPassDescriptor:MTLRenderPassDescriptor = {

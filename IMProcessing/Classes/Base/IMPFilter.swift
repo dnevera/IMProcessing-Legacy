@@ -48,6 +48,10 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
 
     // MARK: - public
     
+    open var prefersRendering:Bool  {
+        return  !context.supportsGPUv2
+    }
+    
     public var name: String? = nil
     
     public var context: IMPContext
@@ -819,11 +823,14 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         }
         return (index,true)
     }
+
+    lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context, name: "IMPFilterBaseResamplerKernel")
+    lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: "IMPFilterBaseResamplerShader")
     
-    lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context, name: "IMPFilterBaseResampler")
-    
-    lazy var resampler:IMPCoreImageMTLKernel = {
-        let v = IMPCoreImageMTLKernel.register(function: self.resampleKernel)
+    lazy var resampler:IMPCIFilter = {
+        let v = self.prefersRendering ?
+            IMPCoreImageMTLShader.register(shader: self.resampleShader)  :
+            IMPCoreImageMTLKernel.register(function: self.resampleKernel)
         v.source = IMPImage(context: self.context)
         v.destination = IMPImage(context: self.context)
         return v

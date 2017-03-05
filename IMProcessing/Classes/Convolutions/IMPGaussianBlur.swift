@@ -60,12 +60,20 @@ public class IMPGaussianBlurFilter: IMPFilter {
 
         }
         
-        add(function: downscaleKernel)
-        add(function: horizontalKernel)
-        add(function: verticalKernel)
-        add(function: upscaleKernel)
+        if prefersRendering {
+            add(shader: downscaleShader, fail: fail)
+            add(shader: horizontalShader, fail: fail)
+            add(shader: verticalShader, fail: fail)
+            add(shader: upscaleShader, fail: fail)
+        }
+        else {
+            add(function: downscaleKernel, fail: fail)
+            add(function: horizontalKernel, fail: fail)
+            add(function: verticalKernel, fail: fail)
+            add(function: upscaleKernel, fail: fail)
+        }
     }
-    
+        
     var sigma:Float {
         get {
             return radiusApproximation > radius ? radius : radiusApproximation
@@ -102,9 +110,15 @@ public class IMPGaussianBlurFilter: IMPFilter {
         let newSize = NSSize(width: size.width/CGFloat(downsamplingFactor),
                              height: size.height/CGFloat(downsamplingFactor))
         
-        downscaleKernel.destinationSize = newSize
-        upscaleKernel.destinationSize = size
-                
+        if prefersRendering {
+            downscaleShader.destinationSize = newSize
+            upscaleShader.destinationSize = size
+        }
+        else {
+            downscaleKernel.destinationSize = newSize
+            upscaleKernel.destinationSize = size
+        }
+        
         var offsets:[Float] = [Float]()
         var weights:[Float] = [Float]()
         
@@ -151,8 +165,19 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     
     lazy var downscaleShader:IMPShader = IMPShader(context: self.context,
-                                                   vertexName:"GaussianDownscaleShader")
+                                                   name:"GaussianDownscaleShader")
     
+    lazy var upscaleShader:IMPShader   = {
+        let s = IMPShader(context: self.context,
+                          fragmentName: "fragment_blendSource",
+                          name: "GaussianUpscaleShader")
+        s.optionsHandler = { (shader,commandEncoder, input, output) in
+            commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, at: 0)
+            commandEncoder.setFragmentTexture((self.source?.texture)!, at:1)
+        }
+        return s
+    }()
+
     lazy var downscaleKernel:IMPFunction = {
         let f = IMPFunction(context: self.context,
                             kernelName: "kernel_passthrough",
@@ -202,7 +227,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var horizontalShader:IMPShader = {
         let s = IMPShader(context: self.context,
-                          vertexName: "fragment_gaussianSampledBlur",
+                          fragmentName: "fragment_gaussianSampledBlur",
                           name: "GaussianHorizontalShader")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
@@ -218,7 +243,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     lazy var verticalShader:IMPShader = {
         
         let s = IMPShader(context: self.context,
-                          vertexName: "fragment_gaussianSampledBlur",
+                          fragmentName: "fragment_gaussianSampledBlur",
                           name: "GaussianVerticalShader")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in

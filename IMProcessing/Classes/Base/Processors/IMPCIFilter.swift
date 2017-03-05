@@ -33,7 +33,7 @@ class IMPCIFilterConstructor: NSObject, CIFilterConstructor {
 
 public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
-    typealias CommandProcessor = ((
+   public typealias CommandProcessor = ((
         _ commandBuffer:MTLCommandBuffer,
         _ threadgroups:MTLSize,
         _ threadsPerThreadgroup:MTLSize,
@@ -77,7 +77,7 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
         ]
     }
     
-    lazy var colorSpace:CGColorSpace = {
+    lazy public var colorSpace:CGColorSpace = {
         if #available(iOS 10.0, *) {
             return CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
         }
@@ -86,13 +86,13 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
         }
     }()
     
-    lazy var processor:CommandProcessor? = self.textureProcessor
+    lazy public var processor:CommandProcessor? = self.textureProcessor
     
-    lazy var threadsPerThreadgroup:MTLSize = MTLSize(width: 16,height: 16,depth: 1)
+    lazy public var threadsPerThreadgroup:MTLSize = MTLSize(width: 16,height: 16,depth: 1)
     
     var kernelIndex:Int? = 0
  
-    func textureProcessor(
+    public func textureProcessor(
     _ commandBuffer:MTLCommandBuffer,
     _ threadgroups:MTLSize,
     _ threadsPerThreadgroup:MTLSize,
@@ -119,7 +119,7 @@ extension IMPCIFilter {
         return nil
     }
     
-    func flush() {
+    public func flush() {
         source?.image = nil
         source = nil
         destination?.image = nil
