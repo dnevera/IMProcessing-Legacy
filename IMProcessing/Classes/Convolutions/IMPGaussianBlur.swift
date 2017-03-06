@@ -14,7 +14,6 @@
 import Foundation
 import Accelerate
 import simd
-import MetalPerformanceShaders
 
 public class IMPGaussianBlurFilter: IMPFilter {
     

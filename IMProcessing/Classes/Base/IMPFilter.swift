@@ -8,12 +8,12 @@
 
 #if os(iOS)
     import UIKit
+    import MetalPerformanceShaders
 #else
     import Cocoa
 #endif
 
 import Metal
-import MetalPerformanceShaders
 import CoreImage
 
 public protocol IMPFilterProtocol:IMPContextProvider {
@@ -402,7 +402,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                     complete: CompleteHandler?=nil)  {
         appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
     }
-    
+    #if os(iOS)
     public func add(mps: MPSUnaryImageKernel, withName: String? = nil,
                     fail: FailHandler?=nil,
                     complete: CompleteHandler?=nil)   {
@@ -422,6 +422,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
         appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
     }
+    #endif
 
     
     //
@@ -466,6 +467,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
     }
 
+    #if os(iOS)
     public func insert(mps: MPSUnaryImageKernel, withName: String? = nil,
                        at index: Int,
                        fail: FailHandler?=nil,
@@ -487,7 +489,8 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
         insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
     }
-
+    #endif
+    
     //
     // MARK: - insertion before / after
     //
@@ -585,6 +588,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     }
 
     // Insert MPS before/after
+    #if os(iOS)
     public func insert(mps: MPSUnaryImageKernel, withName: String? = nil,
                        after filterName: String,
                        fail: FailHandler?=nil,
@@ -628,7 +632,8 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
         insert(filter: filter, before: filterName, fail: fail, complete: complete)
     }
-    
+    #endif
+
     //
     // MARK: - remove filter from chain
     //
@@ -661,6 +666,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         }
     }
 
+    #if os(iOS)
     public func remove(mps: MPSUnaryImageKernel) {
         guard let name = mps.label else {
             fatalError(" *** IMPFilter: remove(mps:) mps kernel should contain defined label property...")
@@ -671,6 +677,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     public func remove(mps: IMPMPSUnaryKernelProvider) {
         remove(filter: mps.name)
     }
+    #endif
 
     public func remove(filter: CIFilter) {
         remove(filter: filter.name)

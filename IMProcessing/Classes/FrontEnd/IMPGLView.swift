@@ -6,9 +6,8 @@
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
+#if os(iOS)
 import GLKit
-import UIKit
-import MetalKit
 import QuartzCore
 
 public class IMPGLView: GLKView{
@@ -214,3 +213,5 @@ extension CGRect {
                       height: height)
     }
 }
+
+#endif

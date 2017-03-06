@@ -310,7 +310,7 @@ open class IMPContext {
             #else
                 var pixelAttributes:[NSOpenGLPixelFormatAttribute] = [UInt32(NSOpenGLPFADoubleBuffer), UInt32(NSOpenGLPFAAccelerated), 0]
                 let pixelFormat = NSOpenGLPixelFormat(attributes: &pixelAttributes)
-                let context = NSOpenGLContext(format: pixelFormat!, shareContext: nil)
+                let context = NSOpenGLContext(format: pixelFormat!, share: nil)
                 context?.makeCurrentContext()
                 glGetIntegerv(GLenum(GL_MAX_TEXTURE_SIZE), &sharedContainerType.maxTextureSize)
                 currentMaximumTextureSize = Int(sharedContainerType.maxTextureSize)

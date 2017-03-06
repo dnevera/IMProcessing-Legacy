@@ -49,6 +49,8 @@
 import AVFoundation
 
 
+#if os(iOS)
+
 public typealias IMPCameraPointBlockType = ((_ camera:IMPCameraManager, _ point:CGPoint)->Void)
 
 ///  @brief Still image compression settings
@@ -77,3 +79,5 @@ public extension CMTime {
         self = CMTimeMake(Int64(duration.value), Int32(duration.scale))
     }
 }
+
+#endif

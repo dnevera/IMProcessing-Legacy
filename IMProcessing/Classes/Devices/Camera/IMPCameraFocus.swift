@@ -6,6 +6,7 @@
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
+#if os(iOS)
 import Foundation
 import AVFoundation
 
@@ -90,3 +91,4 @@ public enum IMPCameraFocus{
         }
     }
 }
+#endif

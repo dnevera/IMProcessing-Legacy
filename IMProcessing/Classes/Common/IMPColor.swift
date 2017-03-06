@@ -17,7 +17,7 @@ import Metal
 
 
 #if os(OSX)
-let impColorSpace = NSColorSpace.sRGBColorSpace()
+let impColorSpace = NSColorSpace.sRGB
 #endif
 
 public extension NSColor{
@@ -54,7 +54,7 @@ public extension NSColor{
     #else
     public var rgb:float3{
     get{
-    guard let rgba = self.colorUsingColorSpace(impColorSpace) else {
+    guard let rgba = self.usingColorSpace(impColorSpace) else {
     return float3(0)
     }
     return float3(rgba.redComponent.float,rgba.greenComponent.float,rgba.blueComponent.float)
@@ -63,7 +63,7 @@ public extension NSColor{
     
     public var rgba:float4{
     get{
-    guard let rgba = self.colorUsingColorSpace(impColorSpace) else {
+    guard let rgba = self.usingColorSpace(impColorSpace) else {
     return float4(0)
     }
     return float4(rgba.redComponent.float,rgba.greenComponent.float,rgba.blueComponent.float,rgba.alphaComponent.float)

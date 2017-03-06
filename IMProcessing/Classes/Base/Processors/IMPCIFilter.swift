@@ -7,7 +7,6 @@
 //
 
 import Metal
-import MetalPerformanceShaders
 import CoreImage
 
 //

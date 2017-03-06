@@ -6,7 +6,6 @@
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
-//import IMProcessing
 import UIKit
 import Photos
 import SnapKit

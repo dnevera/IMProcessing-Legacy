@@ -6,6 +6,7 @@
 //
 //
 
+#if os(iOS)
 import AVFoundation
 
 @available(iOS 10.2, *)
@@ -41,3 +42,4 @@ class IMPCameraSession {
         return nil
     }
 }
+#endif

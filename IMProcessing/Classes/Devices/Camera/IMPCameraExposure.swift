@@ -6,9 +6,9 @@
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
+#if os(iOS)
 import Foundation
 import AVFoundation
-
 
 ///  Exposure settings
 ///
@@ -83,3 +83,4 @@ public enum IMPCameraExposure {
         }
     }
 }
+#endif

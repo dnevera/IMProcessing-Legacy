@@ -15,14 +15,14 @@
     import Cocoa
     
     public enum IMPImageOrientation : Int {
-        case Up             // 0,  default orientation
-        case Down           // 1, -> Up    (0), UIImage, 180 deg rotation
-        case Left           // 2, -> Right (3), UIImage, 90 deg CCW
-        case Right          // 3, -> Down  (1), UIImage, 90 deg CW
-        case UpMirrored     // 4, -> Right (3), UIImage, as above but image mirrored along other axis. horizontal flip
-        case DownMirrored   // 5, -> Right (3), UIImage, horizontal flip
-        case LeftMirrored   // 6, -> Right (3), UIImage, vertical flip
-        case RightMirrored  // 7, -> Right (3), UIImage, vertical flip
+        case up             // 0,  default orientation
+        case down           // 1, -> Up    (0), UIImage, 180 deg rotation
+        case left           // 2, -> Right (3), UIImage, 90 deg CCW
+        case right          // 3, -> Down  (1), UIImage, 90 deg CW
+        case upMirrored     // 4, -> Right (3), UIImage, as above but image mirrored along other axis. horizontal flip
+        case downMirrored   // 5, -> Right (3), UIImage, horizontal flip
+        case leftMirrored   // 6, -> Right (3), UIImage, vertical flip
+        case rightMirrored  // 7, -> Right (3), UIImage, vertical flip
     }
     
     public typealias UIImageOrientation = IMPImageOrientation
@@ -149,8 +149,19 @@ public extension IMPImageProvider {
                 maxSize: CGFloat = 0,
                 orientation:IMPImageOrientation? = nil){
         self.init(context:context, storageMode: storageMode)
-        self.image = prepareImage(image: CIImage(cgImage: image.cgImage!, options: [kCIImageColorSpace: colorSpace]),
-                                  maxSize: maxSize, orientation: orientation ?? image.imageOrientation)
+        #if os(OSX)
+            guard let data = image.tiffRepresentation else {
+                return
+            }
+            let ciimage = CIImage(data: data, options: [kCIImageColorSpace: colorSpace])
+            let imageOrientation = IMPImageOrientation.up
+        #else
+            let ciimage = CIImage(cgImage: image.cgImage!, options: [kCIImageColorSpace: colorSpace])
+            let imageOrientation = image.imageOrientation
+        #endif
+        
+        self.image = prepareImage(image: ciimage,
+                                  maxSize: maxSize, orientation: orientation ?? imageOrientation)
     }
     
     public init(context: IMPContext,
@@ -192,7 +203,13 @@ public extension IMPImageProvider {
     }
     
     public mutating func update(_ inputImage:NSImage){
-        image = CIImage(image: inputImage)
+        //image = CIImage(image: inputImage)
+        #if os(OSX)
+            guard let data = inputImage.tiffRepresentation else { return }
+            image = CIImage(data: data, options: [kCIImageColorSpace: colorSpace])
+        #else
+            image = CIImage(image: inputImage)
+        #endif
     }
     
     public mutating func update(_ buffer:CMSampleBuffer){
@@ -396,6 +413,7 @@ public extension IMPImageProvider {
         }
     }
     
+    #if os(iOS)
     public var nsImage:NSImage? {
         get{
             guard (image != nil) else { return nil}
@@ -405,6 +423,23 @@ public extension IMPImageProvider {
             cgiImage = newValue?.cgImage
         }
     }
+    #else
+    public var nsImage:NSImage? {
+        get {
+            if let image = self.image {
+                let rep: NSCIImageRep = NSCIImageRep(ciImage: image)
+                let nsImage: NSImage = NSImage(size: rep.size)
+                nsImage.addRepresentation(rep)
+                return nsImage
+            }
+            return nil
+        }
+        set{
+            guard let data = newValue?.tiffRepresentation else { return }
+            image = CIImage(data: data, options: [kCIImageColorSpace: colorSpace])
+        }
+    }
+    #endif
 }
 
 
