@@ -33,7 +33,6 @@
 		3151D2021E645D86006843D5 /* IMPMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151D1C61E645D86006843D5 /* IMPMotionManager.swift */; };
 		3151D2031E645D86006843D5 /* IMPAVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151D1C81E645D86006843D5 /* IMPAVSession.swift */; };
 		3151D2041E645D86006843D5 /* IMPCameraSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151D1C91E645D86006843D5 /* IMPCameraSession.swift */; };
-		3151D2051E645D86006843D5 /* IMPGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151D1CB1E645D86006843D5 /* IMPGLView.swift */; };
 		3151D2061E645D86006843D5 /* IMPView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151D1CC1E645D86006843D5 /* IMPView.swift */; };
 		3151D2071E645D86006843D5 /* IMPFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151D1CE1E645D86006843D5 /* IMPFilterView.swift */; };
 		3151D2081E645D86006843D5 /* IMPDistribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3151D1D01E645D86006843D5 /* IMPDistribution.swift */; };
@@ -91,7 +90,6 @@
 		3151D1C61E645D86006843D5 /* IMPMotionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMotionManager.swift; sourceTree = "<group>"; };
 		3151D1C81E645D86006843D5 /* IMPAVSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPAVSession.swift; sourceTree = "<group>"; };
 		3151D1C91E645D86006843D5 /* IMPCameraSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraSession.swift; sourceTree = "<group>"; };
-		3151D1CB1E645D86006843D5 /* IMPGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPGLView.swift; sourceTree = "<group>"; };
 		3151D1CC1E645D86006843D5 /* IMPView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPView.swift; sourceTree = "<group>"; };
 		3151D1CE1E645D86006843D5 /* IMPFilterView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFilterView.swift; sourceTree = "<group>"; };
 		3151D1D01E645D86006843D5 /* IMPDistribution.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDistribution.swift; sourceTree = "<group>"; };
@@ -261,7 +259,6 @@
 		3151D1CA1E645D86006843D5 /* FrontEnd */ = {
 			isa = PBXGroup;
 			children = (
-				3151D1CB1E645D86006843D5 /* IMPGLView.swift */,
 				3151D1CC1E645D86006843D5 /* IMPView.swift */,
 				3151D1CD1E645D86006843D5 /* Privates */,
 			);
@@ -545,7 +542,6 @@
 				3151D2071E645D86006843D5 /* IMPFilterView.swift in Sources */,
 				316A3CFA1E586C2C005BB909 /* AppDelegate.swift in Sources */,
 				3151D1F31E645D86006843D5 /* MPSProcessor.swift in Sources */,
-				3151D2051E645D86006843D5 /* IMPGLView.swift in Sources */,
 				3151D1F61E645D86006843D5 /* IMPColor.swift in Sources */,
 				3151D1EF1E645D86006843D5 /* IMPFilter.swift in Sources */,
 				3151D2111E645D86006843D5 /* IMPDequeue.swift in Sources */,

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2AA6B4AC906DA4FAFADD5262 /* Pods_IMPBaseOperations.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29422B6FED2951F56C1D44C7 /* Pods_IMPBaseOperations.framework */; };
 		313303411E6DE80900CEAD30 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303401E6DE80900CEAD30 /* AppDelegate.swift */; };
 		313303431E6DE80900CEAD30 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303421E6DE80900CEAD30 /* ViewController.swift */; };
 		313303451E6DE80900CEAD30 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 313303441E6DE80900CEAD30 /* Assets.xcassets */; };
@@ -37,7 +38,6 @@
 		313303B01E6DE88A00CEAD30 /* IMPMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303741E6DE88A00CEAD30 /* IMPMotionManager.swift */; };
 		313303B11E6DE88A00CEAD30 /* IMPAVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303761E6DE88A00CEAD30 /* IMPAVSession.swift */; };
 		313303B21E6DE88A00CEAD30 /* IMPCameraSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303771E6DE88A00CEAD30 /* IMPCameraSession.swift */; };
-		313303B31E6DE88A00CEAD30 /* IMPGLView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303791E6DE88A00CEAD30 /* IMPGLView.swift */; };
 		313303B41E6DE88A00CEAD30 /* IMPView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3133037A1E6DE88A00CEAD30 /* IMPView.swift */; };
 		313303B51E6DE88A00CEAD30 /* IMPFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3133037C1E6DE88A00CEAD30 /* IMPFilterView.swift */; };
 		313303B61E6DE88A00CEAD30 /* IMPDistribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3133037E1E6DE88A00CEAD30 /* IMPDistribution.swift */; };
@@ -57,6 +57,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		29422B6FED2951F56C1D44C7 /* Pods_IMPBaseOperations.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPBaseOperations.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3133033D1E6DE80900CEAD30 /* IMPBaseOperations.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPBaseOperations.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		313303401E6DE80900CEAD30 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		313303421E6DE80900CEAD30 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -94,7 +95,6 @@
 		313303741E6DE88A00CEAD30 /* IMPMotionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMotionManager.swift; sourceTree = "<group>"; };
 		313303761E6DE88A00CEAD30 /* IMPAVSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPAVSession.swift; sourceTree = "<group>"; };
 		313303771E6DE88A00CEAD30 /* IMPCameraSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraSession.swift; sourceTree = "<group>"; };
-		313303791E6DE88A00CEAD30 /* IMPGLView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPGLView.swift; sourceTree = "<group>"; };
 		3133037A1E6DE88A00CEAD30 /* IMPView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPView.swift; sourceTree = "<group>"; };
 		3133037C1E6DE88A00CEAD30 /* IMPFilterView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFilterView.swift; sourceTree = "<group>"; };
 		3133037E1E6DE88A00CEAD30 /* IMPDistribution.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDistribution.swift; sourceTree = "<group>"; };
@@ -124,6 +124,8 @@
 		313303C21E6DE8D000CEAD30 /* IMPCoreImage.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = IMPCoreImage.metal; sourceTree = "<group>"; };
 		313303C51E6DE94C00CEAD30 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		313303C71E6DE95200CEAD30 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		634F267F841AC36C9BE98908 /* Pods-IMPBaseOperations.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.debug.xcconfig"; sourceTree = "<group>"; };
+		99F412C0F717D76239294AEA /* Pods-IMPBaseOperations.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -133,6 +135,7 @@
 			files = (
 				313303C81E6DE95200CEAD30 /* MetalKit.framework in Frameworks */,
 				313303C61E6DE94C00CEAD30 /* Metal.framework in Frameworks */,
+				2AA6B4AC906DA4FAFADD5262 /* Pods_IMPBaseOperations.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -145,6 +148,7 @@
 				3133033F1E6DE80900CEAD30 /* IMPBaseOperations */,
 				3133033E1E6DE80900CEAD30 /* Products */,
 				313303C41E6DE94B00CEAD30 /* Frameworks */,
+				6088118F83E226A3BCAE4C5E /* Pods */,
 			);
 			sourceTree = "<group>";
 		};
@@ -289,7 +293,6 @@
 		313303781E6DE88A00CEAD30 /* FrontEnd */ = {
 			isa = PBXGroup;
 			children = (
-				313303791E6DE88A00CEAD30 /* IMPGLView.swift */,
 				3133037A1E6DE88A00CEAD30 /* IMPView.swift */,
 				3133037B1E6DE88A00CEAD30 /* Privates */,
 			);
@@ -369,8 +372,18 @@
 			children = (
 				313303C71E6DE95200CEAD30 /* MetalKit.framework */,
 				313303C51E6DE94C00CEAD30 /* Metal.framework */,
+				29422B6FED2951F56C1D44C7 /* Pods_IMPBaseOperations.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		6088118F83E226A3BCAE4C5E /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				634F267F841AC36C9BE98908 /* Pods-IMPBaseOperations.debug.xcconfig */,
+				99F412C0F717D76239294AEA /* Pods-IMPBaseOperations.release.xcconfig */,
+			);
+			name = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -380,9 +393,12 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3133034C1E6DE80900CEAD30 /* Build configuration list for PBXNativeTarget "IMPBaseOperations" */;
 			buildPhases = (
+				7F65EF845FF9080EA9E847BA /* [CP] Check Pods Manifest.lock */,
 				313303391E6DE80900CEAD30 /* Sources */,
 				3133033A1E6DE80900CEAD30 /* Frameworks */,
 				3133033B1E6DE80900CEAD30 /* Resources */,
+				F9960612F198147C55E995AB /* [CP] Embed Pods Frameworks */,
+				D96323B87D1B74467F1132F5 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -440,6 +456,54 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		7F65EF845FF9080EA9E847BA /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		D96323B87D1B74467F1132F5 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F9960612F198147C55E995AB /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		313303391E6DE80900CEAD30 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -469,7 +533,6 @@
 				313303411E6DE80900CEAD30 /* AppDelegate.swift in Sources */,
 				313303A41E6DE88A00CEAD30 /* IMPColor.swift in Sources */,
 				313303A11E6DE88A00CEAD30 /* MPSProcessor.swift in Sources */,
-				313303B31E6DE88A00CEAD30 /* IMPGLView.swift in Sources */,
 				313303B21E6DE88A00CEAD30 /* IMPCameraSession.swift in Sources */,
 				313303AE1E6DE88A00CEAD30 /* IMPCameraFocus.swift in Sources */,
 				3133039F1E6DE88A00CEAD30 /* IMPShader.swift in Sources */,
@@ -597,6 +660,7 @@
 		};
 		3133034D1E6DE80900CEAD30 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 634F267F841AC36C9BE98908 /* Pods-IMPBaseOperations.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -613,6 +677,7 @@
 		};
 		3133034E1E6DE80900CEAD30 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 99F412C0F717D76239294AEA /* Pods-IMPBaseOperations.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -646,6 +711,7 @@
 				3133034E1E6DE80900CEAD30 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
