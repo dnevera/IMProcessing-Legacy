@@ -19,7 +19,6 @@ import CoreImage
 //id<MTLTexture> texture = [... initialize your textue... ]
 //CIFilter* rawFilter = [CIFilter filterWithCVPixelBuffer:CMSampleBufferGetImageBuffer(rawSampleBuffer) properties:rawImageAttachments options:[... your options ...]];
 //[context render:rawFilter.outputImage toMTLTexture:texture commandBuffer:[...] bounds:[...] colorSpace:[...]]
-//
 
 
 protocol IMPCoreImageRegister {

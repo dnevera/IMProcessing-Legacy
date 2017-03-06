@@ -34,3 +34,8 @@ public enum IMProcessing{
         #endif
     }
 }
+
+
+public func addressOf<T: AnyObject>(o: T?) -> Int? {
+    return o == nil ? nil : unsafeBitCast(o, to: Int.self)
+}

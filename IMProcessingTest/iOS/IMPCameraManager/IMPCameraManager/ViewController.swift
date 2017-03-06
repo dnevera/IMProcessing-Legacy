@@ -29,10 +29,27 @@ func CGRectMake(_ x: CGFloat, _ y: CGFloat, _ width: CGFloat, _ height: CGFloat)
 
 public class TestFilter: IMPFilter {
     
+    class BlurFilter: IMPMPSUnaryKernelProvider {
+        var name: String { return "BlurFilter" }
+        func mps(device:MTLDevice) -> MPSUnaryImageKernel? {
+            return MPSImageGaussianBlur(device: device, sigma: radius)
+        }
+        var radius:Float = 1
+        var context: IMPContext?
+        init(context:IMPContext?) {
+            self.context = context
+        }
+    }
+
+    lazy var mpsBlurFilter:BlurFilter = BlurFilter(context:self.context)
+
     lazy var impBlurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     
     public var blurRadius:Float = 1 {
-        didSet{ impBlurFilter.radius = blurRadius }
+        didSet{
+            impBlurFilter.radius = blurRadius
+            mpsBlurFilter.radius = blurRadius
+        }
     }
     
     public var inputEV:Float = 0 {
@@ -63,6 +80,7 @@ public class TestFilter: IMPFilter {
         add(function: kernelEV)
         //add(filter: exposureFilter)
         add(filter: impBlurFilter)
+        //add(mps: mpsBlurFilter)
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!

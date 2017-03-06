@@ -25,7 +25,7 @@ public protocol IMPFilterProtocol:IMPContextProvider {
     var  enabled:          Bool              {get set}
     var  dirty:            Bool              {get set}
     
-    func apply(_ destination: IMPImageProvider)
+    func apply(_ destination: IMPImageProvider, with destinationSize:NSSize?)
     
     init(context:IMPContext, name: String?)
 }
@@ -123,7 +123,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         }
     }
     
-    open func apply(_ result: IMPImageProvider) {
+    open func apply(_ result: IMPImageProvider, with destinationSize:NSSize? = nil) {
         
         guard let source = self.source else {
             dirty = false
@@ -144,7 +144,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 return
             }
 
-            let newSize = destinationSize ?? size
+            let newSize = destinationSize ?? self.destinationSize ?? size
             
             if result.texture == nil {
                 result.texture = context.device.make2DTexture(size: newSize, pixelFormat: (source.texture?.pixelFormat)!)
@@ -165,7 +165,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
 
         var scaledImage = source.image
         
-        if let newsize = destinationSize,
+        if let newsize = destinationSize ??  self.destinationSize,
             let sImage = scaledImage
             {
                 let originX = sImage.extent.origin.x
@@ -226,9 +226,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             }
         }
         
-        for (index, c) in coreImageFilterList.enumerated() {
-            
-            let renderToResult = (index == coreImageFilterList.count - 1) && resultIn != nil
+        for c in coreImageFilterList {
             
             if let filter = c.cifilter {
                 
@@ -246,10 +244,6 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                     
                     f.destination = f.destination ?? IMPImage(context: context)
                     
-                    if renderToResult {
-                        f.destination?.texture = resultIn
-                    }
-                    
                     f.process(to: f.destination!, commandBuffer: commandBuffer)
                     
                     currentResult = (f.destination?.texture)!
@@ -261,10 +255,6 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                                     forKey: kCIInputImageKey)
                     
                     guard let image = filter.outputImage else { continue }
-                    
-                    if renderToResult {
-                        currentResult = resultIn!
-                    }
                     
                     self.context.coreImage?.render(image,
                                                    to: currentResult,
@@ -281,13 +271,13 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 
                 filter.source?.texture = currentResult
                 
-                if renderToResult {
-                    filter._destination.texture = resultIn
-                }
-                
                 filter.apply(to: &filter._destination.texture, commandBuffer: commandBuffer)
                 
                 currentResult = filter._destination.texture!
+            }
+            
+            if let comlete = c.complete {
+                comlete(IMPImage(context:context, texture: currentResult))
             }
         }
         

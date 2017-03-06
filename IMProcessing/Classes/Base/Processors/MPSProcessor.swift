@@ -57,6 +57,7 @@ class IMPCoreImageMPSUnaryKernel: IMPCIFilter{
         else {
             let index = registeredFilter.count
             filter.kernelIndex = index
+            filter.context = mps.context
             registeredFilter.append(filter)
             return filter
         }
@@ -67,7 +68,7 @@ class IMPCoreImageMPSUnaryKernel: IMPCIFilter{
     }
     
     var mps: IMPMPSUnaryKernelProvider?
-    
+           
     override func processBigImage(index:Int) -> CIImage? {
         do {
             if #available(iOS 10.0, *) {
