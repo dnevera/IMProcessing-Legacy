@@ -39,7 +39,6 @@
 		313303B11E6DE88A00CEAD30 /* IMPAVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303761E6DE88A00CEAD30 /* IMPAVSession.swift */; };
 		313303B21E6DE88A00CEAD30 /* IMPCameraSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303771E6DE88A00CEAD30 /* IMPCameraSession.swift */; };
 		313303B41E6DE88A00CEAD30 /* IMPView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3133037A1E6DE88A00CEAD30 /* IMPView.swift */; };
-		313303B51E6DE88A00CEAD30 /* IMPFilterView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3133037C1E6DE88A00CEAD30 /* IMPFilterView.swift */; };
 		313303B61E6DE88A00CEAD30 /* IMPDistribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3133037E1E6DE88A00CEAD30 /* IMPDistribution.swift */; };
 		313303B71E6DE88A00CEAD30 /* IMPImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303801E6DE88A00CEAD30 /* IMPImage.swift */; };
 		313303B81E6DE88A00CEAD30 /* IMPImageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313303811E6DE88A00CEAD30 /* IMPImageProvider.swift */; };
@@ -54,6 +53,7 @@
 		313303C31E6DE8D000CEAD30 /* IMPCoreImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = 313303C21E6DE8D000CEAD30 /* IMPCoreImage.metal */; };
 		313303C61E6DE94C00CEAD30 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313303C51E6DE94C00CEAD30 /* Metal.framework */; };
 		313303C81E6DE95200CEAD30 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313303C71E6DE95200CEAD30 /* MetalKit.framework */; };
+		313D53371E6EC384007CB97F /* IMPDisplayLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313D53361E6EC384007CB97F /* IMPDisplayLink.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -96,7 +96,6 @@
 		313303761E6DE88A00CEAD30 /* IMPAVSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPAVSession.swift; sourceTree = "<group>"; };
 		313303771E6DE88A00CEAD30 /* IMPCameraSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraSession.swift; sourceTree = "<group>"; };
 		3133037A1E6DE88A00CEAD30 /* IMPView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPView.swift; sourceTree = "<group>"; };
-		3133037C1E6DE88A00CEAD30 /* IMPFilterView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFilterView.swift; sourceTree = "<group>"; };
 		3133037E1E6DE88A00CEAD30 /* IMPDistribution.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDistribution.swift; sourceTree = "<group>"; };
 		313303801E6DE88A00CEAD30 /* IMPImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPImage.swift; sourceTree = "<group>"; };
 		313303811E6DE88A00CEAD30 /* IMPImageProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPImageProvider.swift; sourceTree = "<group>"; };
@@ -124,6 +123,7 @@
 		313303C21E6DE8D000CEAD30 /* IMPCoreImage.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = IMPCoreImage.metal; sourceTree = "<group>"; };
 		313303C51E6DE94C00CEAD30 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		313303C71E6DE95200CEAD30 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
+		313D53361E6EC384007CB97F /* IMPDisplayLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDisplayLink.swift; sourceTree = "<group>"; };
 		634F267F841AC36C9BE98908 /* Pods-IMPBaseOperations.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.debug.xcconfig"; sourceTree = "<group>"; };
 		99F412C0F717D76239294AEA /* Pods-IMPBaseOperations.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -294,6 +294,7 @@
 			isa = PBXGroup;
 			children = (
 				3133037A1E6DE88A00CEAD30 /* IMPView.swift */,
+				313D53361E6EC384007CB97F /* IMPDisplayLink.swift */,
 				3133037B1E6DE88A00CEAD30 /* Privates */,
 			);
 			path = FrontEnd;
@@ -302,7 +303,6 @@
 		3133037B1E6DE88A00CEAD30 /* Privates */ = {
 			isa = PBXGroup;
 			children = (
-				3133037C1E6DE88A00CEAD30 /* IMPFilterView.swift */,
 			);
 			path = Privates;
 			sourceTree = "<group>";
@@ -516,6 +516,7 @@
 				313303AB1E6DE88A00CEAD30 /* IMPGaussianBlur.swift in Sources */,
 				313303AF1E6DE88A00CEAD30 /* IMPCameraManager.swift in Sources */,
 				3133039E1E6DE88A00CEAD30 /* IMPFunction.swift in Sources */,
+				313D53371E6EC384007CB97F /* IMPDisplayLink.swift in Sources */,
 				313303BB1E6DE88A00CEAD30 /* IMPTextureCache.swift in Sources */,
 				313303BE1E6DE88A00CEAD30 /* IMPVideoCache.swift in Sources */,
 				313303431E6DE80900CEAD30 /* ViewController.swift in Sources */,
@@ -539,7 +540,6 @@
 				313303BA1E6DE88A00CEAD30 /* IMPMTLTexture.swift in Sources */,
 				313303A01E6DE88A00CEAD30 /* IMPCIFilter.swift in Sources */,
 				313303B61E6DE88A00CEAD30 /* IMPDistribution.swift in Sources */,
-				313303B51E6DE88A00CEAD30 /* IMPFilterView.swift in Sources */,
 				313303B11E6DE88A00CEAD30 /* IMPAVSession.swift in Sources */,
 				313303BC1E6DE88A00CEAD30 /* IMPTextureDelayLine.swift in Sources */,
 				313303AA1E6DE88A00CEAD30 /* IMPTypeAliases .swift in Sources */,
