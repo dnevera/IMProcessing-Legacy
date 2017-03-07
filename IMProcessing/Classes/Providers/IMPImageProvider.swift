@@ -123,6 +123,27 @@ public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
 public extension IMPImageProvider {
     
     public init(context: IMPContext,
+                url: URL,
+                storageMode:IMPImageStorageMode? = nil,
+                maxSize: CGFloat = 0,
+                orientation:IMPImageOrientation? = nil){
+        self.init(context:context, storageMode: storageMode)
+        self.image = prepareImage(image: CIImage(contentsOf: url, options: [kCIImageColorSpace: colorSpace]),
+                                  maxSize: maxSize, orientation: orientation)
+    }
+    
+    public init(context: IMPContext,
+                path: String,
+                storageMode:IMPImageStorageMode? = nil,
+                maxSize: CGFloat = 0,
+                orientation:IMPImageOrientation? = nil){
+        self.init(context: context, url: URL(fileURLWithPath:path),
+                  storageMode:storageMode,
+                  maxSize:maxSize,
+                  orientation:orientation)
+    }
+
+    public init(context: IMPContext,
                 provider: IMPImageProvider,
                 storageMode:IMPImageStorageMode? = nil,
                 maxSize: CGFloat = 0,
@@ -131,7 +152,7 @@ public extension IMPImageProvider {
         self.image = prepareImage(image: provider.image?.copy() as? CIImage,
                                   maxSize: maxSize, orientation: orientation)
     }
-    
+
     public init(context: IMPContext,
                 image: CIImage,
                 storageMode:IMPImageStorageMode? = nil,
@@ -383,8 +404,13 @@ public extension IMPImageProvider {
             }
             
             if storageMode == .shared {
-                descriptor.storageMode = .shared
-                descriptor.usage = [.shaderRead, .shaderWrite]
+                #if os(iOS)
+                    descriptor.storageMode = .shared
+                    descriptor.usage = [.shaderRead, .shaderWrite]
+                #elseif os(OSX)
+                    descriptor.storageMode = .managed
+                    descriptor.usage = [.shaderRead, .shaderWrite]
+                #endif
             }
             else {
                 descriptor.storageMode = .private

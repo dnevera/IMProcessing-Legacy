@@ -54,6 +54,7 @@
 		313303C61E6DE94C00CEAD30 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313303C51E6DE94C00CEAD30 /* Metal.framework */; };
 		313303C81E6DE95200CEAD30 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313303C71E6DE95200CEAD30 /* MetalKit.framework */; };
 		313D53371E6EC384007CB97F /* IMPDisplayLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313D53361E6EC384007CB97F /* IMPDisplayLink.swift */; };
+		313D53A91E6ECBE4007CB97F /* IMPFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313D53A81E6ECBE4007CB97F /* IMPFileManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -124,6 +125,7 @@
 		313303C51E6DE94C00CEAD30 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		313303C71E6DE95200CEAD30 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		313D53361E6EC384007CB97F /* IMPDisplayLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDisplayLink.swift; sourceTree = "<group>"; };
+		313D53A81E6ECBE4007CB97F /* IMPFileManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFileManager.swift; sourceTree = "<group>"; };
 		634F267F841AC36C9BE98908 /* Pods-IMPBaseOperations.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.debug.xcconfig"; sourceTree = "<group>"; };
 		99F412C0F717D76239294AEA /* Pods-IMPBaseOperations.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -167,6 +169,7 @@
 				3133034F1E6DE88A00CEAD30 /* Classes */,
 				313303401E6DE80900CEAD30 /* AppDelegate.swift */,
 				313303421E6DE80900CEAD30 /* ViewController.swift */,
+				313D53A81E6ECBE4007CB97F /* IMPFileManager.swift */,
 				313303441E6DE80900CEAD30 /* Assets.xcassets */,
 				313303461E6DE80900CEAD30 /* Main.storyboard */,
 				313303491E6DE80900CEAD30 /* Info.plist */,
@@ -529,6 +532,7 @@
 				313303991E6DE88A00CEAD30 /* IMPPhotoPlate.swift in Sources */,
 				3133039C1E6DE88A00CEAD30 /* IMPVertices.swift in Sources */,
 				313303B91E6DE88A00CEAD30 /* IMPMTLDevice.swift in Sources */,
+				313D53A91E6ECBE4007CB97F /* IMPFileManager.swift in Sources */,
 				313303C01E6DE88A00CEAD30 /* IMPQueue.swift in Sources */,
 				313303BD1E6DE88A00CEAD30 /* IMPTextureProvider.swift in Sources */,
 				313303411E6DE80900CEAD30 /* AppDelegate.swift in Sources */,

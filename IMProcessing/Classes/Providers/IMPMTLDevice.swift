@@ -111,8 +111,13 @@ public extension MTLDevice {
                                                          height: height,
                                                          mipmapped: false)
         if mode == .shared {
-            d.storageMode = .shared
-            d.usage = [.shaderRead,.shaderWrite]
+            #if os(iOS)
+                d.storageMode = .shared
+                d.usage = [.shaderRead, .shaderWrite]
+            #elseif os(OSX)
+                d.storageMode = .managed
+                d.usage = [.shaderRead, .shaderWrite]
+            #endif
         }
         else {
             d.storageMode = .private
@@ -129,8 +134,13 @@ public extension MTLDevice {
                                                          height: Int(size.height),
                                                          mipmapped: false)
         if mode == .shared {
-            d.storageMode = .shared
-            d.usage = [.shaderRead,.shaderWrite]
+            #if os(iOS)
+                d.storageMode = .shared
+                d.usage = [.shaderRead, .shaderWrite]
+            #elseif os(OSX)
+                d.storageMode = .managed
+                d.usage = [.shaderRead, .shaderWrite]
+            #endif
         }
         else {
             d.storageMode = .private
@@ -147,13 +157,19 @@ public extension MTLDevice {
                                                  height: Int(size.height),
                                                  mipmapped: false)
         if mode == .shared {
-            d.storageMode = .shared
-            d.usage = [.shaderRead,.shaderWrite]
+            #if os(iOS)
+                d.storageMode = .shared
+                d.usage = [.shaderRead, .shaderWrite]
+            #elseif os(OSX)
+                d.storageMode = .managed
+                d.usage = [.shaderRead, .shaderWrite]
+            #endif
         }
         else {
             d.storageMode = .private
             d.usage = [.shaderRead,.shaderWrite]
         }
+
         return makeTexture(descriptor:d)
     }
 }

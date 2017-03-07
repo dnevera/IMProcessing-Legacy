@@ -17,7 +17,12 @@ import MetalKit
 
 public class IMPView: MTKView {
     
-    public var renderingEnabled = false
+    
+    #if os(iOS)
+        public var renderingEnabled = false
+    #else
+        public let renderingEnabled = true
+    #endif
     
     public var exactResolutionEnabled = false
     
@@ -27,21 +32,7 @@ public class IMPView: MTKView {
             self.needProcessing = true
             
             filter?.addObserver(newSource: { (source) in
-                if let size = source.size {
-                    
-                    if self.exactResolutionEnabled {
-                        self.drawableSize = size
-                    }
-                    else {
-                        // down scale targetTexture
-                        let newSize = NSSize(width: self.bounds.size.width * screenScale,
-                                             height: self.bounds.size.height * screenScale
-                        )
-                        let scale = fmin(fmin(newSize.width/size.width, newSize.height/size.height),1)
-                        self.drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
-                    }
-                    self.needProcessing = true
-                }
+                self.updateDrawbleSize()
             })
             
             filter?.addObserver(dirty: { (filter, source, destintion) in
@@ -49,6 +40,41 @@ public class IMPView: MTKView {
             })
         }
     }
+    
+    private func updateDrawbleSize()  {
+        if let size = self.filter?.source?.size {
+            if exactResolutionEnabled {
+                drawableSize = size
+            }
+            else {
+                // down scale targetTexture
+                let newSize = NSSize(width: self.bounds.size.width * screenScale,
+                                     height: self.bounds.size.height * screenScale
+                )
+                let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
+                drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
+            }
+            needProcessing = true
+        }
+    }
+    
+    #if os(OSX)
+    var invalidateSizeTimer:Timer?
+    
+    func invalidateSizeTimerHandler(timer:Timer?)  {
+        updateDrawbleSize()
+    }
+    
+    public override var frame: NSRect {
+        didSet{
+            invalidateSizeTimer?.invalidate()
+            invalidateSizeTimer = Timer.scheduledTimer(timeInterval: 1/TimeInterval(preferredFramesPerSecond),
+                                                       target: self, 
+                                                       selector: #selector(invalidateSizeTimerHandler(timer:)),
+                                                       userInfo: nil, repeats: false)
+        }
+    }
+    #endif
     
     public var viewReadyHandler:(()->Void)?
     
@@ -121,7 +147,18 @@ public class IMPView: MTKView {
         self.processingOperationQueue.addOperation(ProcessingOperation(view: self, size: size))
     }
     
+    lazy var viewPort:MTLViewport = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
+    
+    public override var drawableSize: CGSize {
+        didSet{
+            viewPort = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
+            NSLog("view port = \(viewPort)")
+        }
+    }
+    
     func refresh(rect: CGRect){
+        
+        NSLog("refresh source= \(filter?.source?.size) drawableSize = \(drawableSize)")
         
         context.wait()
         
@@ -178,6 +215,7 @@ public class IMPView: MTKView {
                 
                 encoder.setVertexBuffer(vertexBuffer, offset:0, at:0)
                 encoder.setFragmentTexture(sourceTexture, at:0)
+                encoder.setViewport(viewPort)
                 
                 encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
                 encoder.endEncoding()
@@ -191,7 +229,12 @@ public class IMPView: MTKView {
         }
         
         commandBuffer.commit()
-        
+
+        //
+        // https://forums.developer.apple.com/thread/64889
+        //
+        self.draw()
+
         if frameCounter > 0  && isFirstFrame {
             isFirstFrame = false
             if viewReadyHandler !=  nil {
@@ -232,6 +275,9 @@ public class IMPView: MTKView {
         autoResizeDrawable = false
         #if os(iOS)
             contentMode = .scaleAspectFit
+        #elseif os(OSX)
+            postsFrameChangedNotifications = true
+            //addObserver(self, forKeyPath: NSViewFrameDidChange.name, options: [.new], context: nil)
         #endif
         enableSetNeedsDisplay = false
         isPaused = false
@@ -317,10 +363,6 @@ extension IMPView: MTKViewDelegate {
         
         context.runOperation(.async) { [unowned self] in
             self.refresh(rect: view.bounds)
-            //
-            // https://forums.developer.apple.com/thread/64889
-            //
-            self.draw()
         }
     }
 }
