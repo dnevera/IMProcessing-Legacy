@@ -152,16 +152,12 @@ public class IMPView: MTKView {
     public override var drawableSize: CGSize {
         didSet{
             viewPort = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
-            NSLog("view port = \(viewPort)")
         }
     }
     
     func refresh(rect: CGRect){
         
-        NSLog("refresh source= \(filter?.source?.size) drawableSize = \(drawableSize)")
-        
         context.wait()
-        
         
         guard let drawable = self.currentDrawable else {
             context.resume()

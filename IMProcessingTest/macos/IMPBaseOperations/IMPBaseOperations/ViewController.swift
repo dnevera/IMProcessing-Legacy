@@ -13,9 +13,16 @@ public class TestFilter: IMPFilter {
     
     lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     
-    public var blurRadius:Float = 100 {
+    public var blurRadius:Float = 0 {
         didSet{
             blurFilter.radius = blurRadius
+        }
+    }
+    
+    public var ciBlurRadius:Float = 0 {
+        didSet{
+            ciBlurFilter.setValue(NSNumber(value:ciBlurRadius), forKey: "inputRadius")
+            dirty = true
         }
     }
     
@@ -71,10 +78,12 @@ public class TestFilter: IMPFilter {
         add(function: kernelRed)
         add(function: kernelEV)
         add(filter: exposureFilter)
-        add(filter:blurFilter)
+        add(filter: blurFilter)
+        add(filter: ciBlurFilter)
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
+    private lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
 }
 
 
@@ -114,14 +123,26 @@ class ViewController: NSViewController {
             make.width.equalTo(200)
         }
         
+        let ciBlurSlider = NSSlider(value: 0, minValue: 0, maxValue: 32, target: self, action: #selector(sliderHandler(sender:)))
+        ciBlurSlider.floatValue = 0
+        ciBlurSlider.tag = 101
+        
+        view.addSubview(ciBlurSlider)
+        
+        ciBlurSlider.snp.makeConstraints { (make) in
+            make.left.equalTo(blurSlider.snp.right).offset(20)
+            make.bottom.equalTo(ciBlurSlider.superview!.snp.bottom).offset(-20)
+            make.width.equalTo(200)
+        }
+
         let evSlider = NSSlider(value: 0, minValue: -3, maxValue: 3, target: self, action: #selector(sliderHandler(sender:)))
         evSlider.floatValue = 0
-        evSlider.tag = 101
+        evSlider.tag = 102
         
         view.addSubview(evSlider)
         
         evSlider.snp.makeConstraints { (make) in
-            make.left.equalTo(blurSlider.snp.right).offset(20)
+            make.left.equalTo(ciBlurSlider.snp.right).offset(20)
             make.bottom.equalTo(evSlider.superview!.snp.bottom).offset(-20)
             make.width.equalTo(200)
         }
@@ -139,16 +160,17 @@ class ViewController: NSViewController {
     }
 
     func sliderHandler(sender:NSSlider)  {
-        filter.context.runOperation(.async) { 
+        filter.context.runOperation(.async) {
             switch sender.tag {
             case 100:
                 self.filter.blurRadius = sender.floatValue
             case 101:
+                self.filter.ciBlurRadius = sender.floatValue
+            case 102:
                 self.filter.inputEV = sender.floatValue
             default:
                 break
             }
-            print("sender = \(sender.tag, sender.floatValue)")            
         }
     }
     
