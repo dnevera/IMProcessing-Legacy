@@ -22,7 +22,10 @@
 #include "IMPBlending_metal.h"
 #include "IMPGeometry_metal.h"
 
+#include "IMPDerivatives_metal.h"
+
 #include "IMPGaussianBlur_metal.h"
+
 
 //#include "IMPHistogram_metal.h"
 //#include "IMPHistogramLayer_metal.h"

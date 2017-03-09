@@ -48,6 +48,10 @@ extern "C" {
         float bottom;
     } IMPRegion;
     
+    typedef struct {
+        float2 point[3][3];
+    } IMPGradientCoords;
+    
     typedef enum : uint {
         LUMINOSITY = 0,
         NORMAL

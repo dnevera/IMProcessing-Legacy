@@ -45,10 +45,11 @@ public class TestFilter: IMPFilter {
 
     lazy var impBlurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     
-    public var blurRadius:Float = 1 {
+    public var blurRadius:Float = 0 {
         didSet{
-            impBlurFilter.radius = blurRadius
-            mpsBlurFilter.radius = blurRadius
+            //impBlurFilter.radius = blurRadius
+            //mpsBlurFilter.radius = blurRadius
+            harrisCornerDetector.threshold = blurRadius
         }
     }
     
@@ -75,14 +76,26 @@ public class TestFilter: IMPFilter {
         return f
     }()
     
-    override public func configure(_ withName: String?) {
-        super.configure("Test filter")
-        add(function: kernelEV)
+    override public func configure() {
+        extendName(suffix: "Test filter")
+        super.configure()
+        //add(function: kernelEV)
         //add(filter: exposureFilter)
-        add(filter: impBlurFilter)
+        //add(filter: impBlurFilter)
         //add(mps: mpsBlurFilter)
+        //add(filter: xyderivative)
+        //add(filter: nonMaximumSup)
+        //add(filter: harrisCornerDetector)
+        
+        addObserver(newSource: { (source) in
+            self.harrisCornerDetector.source = source
+            _ = self.harrisCornerDetector.process(with: NSSize(width: 400, height: 400))
+        })
     }
-    
+
+    //private lazy var xyderivative:IMPDerivative = IMPXYDerivative(context: self.context)
+    //private lazy var nonMaximumSup:IMPDerivative = IMPNonMaximumSuppression(context: self.context)
+    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context)
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
 }
 
@@ -93,7 +106,7 @@ class ViewController: UIViewController {
         super.viewDidAppear(animated)
     }
     
-    let context = IMPContext(lazy: true)
+    let context = IMPContext(lazy: false)
     
     lazy var containerView:UIView = {
         let y = (self.navigationController?.navigationBar.bounds.height)! + UIApplication.shared.statusBarFrame.height

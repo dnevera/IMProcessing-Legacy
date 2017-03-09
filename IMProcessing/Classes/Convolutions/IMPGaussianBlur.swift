@@ -49,8 +49,11 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
     }
     
-    public override func configure(_ withName: String?) {
-        self.name = "IMPGaussianBlurFilter"
+    public override func configure() {
+        
+        super.configure()
+        
+        extendName(suffix: "GaussianBlur")
         adjustment = IMPGaussianBlurFilter.defaultAdjustment
         radius = 0
         

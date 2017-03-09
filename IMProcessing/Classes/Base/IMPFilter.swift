@@ -25,9 +25,11 @@ public protocol IMPFilterProtocol:IMPContextProvider {
     var  enabled:          Bool              {get set}
     var  dirty:            Bool              {get set}
     
-    func apply(_ destination: IMPImageProvider, with destinationSize:NSSize?)
+    func apply(_ result: IMPImageProvider, with destinationSize:NSSize?)
     
     init(context:IMPContext, name: String?)
+    
+    func configure()
 }
 
 
@@ -80,7 +82,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         self.context = context
         self.name = name
         defer {
-            configure(name)
+            configure()
         }
     }
     
@@ -106,9 +108,16 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         return coreImageFilterList
     }
     
-    open func configure(_ withName: String?){
-        name = withName
+    public func extendName(suffix:String) {
+        name = {
+            if name == nil {
+                return self.context.uid + ":" + suffix
+            }
+            return self.name! + ":" + suffix
+        }()
     }
+    
+    open func configure(){}
     
     public func flush(){
         source?.image = nil
@@ -121,6 +130,10 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 f.flush()
             }
         }
+    }
+    
+    public func process(with resampleSize:NSSize? = nil){
+        apply(_destination, with: resampleSize)
     }
     
     open func apply(_ result: IMPImageProvider, with destinationSize:NSSize? = nil) {
@@ -157,6 +170,9 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 self.apply(to: &result.texture, commandBuffer: commandBuffer)
             }
             
+            dirty = false
+
+            //print(" filter \(name) \(destinationObservers)")
             executeDestinationObservers(destination: result)
 
             return
@@ -274,6 +290,8 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 filter.apply(to: &filter._destination.texture, commandBuffer: commandBuffer)
                 
                 currentResult = filter._destination.texture!
+                
+                filter.executeDestinationObservers(destination: filter._destination)
             }
             
             if let comlete = c.complete {
@@ -300,6 +318,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     }
     public func addObserver(destinationUpdated observer:@escaping UpdateHandler){
         destinationObservers.append(observer)
+        //print(" filter \(name) \(destinationObservers)")
     }
     public func addObserver(dirty observer:@escaping FilterHandler){
         root?.dirtyObservers.append(observer)
@@ -712,6 +731,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     }
     
     internal func executeDestinationObservers(destination:IMPImageProvider?){
+        //(" filter \(name) \(destinationObservers)")
         if observersEnabled {
             if let d = destination {
                 for o in destinationObservers {
@@ -821,10 +841,10 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         return (index,true)
     }
 
-    lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context, name: "IMPFilterBaseResamplerKernel")
-    lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: "IMPFilterBaseResamplerShader")
+    private lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context, name: "IMPFilterBaseResamplerKernel")
+    private lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: "IMPFilterBaseResamplerShader")
     
-    lazy var resampler:IMPCIFilter = {
+    private lazy var resampler:IMPCIFilter = {
         let v = self.prefersRendering ?
             IMPCoreImageMTLShader.register(shader: self.resampleShader)  :
             IMPCoreImageMTLKernel.register(function: self.resampleKernel)
