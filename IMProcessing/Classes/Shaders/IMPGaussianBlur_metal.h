@@ -109,7 +109,7 @@ namespace IMProcessing
         if (adjustment.blending.mode == 0)
             inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
         else // only two modes yet
-            inColor = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
+            inColor = IMProcessing::blendNormal(inColor, float4(rgb, adjustment.blending.opacity));
         
         return  inColor;
     }

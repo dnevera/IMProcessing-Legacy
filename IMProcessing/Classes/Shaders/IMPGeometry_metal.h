@@ -76,8 +76,7 @@ namespace IMProcessing
         float3 position = float3(in.position);
         
         IMPVertexOut out;
-        out.position =    homography_model * float4(position,1);
-        
+        out.position =    homography_model * float4(position,1);        
         out.texcoord = float2(float3(in.texcoord).xy);
         
         return out;

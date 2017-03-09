@@ -9,9 +9,9 @@
 import Metal
 import CoreImage
 
-class IMPCoreImageMTLKernel: IMPCIFilter{
+public class IMPCoreImageMTLKernel: IMPCIFilter{
     
-    override var destinationSize: NSSize? {
+    override public var destinationSize: NSSize? {
         set{
             function?.destinationSize = newValue
         }
@@ -50,7 +50,7 @@ class IMPCoreImageMTLKernel: IMPCIFilter{
         }
     }
     
-    override func isEqual(_ object: Any?) -> Bool {
+    override public func isEqual(_ object: Any?) -> Bool {
         return self.function?.name == (object as? IMPCoreImageMTLKernel)?.function?.name
     }
         
@@ -86,7 +86,7 @@ class IMPCoreImageMTLKernel: IMPCIFilter{
         return nil
     }
         
-    override func textureProcessor(_ commandBuffer: MTLCommandBuffer,
+    override public func textureProcessor(_ commandBuffer: MTLCommandBuffer,
                                    _ threadgroups: MTLSize,
                                    _ threadsPerThreadgroup: MTLSize,
                                    _ source: IMPImageProvider,

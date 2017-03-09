@@ -97,7 +97,9 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     func makePipeline() -> MTLRenderPipelineState? {
         do {
             
-            renderPipelineDescription.vertexDescriptor = vertexDescriptor
+            if let vertexDescriptor = self.vertexDescriptor {
+                renderPipelineDescription.vertexDescriptor = vertexDescriptor
+            }
             renderPipelineDescription.colorAttachments[0].pixelFormat = pixelFormat
             renderPipelineDescription.vertexFunction   = library.makeFunction(name: vertexName)
             renderPipelineDescription.fragmentFunction = library.makeFunction(name: fragmentName)
@@ -154,9 +156,9 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         return lhs.name == rhs.name
     }
     
-    lazy var _library:MTLLibrary = self.context.defaultLibrary
+    private lazy var _library:MTLLibrary = self.context.defaultLibrary
         
-    lazy var _vertexDescriptor:MTLVertexDescriptor = {
+    private lazy var _vertexDescriptor:MTLVertexDescriptor = {
         var v = MTLVertexDescriptor()
         v.attributes[0].format = .float3
         v.attributes[0].bufferIndex = 0
@@ -169,11 +171,11 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         return v
     }()
 
-    public var vertexDescriptor:MTLVertexDescriptor {
+    public var vertexDescriptor:MTLVertexDescriptor? {
         return _vertexDescriptor
     }
     
-    lazy var renderPassDescriptor:MTLRenderPassDescriptor = {
+    private lazy var renderPassDescriptor:MTLRenderPassDescriptor = {
         let r = MTLRenderPassDescriptor()
         r.colorAttachments[0].loadAction  = .clear
         r.colorAttachments[0].clearColor  = self.clearColor
@@ -182,5 +184,5 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     }()
 
     private lazy var _name:String = self.vertexName + ":" + self.fragmentName
-    var _verticesBuffer: MTLBuffer!
+    private var _verticesBuffer: MTLBuffer!
 }

@@ -9,9 +9,9 @@
 import Metal
 import CoreImage
 
-class IMPCoreImageMTLShader: IMPCIFilter{
+public class IMPCoreImageMTLShader: IMPCIFilter{
     
-    override var destinationSize: NSSize? {
+    override public var destinationSize: NSSize? {
         set{
             shader?.destinationSize = newValue
         }
@@ -23,12 +23,12 @@ class IMPCoreImageMTLShader: IMPCIFilter{
     static var registeredShaderList:[IMPShader] = [IMPShader]()
     static var registeredFilterList:[String:IMPCoreImageMTLShader] = [String:IMPCoreImageMTLShader]()
     
-    static func register(shader:IMPShader) -> IMPCoreImageMTLShader {
+    static func register(shader:IMPShader, filter: IMPCoreImageMTLShader? = nil) -> IMPCoreImageMTLShader {
         if let filter = registeredFilterList[shader.name] {
             return filter
         }
         else {
-            let filter = IMPCoreImageMTLShader()
+            let filter = filter ?? IMPCoreImageMTLShader()
             if #available(iOS 10.0, *) {
                 filter.name = shader.name
             } else {
@@ -42,7 +42,7 @@ class IMPCoreImageMTLShader: IMPCIFilter{
         }
     }
     
-    override func isEqual(_ object: Any?) -> Bool {
+    override public func isEqual(_ object: Any?) -> Bool {
         return self.shader?.name == (object as? IMPCoreImageMTLShader)?.shader?.name
     }
     
@@ -61,12 +61,12 @@ class IMPCoreImageMTLShader: IMPCIFilter{
         }
     }
     
-    override func textureProcessor(_ commandBuffer: MTLCommandBuffer,
+    override public func textureProcessor(_ commandBuffer: MTLCommandBuffer,
                                    _ threadgroups: MTLSize,
                                    _ threadsPerThreadgroup: MTLSize,
                                    _ source: IMPImageProvider,
                                    _ destination: IMPImageProvider) {
-                 
+                
         if let sourceTexture = source.texture,
             let shader   = self.shader,
             let vertices = shader.vertices,

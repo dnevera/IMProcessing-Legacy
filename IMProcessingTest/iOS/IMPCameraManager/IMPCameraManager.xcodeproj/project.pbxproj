@@ -52,6 +52,7 @@
 		313961601E7163C700761F02 /* IMPNonMaximumSuppression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139615F1E7163C700761F02 /* IMPNonMaximumSuppression.swift */; };
 		313961621E7165C600761F02 /* IMPHarrisCorner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961611E7165C600761F02 /* IMPHarrisCorner.swift */; };
 		313961641E71678000761F02 /* IMPHarrisCornerDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961631E71678000761F02 /* IMPHarrisCornerDetector.swift */; };
+		313961671E71991700761F02 /* IMPCrosshairGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961661E71991700761F02 /* IMPCrosshairGenerator.swift */; };
 		3161D1971E58517C00273F0D /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3161D1961E58517C00273F0D /* AppDelegate.swift */; };
 		3161D1991E58517C00273F0D /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3161D1981E58517C00273F0D /* ViewController.swift */; };
 		3161D19C1E58517C00273F0D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3161D19A1E58517C00273F0D /* Main.storyboard */; };
@@ -112,7 +113,7 @@
 		311E0B991E7141F100780B7A /* IMPConstants_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPConstants_metal.h; sourceTree = "<group>"; };
 		311E0B9A1E7141F100780B7A /* IMPFlowControl_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPFlowControl_metal.h; sourceTree = "<group>"; };
 		311E0B9B1E7141F100780B7A /* IMPGaussianBlur_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPGaussianBlur_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
-		311E0B9C1E7141F100780B7A /* IMPGeometry_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPGeometry_metal.h; sourceTree = "<group>"; };
+		311E0B9C1E7141F100780B7A /* IMPGeometry_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPGeometry_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
 		311E0B9D1E7141F100780B7A /* IMProcessing_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMProcessing_metal.h; sourceTree = "<group>"; };
 		311E0B9E1E7141F100780B7A /* IMProcessingUI_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMProcessingUI_metal.h; sourceTree = "<group>"; };
 		311E0B9F1E7141F100780B7A /* IMPStdlib_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPStdlib_metal.h; sourceTree = "<group>"; };
@@ -126,6 +127,8 @@
 		3139615F1E7163C700761F02 /* IMPNonMaximumSuppression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPNonMaximumSuppression.swift; sourceTree = "<group>"; };
 		313961611E7165C600761F02 /* IMPHarrisCorner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHarrisCorner.swift; sourceTree = "<group>"; };
 		313961631E71678000761F02 /* IMPHarrisCornerDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHarrisCornerDetector.swift; sourceTree = "<group>"; };
+		313961661E71991700761F02 /* IMPCrosshairGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPCrosshairGenerator.swift; path = Generators/IMPCrosshairGenerator.swift; sourceTree = "<group>"; };
+		313961681E719A1300761F02 /* IMPCrosshair_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPCrosshair_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
 		3161D1931E58517C00273F0D /* IMPCameraManager.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPCameraManager.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3161D1961E58517C00273F0D /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		3161D1981E58517C00273F0D /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -162,6 +165,7 @@
 				311E0B841E7141F100780B7A /* FrontEnd */,
 				311E0B881E7141F100780B7A /* Math */,
 				311E0B8A1E7141F100780B7A /* Operations */,
+				313961651E7198D000761F02 /* Generators */,
 				311E0B8C1E7141F100780B7A /* Providers */,
 				311E0B951E7141F100780B7A /* Shaders */,
 				311E0BA21E7141F100780B7A /* Utils */,
@@ -331,6 +335,7 @@
 				311E0B9B1E7141F100780B7A /* IMPGaussianBlur_metal.h */,
 				311E0BCE1E7147A400780B7A /* IMPDerivatives_metal.h */,
 				311E0B9C1E7141F100780B7A /* IMPGeometry_metal.h */,
+				313961681E719A1300761F02 /* IMPCrosshair_metal.h */,
 				311E0B9D1E7141F100780B7A /* IMProcessing_metal.h */,
 				311E0B9E1E7141F100780B7A /* IMProcessingUI_metal.h */,
 				311E0B9F1E7141F100780B7A /* IMPStdlib_metal.h */,
@@ -348,6 +353,14 @@
 				311E0BA51E7141F100780B7A /* IMPQueue.swift */,
 			);
 			path = Utils;
+			sourceTree = "<group>";
+		};
+		313961651E7198D000761F02 /* Generators */ = {
+			isa = PBXGroup;
+			children = (
+				313961661E71991700761F02 /* IMPCrosshairGenerator.swift */,
+			);
+			name = Generators;
 			sourceTree = "<group>";
 		};
 		3161D18A1E58517C00273F0D = {
@@ -552,6 +565,7 @@
 				311E0BCA1E7141F100780B7A /* IMPTextureProvider.swift in Sources */,
 				311E0BC31E7141F100780B7A /* IMPDerivative.swift in Sources */,
 				311E0BC11E7141F100780B7A /* IMPView.swift in Sources */,
+				313961671E71991700761F02 /* IMPCrosshairGenerator.swift in Sources */,
 				311E0BB41E7141F100780B7A /* IMPRgbHsv.swift in Sources */,
 				311E0BB61E7141F100780B7A /* IMPSimd.swift in Sources */,
 				311E0BAC1E7141F100780B7A /* IMPShader.swift in Sources */,

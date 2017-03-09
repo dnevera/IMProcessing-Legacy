@@ -25,6 +25,7 @@
 #include "IMPDerivatives_metal.h"
 
 #include "IMPGaussianBlur_metal.h"
+#include "IMPCrosshair_metal.h"
 
 
 //#include "IMPHistogram_metal.h"

@@ -31,8 +31,7 @@ vertex VertexOut vertex_passview(
     
     float3 position = float3(float2(v.position) , 0.0);
     
-    out.position = float4(position, 1.0);
-    
+    out.position = float4(position, 1.0);    
     out.texcoord = float2(v.texcoord);
     
     return out;

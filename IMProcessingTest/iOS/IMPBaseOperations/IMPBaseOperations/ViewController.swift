@@ -21,9 +21,11 @@ public class TestFilter: IMPFilter {
 
     lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
 
-    public var blurRadius:Float = 1 {
+    public var blurRadius:Float = 0.2 {
         didSet{
             blurFilter.radius = blurRadius
+            harrisCornerDetector.blurRadius = blurRadius
+            dirty = true
         }
     }
     
@@ -31,6 +33,7 @@ public class TestFilter: IMPFilter {
         didSet{
             print("exposure MTL EV = \(inputEV)")
             print("exposure CI EV = \(ci_inputEV)")
+            harrisCornerDetector.sensitivity = inputEV
             dirty = true
         }
     }
@@ -40,6 +43,7 @@ public class TestFilter: IMPFilter {
             exposureFilter.setValue(ci_inputEV, forKey: "inputEV")
             print("exposure MTL EV = \(inputEV)")
             print("exposure CI EV = \(ci_inputEV)")
+            harrisCornerDetector.threshold = ci_inputEV
             dirty = true
         }
     }
@@ -74,14 +78,30 @@ public class TestFilter: IMPFilter {
         return f
     }()
     
-    override public func configure(_ withName: String?) {
-        super.configure("Test filter")
-        add(function: kernelRed)
-        add(function: kernelEV)
-        add(filter: exposureFilter)
-        add(filter:blurFilter)
+    override public func configure() {
+        extendName(suffix: "Test filter")
+        //add(function: kernelRed)
+        //add(function: kernelEV)
+        //add(filter: exposureFilter)
+        //add(filter:blurFilter)
+
+//        add(filter:harrisCornerDetector)
+        
+        add(filter: crosshairGenerator)
+        
+        harrisCornerDetector.addObserver { (corners:[float3]) in
+            self.crosshairGenerator.points = corners
+        }
+        
+        addObserver(newSource: { (source) in
+            self.harrisCornerDetector.source = source
+            self.harrisCornerDetector.process(with: NSSize(width: 400, height: 400))
+        })
     }
     
+    private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
+    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext(lazy: false))
+
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
 }
 
@@ -95,8 +115,9 @@ public class DownScaleFilter: IMPFilter {
         }
     }
     
-    public override func configure(_ withName: String?) {
-        super.configure("Downscale input filter")
+    public override func configure() {
+        extendName(suffix: "Downscale input filter")
+        super.configure()
         lancoz.setValue(1, forKey: kCIInputScaleKey)
         add(filter: lancoz)
     }
@@ -220,19 +241,19 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
 
     func blurHandler(slider:UISlider)  {
         testFilter.context.runOperation(.async) {
-            self.testFilter.blurRadius = slider.value * 200
+            self.testFilter.blurRadius = slider.value * 5
         }
     }
 
     func evHandler(slider:UISlider)  {
         testFilter.context.runOperation(.async) {
-            self.testFilter.inputEV = slider.value * 2
+            self.testFilter.inputEV = slider.value * 5
         }
     }
     
     func ci_evHandler(slider:UISlider)  {
         testFilter.context.runOperation(.async) {
-            self.testFilter.ci_inputEV = slider.value * 2
+            self.testFilter.ci_inputEV = slider.value * 1
         }
     }
 

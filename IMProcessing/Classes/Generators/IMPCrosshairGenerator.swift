@@ -1,0 +1,151 @@
+//
+//  IMPCrosshairGenerator.swift
+//  IMPCameraManager
+//
+//  Created by Denis Svinarchuk on 09/03/2017.
+//  Copyright © 2017 Dehancer. All rights reserved.
+//
+
+import Foundation
+import Metal
+
+public class IMPDrawPointsShader: IMPShader {
+    
+    public var points = [float3]() {
+        didSet{            
+            _pointsBuffer = context.device.makeBuffer(bytes: points, length: points.count * MemoryLayout<float3>.size, options: [])
+        }
+    }
+    
+    lazy var _vertexDescriptor:MTLVertexDescriptor = {
+        var v = MTLVertexDescriptor()
+        v.attributes[0].format = .float3
+        v.attributes[0].bufferIndex = 0
+        v.attributes[0].offset = 0
+        v.layouts[0].stride = MemoryLayout<float3>.size
+        return v
+    }()
+    
+    override public var vertexDescriptor: MTLVertexDescriptor? {
+        return _vertexDescriptor
+    }
+    
+    public var pointsBuffer:MTLBuffer {
+        return _pointsBuffer
+    }
+    
+    private lazy var _pointsBuffer: MTLBuffer = self.context.device.makeBuffer(bytes: self.points,
+                                                                          length: self.points.count * MemoryLayout<float3>.size,
+                                                                          options: [])
+}
+
+class IMPDrawPointsCoreMTLShader: IMPCoreImageMTLShader {
+    override public func textureProcessor(_ commandBuffer: MTLCommandBuffer,
+                                          _ threadgroups: MTLSize,
+                                          _ threadsPerThreadgroup: MTLSize,
+                                          _ source: IMPImageProvider,
+                                          _ destination: IMPImageProvider) {
+        
+        if let sourceTexture = source.texture,
+            let shader   = self.shader as? IMPDrawPointsShader,
+            let destinationTexture = destination.texture
+        {
+            let points = shader.points
+            
+            let renderEncoder = shader.commandEncoder(from: commandBuffer, width: destinationTexture)
+            
+            renderEncoder.setVertexBuffer(shader.pointsBuffer, offset: 0, at: 0)
+            renderEncoder.setFragmentTexture(sourceTexture, at:0)
+            
+            if let handler = shader.optionsHandler {
+                handler(shader, renderEncoder, sourceTexture, destinationTexture)
+            }
+            
+            renderEncoder.drawPrimitives(type: .point,
+                                         vertexStart: 0,
+                                         vertexCount: points.count,
+                                         instanceCount: 1)
+            renderEncoder.endEncoding()
+        }
+    }
+}
+
+
+public class IMPCrosshairGenerator: IMPFilter {
+    
+    public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
+    
+    public var adjustment:IMPAdjustment!{
+        didSet{
+            adjustmentBuffer = adjustmentBuffer ?? context.device.makeBuffer(length: MemoryLayout.size(ofValue: adjustment), options: [])
+            memcpy(adjustmentBuffer.contents(), &adjustment, adjustmentBuffer.length)
+        }
+    }
+    
+    var adjustmentBuffer:MTLBuffer!
+    
+    public var points:[float3] {
+        set{
+            pointsShader.points = newValue
+            dirty = true
+        }
+        get{ return pointsShader.points }
+    }
+    
+    static var defaultWidth:Float = 15
+    static var defaultColor:float4 = float4(0,1,0,0.5)
+    
+    public var width:Float = IMPCrosshairGenerator.defaultWidth {
+        didSet{
+            memcpy(widthBuffer.contents(), &width, widthBuffer.length)
+            dirty = true
+        }
+    }
+    
+    public var color:float4 = IMPCrosshairGenerator.defaultColor {
+        didSet{
+            memcpy(colorBuffer.contents(), &color, colorBuffer.length)
+            dirty = true
+        }
+    }
+
+    public override func configure() {
+        extendName(suffix: "CrosshairGenerator")
+        shader.processor = shader.textureProcessor
+        add(filter: shader)
+        add(shader: blendShader)
+        width = IMPCrosshairGenerator.defaultWidth
+        color = IMPCrosshairGenerator.defaultColor
+        adjustment = IMPCrosshairGenerator.defaultAdjustment
+    }
+    
+    private lazy var pointsShader:IMPDrawPointsShader =  {
+        let s = IMPDrawPointsShader(context: self.context,
+                                    vertexName: "vertex_crosshair",
+                                    fragmentName: "fragment_crosshair",
+                                    name: "IMPFilterBasePointsShader")
+        s.optionsHandler = { (shader, commandEncoder, input, output) in
+            commandEncoder.setVertexBuffer(self.widthBuffer, offset: 0, at: 1)
+            commandEncoder.setFragmentBuffer(self.colorBuffer, offset: 0, at: 0)
+        }
+        return s
+    }()
+    
+    lazy var blendShader:IMPShader   = {
+        let s = IMPShader(context: self.context,
+                          fragmentName: "fragment_blendCrosshairSource")
+        s.optionsHandler = { (shader,commandEncoder, input, output) in
+            commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, at: 0)
+            commandEncoder.setFragmentTexture((self.source?.texture)!, at:1)
+        }
+        return s
+    }()
+    
+    private lazy var shader:IMPCIFilter = {
+        return IMPDrawPointsCoreMTLShader.register(shader: self.pointsShader, filter: IMPDrawPointsCoreMTLShader())
+    }()
+
+    private lazy var widthBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.width), options: [])
+    private lazy var colorBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.color), options: [])
+
+}

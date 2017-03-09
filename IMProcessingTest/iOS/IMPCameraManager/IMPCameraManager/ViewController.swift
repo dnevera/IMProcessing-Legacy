@@ -49,7 +49,7 @@ public class TestFilter: IMPFilter {
         didSet{
             //impBlurFilter.radius = blurRadius
             //mpsBlurFilter.radius = blurRadius
-            harrisCornerDetector.threshold = blurRadius
+            harrisCornerDetector.blurRadius = blurRadius
         }
     }
     
@@ -79,6 +79,7 @@ public class TestFilter: IMPFilter {
     override public func configure() {
         extendName(suffix: "Test filter")
         super.configure()
+        
         //add(function: kernelEV)
         //add(filter: exposureFilter)
         //add(filter: impBlurFilter)
@@ -87,15 +88,22 @@ public class TestFilter: IMPFilter {
         //add(filter: nonMaximumSup)
         //add(filter: harrisCornerDetector)
         
+        add(filter: crosshairGenerator)
+        
+        harrisCornerDetector.addObserver { (corners:[float3]) in
+            self.crosshairGenerator.points = corners
+        }
+        
         addObserver(newSource: { (source) in
-            self.harrisCornerDetector.source = source
-            _ = self.harrisCornerDetector.process(with: NSSize(width: 400, height: 400))
+            self.context.runOperation(.sync, {
+                self.harrisCornerDetector.source = source
+                self.harrisCornerDetector.process()
+            })
         })
     }
 
-    //private lazy var xyderivative:IMPDerivative = IMPXYDerivative(context: self.context)
-    //private lazy var nonMaximumSup:IMPDerivative = IMPNonMaximumSuppression(context: self.context)
-    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context)
+    private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
+    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext(lazy: false))
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
 }
 

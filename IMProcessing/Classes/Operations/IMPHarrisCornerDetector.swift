@@ -27,6 +27,8 @@ import Accelerate
  */
 public class IMPHarrisCornerDetector: IMPFilter{
     
+    public typealias PointsListObserver = ((_ corners: [float3]) -> Void)
+    
     public static let defaultBlurRadius:Float = 2.0
     
     public var blurRadius:Float {
@@ -57,6 +59,10 @@ public class IMPHarrisCornerDetector: IMPFilter{
         
         super.configure()
         
+        resampler.destinationSize = NSSize(width: 400, height: 400)
+
+        add(filter: resampler)
+        
         add(filter: xyDerivative)
         add(filter: blurFilter)
         add(filter: harrisCorner)
@@ -81,10 +87,10 @@ public class IMPHarrisCornerDetector: IMPFilter{
                 destination.texture?.makeTextureView(pixelFormat: .rgba8Uint) :
                 destination.texture
         {
-            let imageByteSize = Int(size.width * size.height * 4)
-            let rawPixels = UnsafeMutablePointer<UInt8>.allocate(capacity:imageByteSize)
             let bytesPerRow = Int(size.width * 4)
             let bytesPerImage = Int(size.height)*bytesPerRow
+            let imageByteSize = bytesPerRow * Int(size.height)
+            let rawPixels = UnsafeMutablePointer<UInt8>.allocate(capacity:imageByteSize)
             
             texture.getBytes(rawPixels,
                              bytesPerRow: bytesPerRow,
@@ -94,24 +100,43 @@ public class IMPHarrisCornerDetector: IMPFilter{
             
             var corners = [float3]()
             
-            var currentByte = 0
-            while (currentByte < imageByteSize) {
-                let colorByte = rawPixels[currentByte]
+            //var currentByte = 0
+            
+            for x in stride(from: 0, to: bytesPerRow, by: 4){
+                for y in stride(from: 0, to: Int(size.height), by: 1){
+            //while (currentByte < imageByteSize) {
+                let colorByte = rawPixels[y*bytesPerRow+x]
                 
                 if (colorByte > 0) {
-                    let xCoordinate = currentByte % bytesPerRow
-                    let yCoordinate = currentByte / bytesPerRow
+                    //let xCoordinate = Float(currentByte % bytesPerRow)
+                    //let yCoordinate = Float(currentByte / bytesPerRow)
+                    let xCoordinate = Float(x/4) / Float(size.width)
+                    let yCoordinate = 1 - Float(y) / Float(size.height)
                     
-                    let point = float3(((Float(xCoordinate) / 4.0) / Float(size.width)), Float(yCoordinate) / Float(size.height), Float(colorByte/255))
-                    corners.append(point)
+                    //corners.append(float3( xCoordinate / 4.0 / Float(size.width), yCoordinate / Float(size.height), 0))
+                    corners.append(float3( xCoordinate , yCoordinate  , 0))
                 }
-                currentByte += 4
+                
+                //currentByte += 4
+                }
             }
             rawPixels.deallocate(capacity: imageByteSize)
             
-            print("corners = \(corners)")
+            for o in cornersObserverList {
+                o(corners)
+            }
         }
     }
     
-    //private lazy var cornersObserverList = (_ corners: [float2]() -> Void)
+    func addObserver(corners observer: @escaping PointsListObserver) {
+        cornersObserverList.append(observer)
+    }
+    
+    private lazy var cornersObserverList = [PointsListObserver]()
+    
+    private lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: "IMPFilterBaseResamplerShader")
+    
+    private lazy var resampler:IMPCIFilter = {
+        return IMPCoreImageMTLShader.register(shader: self.resampleShader)
+    }()
 }

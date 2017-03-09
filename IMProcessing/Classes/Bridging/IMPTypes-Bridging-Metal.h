@@ -37,7 +37,7 @@ extern "C" {
     typedef struct {
         float4 position [[position]];
         float2 texcoord;
-    } IMPVertexOut;    
+    } IMPVertexOut;
 
 #endif
     
