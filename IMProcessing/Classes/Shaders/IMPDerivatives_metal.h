@@ -65,7 +65,7 @@ public:
     float centerLuma(){
         return IMProcessing::lum(center);
     }
-    float rightLuma(){        
+    float rightLuma(){
         return IMProcessing::lum(right);
     }
     
@@ -140,7 +140,7 @@ fragment float4 fragment_nonMaximumSuppression(
 
 }
 
-fragment float4 fragment_sobelEdge(
+fragment float4 fragment_directionalSobelEdge(
                                       IMPVertexOut in [[stage_in]],
                                       texture2d<float, access::sample> texture [[ texture(0) ]],
                                       const device float &radius [[ buffer(0) ]]

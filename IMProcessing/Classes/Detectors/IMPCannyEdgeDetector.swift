@@ -9,20 +9,22 @@
 import Foundation
 import Metal
 
-public class IMPSobelEdgeDetector: IMPDerivative {
-    public required init(context: IMPContext, name: String?=nil) {
-        super.init(context:context, name:name, functionName:"fragment_sobelEdge")
-    }
-    
-    public required init(context: IMPContext, name: String?, functionName: String) {
-        fatalError("IMPSobelEdgeDetection:init(context:name:functionName:) has been already implemented")
-    }
-    
-    public override func configure() {
-        extendName(suffix: "SobelEdgeDetector")
-        super.configure()
-    }
-}
+/** This applies the edge detection process described by John Canny in
+ 
+ Canny, J., A Computational Approach To Edge Detection, IEEE Trans. Pattern Analysis and Machine Intelligence, 8(6):679–698, 1986.
+ 
+ and implemented in OpenGL ES by
+ 
+ A. Ensor, S. Hall. GPU-based Image Analysis on Mobile Devices. Proceedings of Image and Vision Computing New Zealand 2011.
+ 
+ It starts with a conversion to luminance, followed by an accelerated 9-hit Gaussian blur. A Sobel operator is applied to obtain the overall
+ gradient strength in the blurred image, as well as the direction (in texture sampling steps) of the gradient. A non-maximum suppression filter
+ acts along the direction of the gradient, highlighting strong edges that pass the threshold and completely removing those that fail the lower
+ threshold. Finally, pixels from in-between these thresholds are either included in edges or rejected based on neighboring pixels.
+ 
+ Sources:  https://github.com/BradLarson/GPUImage2
+
+ */
 
 public class IMPCannyEdgeDetector: IMPResampler{
     
@@ -66,9 +68,11 @@ public class IMPCannyEdgeDetector: IMPResampler{
         blurRadius = IMPCannyEdgeDetector.defaultBlurRadius
     }
     
-    private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     private lazy var luminance:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_luminance")
-    private lazy var sobelEdgeFilter:IMPSobelEdgeDetector = IMPSobelEdgeDetector(context: self.context)
+    
+    private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     private lazy var directionalNonMaximumSuppression:IMPDirectionalNonMaximumSuppression = IMPDirectionalNonMaximumSuppression(context: self.context)
+
+    private lazy var sobelEdgeFilter:IMPDerivative = IMPDerivative(context: self.context, functionName: "fragment_directionalSobelEdge")
     private lazy var weakPixelInclusion:IMPDerivative = IMPDerivative(context: self.context, functionName: "fragment_weakPixelInclusion")
 }

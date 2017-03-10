@@ -11,7 +11,7 @@ import Metal
 import Accelerate
 
 
-/* Harris corner detector
+/** Harris corner detector
  
  First pass: reduce to luminance and take the derivative of the luminance texture (GPUImageXYDerivativeFilter)
  
@@ -156,5 +156,5 @@ public class IMPHarrisCornerDetector: IMPResampler{
         cornersObserverList.append(observer)
     }
     
-    private lazy var cornersObserverList = [PointsListObserver]()    
+    private lazy var cornersObserverList = [PointsListObserver]()
 }
