@@ -19,17 +19,8 @@ public class IMPDrawPointsShader: IMPShader {
         }
     }
     
-//    lazy var _vertexDescriptor:MTLVertexDescriptor = {
-//        var v = MTLVertexDescriptor()
-//        v.attributes[0].format = .float3
-//        v.attributes[0].bufferIndex = 0
-//        v.attributes[0].offset = 0
-//        v.layouts[0].stride = MemoryLayout<float3>.size
-//        return v
-//    }()
-    
     override public var vertexDescriptor: MTLVertexDescriptor? {
-        return nil //_vertexDescriptor
+        return nil
     }
     
     public var pointsBuffer:MTLBuffer {
@@ -92,8 +83,8 @@ public class IMPCrosshairGenerator: IMPFilter {
         get{ return pointsShader.points }
     }
     
-    static var defaultWidth:Float = 20
-    static var defaultColor:float4 = float4(0,1,0,1)
+    static var defaultWidth:Float = 40
+    static var defaultColor:float4 = float4(0,1,0.3,1)
     
     public var width:Float = IMPCrosshairGenerator.defaultWidth {
         didSet{
