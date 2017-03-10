@@ -10,6 +10,7 @@
 		2C46FA4E6F180CB336946925 /* Pods_IMPCameraManager.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 832E7C664916882581B6B378 /* Pods_IMPCameraManager.framework */; };
 		311588CD1E7311EF0088D67D /* IMPHarrisCornerDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588CC1E7311EF0088D67D /* IMPHarrisCornerDetector.swift */; };
 		311588CF1E73120F0088D67D /* IMPCannyEdgeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588CE1E73120F0088D67D /* IMPCannyEdgeDetector.swift */; };
+		311588D21E7351980088D67D /* IMPResampler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588D11E7351980088D67D /* IMPResampler.swift */; };
 		311E0BA61E7141F100780B7A /* IMPPhotoPlate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E0B5E1E7141F100780B7A /* IMPPhotoPlate.swift */; };
 		311E0BA71E7141F100780B7A /* IMPQuad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E0B5F1E7141F100780B7A /* IMPQuad.swift */; };
 		311E0BA81E7141F100780B7A /* IMPTransformModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E0B601E7141F100780B7A /* IMPTransformModel.swift */; };
@@ -68,6 +69,7 @@
 		311588CC1E7311EF0088D67D /* IMPHarrisCornerDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPHarrisCornerDetector.swift; path = Detectors/IMPHarrisCornerDetector.swift; sourceTree = "<group>"; };
 		311588CE1E73120F0088D67D /* IMPCannyEdgeDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPCannyEdgeDetector.swift; path = Detectors/IMPCannyEdgeDetector.swift; sourceTree = "<group>"; };
 		311588D01E7312AA0088D67D /* IMPColorProcessing_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPColorProcessing_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
+		311588D11E7351980088D67D /* IMPResampler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPResampler.swift; sourceTree = "<group>"; };
 		311E0B5E1E7141F100780B7A /* IMPPhotoPlate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPhotoPlate.swift; sourceTree = "<group>"; };
 		311E0B5F1E7141F100780B7A /* IMPQuad.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPQuad.swift; sourceTree = "<group>"; };
 		311E0B601E7141F100780B7A /* IMPTransformModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTransformModel.swift; sourceTree = "<group>"; };
@@ -313,6 +315,7 @@
 		311E0B8A1E7141F100780B7A /* Operations */ = {
 			isa = PBXGroup;
 			children = (
+				311588D11E7351980088D67D /* IMPResampler.swift */,
 				311E0B8B1E7141F100780B7A /* IMPDerivative.swift */,
 				313961611E7165C600761F02 /* IMPHarrisCorner.swift */,
 				311E0BCF1E7154A200780B7A /* IMPXYDerivative.swift */,
@@ -561,6 +564,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				311588D21E7351980088D67D /* IMPResampler.swift in Sources */,
 				311E0BC61E7141F100780B7A /* IMPMTLDevice.swift in Sources */,
 				311E0BA61E7141F100780B7A /* IMPPhotoPlate.swift in Sources */,
 				311E0BA91E7141F100780B7A /* IMPVertices.swift in Sources */,

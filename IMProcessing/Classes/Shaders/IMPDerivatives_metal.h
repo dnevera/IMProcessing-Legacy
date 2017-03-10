@@ -35,6 +35,11 @@ public:
     float3 left;
     float3 center;
     float3 right;
+
+    float3 leftIntensity;
+    float3 centerIntensity;
+    float3 rightIntensity;
+
     
     METAL_FUNC LineColors() {}
     
@@ -49,18 +54,18 @@ public:
         left   = texture.sample(cornerSampler, texCoord + float2(-x,y)).rgb;
         center = texture.sample(cornerSampler, texCoord + float2( 0,y)).rgb;
         right  = texture.sample(cornerSampler, texCoord + float2( x,y)).rgb;
+        leftIntensity   = left.r;
+        rightIntensity  = right.r;
+        centerIntensity = center.r;
     }
     
     float leftLuma(){
-        //return left.r;
         return IMProcessing::lum(left);
     }
     float centerLuma(){
-        //return center.r;
         return IMProcessing::lum(center);
     }
-    float rightLuma(){
-        //return right.r;
+    float rightLuma(){        
         return IMProcessing::lum(right);
     }
     
@@ -183,7 +188,50 @@ fragment float4 fragment_harrisCorner(
     return float4(float3(cornerness * sensitivity), 1.0);
 }
 
+fragment float4 fragment_directionalNonMaximumSuppression(
+                                                          IMPVertexOut in [[stage_in]],
+                                                          texture2d<float, access::sample> texture    [[ texture(0)]],
+                                                          const device float               &radius    [[ buffer(0) ]],
+                                                          const device float               &upperThreshold [[ buffer(1) ]],
+                                                          const device float               &lowerThreshold [[ buffer(2) ]]
+                                                          ) {
+    
+    float3 gradient = texture.sample(cornerSampler, in.texcoord.xy).rgb;
+    
+    float2 texel(1/float(texture.get_width()), 1/float(texture.get_height()));
+    
+    float2 gradientDirection = ((gradient.gb * 2.0) - 1.0) * texel;
+    
+    float firstMagnitude  = texture.sample(cornerSampler, in.texcoord.xy + gradientDirection).r;
+    float secondMagnitude = texture.sample(cornerSampler, in.texcoord.xy - gradientDirection).r;
+    
+    float multiplier = step(firstMagnitude, gradient.r);
+    multiplier = multiplier * step(secondMagnitude, gradient.r);
+    
+    float thresholdCompliance = smoothstep(lowerThreshold, upperThreshold, gradient.r);
+    multiplier = multiplier * thresholdCompliance;
+    
+    return float4(multiplier, multiplier, multiplier, 1.0);
 
+}
+
+fragment float4 fragment_weakPixelInclusion(
+                                      IMPVertexOut in [[stage_in]],
+                                      texture2d<float, access::sample> texture [[ texture(0) ]],
+                                      const device float &radius [[ buffer(0) ]]
+                                      ) {
+    
+    CornerColors corner(texture,in.texcoord.xy,radius);
+    
+    float sum = corner.bottom.leftLuma() + corner.top.rightLuma() + corner.top.leftLuma() + \
+    corner.bottom.rightLuma() + corner.mid.leftLuma() + corner.mid.rightLuma() + corner.bottom.centerLuma() +\
+    corner.top.centerLuma() + corner.mid.centerLuma();
+    
+    float sumTest = step(1.5, sum);
+    float pixelTest = step(0.01, corner.mid.centerLuma());
+    
+    return float4(float3(sumTest * pixelTest), 1.0);
+}
 
 #endif // __cplusplus
 #endif //__METAL_VERSION__

@@ -25,30 +25,7 @@ import Accelerate
  Sources:  https://github.com/BradLarson/GPUImage2
  
  */
-public class IMPHarrisCornerDetector: IMPFilter{
-
-    public var maxSize:CGFloat = 200 {
-        didSet{
-            updateResampler()
-            dirty = true
-        }
-    }
-    
-    private func updateResampler(){
-        if let size = source?.size {
-            let scale = fmax(fmin(fmin(maxSize/size.width, maxSize/size.height),1),0.01)
-            let samplefSize = NSSize(width: size.width * scale, height: size.height * scale)
-            if resampler.destinationSize != samplefSize {
-                resampler.destinationSize = samplefSize
-            }
-        }
-    }
-    
-    public override var source: IMPImageProvider? {
-        didSet{
-            updateResampler()
-        }
-    }
+public class IMPHarrisCornerDetector: IMPResampler{
     
     public typealias PointsListObserver = ((_ corners: [float2]) -> Void)
     
@@ -91,8 +68,6 @@ public class IMPHarrisCornerDetector: IMPFilter{
         
         super.configure()
         
-        add(filter: resampler)
-        
         add(filter: xyDerivative)
         add(filter: blurFilter)
         add(filter: harrisCorner)
@@ -101,6 +76,7 @@ public class IMPHarrisCornerDetector: IMPFilter{
             self.readCorners(destination)
         }
         
+        maxSize = 200
         blurRadius = IMPHarrisCornerDetector.defaultBlurRadius
         sensitivity = IMPHarrisCorner.defaultSensitivity
         threshold = IMPNonMaximumSuppression.defaultThreshold
@@ -180,11 +156,5 @@ public class IMPHarrisCornerDetector: IMPFilter{
         cornersObserverList.append(observer)
     }
     
-    private lazy var cornersObserverList = [PointsListObserver]()
-    
-    private lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: "IMPFilterBaseResamplerShader")
-    
-    private lazy var resampler:IMPCIFilter = {
-        return IMPCoreImageMTLShader.register(shader: self.resampleShader)
-    }()
+    private lazy var cornersObserverList = [PointsListObserver]()    
 }

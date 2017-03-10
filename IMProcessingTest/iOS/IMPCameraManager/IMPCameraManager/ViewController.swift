@@ -82,14 +82,14 @@ public class TestFilter: IMPFilter {
         
         
         add(function: kernelEV)
-            
-        add(filter: canny)
-//        { (source) in
-//            self.context.runOperation(.async, {
-//                self.harrisCornerDetector.source = source
-//                self.harrisCornerDetector.process()
-//            })
-//        }
+        { (source) in
+            self.context.runOperation(.async, {
+                self.harrisCornerDetector.source = source
+                self.harrisCornerDetector.process()
+            })
+        }
+        
+        //add(filter: canny)
         
         //add(filter: exposureFilter)
         //add(filter: impBlurFilter)
@@ -99,11 +99,11 @@ public class TestFilter: IMPFilter {
 
         //add(filter: harrisCornerDetector)
 
-        //add(filter: crosshairGenerator)
-        //
-        //harrisCornerDetector.addObserver { (corners:[float2]) in
-        //    self.crosshairGenerator.points = corners
-        //}
+        add(filter: crosshairGenerator)
+        
+        harrisCornerDetector.addObserver { (corners:[float2]) in
+            self.crosshairGenerator.points = corners
+        }
 
     }
 

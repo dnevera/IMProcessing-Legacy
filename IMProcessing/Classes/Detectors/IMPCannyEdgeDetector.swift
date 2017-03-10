@@ -9,7 +9,7 @@
 import Foundation
 import Metal
 
-public class IMPSobelEdgeDetection: IMPDerivative {
+public class IMPSobelEdgeDetector: IMPDerivative {
     public required init(context: IMPContext, name: String?=nil) {
         super.init(context:context, name:name, functionName:"fragment_sobelEdge")
     }
@@ -19,22 +19,39 @@ public class IMPSobelEdgeDetection: IMPDerivative {
     }
     
     public override func configure() {
-        extendName(suffix: "XY")
+        extendName(suffix: "SobelEdgeDetector")
         super.configure()
     }
 }
 
-public class IMPCannyEdgeDetector: IMPFilter{
+public class IMPCannyEdgeDetector: IMPResampler{
     
     public static let defaultBlurRadius:Float = 2
     
     public var blurRadius:Float {
         set{
             blurFilter.radius = newValue
-            //dirty = true
+            dirty = true
         }
         get { return blurFilter.radius }
     }
+    
+    public var upperThreshold:Float {
+        set{
+            directionalNonMaximumSuppression.upperThreshold = newValue
+            dirty = true
+        }
+        get { return directionalNonMaximumSuppression.upperThreshold }
+    }
+    
+    public var lowerThreshold:Float {
+        set{
+            directionalNonMaximumSuppression.lowerThreshold = newValue
+            dirty = true
+        }
+        get { return directionalNonMaximumSuppression.lowerThreshold }
+    }
+
     
     public override func configure() {
         extendName(suffix: "CannyEdgeDetector")
@@ -42,12 +59,16 @@ public class IMPCannyEdgeDetector: IMPFilter{
         
         add(function: luminance)
         add(filter: blurFilter)
-        add(filter: sobleEdgeFilter)
+        add(filter: sobelEdgeFilter)
+        add(filter: directionalNonMaximumSuppression)
+        add(filter: weakPixelInclusion)
         
         blurRadius = IMPCannyEdgeDetector.defaultBlurRadius
     }
     
     private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     private lazy var luminance:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_luminance")
-    private lazy var sobleEdgeFilter:IMPSobelEdgeDetection = IMPSobelEdgeDetection(context: self.context)
+    private lazy var sobelEdgeFilter:IMPSobelEdgeDetector = IMPSobelEdgeDetector(context: self.context)
+    private lazy var directionalNonMaximumSuppression:IMPDirectionalNonMaximumSuppression = IMPDirectionalNonMaximumSuppression(context: self.context)
+    private lazy var weakPixelInclusion:IMPDerivative = IMPDerivative(context: self.context, functionName: "fragment_weakPixelInclusion")
 }
