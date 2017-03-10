@@ -112,22 +112,19 @@ public class IMPHarrisCornerDetector: IMPFilter{
     private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context, name: "HarrisCornerDetector:Corner")
     private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context, name: "HarrisCornerDetector:NonMaximum")
     
-    var rawPixels:[UInt8] = [UInt8]() //UnsafeMutablePointer<UInt8>?
+    var rawPixels:UnsafeMutablePointer<UInt8>? //[UInt8]() //UnsafeMutablePointer<UInt8>?
     var imageByteSize:Int = 0
 
     
     deinit {
-        //rawPixels?.deallocate(capacity: imageByteSize)
+        rawPixels?.deallocate(capacity: imageByteSize)
     }
     
     private var isReading = false
     
     private func readCorners(_ destination: IMPImageProvider) {
         
-        guard !isReading else {
-            NSLog(" .................... reading ")
-            return
-        }
+        guard !isReading else { return }
         
         isReading = true
         
@@ -141,13 +138,18 @@ public class IMPHarrisCornerDetector: IMPFilter{
             let height      = Int(size.height)
             
             let bytesPerRow   = width * 4
-            imageByteSize = height * bytesPerRow
+            let newSize = height * bytesPerRow
             
-            if rawPixels.count != imageByteSize {
-                rawPixels = [UInt8](repeating: 0, count: Int(imageByteSize)) //UnsafeMutablePointer<UInt8>.allocate(capacity:imageByteSize)
+            if imageByteSize != newSize {
+                if imageByteSize > 0 {
+                    rawPixels?.deallocate(capacity: imageByteSize)
+                }
+                rawPixels = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize) 
             }
 
-            texture.getBytes(&rawPixels,
+            imageByteSize = newSize
+            
+            texture.getBytes(rawPixels!,
                              bytesPerRow: bytesPerRow,
                              from: MTLRegionMake2D(0, 0, texture.width, texture.height),
                              mipmapLevel: 0)
@@ -156,11 +158,11 @@ public class IMPHarrisCornerDetector: IMPFilter{
             
             for x in stride(from: 0, to: width, by: 1){
                 for y in stride(from: 0, to: height, by: 1){
-                    let colorByte = rawPixels[y * bytesPerRow + x * 4]
+                    let colorByte = rawPixels![y * bytesPerRow + x * 4]
                     
                     if (colorByte > 128) {
                         let xCoordinate = Float(x) / Float(width)
-                        let yCoordinate = Float(y) / Float(height) // flip vertical
+                        let yCoordinate = Float(y) / Float(height) 
                         corners.append(float2(xCoordinate, yCoordinate))
                     }
                 }
