@@ -166,9 +166,9 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 result.texture = result.texture?.reuse(size: newSize)
             }
             
-            context.execute{ [unowned self] (commandBuffer) in
+           context.execute{ [unowned self] (commandBuffer) in
                 self.apply(to: &result.texture, commandBuffer: commandBuffer)
-            }
+           }
             
             dirty = false
 
@@ -225,7 +225,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     //
     // optimize processing when image < GPU SIZE
     //
-    private func apply(to resultIn: inout MTLTexture?, commandBuffer: MTLCommandBuffer) {
+    private func apply(to resultIn: inout MTLTexture?, commandBuffer: MTLCommandBuffer? = nil) {
         
         let source:MTLTexture? = self.source?.texture
         

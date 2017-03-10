@@ -17,6 +17,21 @@ import simd
 
 public class IMPGaussianBlurFilter: IMPFilter {
     
+    public override var source: IMPImageProvider? {
+        didSet{
+            if oldValue?.size == nil {
+                self.update()
+                return
+            }
+            if let size = source?.size,
+                let oldSize = oldValue?.size {
+                if size != oldSize {
+                    self.update()
+                }
+            }
+        }
+    }
+    
     public static let radiusRange:(minimum:Float, maximum:Float) = (minimum:0.5, maximum:1000)
     
     public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
@@ -100,7 +115,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     var adjustmentBuffer:MTLBuffer!
     
     func update()  {
-        context.runOperation(.async){
+        context.runOperation(context.isLazy ? .async : .sync ){
             self.updateWeights()
         }
     }

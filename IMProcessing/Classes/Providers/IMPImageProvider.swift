@@ -267,7 +267,7 @@ public extension IMPImageProvider {
         
         if let ref = textureRef,
             let texture = CVMetalTextureGetTexture(ref) {
-            self.texture = texture
+            self.texture = texture.makeTextureView(pixelFormat: IMProcessing.colors.pixelFormat)
         }
         else {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")

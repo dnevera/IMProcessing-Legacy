@@ -31,16 +31,16 @@ namespace IMProcessing
     
     
     vertex IMPCrosshairVertexOut vertex_crosshair(
-                                                  const device packed_float3* vertex_array [[ buffer(0) ]],
+                                                  const device packed_float2* vertex_array [[ buffer(0) ]],
                                                   const device float         &width        [[ buffer(1) ]],
                                                   unsigned int vid [[ vertex_id ]])
     {
         
         
-        float3 position = vertex_array[vid];
+        float2 position = vertex_array[vid];
         
         IMPCrosshairVertexOut out;
-        out.position = float4(((position.xy * 2.0) - 1.0), 0.0, 1.0);
+        out.position = float4(position.xy * float2(2.0,-2.0) - float2(1,-1), 0.0, 1.0);
         out.pointsize = width;
         
         out.spacing = 1.0 / width;
@@ -52,7 +52,7 @@ namespace IMProcessing
     //
     // https://forums.developer.apple.com/thread/43570
     //
-    fragment half4 fragment_crosshair__(IMPCrosshairVertexOut fragData [[stage_in]],
+    fragment float4 fragment_crosshair__(IMPCrosshairVertexOut fragData [[stage_in]],
                                       texture2d<float, access::sample> texture    [[ texture(0) ]],
                                       const device float4              &color     [[ buffer(0) ]],
                                       float2 pointCoord  [[point_coord]])
@@ -60,7 +60,7 @@ namespace IMProcessing
         if (length(pointCoord - float2(0.5)) > 0.5) {
             discard_fragment();
         }
-        return half4(0,1,0,1);
+        return color;
     }
     
     
@@ -93,9 +93,9 @@ namespace IMProcessing
         float4 rgba = texture.sample(s, in.texcoord.xy);
         
         if (adjustment.blending.mode == 0)
-            inColor = IMProcessing::blendLuminosity(inColor * 0.3, float4(rgba.rgb,adjustment.blending.opacity * rgba.a));
+            inColor = IMProcessing::blendLuminosity(inColor, float4(rgba.rgb,adjustment.blending.opacity * rgba.a));
         else // only two modes yet
-            inColor = IMProcessing::blendNormal(inColor * 0.3, float4(rgba.rgb, adjustment.blending.opacity * rgba.a));
+            inColor = IMProcessing::blendNormal(inColor, float4(rgba.rgb, adjustment.blending.opacity * rgba.a));
         
         return  inColor;
     }

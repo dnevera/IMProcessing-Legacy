@@ -80,30 +80,39 @@ public class TestFilter: IMPFilter {
         extendName(suffix: "Test filter")
         super.configure()
         
-        //add(function: kernelEV)
+        
+        add(function: kernelEV)
+        { (source) in
+            self.context.runOperation(.async, {
+                self.harrisCornerDetector.source = source
+                self.harrisCornerDetector.process()
+            })
+        }
+        
         //add(filter: exposureFilter)
         //add(filter: impBlurFilter)
         //add(mps: mpsBlurFilter)
         //add(filter: xyderivative)
         //add(filter: nonMaximumSup)
+
         //add(filter: harrisCornerDetector)
-        
+
         add(filter: crosshairGenerator)
-        
-        harrisCornerDetector.addObserver { (corners:[float3]) in
+       
+        harrisCornerDetector.addObserver { (corners:[float2]) in
             self.crosshairGenerator.points = corners
         }
-        
-        addObserver(newSource: { (source) in
-            self.context.runOperation(.sync, {
-                self.harrisCornerDetector.source = source
-                self.harrisCornerDetector.process()
-            })
-        })
+
+//        self.addObserver(newSource: { (source) in
+//            self.context.runOperation(.async, {
+//                self.harrisCornerDetector.source = source
+//                self.harrisCornerDetector.process()
+//            })
+//        })
     }
 
     private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
-    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext(lazy: false))
+    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext(lazy: true))
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
 }
 
@@ -114,7 +123,7 @@ class ViewController: UIViewController {
         super.viewDidAppear(animated)
     }
     
-    let context = IMPContext(lazy: false)
+    let context = IMPContext(lazy: true)
     
     lazy var containerView:UIView = {
         let y = (self.navigationController?.navigationBar.bounds.height)! + UIApplication.shared.statusBarFrame.height
@@ -269,7 +278,7 @@ class ViewController: UIViewController {
                 self.liveViewFilter.inputEV = slider.value * 3
             }
             else if slider === self.blurSlider {
-                self.liveViewFilter.blurRadius = slider.value * 30
+                self.liveViewFilter.blurRadius = slider.value * 10
             }
             else if slider === self.exposureSlider {
                 self.liveViewFilter.inputExposure = slider.value * 3

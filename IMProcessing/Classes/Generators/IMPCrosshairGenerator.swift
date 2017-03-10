@@ -11,32 +11,32 @@ import Metal
 
 public class IMPDrawPointsShader: IMPShader {
     
-    public var points = [float3]() {
-        didSet{            
-            _pointsBuffer = context.device.makeBuffer(bytes: points, length: points.count * MemoryLayout<float3>.size, options: [])
+    public var points = [float2]() {
+        didSet{
+            if points.count > 1 {
+                _pointsBuffer = context.device.makeBuffer(bytes: points, length: points.count * MemoryLayout<float2>.size, options: [])
+            }
         }
     }
     
-    lazy var _vertexDescriptor:MTLVertexDescriptor = {
-        var v = MTLVertexDescriptor()
-        v.attributes[0].format = .float3
-        v.attributes[0].bufferIndex = 0
-        v.attributes[0].offset = 0
-        v.layouts[0].stride = MemoryLayout<float3>.size
-        return v
-    }()
+//    lazy var _vertexDescriptor:MTLVertexDescriptor = {
+//        var v = MTLVertexDescriptor()
+//        v.attributes[0].format = .float3
+//        v.attributes[0].bufferIndex = 0
+//        v.attributes[0].offset = 0
+//        v.layouts[0].stride = MemoryLayout<float3>.size
+//        return v
+//    }()
     
     override public var vertexDescriptor: MTLVertexDescriptor? {
-        return _vertexDescriptor
+        return nil //_vertexDescriptor
     }
     
     public var pointsBuffer:MTLBuffer {
         return _pointsBuffer
     }
     
-    private lazy var _pointsBuffer: MTLBuffer = self.context.device.makeBuffer(bytes: self.points,
-                                                                          length: self.points.count * MemoryLayout<float3>.size,
-                                                                          options: [])
+    private lazy var _pointsBuffer: MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
 }
 
 class IMPDrawPointsCoreMTLShader: IMPCoreImageMTLShader {
@@ -84,7 +84,7 @@ public class IMPCrosshairGenerator: IMPFilter {
     
     var adjustmentBuffer:MTLBuffer!
     
-    public var points:[float3] {
+    public var points:[float2] {
         set{
             pointsShader.points = newValue
             dirty = true
@@ -92,8 +92,8 @@ public class IMPCrosshairGenerator: IMPFilter {
         get{ return pointsShader.points }
     }
     
-    static var defaultWidth:Float = 15
-    static var defaultColor:float4 = float4(0,1,0,0.5)
+    static var defaultWidth:Float = 20
+    static var defaultColor:float4 = float4(0,1,0,1)
     
     public var width:Float = IMPCrosshairGenerator.defaultWidth {
         didSet{

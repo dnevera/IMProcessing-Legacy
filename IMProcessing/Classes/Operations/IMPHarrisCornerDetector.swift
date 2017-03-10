@@ -26,10 +26,34 @@ import Accelerate
  
  */
 public class IMPHarrisCornerDetector: IMPFilter{
+
+    public var maxSize:CGFloat = 200 {
+        didSet{
+            updateResampler()
+            dirty = true
+        }
+    }
     
-    public typealias PointsListObserver = ((_ corners: [float3]) -> Void)
+    private func updateResampler(){
+        if let size = source?.size {
+            let scale = fmax(fmin(fmin(maxSize/size.width, maxSize/size.height),1),0.01)
+            let samplefSize = NSSize(width: size.width * scale, height: size.height * scale)
+            if resampler.destinationSize != samplefSize {
+                resampler.destinationSize = samplefSize
+            }
+        }
+    }
     
-    public static let defaultBlurRadius:Float = 2.0
+    public override var source: IMPImageProvider? {
+        didSet{
+            updateResampler()
+        }
+    }
+    
+    public typealias PointsListObserver = ((_ corners: [float2]) -> Void)
+    
+    public static let defaultBlurRadius:Float = 2
+    public static let defaultTexelRadius:Float = 1.5
     
     public var blurRadius:Float {
         set{
@@ -37,6 +61,14 @@ public class IMPHarrisCornerDetector: IMPFilter{
             dirty = true
         }
         get { return blurFilter.radius }
+    }
+    
+    public var texelRadius:Float {
+        set{
+            xyDerivative.texelRadius = newValue
+            dirty = true
+        }
+        get { return xyDerivative.texelRadius }
     }
     
     public var sensitivity:Float {
@@ -59,14 +91,12 @@ public class IMPHarrisCornerDetector: IMPFilter{
         
         super.configure()
         
-        resampler.destinationSize = NSSize(width: 400, height: 400)
-
         add(filter: resampler)
         
         add(filter: xyDerivative)
         add(filter: blurFilter)
         add(filter: harrisCorner)
-        
+
         add(filter: nonMaximumSuppression) { [unowned self] (destination) in
             self.readCorners(destination)
         }
@@ -74,6 +104,7 @@ public class IMPHarrisCornerDetector: IMPFilter{
         blurRadius = IMPHarrisCornerDetector.defaultBlurRadius
         sensitivity = IMPHarrisCorner.defaultSensitivity
         threshold = IMPNonMaximumSuppression.defaultThreshold
+        texelRadius = IMPHarrisCornerDetector.defaultTexelRadius
     }
     
     private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context, name: "HarrisCornerDetector:XYDerivative")
@@ -81,50 +112,65 @@ public class IMPHarrisCornerDetector: IMPFilter{
     private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context, name: "HarrisCornerDetector:Corner")
     private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context, name: "HarrisCornerDetector:NonMaximum")
     
+    var rawPixels:[UInt8] = [UInt8]() //UnsafeMutablePointer<UInt8>?
+    var imageByteSize:Int = 0
+
+    
+    deinit {
+        //rawPixels?.deallocate(capacity: imageByteSize)
+    }
+    
+    private var isReading = false
+    
     private func readCorners(_ destination: IMPImageProvider) {
+        
+        guard !isReading else {
+            NSLog(" .................... reading ")
+            return
+        }
+        
+        isReading = true
+        
         if let size = destination.size,
             let texture = destination.texture?.pixelFormat != .rgba8Uint ?
                 destination.texture?.makeTextureView(pixelFormat: .rgba8Uint) :
                 destination.texture
         {
-            let bytesPerRow = Int(size.width * 4)
-            let bytesPerImage = Int(size.height)*bytesPerRow
-            let imageByteSize = bytesPerRow * Int(size.height)
-            let rawPixels = UnsafeMutablePointer<UInt8>.allocate(capacity:imageByteSize)
             
-            texture.getBytes(rawPixels,
+            let width       = Int(size.width)
+            let height      = Int(size.height)
+            
+            let bytesPerRow   = width * 4
+            imageByteSize = height * bytesPerRow
+            
+            if rawPixels.count != imageByteSize {
+                rawPixels = [UInt8](repeating: 0, count: Int(imageByteSize)) //UnsafeMutablePointer<UInt8>.allocate(capacity:imageByteSize)
+            }
+
+            texture.getBytes(&rawPixels,
                              bytesPerRow: bytesPerRow,
-                             bytesPerImage: bytesPerImage,
-                             from: MTLRegion(origin: MTLOrigin(), size: texture.size),
-                             mipmapLevel: 0, slice: 0)
+                             from: MTLRegionMake2D(0, 0, texture.width, texture.height),
+                             mipmapLevel: 0)
             
-            var corners = [float3]()
+            var corners = [float2]()
             
-            //var currentByte = 0
-            
-            for x in stride(from: 0, to: bytesPerRow, by: 4){
-                for y in stride(from: 0, to: Int(size.height), by: 1){
-            //while (currentByte < imageByteSize) {
-                let colorByte = rawPixels[y*bytesPerRow+x]
-                
-                if (colorByte > 0) {
-                    //let xCoordinate = Float(currentByte % bytesPerRow)
-                    //let yCoordinate = Float(currentByte / bytesPerRow)
-                    let xCoordinate = Float(x/4) / Float(size.width)
-                    let yCoordinate = 1 - Float(y) / Float(size.height)
+            for x in stride(from: 0, to: width, by: 1){
+                for y in stride(from: 0, to: height, by: 1){
+                    let colorByte = rawPixels[y * bytesPerRow + x * 4]
                     
-                    //corners.append(float3( xCoordinate / 4.0 / Float(size.width), yCoordinate / Float(size.height), 0))
-                    corners.append(float3( xCoordinate , yCoordinate  , 0))
-                }
-                
-                //currentByte += 4
+                    if (colorByte > 128) {
+                        let xCoordinate = Float(x) / Float(width)
+                        let yCoordinate = Float(y) / Float(height) // flip vertical
+                        corners.append(float2(xCoordinate, yCoordinate))
+                    }
                 }
             }
-            rawPixels.deallocate(capacity: imageByteSize)
             
             for o in cornersObserverList {
                 o(corners)
             }
+            
+            isReading = false
         }
     }
     
