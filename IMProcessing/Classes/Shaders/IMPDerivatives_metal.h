@@ -135,6 +135,32 @@ fragment float4 fragment_nonMaximumSuppression(
 
 }
 
+fragment float4 fragment_sobelEdge(
+                                      IMPVertexOut in [[stage_in]],
+                                      texture2d<float, access::sample> texture [[ texture(0) ]],
+                                      const device float &radius [[ buffer(0) ]]
+                                      ) {
+    
+    CornerColors corner(texture,in.texcoord.xy,radius);
+    
+    float2 gradientDirection;
+    gradientDirection.x = -corner.bottom.leftLuma() - 2.0 * corner.mid.leftLuma() \
+    - corner.top.leftLuma() + corner.bottom.rightLuma() + 2.0 * corner.mid.rightLuma() + corner.top.rightLuma();
+    
+    gradientDirection.y = -corner.top.leftLuma() - 2.0 * corner.top.centerLuma() \
+    - corner.top.rightLuma() + corner.bottom.leftLuma() + 2.0 * corner.bottom.centerLuma() + corner.bottom.rightLuma();
+    
+    float gradientMagnitude = length(gradientDirection);
+    float2 normalizedDirection = normalize(gradientDirection);
+    
+    // Offset by 1-sin(pi/8) to set to 0 if near axis, 1 if away
+    normalizedDirection = sign(normalizedDirection) * floor(abs(normalizedDirection) + 0.617316);
+    
+    // Place -1.0 - 1.0 within 0 - 1.0
+    normalizedDirection = (normalizedDirection + 1.0) * 0.5;
+    
+    return float4(gradientMagnitude, normalizedDirection.x, normalizedDirection.y, 1.0);
+}
 
 
 fragment float4 fragment_harrisCorner(

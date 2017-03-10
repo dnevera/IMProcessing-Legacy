@@ -82,12 +82,14 @@ public class TestFilter: IMPFilter {
         
         
         add(function: kernelEV)
-        { (source) in
-            self.context.runOperation(.async, {
-                self.harrisCornerDetector.source = source
-                self.harrisCornerDetector.process()
-            })
-        }
+            
+        add(filter: canny)
+//        { (source) in
+//            self.context.runOperation(.async, {
+//                self.harrisCornerDetector.source = source
+//                self.harrisCornerDetector.process()
+//            })
+//        }
         
         //add(filter: exposureFilter)
         //add(filter: impBlurFilter)
@@ -97,20 +99,16 @@ public class TestFilter: IMPFilter {
 
         //add(filter: harrisCornerDetector)
 
-        add(filter: crosshairGenerator)
-       
-        harrisCornerDetector.addObserver { (corners:[float2]) in
-            self.crosshairGenerator.points = corners
-        }
+        //add(filter: crosshairGenerator)
+        //
+        //harrisCornerDetector.addObserver { (corners:[float2]) in
+        //    self.crosshairGenerator.points = corners
+        //}
 
-//        self.addObserver(newSource: { (source) in
-//            self.context.runOperation(.async, {
-//                self.harrisCornerDetector.source = source
-//                self.harrisCornerDetector.process()
-//            })
-//        })
     }
 
+    private lazy var canny:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
+    
     private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
     private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext(lazy: true))
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!

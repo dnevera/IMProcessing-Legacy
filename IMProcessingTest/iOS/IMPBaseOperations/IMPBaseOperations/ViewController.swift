@@ -24,7 +24,7 @@ public class TestFilter: IMPFilter {
     public var blurRadius:Float = 0.2 {
         didSet{
             blurFilter.radius = blurRadius
-            harrisCornerDetector.blurRadius = blurRadius
+            //harrisCornerDetector.blurRadius = blurRadius
             dirty = true
         }
     }
@@ -33,7 +33,7 @@ public class TestFilter: IMPFilter {
         didSet{
             print("exposure MTL EV = \(inputEV)")
             print("exposure CI EV = \(ci_inputEV)")
-            harrisCornerDetector.sensitivity = inputEV
+            //harrisCornerDetector.sensitivity = inputEV
             dirty = true
         }
     }
@@ -80,27 +80,43 @@ public class TestFilter: IMPFilter {
     
     override public func configure() {
         extendName(suffix: "Test filter")
+
+        add(filter: crosshairGenerator)
+
+//        addObserver(newSource: { (source) in
+//            print("new source")
+//            self.harrisCornerDetector.source = source
+//            self.harrisCornerDetector.process()
+//        })
+
+        addObserver(dirty: { (filter, source, destination) in
+            print("new dirty")
+            self.harrisCornerDetector.source = source
+            self.harrisCornerDetector.process()
+        })
+        
         //add(function: kernelRed)
         //add(function: kernelEV)
         //add(filter: exposureFilter)
         //add(filter:blurFilter)
 
-//        add(filter:harrisCornerDetector)
+        //add(filter:harrisCornerDetector)
         
-        add(filter: crosshairGenerator)
-        
-        harrisCornerDetector.addObserver { (corners:[float3]) in
+        harrisCornerDetector.addObserver { (corners:[float2]) in
+            print("new corners corners.count = \(corners.count)")
             self.crosshairGenerator.points = corners
+            //self.dirty = true
         }
         
-        addObserver(newSource: { (source) in
-            self.harrisCornerDetector.source = source
-            self.harrisCornerDetector.process(with: NSSize(width: 400, height: 400))
+        harrisCornerDetector.addObserver(destinationUpdated: { (destination) in
+            print("destination done")
+            //self.dirty = true
         })
+        
     }
     
     private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
-    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext(lazy: false))
+    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context /*IMPContext(lazy: false)*/)
 
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
 }

@@ -27,6 +27,7 @@
 #include "IMPGaussianBlur_metal.h"
 #include "IMPCrosshair_metal.h"
 
+#include "IMPColorProcessing_metal.h"
 
 //#include "IMPHistogram_metal.h"
 //#include "IMPHistogramLayer_metal.h"
