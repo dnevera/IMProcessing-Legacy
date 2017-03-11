@@ -27,7 +27,7 @@ import Accelerate
  */
 public class IMPHarrisCornerDetector: IMPResampler{
     
-    public typealias PointsListObserver = ((_ corners: [float2]) -> Void)
+    public typealias PointsListObserver = ((_ corners: [float2], _ imageSize:NSSize) -> Void)
     
     public static let defaultBlurRadius:Float = 2
     public static let defaultTexelRadius:Float = 1.5
@@ -88,7 +88,7 @@ public class IMPHarrisCornerDetector: IMPResampler{
     private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context, name: "HarrisCornerDetector:Corner")
     private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context, name: "HarrisCornerDetector:NonMaximum")
     
-    var rawPixels:UnsafeMutablePointer<UInt8>? //[UInt8]() //UnsafeMutablePointer<UInt8>?
+    var rawPixels:UnsafeMutablePointer<UInt8>?
     var imageByteSize:Int = 0
 
     
@@ -145,7 +145,7 @@ public class IMPHarrisCornerDetector: IMPResampler{
             }
             
             for o in cornersObserverList {
-                o(corners)
+                o(corners,size)
             }
             
             isReading = false

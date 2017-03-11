@@ -11,6 +11,7 @@ import UIKit
 import SnapKit
 import MetalPerformanceShaders
 
+
 class BaseNavigationController: UINavigationController {
 
     override var shouldAutorotate: Bool {
@@ -82,14 +83,14 @@ public class TestFilter: IMPFilter {
         
         
         add(function: kernelEV)
-//        { (source) in
-//            self.context.runOperation(.async, {
-//                self.harrisCornerDetector.source = source
-//                self.harrisCornerDetector.process()
-//            })
-//        }
+        { (source) in
+            self.context.runOperation(.async, {
+                self.harrisCornerDetector.source = source
+                self.harrisCornerDetector.process()
+            })
+        }
         
-        add(filter: canny)
+        //add(filter: canny)
         
         //add(filter: exposureFilter)
         //add(filter: impBlurFilter)
@@ -99,11 +100,12 @@ public class TestFilter: IMPFilter {
 
         //add(filter: harrisCornerDetector)
 
-//        add(filter: crosshairGenerator)
-//        
-//        harrisCornerDetector.addObserver { (corners:[float2]) in
-//            self.crosshairGenerator.points = corners
-//        }
+        //add(filter: crosshairGenerator)
+        
+        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+            //self.crosshairGenerator.points = corners
+            self.houghTransform(points: corners, size: size)
+        }
 
     }
 
@@ -112,6 +114,25 @@ public class TestFilter: IMPFilter {
     private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
     private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext(lazy: true))
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
+    
+    func houghTransform(points:[float2], size: NSSize, precision:Float = 0.1){
+        let houghSize = Int(round(sqrtf(size.width.float*size.width.float + size.height.float*size.height.float)))
+        var lines = [Int:float2]()
+        for point in points {
+            for f in stride(from: 0, through: 180, by: 1){
+                for r in stride(from: 0, through: houghSize, by: 1){
+                    let theta = Float(f) * M_PI.float / 180.0
+                    let solve = abs(( (point.y)*sin(theta) + (point.x)*cos(theta)) - Float(r))
+                    print(" solve = \(solve)")
+                    if solve < precision {
+                        lines[r] = point
+                    }
+                }
+            }
+        }
+        
+        print("Line result = \(lines)")
+    }
 }
 
 

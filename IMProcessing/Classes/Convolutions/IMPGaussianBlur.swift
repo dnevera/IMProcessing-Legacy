@@ -208,8 +208,9 @@ public class IMPGaussianBlurFilter: IMPFilter {
                             name:        "Upscale")
         
         f.optionsHandler = { (function,commandEncoder, input, output) in
+            guard let texture = self.source?.texture else { return }
             commandEncoder.setBuffer(self.adjustmentBuffer, offset: 0, at: 0)
-            commandEncoder.setTexture((self.source?.texture)!, at:2)
+            commandEncoder.setTexture(texture, at:2)
         }
         
         return f

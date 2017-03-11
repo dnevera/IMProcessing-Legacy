@@ -11,11 +11,11 @@ import Photos
 import SnapKit
 import CoreImage
 import MetalPerformanceShaders
+import simd
 
 func CGRectMake(_ x: CGFloat, _ y: CGFloat, _ width: CGFloat, _ height: CGFloat) -> CGRect {
     return CGRect(x: x, y: y, width: width, height: height)
 }
-
 
 public class TestFilter: IMPFilter {
 
@@ -81,20 +81,23 @@ public class TestFilter: IMPFilter {
     override public func configure() {
         extendName(suffix: "Test filter")
 
-        add(filter: crosshairGenerator)
-
-//        addObserver(newSource: { (source) in
-//            print("new source")
+//        addObserver(dirty: { (filter, source, destination) in
+//            print("new dirty")
 //            self.harrisCornerDetector.source = source
 //            self.harrisCornerDetector.process()
 //        })
-
-        addObserver(dirty: { (filter, source, destination) in
-            print("new dirty")
-            self.harrisCornerDetector.source = source
-            self.harrisCornerDetector.process()
-        })
+//        
+        normailzeSizeFilter.maxSize = 200
         
+        add(filter:cannyEdgeDetector) { (destination) in
+            self.readLines(destination)
+        }
+        //add(filter:normailzeSizeFilter)
+//
+//        add(filter: crosshairGenerator) { (source) in
+//            print("crosshairGenerator done.... self.crosshairGenerator.points = \(self.crosshairGenerator.points.count)")
+//        }
+
         //add(function: kernelRed)
         //add(function: kernelEV)
         //add(filter: exposureFilter)
@@ -102,22 +105,310 @@ public class TestFilter: IMPFilter {
 
         //add(filter:harrisCornerDetector)
         
-        harrisCornerDetector.addObserver { (corners:[float2]) in
-            print("new corners corners.count = \(corners.count)")
+        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+            print("new corners corners.count = \(corners.count) size = \(size)")
             self.crosshairGenerator.points = corners
-            //self.dirty = true
+            self.harrisCornerDetector.context.runOperation(.async, { 
+                //self.houghTransform(points: corners, size: size)
+                //self.avarageDistances(points: corners, size: size)
+            })
         }
         
         harrisCornerDetector.addObserver(destinationUpdated: { (destination) in
             print("destination done")
-            //self.dirty = true
         })
         
     }
     
+    
+    
+    class AdjacentPoints {
+        
+        
+        let roundK:Float    = 4
+        let minimumDistance:Float = 4
+        
+        let width:Int
+        let height:Int
+        let anchor:float2
+        init(anchor:float2, size:NSSize) {
+            self.anchor=anchor
+            width = Int(size.width)
+            height = Int(size.height)
+        }
+        
+        func append(point:float2) {
+            
+            let ax  = round(anchor.x * width.float/roundK) * roundK
+            let ay  = round(anchor.y * height.float/roundK) * roundK
+            let anchorRound = float2(ax,ay)
+
+            let nx  = round(point.x * width.float/roundK) * roundK
+            let ny  = round(point.y * height.float/roundK) * roundK
+            let newRound = float2(nx,ny)
+
+            let nd = round(distance(anchorRound, newRound))
+            
+            //neighbors.append(point)
+            
+            if neighbors.count > 1 {
+                
+                var newadd = false
+                
+                for p in neighbors {
+                    let px  = round(p.x * width.float/roundK) * roundK
+                    let py  = round(p.y * height.float/roundK) * roundK
+                    let pointRound = float2(px,py)
+
+                    let d = round(distance(anchorRound, pointRound))
+
+                    if nd < d && nd >= minimumDistance {
+                        newadd = true
+                    }
+                    
+                }
+                
+                if newadd { neighbors.append(point) }
+            }
+        }
+        
+        private var neighbors:[float2] = [float2]()
+    }
+    
+    func avarageDistances(points:[float2], size: NSSize, precision:Float = 0.1){
+        let roundK:Float = 3
+        
+        var neighbors = [Int:[(float2,float2)]]()
+        
+        for anchor in points {
+            let ax  = round(anchor.x * size.width.float/roundK) * roundK
+            let ay  = round(anchor.y * size.height.float/roundK) * roundK
+            let anchorRound = float2(ax,ay)
+            for point in points {
+                let px  = round(point.x * size.width.float/roundK) * roundK
+                let py  = round(point.y * size.height.float/roundK) * roundK
+                let pointRound = float2(px,py)
+                let d = round(distance(anchorRound, pointRound))
+                
+                if neighbors[Int(d)] == nil {
+                    neighbors[Int(d)] = [(anchor,point)]
+                }
+                neighbors[Int(d)]?.append((anchor,point))
+            }
+        }
+        
+        for (k,n) in neighbors {
+            print(" \(k) = \(n)")
+        }
+    }
+    
+    public class Hough {
+        
+        public class Accumulator {
+            public var bins:[Int]
+            public let width:Int
+            public let height:Int
+            public let houghDistance:Float
+            
+            public func max(r:Int,t:Int) -> Int {
+                return bins[(r*width) + t]
+            }
+            
+            public init(imageWidth:Int, imageHeight: Int) {
+                houghDistance = (sqrt(2.0) * Float( imageHeight>imageWidth ? imageHeight : imageWidth )) / 2.0
+                width  = 180
+                height = Int(houghDistance * 2)
+                bins = [Int](repeating:0, count: Int(width) * Int(height))
+            }
+        }
+        
+
+        public var slopes:[Int]
+        public let accumulator:Accumulator
+        public let imageWidth:Int
+        public let imageHeight:Int
+        public let threshold:Int
+        
+        public init(image:UnsafeMutablePointer<UInt8>,
+                    bytesPerRow:Int,
+                    width:Int,
+                    height:Int,
+                    threshold:Int) {
+            self.threshold = threshold
+            imageWidth = width
+            imageHeight = height
+            accumulator = Accumulator(imageWidth: width, imageHeight: height)
+            slopes = [Int](repeating:0, count: accumulator.width)
+            transform(image: image, bytesPerRow: bytesPerRow, width:width, height:height)
+        }
+        
+        public func getLines() -> [IMPLineSegment] {
+            var lines = [IMPLineSegment]()
+            
+            if accumulator.bins.count == 0 { return lines }
+            
+            for r in stride(from: 0, to: accumulator.height, by: 1) {
+                
+                for t in stride(from: 0, to: accumulator.width, by: 1){
+                    
+                    //Is this point a local maxima (9x9)
+                    var max = accumulator.max(r: r, t: t)
+                    
+                    if max < threshold { continue }
+                    
+                    var exit = false
+                    for ly in stride(from: -4, through: 4, by: 1){
+                        for lx in stride(from: -4, through: 4, by: 1) {
+                            let newmax = accumulator.max(r: r+ly, t: t+lx)
+                            if newmax > max {
+                                max = newmax
+                                exit = true
+                                break
+                            }
+                            if exit { break }
+                        }
+                    }
+                    
+                    if max > accumulator.max(r: r, t: t) { continue }
+                    
+                    
+                    var p0 = float2()
+                    var p1 = float2()
+                    
+                    let theta = Float(t) * M_PI.float / 180.0
+
+                    let rr = Float(r)
+                    let h  = Float(accumulator.height)/2
+                    let w  = Float(accumulator.width)/2
+                    
+                    if t >= 45 && t <= 135 {
+                        //y = (r - x cos(t)) / sin(t)
+                        let x1:Float = 0
+                        let y1 = ((rr-h) - ((x1-w) * cos(theta))) / sin(theta) + h
+                        let x2 = w
+                        let y2 = ((rr-h) - ((x2 - w) * cos(theta))) / sin(theta) + h
+                        p0 = float2(x1, y1)
+                        p1 = float2(x2, y2)
+                    }
+                    else {
+                        
+                        //x = (r - y sin(t)) / cos(t);
+                        let y1:Float = 0
+                        let x1 = ((rr-h) - ((y1 - h) * sin(theta))) / cos(theta) + w
+                        let y2 = h
+                        let x2 = ((rr-h)) - ((y2 - h) * sin(theta)) / cos(theta) + w
+                        p0 = float2(x1,y1)
+                        p1 = float2(x2,y2)
+                    }
+                    
+                    let delim = float2(Float(imageWidth),Float(imageHeight))
+                    lines.append(IMPLineSegment(p0: p0/delim,
+                                                p1: p1/delim))
+                }
+            }
+            return lines
+        }
+        
+        func transform(image:UnsafeMutablePointer<UInt8>, bytesPerRow:Int, width:Int, height:Int) {
+            
+            let center_x = Float(width)/2
+            let center_y = Float(height)/2
+            
+            for x in stride(from: 0, to: width, by: 1){
+                
+                for y in stride(from: 0, to: height, by: 1){
+                    
+                    let colorByte = image[y * bytesPerRow + x * 4]
+                    
+                    if colorByte < 1 { continue }
+                    
+                    for t in stride(from: 0, to: accumulator.width, by: 1){
+                        
+                        let theta = Float(t) * M_PI.float / accumulator.width.float
+                        
+                        let r = (Float(x) - center_x ) * cos(theta) + (Float(y) - center_y) * sin(theta)
+                        accumulator.bins[ Int((round(r + accumulator.houghDistance) * accumulator.width.float)) + t] += 1
+                    }
+                }
+            }
+        }
+    }
+    
+    var rawPixels:UnsafeMutablePointer<UInt8>?
+    var imageByteSize:Int = 0
+    
+    
+    deinit {
+        rawPixels?.deallocate(capacity: imageByteSize)
+    }
+    
+    private var isReading = false
+
+    private func readLines(_ destination: IMPImageProvider) {
+        
+        guard !isReading else { return }
+        
+        isReading = true
+        
+        if let size = destination.size,
+            let texture = destination.texture?.pixelFormat != .rgba8Uint ?
+                destination.texture?.makeTextureView(pixelFormat: .rgba8Uint) :
+                destination.texture
+        {
+            
+            let width       = Int(size.width)
+            let height      = Int(size.height)
+            
+            let bytesPerRow   = width * 4
+            let newSize = height * bytesPerRow
+            
+            if imageByteSize != newSize {
+                if imageByteSize > 0 {
+                    rawPixels?.deallocate(capacity: imageByteSize)
+                }
+                rawPixels = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
+            }
+            
+            imageByteSize = newSize
+            
+            if let image = rawPixels {
+                texture.getBytes(image,
+                                 bytesPerRow: bytesPerRow,
+                                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),
+                                 mipmapLevel: 0)
+                
+                
+                let hough = Hough(image: rawPixels!,
+                                  bytesPerRow: bytesPerRow,
+                                  width: width,
+                                  height: height,
+                                  threshold: 90)
+                
+                let lines = hough.getLines()
+                for (i,s) in lines.enumerated() {
+                    let ay = (s.p1.y-s.p0.y)
+                    let ax = (s.p1.x-s.p0.x)
+                    if ax != 0 {
+                        let a  = ay/ax
+                        print("Line[\(i)] result = \(s) degrees = \(atan(a) * 180 / M_PI.float)")
+                    }
+                    
+                }
+//                for (i,s) in hough.slopes.enumerated() {
+//                    print("Line[\(i)] result = \(s)")
+//                }
+            }
+
+            isReading = false
+        }
+    }
+
+    
+    private lazy var normailzeSizeFilter:IMPResampler = IMPResampler(context: self.context, name: "canyEdageResampler")
+
+    private lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
     private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
     private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context /*IMPContext(lazy: false)*/)
-
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
 }
 

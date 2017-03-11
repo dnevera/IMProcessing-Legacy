@@ -64,6 +64,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         didSet{
             oldValue?.texture?.setPurgeableState(.volatile)
             executeNewSourceObservers(source: source)
+            dirty = true
         }
     }
     

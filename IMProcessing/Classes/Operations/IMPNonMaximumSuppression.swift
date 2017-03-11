@@ -45,8 +45,8 @@ public class IMPNonMaximumSuppression: IMPDerivative {
 
 public class IMPDirectionalNonMaximumSuppression: IMPDerivative {
     
-    public static let defaultUpperThreshold:Float = 0.4
-    public static let defaultLowerThreshold:Float = 0.1
+    public static let defaultUpperThreshold:Float = 0.5
+    public static let defaultLowerThreshold:Float = 0.2
     
     public var upperThreshold:Float = IMPDirectionalNonMaximumSuppression.defaultUpperThreshold {
         didSet{

@@ -7,51 +7,53 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		313961BC1E71CC0000761F02 /* IMPPhotoPlate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139616C1E71CC0000761F02 /* IMPPhotoPlate.swift */; };
-		313961BD1E71CC0000761F02 /* IMPQuad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139616D1E71CC0000761F02 /* IMPQuad.swift */; };
-		313961BE1E71CC0000761F02 /* IMPTransformModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139616E1E71CC0000761F02 /* IMPTransformModel.swift */; };
-		313961BF1E71CC0000761F02 /* IMPVertices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139616F1E71CC0000761F02 /* IMPVertices.swift */; };
-		313961C01E71CC0000761F02 /* IMPFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961701E71CC0000761F02 /* IMPFilter.swift */; };
-		313961C11E71CC0000761F02 /* IMPFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961711E71CC0000761F02 /* IMPFunction.swift */; };
-		313961C21E71CC0000761F02 /* IMPShader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961721E71CC0000761F02 /* IMPShader.swift */; };
-		313961C31E71CC0000761F02 /* IMPCIFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961741E71CC0000761F02 /* IMPCIFilter.swift */; };
-		313961C41E71CC0000761F02 /* MPSProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961751E71CC0000761F02 /* MPSProcessor.swift */; };
-		313961C51E71CC0000761F02 /* MTLProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961761E71CC0000761F02 /* MTLProcessor.swift */; };
-		313961C61E71CC0000761F02 /* MTLShader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961771E71CC0000761F02 /* MTLShader.swift */; };
-		313961C71E71CC0000761F02 /* IMPColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139617F1E71CC0000761F02 /* IMPColor.swift */; };
-		313961C81E71CC0000761F02 /* IMPContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961801E71CC0000761F02 /* IMPContext.swift */; };
-		313961C91E71CC0000761F02 /* IMPNumericTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961811E71CC0000761F02 /* IMPNumericTypes.swift */; };
-		313961CA1E71CC0000761F02 /* IMPRgbHsv.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961821E71CC0000761F02 /* IMPRgbHsv.swift */; };
-		313961CB1E71CC0000761F02 /* IMProcessing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961831E71CC0000761F02 /* IMProcessing.swift */; };
-		313961CC1E71CC0000761F02 /* IMPSimd.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961841E71CC0000761F02 /* IMPSimd.swift */; };
-		313961CD1E71CC0000761F02 /* IMPTypeAliases .swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961851E71CC0000761F02 /* IMPTypeAliases .swift */; };
-		313961CE1E71CC0000761F02 /* IMPGaussianBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961871E71CC0000761F02 /* IMPGaussianBlur.swift */; };
-		313961CF1E71CC0000761F02 /* IMPCameraExposure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139618A1E71CC0000761F02 /* IMPCameraExposure.swift */; };
-		313961D01E71CC0000761F02 /* IMPCameraExtentions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139618B1E71CC0000761F02 /* IMPCameraExtentions.swift */; };
-		313961D11E71CC0000761F02 /* IMPCameraFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139618C1E71CC0000761F02 /* IMPCameraFocus.swift */; };
-		313961D21E71CC0000761F02 /* IMPCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139618D1E71CC0000761F02 /* IMPCameraManager.swift */; };
-		313961D31E71CC0000761F02 /* IMPMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139618E1E71CC0000761F02 /* IMPMotionManager.swift */; };
-		313961D41E71CC0000761F02 /* IMPAVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961901E71CC0000761F02 /* IMPAVSession.swift */; };
-		313961D51E71CC0000761F02 /* IMPCameraSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961911E71CC0000761F02 /* IMPCameraSession.swift */; };
-		313961D61E71CC0000761F02 /* IMPDisplayLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961931E71CC0000761F02 /* IMPDisplayLink.swift */; };
-		313961D71E71CC0000761F02 /* IMPView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961941E71CC0000761F02 /* IMPView.swift */; };
-		313961D81E71CC0000761F02 /* IMPCrosshairGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961971E71CC0000761F02 /* IMPCrosshairGenerator.swift */; };
-		313961D91E71CC0000761F02 /* IMPDistribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961991E71CC0000761F02 /* IMPDistribution.swift */; };
-		313961DA1E71CC0000761F02 /* IMPDerivative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139619B1E71CC0000761F02 /* IMPDerivative.swift */; };
-		313961DB1E71CC0000761F02 /* IMPHarrisCorner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139619C1E71CC0000761F02 /* IMPHarrisCorner.swift */; };
-		313961DC1E71CC0000761F02 /* IMPHarrisCornerDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139619D1E71CC0000761F02 /* IMPHarrisCornerDetector.swift */; };
-		313961DD1E71CC0000761F02 /* IMPNonMaximumSuppression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139619E1E71CC0000761F02 /* IMPNonMaximumSuppression.swift */; };
-		313961DE1E71CC0000761F02 /* IMPXYDerivative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3139619F1E71CC0000761F02 /* IMPXYDerivative.swift */; };
-		313961DF1E71CC0000761F02 /* IMPImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961A11E71CC0000761F02 /* IMPImage.swift */; };
-		313961E01E71CC0000761F02 /* IMPImageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961A21E71CC0000761F02 /* IMPImageProvider.swift */; };
-		313961E11E71CC0000761F02 /* IMPMTLDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961A31E71CC0000761F02 /* IMPMTLDevice.swift */; };
-		313961E21E71CC0000761F02 /* IMPMTLTexture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961A41E71CC0000761F02 /* IMPMTLTexture.swift */; };
-		313961E31E71CC0000761F02 /* IMPTextureCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961A51E71CC0000761F02 /* IMPTextureCache.swift */; };
-		313961E41E71CC0000761F02 /* IMPTextureDelayLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961A61E71CC0000761F02 /* IMPTextureDelayLine.swift */; };
-		313961E51E71CC0000761F02 /* IMPTextureProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961A71E71CC0000761F02 /* IMPTextureProvider.swift */; };
-		313961E61E71CC0000761F02 /* IMPVideoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961A81E71CC0000761F02 /* IMPVideoCache.swift */; };
-		313961E71E71CC0000761F02 /* IMPDequeue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961B91E71CC0000761F02 /* IMPDequeue.swift */; };
-		313961E81E71CC0000761F02 /* IMPQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313961BB1E71CC0000761F02 /* IMPQueue.swift */; };
+		311589291E73E86E0088D67D /* IMPPhotoPlate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588D61E73E86E0088D67D /* IMPPhotoPlate.swift */; };
+		3115892A1E73E86E0088D67D /* IMPQuad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588D71E73E86E0088D67D /* IMPQuad.swift */; };
+		3115892B1E73E86E0088D67D /* IMPTransformModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588D81E73E86E0088D67D /* IMPTransformModel.swift */; };
+		3115892C1E73E86E0088D67D /* IMPVertices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588D91E73E86E0088D67D /* IMPVertices.swift */; };
+		3115892D1E73E86E0088D67D /* IMPFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588DA1E73E86E0088D67D /* IMPFilter.swift */; };
+		3115892E1E73E86E0088D67D /* IMPFunction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588DB1E73E86E0088D67D /* IMPFunction.swift */; };
+		3115892F1E73E86E0088D67D /* IMPShader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588DC1E73E86E0088D67D /* IMPShader.swift */; };
+		311589301E73E86E0088D67D /* IMPCIFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588DE1E73E86E0088D67D /* IMPCIFilter.swift */; };
+		311589311E73E86E0088D67D /* MPSProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588DF1E73E86E0088D67D /* MPSProcessor.swift */; };
+		311589321E73E86E0088D67D /* MTLProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588E01E73E86E0088D67D /* MTLProcessor.swift */; };
+		311589331E73E86E0088D67D /* MTLShader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588E11E73E86E0088D67D /* MTLShader.swift */; };
+		311589341E73E86E0088D67D /* IMPColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588E91E73E86E0088D67D /* IMPColor.swift */; };
+		311589351E73E86E0088D67D /* IMPContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588EA1E73E86E0088D67D /* IMPContext.swift */; };
+		311589361E73E86E0088D67D /* IMPNumericTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588EB1E73E86E0088D67D /* IMPNumericTypes.swift */; };
+		311589371E73E86E0088D67D /* IMPRgbHsv.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588EC1E73E86E0088D67D /* IMPRgbHsv.swift */; };
+		311589381E73E86E0088D67D /* IMProcessing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588ED1E73E86E0088D67D /* IMProcessing.swift */; };
+		311589391E73E86E0088D67D /* IMPSimd.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588EE1E73E86E0088D67D /* IMPSimd.swift */; };
+		3115893A1E73E86E0088D67D /* IMPTypeAliases .swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588EF1E73E86E0088D67D /* IMPTypeAliases .swift */; };
+		3115893B1E73E86E0088D67D /* IMPGaussianBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588F11E73E86E0088D67D /* IMPGaussianBlur.swift */; };
+		3115893C1E73E86E0088D67D /* IMPCannyEdgeDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588F31E73E86E0088D67D /* IMPCannyEdgeDetector.swift */; };
+		3115893D1E73E86E0088D67D /* IMPHarrisCornerDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588F41E73E86E0088D67D /* IMPHarrisCornerDetector.swift */; };
+		3115893E1E73E86E0088D67D /* IMPCameraExposure.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588F71E73E86E0088D67D /* IMPCameraExposure.swift */; };
+		3115893F1E73E86E0088D67D /* IMPCameraExtentions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588F81E73E86E0088D67D /* IMPCameraExtentions.swift */; };
+		311589401E73E86E0088D67D /* IMPCameraFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588F91E73E86E0088D67D /* IMPCameraFocus.swift */; };
+		311589411E73E86E0088D67D /* IMPCameraManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588FA1E73E86E0088D67D /* IMPCameraManager.swift */; };
+		311589421E73E86E0088D67D /* IMPMotionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588FB1E73E86E0088D67D /* IMPMotionManager.swift */; };
+		311589431E73E86E0088D67D /* IMPAVSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588FD1E73E86E0088D67D /* IMPAVSession.swift */; };
+		311589441E73E86E0088D67D /* IMPCameraSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311588FE1E73E86E0088D67D /* IMPCameraSession.swift */; };
+		311589451E73E86E0088D67D /* IMPDisplayLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589001E73E86E0088D67D /* IMPDisplayLink.swift */; };
+		311589461E73E86E0088D67D /* IMPView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589011E73E86E0088D67D /* IMPView.swift */; };
+		311589471E73E86E0088D67D /* IMPCrosshairGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589031E73E86E0088D67D /* IMPCrosshairGenerator.swift */; };
+		311589481E73E86E0088D67D /* IMPDistribution.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589051E73E86E0088D67D /* IMPDistribution.swift */; };
+		311589491E73E86E0088D67D /* IMPDerivative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589071E73E86E0088D67D /* IMPDerivative.swift */; };
+		3115894A1E73E86E0088D67D /* IMPHarrisCorner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589081E73E86E0088D67D /* IMPHarrisCorner.swift */; };
+		3115894B1E73E86E0088D67D /* IMPNonMaximumSuppression.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589091E73E86E0088D67D /* IMPNonMaximumSuppression.swift */; };
+		3115894C1E73E86E0088D67D /* IMPResampler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3115890A1E73E86E0088D67D /* IMPResampler.swift */; };
+		3115894D1E73E86E0088D67D /* IMPXYDerivative.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3115890B1E73E86E0088D67D /* IMPXYDerivative.swift */; };
+		3115894E1E73E86E0088D67D /* IMPImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3115890D1E73E86E0088D67D /* IMPImage.swift */; };
+		3115894F1E73E86E0088D67D /* IMPImageProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3115890E1E73E86E0088D67D /* IMPImageProvider.swift */; };
+		311589501E73E86E0088D67D /* IMPMTLDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3115890F1E73E86E0088D67D /* IMPMTLDevice.swift */; };
+		311589511E73E86E0088D67D /* IMPMTLTexture.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589101E73E86E0088D67D /* IMPMTLTexture.swift */; };
+		311589521E73E86E0088D67D /* IMPTextureCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589111E73E86E0088D67D /* IMPTextureCache.swift */; };
+		311589531E73E86E0088D67D /* IMPTextureDelayLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589121E73E86E0088D67D /* IMPTextureDelayLine.swift */; };
+		311589541E73E86E0088D67D /* IMPTextureProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589131E73E86E0088D67D /* IMPTextureProvider.swift */; };
+		311589551E73E86E0088D67D /* IMPVideoCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589141E73E86E0088D67D /* IMPVideoCache.swift */; };
+		311589561E73E86E0088D67D /* IMPDequeue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589261E73E86E0088D67D /* IMPDequeue.swift */; };
+		311589571E73E86E0088D67D /* IMPQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311589281E73E86E0088D67D /* IMPQueue.swift */; };
 		316A3CFA1E586C2C005BB909 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316A3CF91E586C2C005BB909 /* AppDelegate.swift */; };
 		316A3CFC1E586C2C005BB909 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316A3CFB1E586C2C005BB909 /* ViewController.swift */; };
 		316A3CFF1E586C2C005BB909 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 316A3CFD1E586C2C005BB909 /* Main.storyboard */; };
@@ -59,76 +61,80 @@
 		316A3D041E586C2C005BB909 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 316A3D021E586C2C005BB909 /* LaunchScreen.storyboard */; };
 		316A3D0D1E586DA2005BB909 /* IMPCoreImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = 316A3D0C1E586DA2005BB909 /* IMPCoreImage.metal */; };
 		316A3D0F1E586DAB005BB909 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 316A3D0E1E586DAB005BB909 /* Images.xcassets */; };
+		31E3B47A1E747DE3001998DD /* IMPHoughLinesDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E3B4791E747DE3001998DD /* IMPHoughLinesDetector.swift */; };
 		987178267590305BFABF34BF /* Pods_IMPBaseOperations.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3148E7B39058C9E2CA5AA24E /* Pods_IMPBaseOperations.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		2C00A6DACE41B0F63C864221 /* Pods-IMPBaseOperations.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.release.xcconfig"; sourceTree = "<group>"; };
-		3139616C1E71CC0000761F02 /* IMPPhotoPlate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPhotoPlate.swift; sourceTree = "<group>"; };
-		3139616D1E71CC0000761F02 /* IMPQuad.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPQuad.swift; sourceTree = "<group>"; };
-		3139616E1E71CC0000761F02 /* IMPTransformModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTransformModel.swift; sourceTree = "<group>"; };
-		3139616F1E71CC0000761F02 /* IMPVertices.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPVertices.swift; sourceTree = "<group>"; };
-		313961701E71CC0000761F02 /* IMPFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFilter.swift; sourceTree = "<group>"; };
-		313961711E71CC0000761F02 /* IMPFunction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFunction.swift; sourceTree = "<group>"; };
-		313961721E71CC0000761F02 /* IMPShader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPShader.swift; sourceTree = "<group>"; };
-		313961741E71CC0000761F02 /* IMPCIFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCIFilter.swift; sourceTree = "<group>"; };
-		313961751E71CC0000761F02 /* MPSProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPSProcessor.swift; sourceTree = "<group>"; };
-		313961761E71CC0000761F02 /* MTLProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MTLProcessor.swift; sourceTree = "<group>"; };
-		313961771E71CC0000761F02 /* MTLShader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MTLShader.swift; sourceTree = "<group>"; };
-		313961791E71CC0000761F02 /* IMPConstants-Bridging-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPConstants-Bridging-Metal.h"; sourceTree = "<group>"; };
-		3139617A1E71CC0000761F02 /* IMPHistogramTypes-Bridging-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPHistogramTypes-Bridging-Metal.h"; sourceTree = "<group>"; };
-		3139617B1E71CC0000761F02 /* IMPOperations-Bridgin-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPOperations-Bridgin-Metal.h"; sourceTree = "<group>"; };
-		3139617C1E71CC0000761F02 /* IMProcessing-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMProcessing-Bridging-Header.h"; sourceTree = "<group>"; };
-		3139617D1E71CC0000761F02 /* IMPTypes-Bridging-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPTypes-Bridging-Metal.h"; sourceTree = "<group>"; };
-		3139617F1E71CC0000761F02 /* IMPColor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPColor.swift; sourceTree = "<group>"; };
-		313961801E71CC0000761F02 /* IMPContext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPContext.swift; sourceTree = "<group>"; };
-		313961811E71CC0000761F02 /* IMPNumericTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPNumericTypes.swift; sourceTree = "<group>"; };
-		313961821E71CC0000761F02 /* IMPRgbHsv.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPRgbHsv.swift; sourceTree = "<group>"; };
-		313961831E71CC0000761F02 /* IMProcessing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMProcessing.swift; sourceTree = "<group>"; };
-		313961841E71CC0000761F02 /* IMPSimd.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPSimd.swift; sourceTree = "<group>"; };
-		313961851E71CC0000761F02 /* IMPTypeAliases .swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "IMPTypeAliases .swift"; sourceTree = "<group>"; };
-		313961871E71CC0000761F02 /* IMPGaussianBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPGaussianBlur.swift; sourceTree = "<group>"; };
-		3139618A1E71CC0000761F02 /* IMPCameraExposure.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraExposure.swift; sourceTree = "<group>"; };
-		3139618B1E71CC0000761F02 /* IMPCameraExtentions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraExtentions.swift; sourceTree = "<group>"; };
-		3139618C1E71CC0000761F02 /* IMPCameraFocus.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraFocus.swift; sourceTree = "<group>"; };
-		3139618D1E71CC0000761F02 /* IMPCameraManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraManager.swift; sourceTree = "<group>"; };
-		3139618E1E71CC0000761F02 /* IMPMotionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMotionManager.swift; sourceTree = "<group>"; };
-		313961901E71CC0000761F02 /* IMPAVSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPAVSession.swift; sourceTree = "<group>"; };
-		313961911E71CC0000761F02 /* IMPCameraSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraSession.swift; sourceTree = "<group>"; };
-		313961931E71CC0000761F02 /* IMPDisplayLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDisplayLink.swift; sourceTree = "<group>"; };
-		313961941E71CC0000761F02 /* IMPView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPView.swift; sourceTree = "<group>"; };
-		313961971E71CC0000761F02 /* IMPCrosshairGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCrosshairGenerator.swift; sourceTree = "<group>"; };
-		313961991E71CC0000761F02 /* IMPDistribution.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDistribution.swift; sourceTree = "<group>"; };
-		3139619B1E71CC0000761F02 /* IMPDerivative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDerivative.swift; sourceTree = "<group>"; };
-		3139619C1E71CC0000761F02 /* IMPHarrisCorner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHarrisCorner.swift; sourceTree = "<group>"; };
-		3139619D1E71CC0000761F02 /* IMPHarrisCornerDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHarrisCornerDetector.swift; sourceTree = "<group>"; };
-		3139619E1E71CC0000761F02 /* IMPNonMaximumSuppression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPNonMaximumSuppression.swift; sourceTree = "<group>"; };
-		3139619F1E71CC0000761F02 /* IMPXYDerivative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPXYDerivative.swift; sourceTree = "<group>"; };
-		313961A11E71CC0000761F02 /* IMPImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPImage.swift; sourceTree = "<group>"; };
-		313961A21E71CC0000761F02 /* IMPImageProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPImageProvider.swift; sourceTree = "<group>"; };
-		313961A31E71CC0000761F02 /* IMPMTLDevice.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMTLDevice.swift; sourceTree = "<group>"; };
-		313961A41E71CC0000761F02 /* IMPMTLTexture.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMTLTexture.swift; sourceTree = "<group>"; };
-		313961A51E71CC0000761F02 /* IMPTextureCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTextureCache.swift; sourceTree = "<group>"; };
-		313961A61E71CC0000761F02 /* IMPTextureDelayLine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTextureDelayLine.swift; sourceTree = "<group>"; };
-		313961A71E71CC0000761F02 /* IMPTextureProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTextureProvider.swift; sourceTree = "<group>"; };
-		313961A81E71CC0000761F02 /* IMPVideoCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPVideoCache.swift; sourceTree = "<group>"; };
-		313961AA1E71CC0000761F02 /* IMPBlending_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPBlending_metal.h; sourceTree = "<group>"; };
-		313961AB1E71CC0000761F02 /* IMPColorSpaces_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPColorSpaces_metal.h; sourceTree = "<group>"; };
-		313961AC1E71CC0000761F02 /* IMPCommon_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPCommon_metal.h; sourceTree = "<group>"; };
-		313961AD1E71CC0000761F02 /* IMPConstants_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPConstants_metal.h; sourceTree = "<group>"; };
-		313961AE1E71CC0000761F02 /* IMPCrosshair_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPCrosshair_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
-		313961AF1E71CC0000761F02 /* IMPDerivatives_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPDerivatives_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
-		313961B01E71CC0000761F02 /* IMPFlowControl_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPFlowControl_metal.h; sourceTree = "<group>"; };
-		313961B11E71CC0000761F02 /* IMPGaussianBlur_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPGaussianBlur_metal.h; sourceTree = "<group>"; };
-		313961B21E71CC0000761F02 /* IMPGeometry_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPGeometry_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
-		313961B31E71CC0000761F02 /* IMProcessing_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMProcessing_metal.h; sourceTree = "<group>"; };
-		313961B41E71CC0000761F02 /* IMProcessingUI_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMProcessingUI_metal.h; sourceTree = "<group>"; };
-		313961B51E71CC0000761F02 /* IMPStdlib_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPStdlib_metal.h; sourceTree = "<group>"; };
-		313961B61E71CC0000761F02 /* IMPSwift-Bridging-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPSwift-Bridging-Metal.h"; sourceTree = "<group>"; };
-		313961B71E71CC0000761F02 /* IMPVignette_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPVignette_metal.h; sourceTree = "<group>"; };
-		313961B91E71CC0000761F02 /* IMPDequeue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDequeue.swift; sourceTree = "<group>"; };
-		313961BA1E71CC0000761F02 /* IMPExif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPExif.h; sourceTree = "<group>"; };
-		313961BB1E71CC0000761F02 /* IMPQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPQueue.swift; sourceTree = "<group>"; };
+		311588D61E73E86E0088D67D /* IMPPhotoPlate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPhotoPlate.swift; sourceTree = "<group>"; };
+		311588D71E73E86E0088D67D /* IMPQuad.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPQuad.swift; sourceTree = "<group>"; };
+		311588D81E73E86E0088D67D /* IMPTransformModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTransformModel.swift; sourceTree = "<group>"; };
+		311588D91E73E86E0088D67D /* IMPVertices.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPVertices.swift; sourceTree = "<group>"; };
+		311588DA1E73E86E0088D67D /* IMPFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFilter.swift; sourceTree = "<group>"; };
+		311588DB1E73E86E0088D67D /* IMPFunction.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFunction.swift; sourceTree = "<group>"; };
+		311588DC1E73E86E0088D67D /* IMPShader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPShader.swift; sourceTree = "<group>"; };
+		311588DE1E73E86E0088D67D /* IMPCIFilter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCIFilter.swift; sourceTree = "<group>"; };
+		311588DF1E73E86E0088D67D /* MPSProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MPSProcessor.swift; sourceTree = "<group>"; };
+		311588E01E73E86E0088D67D /* MTLProcessor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MTLProcessor.swift; sourceTree = "<group>"; };
+		311588E11E73E86E0088D67D /* MTLShader.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MTLShader.swift; sourceTree = "<group>"; };
+		311588E31E73E86E0088D67D /* IMPConstants-Bridging-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPConstants-Bridging-Metal.h"; sourceTree = "<group>"; };
+		311588E41E73E86E0088D67D /* IMPHistogramTypes-Bridging-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPHistogramTypes-Bridging-Metal.h"; sourceTree = "<group>"; };
+		311588E51E73E86E0088D67D /* IMPOperations-Bridgin-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPOperations-Bridgin-Metal.h"; sourceTree = "<group>"; };
+		311588E61E73E86E0088D67D /* IMProcessing-Bridging-Header.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMProcessing-Bridging-Header.h"; sourceTree = "<group>"; };
+		311588E71E73E86E0088D67D /* IMPTypes-Bridging-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPTypes-Bridging-Metal.h"; sourceTree = "<group>"; };
+		311588E91E73E86E0088D67D /* IMPColor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPColor.swift; sourceTree = "<group>"; };
+		311588EA1E73E86E0088D67D /* IMPContext.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPContext.swift; sourceTree = "<group>"; };
+		311588EB1E73E86E0088D67D /* IMPNumericTypes.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPNumericTypes.swift; sourceTree = "<group>"; };
+		311588EC1E73E86E0088D67D /* IMPRgbHsv.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPRgbHsv.swift; sourceTree = "<group>"; };
+		311588ED1E73E86E0088D67D /* IMProcessing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMProcessing.swift; sourceTree = "<group>"; };
+		311588EE1E73E86E0088D67D /* IMPSimd.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPSimd.swift; sourceTree = "<group>"; };
+		311588EF1E73E86E0088D67D /* IMPTypeAliases .swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "IMPTypeAliases .swift"; sourceTree = "<group>"; };
+		311588F11E73E86E0088D67D /* IMPGaussianBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPGaussianBlur.swift; sourceTree = "<group>"; };
+		311588F31E73E86E0088D67D /* IMPCannyEdgeDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCannyEdgeDetector.swift; sourceTree = "<group>"; };
+		311588F41E73E86E0088D67D /* IMPHarrisCornerDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHarrisCornerDetector.swift; sourceTree = "<group>"; };
+		311588F71E73E86E0088D67D /* IMPCameraExposure.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraExposure.swift; sourceTree = "<group>"; };
+		311588F81E73E86E0088D67D /* IMPCameraExtentions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraExtentions.swift; sourceTree = "<group>"; };
+		311588F91E73E86E0088D67D /* IMPCameraFocus.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraFocus.swift; sourceTree = "<group>"; };
+		311588FA1E73E86E0088D67D /* IMPCameraManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraManager.swift; sourceTree = "<group>"; };
+		311588FB1E73E86E0088D67D /* IMPMotionManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMotionManager.swift; sourceTree = "<group>"; };
+		311588FD1E73E86E0088D67D /* IMPAVSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPAVSession.swift; sourceTree = "<group>"; };
+		311588FE1E73E86E0088D67D /* IMPCameraSession.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCameraSession.swift; sourceTree = "<group>"; };
+		311589001E73E86E0088D67D /* IMPDisplayLink.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDisplayLink.swift; sourceTree = "<group>"; };
+		311589011E73E86E0088D67D /* IMPView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPView.swift; sourceTree = "<group>"; };
+		311589031E73E86E0088D67D /* IMPCrosshairGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCrosshairGenerator.swift; sourceTree = "<group>"; };
+		311589051E73E86E0088D67D /* IMPDistribution.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDistribution.swift; sourceTree = "<group>"; };
+		311589071E73E86E0088D67D /* IMPDerivative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDerivative.swift; sourceTree = "<group>"; };
+		311589081E73E86E0088D67D /* IMPHarrisCorner.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHarrisCorner.swift; sourceTree = "<group>"; };
+		311589091E73E86E0088D67D /* IMPNonMaximumSuppression.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPNonMaximumSuppression.swift; sourceTree = "<group>"; };
+		3115890A1E73E86E0088D67D /* IMPResampler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPResampler.swift; sourceTree = "<group>"; };
+		3115890B1E73E86E0088D67D /* IMPXYDerivative.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPXYDerivative.swift; sourceTree = "<group>"; };
+		3115890D1E73E86E0088D67D /* IMPImage.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPImage.swift; sourceTree = "<group>"; };
+		3115890E1E73E86E0088D67D /* IMPImageProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPImageProvider.swift; sourceTree = "<group>"; };
+		3115890F1E73E86E0088D67D /* IMPMTLDevice.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMTLDevice.swift; sourceTree = "<group>"; };
+		311589101E73E86E0088D67D /* IMPMTLTexture.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMTLTexture.swift; sourceTree = "<group>"; };
+		311589111E73E86E0088D67D /* IMPTextureCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTextureCache.swift; sourceTree = "<group>"; };
+		311589121E73E86E0088D67D /* IMPTextureDelayLine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTextureDelayLine.swift; sourceTree = "<group>"; };
+		311589131E73E86E0088D67D /* IMPTextureProvider.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTextureProvider.swift; sourceTree = "<group>"; };
+		311589141E73E86E0088D67D /* IMPVideoCache.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPVideoCache.swift; sourceTree = "<group>"; };
+		311589161E73E86E0088D67D /* IMPBlending_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPBlending_metal.h; sourceTree = "<group>"; };
+		311589171E73E86E0088D67D /* IMPColorProcessing_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPColorProcessing_metal.h; sourceTree = "<group>"; };
+		311589181E73E86E0088D67D /* IMPColorSpaces_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPColorSpaces_metal.h; sourceTree = "<group>"; };
+		311589191E73E86E0088D67D /* IMPCommon_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPCommon_metal.h; sourceTree = "<group>"; };
+		3115891A1E73E86E0088D67D /* IMPConstants_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPConstants_metal.h; sourceTree = "<group>"; };
+		3115891B1E73E86E0088D67D /* IMPCrosshair_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPCrosshair_metal.h; sourceTree = "<group>"; };
+		3115891C1E73E86E0088D67D /* IMPDerivatives_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPDerivatives_metal.h; sourceTree = "<group>"; };
+		3115891D1E73E86E0088D67D /* IMPFlowControl_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPFlowControl_metal.h; sourceTree = "<group>"; };
+		3115891E1E73E86E0088D67D /* IMPGaussianBlur_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPGaussianBlur_metal.h; sourceTree = "<group>"; };
+		3115891F1E73E86E0088D67D /* IMPGeometry_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPGeometry_metal.h; sourceTree = "<group>"; };
+		311589201E73E86E0088D67D /* IMProcessing_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMProcessing_metal.h; sourceTree = "<group>"; };
+		311589211E73E86E0088D67D /* IMProcessingUI_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMProcessingUI_metal.h; sourceTree = "<group>"; };
+		311589221E73E86E0088D67D /* IMPStdlib_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPStdlib_metal.h; sourceTree = "<group>"; };
+		311589231E73E86E0088D67D /* IMPSwift-Bridging-Metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "IMPSwift-Bridging-Metal.h"; sourceTree = "<group>"; };
+		311589241E73E86E0088D67D /* IMPVignette_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPVignette_metal.h; sourceTree = "<group>"; };
+		311589261E73E86E0088D67D /* IMPDequeue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPDequeue.swift; sourceTree = "<group>"; };
+		311589271E73E86E0088D67D /* IMPExif.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPExif.h; sourceTree = "<group>"; };
+		311589281E73E86E0088D67D /* IMPQueue.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPQueue.swift; sourceTree = "<group>"; };
 		3148E7B39058C9E2CA5AA24E /* Pods_IMPBaseOperations.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPBaseOperations.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		316A3CF61E586C2C005BB909 /* IMPBaseOperations.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPBaseOperations.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		316A3CF91E586C2C005BB909 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -139,6 +145,7 @@
 		316A3D051E586C2C005BB909 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		316A3D0C1E586DA2005BB909 /* IMPCoreImage.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = IMPCoreImage.metal; sourceTree = "<group>"; };
 		316A3D0E1E586DAB005BB909 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		31E3B4791E747DE3001998DD /* IMPHoughLinesDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHoughLinesDetector.swift; sourceTree = "<group>"; };
 		86450CE34FFB86BCBF84C40A /* Pods-IMPBaseOperations.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -154,211 +161,215 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		313961691E71CC0000761F02 /* Classes */ = {
+		311588D31E73E86E0088D67D /* Classes */ = {
 			isa = PBXGroup;
 			children = (
-				3139616A1E71CC0000761F02 /* Base */,
-				313961781E71CC0000761F02 /* Bridging */,
-				3139617E1E71CC0000761F02 /* Common */,
-				313961861E71CC0000761F02 /* Convolutions */,
-				313961881E71CC0000761F02 /* Devices */,
-				313961921E71CC0000761F02 /* FrontEnd */,
-				313961961E71CC0000761F02 /* Generators */,
-				313961981E71CC0000761F02 /* Math */,
-				3139619A1E71CC0000761F02 /* Operations */,
-				313961A01E71CC0000761F02 /* Providers */,
-				313961A91E71CC0000761F02 /* Shaders */,
-				313961B81E71CC0000761F02 /* Utils */,
+				311588D41E73E86E0088D67D /* Base */,
+				311588E21E73E86E0088D67D /* Bridging */,
+				311588E81E73E86E0088D67D /* Common */,
+				311588F01E73E86E0088D67D /* Convolutions */,
+				311588F21E73E86E0088D67D /* Detectors */,
+				311588F51E73E86E0088D67D /* Devices */,
+				311588FF1E73E86E0088D67D /* FrontEnd */,
+				311589021E73E86E0088D67D /* Generators */,
+				311589041E73E86E0088D67D /* Math */,
+				311589061E73E86E0088D67D /* Operations */,
+				3115890C1E73E86E0088D67D /* Providers */,
+				311589151E73E86E0088D67D /* Shaders */,
+				311589251E73E86E0088D67D /* Utils */,
 			);
 			name = Classes;
 			path = ../../../../IMProcessing/Classes;
 			sourceTree = "<group>";
 		};
-		3139616A1E71CC0000761F02 /* Base */ = {
+		311588D41E73E86E0088D67D /* Base */ = {
 			isa = PBXGroup;
 			children = (
-				3139616B1E71CC0000761F02 /* Graphics */,
-				313961701E71CC0000761F02 /* IMPFilter.swift */,
-				313961711E71CC0000761F02 /* IMPFunction.swift */,
-				313961721E71CC0000761F02 /* IMPShader.swift */,
-				313961731E71CC0000761F02 /* Processors */,
+				311588D51E73E86E0088D67D /* Graphics */,
+				311588DA1E73E86E0088D67D /* IMPFilter.swift */,
+				311588DB1E73E86E0088D67D /* IMPFunction.swift */,
+				311588DC1E73E86E0088D67D /* IMPShader.swift */,
+				311588DD1E73E86E0088D67D /* Processors */,
 			);
 			path = Base;
 			sourceTree = "<group>";
 		};
-		3139616B1E71CC0000761F02 /* Graphics */ = {
+		311588D51E73E86E0088D67D /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
-				3139616C1E71CC0000761F02 /* IMPPhotoPlate.swift */,
-				3139616D1E71CC0000761F02 /* IMPQuad.swift */,
-				3139616E1E71CC0000761F02 /* IMPTransformModel.swift */,
-				3139616F1E71CC0000761F02 /* IMPVertices.swift */,
+				311588D61E73E86E0088D67D /* IMPPhotoPlate.swift */,
+				311588D71E73E86E0088D67D /* IMPQuad.swift */,
+				311588D81E73E86E0088D67D /* IMPTransformModel.swift */,
+				311588D91E73E86E0088D67D /* IMPVertices.swift */,
 			);
 			path = Graphics;
 			sourceTree = "<group>";
 		};
-		313961731E71CC0000761F02 /* Processors */ = {
+		311588DD1E73E86E0088D67D /* Processors */ = {
 			isa = PBXGroup;
 			children = (
-				313961741E71CC0000761F02 /* IMPCIFilter.swift */,
-				313961751E71CC0000761F02 /* MPSProcessor.swift */,
-				313961761E71CC0000761F02 /* MTLProcessor.swift */,
-				313961771E71CC0000761F02 /* MTLShader.swift */,
+				311588DE1E73E86E0088D67D /* IMPCIFilter.swift */,
+				311588DF1E73E86E0088D67D /* MPSProcessor.swift */,
+				311588E01E73E86E0088D67D /* MTLProcessor.swift */,
+				311588E11E73E86E0088D67D /* MTLShader.swift */,
 			);
 			path = Processors;
 			sourceTree = "<group>";
 		};
-		313961781E71CC0000761F02 /* Bridging */ = {
+		311588E21E73E86E0088D67D /* Bridging */ = {
 			isa = PBXGroup;
 			children = (
-				313961791E71CC0000761F02 /* IMPConstants-Bridging-Metal.h */,
-				3139617A1E71CC0000761F02 /* IMPHistogramTypes-Bridging-Metal.h */,
-				3139617B1E71CC0000761F02 /* IMPOperations-Bridgin-Metal.h */,
-				3139617C1E71CC0000761F02 /* IMProcessing-Bridging-Header.h */,
-				3139617D1E71CC0000761F02 /* IMPTypes-Bridging-Metal.h */,
+				311588E31E73E86E0088D67D /* IMPConstants-Bridging-Metal.h */,
+				311588E41E73E86E0088D67D /* IMPHistogramTypes-Bridging-Metal.h */,
+				311588E51E73E86E0088D67D /* IMPOperations-Bridgin-Metal.h */,
+				311588E61E73E86E0088D67D /* IMProcessing-Bridging-Header.h */,
+				311588E71E73E86E0088D67D /* IMPTypes-Bridging-Metal.h */,
 			);
 			path = Bridging;
 			sourceTree = "<group>";
 		};
-		3139617E1E71CC0000761F02 /* Common */ = {
+		311588E81E73E86E0088D67D /* Common */ = {
 			isa = PBXGroup;
 			children = (
-				3139617F1E71CC0000761F02 /* IMPColor.swift */,
-				313961801E71CC0000761F02 /* IMPContext.swift */,
-				313961811E71CC0000761F02 /* IMPNumericTypes.swift */,
-				313961821E71CC0000761F02 /* IMPRgbHsv.swift */,
-				313961831E71CC0000761F02 /* IMProcessing.swift */,
-				313961841E71CC0000761F02 /* IMPSimd.swift */,
-				313961851E71CC0000761F02 /* IMPTypeAliases .swift */,
+				311588E91E73E86E0088D67D /* IMPColor.swift */,
+				311588EA1E73E86E0088D67D /* IMPContext.swift */,
+				311588EB1E73E86E0088D67D /* IMPNumericTypes.swift */,
+				311588EC1E73E86E0088D67D /* IMPRgbHsv.swift */,
+				311588ED1E73E86E0088D67D /* IMProcessing.swift */,
+				311588EE1E73E86E0088D67D /* IMPSimd.swift */,
+				311588EF1E73E86E0088D67D /* IMPTypeAliases .swift */,
 			);
 			path = Common;
 			sourceTree = "<group>";
 		};
-		313961861E71CC0000761F02 /* Convolutions */ = {
+		311588F01E73E86E0088D67D /* Convolutions */ = {
 			isa = PBXGroup;
 			children = (
-				313961871E71CC0000761F02 /* IMPGaussianBlur.swift */,
+				311588F11E73E86E0088D67D /* IMPGaussianBlur.swift */,
 			);
 			path = Convolutions;
 			sourceTree = "<group>";
 		};
-		313961881E71CC0000761F02 /* Devices */ = {
+		311588F21E73E86E0088D67D /* Detectors */ = {
 			isa = PBXGroup;
 			children = (
-				313961891E71CC0000761F02 /* Camera */,
-				3139618D1E71CC0000761F02 /* IMPCameraManager.swift */,
-				3139618E1E71CC0000761F02 /* IMPMotionManager.swift */,
-				3139618F1E71CC0000761F02 /* Sessions */,
+				311588F31E73E86E0088D67D /* IMPCannyEdgeDetector.swift */,
+				311588F41E73E86E0088D67D /* IMPHarrisCornerDetector.swift */,
+				31E3B4791E747DE3001998DD /* IMPHoughLinesDetector.swift */,
+			);
+			path = Detectors;
+			sourceTree = "<group>";
+		};
+		311588F51E73E86E0088D67D /* Devices */ = {
+			isa = PBXGroup;
+			children = (
+				311588F61E73E86E0088D67D /* Camera */,
+				311588FA1E73E86E0088D67D /* IMPCameraManager.swift */,
+				311588FB1E73E86E0088D67D /* IMPMotionManager.swift */,
+				311588FC1E73E86E0088D67D /* Sessions */,
 			);
 			path = Devices;
 			sourceTree = "<group>";
 		};
-		313961891E71CC0000761F02 /* Camera */ = {
+		311588F61E73E86E0088D67D /* Camera */ = {
 			isa = PBXGroup;
 			children = (
-				3139618A1E71CC0000761F02 /* IMPCameraExposure.swift */,
-				3139618B1E71CC0000761F02 /* IMPCameraExtentions.swift */,
-				3139618C1E71CC0000761F02 /* IMPCameraFocus.swift */,
+				311588F71E73E86E0088D67D /* IMPCameraExposure.swift */,
+				311588F81E73E86E0088D67D /* IMPCameraExtentions.swift */,
+				311588F91E73E86E0088D67D /* IMPCameraFocus.swift */,
 			);
 			path = Camera;
 			sourceTree = "<group>";
 		};
-		3139618F1E71CC0000761F02 /* Sessions */ = {
+		311588FC1E73E86E0088D67D /* Sessions */ = {
 			isa = PBXGroup;
 			children = (
-				313961901E71CC0000761F02 /* IMPAVSession.swift */,
-				313961911E71CC0000761F02 /* IMPCameraSession.swift */,
+				311588FD1E73E86E0088D67D /* IMPAVSession.swift */,
+				311588FE1E73E86E0088D67D /* IMPCameraSession.swift */,
 			);
 			path = Sessions;
 			sourceTree = "<group>";
 		};
-		313961921E71CC0000761F02 /* FrontEnd */ = {
+		311588FF1E73E86E0088D67D /* FrontEnd */ = {
 			isa = PBXGroup;
 			children = (
-				313961931E71CC0000761F02 /* IMPDisplayLink.swift */,
-				313961941E71CC0000761F02 /* IMPView.swift */,
-				313961951E71CC0000761F02 /* Privates */,
+				311589001E73E86E0088D67D /* IMPDisplayLink.swift */,
+				311589011E73E86E0088D67D /* IMPView.swift */,
 			);
 			path = FrontEnd;
 			sourceTree = "<group>";
 		};
-		313961951E71CC0000761F02 /* Privates */ = {
+		311589021E73E86E0088D67D /* Generators */ = {
 			isa = PBXGroup;
 			children = (
-			);
-			path = Privates;
-			sourceTree = "<group>";
-		};
-		313961961E71CC0000761F02 /* Generators */ = {
-			isa = PBXGroup;
-			children = (
-				313961971E71CC0000761F02 /* IMPCrosshairGenerator.swift */,
+				311589031E73E86E0088D67D /* IMPCrosshairGenerator.swift */,
 			);
 			path = Generators;
 			sourceTree = "<group>";
 		};
-		313961981E71CC0000761F02 /* Math */ = {
+		311589041E73E86E0088D67D /* Math */ = {
 			isa = PBXGroup;
 			children = (
-				313961991E71CC0000761F02 /* IMPDistribution.swift */,
+				311589051E73E86E0088D67D /* IMPDistribution.swift */,
 			);
 			path = Math;
 			sourceTree = "<group>";
 		};
-		3139619A1E71CC0000761F02 /* Operations */ = {
+		311589061E73E86E0088D67D /* Operations */ = {
 			isa = PBXGroup;
 			children = (
-				3139619B1E71CC0000761F02 /* IMPDerivative.swift */,
-				3139619C1E71CC0000761F02 /* IMPHarrisCorner.swift */,
-				3139619D1E71CC0000761F02 /* IMPHarrisCornerDetector.swift */,
-				3139619E1E71CC0000761F02 /* IMPNonMaximumSuppression.swift */,
-				3139619F1E71CC0000761F02 /* IMPXYDerivative.swift */,
+				311589071E73E86E0088D67D /* IMPDerivative.swift */,
+				311589081E73E86E0088D67D /* IMPHarrisCorner.swift */,
+				311589091E73E86E0088D67D /* IMPNonMaximumSuppression.swift */,
+				3115890A1E73E86E0088D67D /* IMPResampler.swift */,
+				3115890B1E73E86E0088D67D /* IMPXYDerivative.swift */,
 			);
 			path = Operations;
 			sourceTree = "<group>";
 		};
-		313961A01E71CC0000761F02 /* Providers */ = {
+		3115890C1E73E86E0088D67D /* Providers */ = {
 			isa = PBXGroup;
 			children = (
-				313961A11E71CC0000761F02 /* IMPImage.swift */,
-				313961A21E71CC0000761F02 /* IMPImageProvider.swift */,
-				313961A31E71CC0000761F02 /* IMPMTLDevice.swift */,
-				313961A41E71CC0000761F02 /* IMPMTLTexture.swift */,
-				313961A51E71CC0000761F02 /* IMPTextureCache.swift */,
-				313961A61E71CC0000761F02 /* IMPTextureDelayLine.swift */,
-				313961A71E71CC0000761F02 /* IMPTextureProvider.swift */,
-				313961A81E71CC0000761F02 /* IMPVideoCache.swift */,
+				3115890D1E73E86E0088D67D /* IMPImage.swift */,
+				3115890E1E73E86E0088D67D /* IMPImageProvider.swift */,
+				3115890F1E73E86E0088D67D /* IMPMTLDevice.swift */,
+				311589101E73E86E0088D67D /* IMPMTLTexture.swift */,
+				311589111E73E86E0088D67D /* IMPTextureCache.swift */,
+				311589121E73E86E0088D67D /* IMPTextureDelayLine.swift */,
+				311589131E73E86E0088D67D /* IMPTextureProvider.swift */,
+				311589141E73E86E0088D67D /* IMPVideoCache.swift */,
 			);
 			path = Providers;
 			sourceTree = "<group>";
 		};
-		313961A91E71CC0000761F02 /* Shaders */ = {
+		311589151E73E86E0088D67D /* Shaders */ = {
 			isa = PBXGroup;
 			children = (
-				313961AA1E71CC0000761F02 /* IMPBlending_metal.h */,
-				313961AB1E71CC0000761F02 /* IMPColorSpaces_metal.h */,
-				313961AC1E71CC0000761F02 /* IMPCommon_metal.h */,
-				313961AD1E71CC0000761F02 /* IMPConstants_metal.h */,
-				313961AE1E71CC0000761F02 /* IMPCrosshair_metal.h */,
-				313961AF1E71CC0000761F02 /* IMPDerivatives_metal.h */,
-				313961B01E71CC0000761F02 /* IMPFlowControl_metal.h */,
-				313961B11E71CC0000761F02 /* IMPGaussianBlur_metal.h */,
-				313961B21E71CC0000761F02 /* IMPGeometry_metal.h */,
-				313961B31E71CC0000761F02 /* IMProcessing_metal.h */,
-				313961B41E71CC0000761F02 /* IMProcessingUI_metal.h */,
-				313961B51E71CC0000761F02 /* IMPStdlib_metal.h */,
-				313961B61E71CC0000761F02 /* IMPSwift-Bridging-Metal.h */,
-				313961B71E71CC0000761F02 /* IMPVignette_metal.h */,
+				311589161E73E86E0088D67D /* IMPBlending_metal.h */,
+				311589171E73E86E0088D67D /* IMPColorProcessing_metal.h */,
+				311589181E73E86E0088D67D /* IMPColorSpaces_metal.h */,
+				311589191E73E86E0088D67D /* IMPCommon_metal.h */,
+				3115891A1E73E86E0088D67D /* IMPConstants_metal.h */,
+				3115891B1E73E86E0088D67D /* IMPCrosshair_metal.h */,
+				3115891C1E73E86E0088D67D /* IMPDerivatives_metal.h */,
+				3115891D1E73E86E0088D67D /* IMPFlowControl_metal.h */,
+				3115891E1E73E86E0088D67D /* IMPGaussianBlur_metal.h */,
+				3115891F1E73E86E0088D67D /* IMPGeometry_metal.h */,
+				311589201E73E86E0088D67D /* IMProcessing_metal.h */,
+				311589211E73E86E0088D67D /* IMProcessingUI_metal.h */,
+				311589221E73E86E0088D67D /* IMPStdlib_metal.h */,
+				311589231E73E86E0088D67D /* IMPSwift-Bridging-Metal.h */,
+				311589241E73E86E0088D67D /* IMPVignette_metal.h */,
 			);
 			path = Shaders;
 			sourceTree = "<group>";
 		};
-		313961B81E71CC0000761F02 /* Utils */ = {
+		311589251E73E86E0088D67D /* Utils */ = {
 			isa = PBXGroup;
 			children = (
-				313961B91E71CC0000761F02 /* IMPDequeue.swift */,
-				313961BA1E71CC0000761F02 /* IMPExif.h */,
-				313961BB1E71CC0000761F02 /* IMPQueue.swift */,
+				311589261E73E86E0088D67D /* IMPDequeue.swift */,
+				311589271E73E86E0088D67D /* IMPExif.h */,
+				311589281E73E86E0088D67D /* IMPQueue.swift */,
 			);
 			path = Utils;
 			sourceTree = "<group>";
@@ -384,7 +395,7 @@
 		316A3CF81E586C2C005BB909 /* IMPBaseOperations */ = {
 			isa = PBXGroup;
 			children = (
-				313961691E71CC0000761F02 /* Classes */,
+				311588D31E73E86E0088D67D /* Classes */,
 				316A3D0B1E586DA2005BB909 /* Shaders */,
 				316A3CF91E586C2C005BB909 /* AppDelegate.swift */,
 				316A3CFB1E586C2C005BB909 /* ViewController.swift */,
@@ -547,54 +558,57 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				313961BC1E71CC0000761F02 /* IMPPhotoPlate.swift in Sources */,
-				313961BF1E71CC0000761F02 /* IMPVertices.swift in Sources */,
-				313961C91E71CC0000761F02 /* IMPNumericTypes.swift in Sources */,
-				313961D31E71CC0000761F02 /* IMPMotionManager.swift in Sources */,
-				313961DF1E71CC0000761F02 /* IMPImage.swift in Sources */,
+				311589291E73E86E0088D67D /* IMPPhotoPlate.swift in Sources */,
+				3115892C1E73E86E0088D67D /* IMPVertices.swift in Sources */,
+				3115894D1E73E86E0088D67D /* IMPXYDerivative.swift in Sources */,
+				311589501E73E86E0088D67D /* IMPMTLDevice.swift in Sources */,
+				311589521E73E86E0088D67D /* IMPTextureCache.swift in Sources */,
+				311589361E73E86E0088D67D /* IMPNumericTypes.swift in Sources */,
 				316A3CFC1E586C2C005BB909 /* ViewController.swift in Sources */,
-				313961C11E71CC0000761F02 /* IMPFunction.swift in Sources */,
+				311589561E73E86E0088D67D /* IMPDequeue.swift in Sources */,
+				3115892E1E73E86E0088D67D /* IMPFunction.swift in Sources */,
 				316A3D0D1E586DA2005BB909 /* IMPCoreImage.metal in Sources */,
-				313961CE1E71CC0000761F02 /* IMPGaussianBlur.swift in Sources */,
-				313961DE1E71CC0000761F02 /* IMPXYDerivative.swift in Sources */,
-				313961D71E71CC0000761F02 /* IMPView.swift in Sources */,
-				313961CA1E71CC0000761F02 /* IMPRgbHsv.swift in Sources */,
-				313961CC1E71CC0000761F02 /* IMPSimd.swift in Sources */,
-				313961C21E71CC0000761F02 /* IMPShader.swift in Sources */,
-				313961E31E71CC0000761F02 /* IMPTextureCache.swift in Sources */,
-				313961C81E71CC0000761F02 /* IMPContext.swift in Sources */,
-				313961E71E71CC0000761F02 /* IMPDequeue.swift in Sources */,
-				313961DB1E71CC0000761F02 /* IMPHarrisCorner.swift in Sources */,
-				313961CF1E71CC0000761F02 /* IMPCameraExposure.swift in Sources */,
-				313961E41E71CC0000761F02 /* IMPTextureDelayLine.swift in Sources */,
-				313961E11E71CC0000761F02 /* IMPMTLDevice.swift in Sources */,
-				313961D61E71CC0000761F02 /* IMPDisplayLink.swift in Sources */,
-				313961D11E71CC0000761F02 /* IMPCameraFocus.swift in Sources */,
-				313961D01E71CC0000761F02 /* IMPCameraExtentions.swift in Sources */,
-				313961DC1E71CC0000761F02 /* IMPHarrisCornerDetector.swift in Sources */,
-				313961D81E71CC0000761F02 /* IMPCrosshairGenerator.swift in Sources */,
-				313961E61E71CC0000761F02 /* IMPVideoCache.swift in Sources */,
-				313961C31E71CC0000761F02 /* IMPCIFilter.swift in Sources */,
-				313961D91E71CC0000761F02 /* IMPDistribution.swift in Sources */,
-				313961D21E71CC0000761F02 /* IMPCameraManager.swift in Sources */,
-				313961E51E71CC0000761F02 /* IMPTextureProvider.swift in Sources */,
-				313961DD1E71CC0000761F02 /* IMPNonMaximumSuppression.swift in Sources */,
-				313961BE1E71CC0000761F02 /* IMPTransformModel.swift in Sources */,
-				313961D41E71CC0000761F02 /* IMPAVSession.swift in Sources */,
-				313961D51E71CC0000761F02 /* IMPCameraSession.swift in Sources */,
+				3115893B1E73E86E0088D67D /* IMPGaussianBlur.swift in Sources */,
+				3115894C1E73E86E0088D67D /* IMPResampler.swift in Sources */,
+				311589371E73E86E0088D67D /* IMPRgbHsv.swift in Sources */,
+				311589391E73E86E0088D67D /* IMPSimd.swift in Sources */,
+				3115892F1E73E86E0088D67D /* IMPShader.swift in Sources */,
+				311589351E73E86E0088D67D /* IMPContext.swift in Sources */,
+				311589461E73E86E0088D67D /* IMPView.swift in Sources */,
+				311589301E73E86E0088D67D /* IMPCIFilter.swift in Sources */,
+				3115893C1E73E86E0088D67D /* IMPCannyEdgeDetector.swift in Sources */,
+				3115892B1E73E86E0088D67D /* IMPTransformModel.swift in Sources */,
+				311589441E73E86E0088D67D /* IMPCameraSession.swift in Sources */,
+				3115893F1E73E86E0088D67D /* IMPCameraExtentions.swift in Sources */,
 				316A3CFA1E586C2C005BB909 /* AppDelegate.swift in Sources */,
-				313961E81E71CC0000761F02 /* IMPQueue.swift in Sources */,
-				313961C41E71CC0000761F02 /* MPSProcessor.swift in Sources */,
-				313961C71E71CC0000761F02 /* IMPColor.swift in Sources */,
-				313961C01E71CC0000761F02 /* IMPFilter.swift in Sources */,
-				313961C51E71CC0000761F02 /* MTLProcessor.swift in Sources */,
-				313961C61E71CC0000761F02 /* MTLShader.swift in Sources */,
-				313961BD1E71CC0000761F02 /* IMPQuad.swift in Sources */,
-				313961CB1E71CC0000761F02 /* IMProcessing.swift in Sources */,
-				313961E01E71CC0000761F02 /* IMPImageProvider.swift in Sources */,
-				313961CD1E71CC0000761F02 /* IMPTypeAliases .swift in Sources */,
-				313961E21E71CC0000761F02 /* IMPMTLTexture.swift in Sources */,
-				313961DA1E71CC0000761F02 /* IMPDerivative.swift in Sources */,
+				311589531E73E86E0088D67D /* IMPTextureDelayLine.swift in Sources */,
+				311589431E73E86E0088D67D /* IMPAVSession.swift in Sources */,
+				3115894F1E73E86E0088D67D /* IMPImageProvider.swift in Sources */,
+				311589571E73E86E0088D67D /* IMPQueue.swift in Sources */,
+				311589311E73E86E0088D67D /* MPSProcessor.swift in Sources */,
+				311589341E73E86E0088D67D /* IMPColor.swift in Sources */,
+				311589471E73E86E0088D67D /* IMPCrosshairGenerator.swift in Sources */,
+				311589511E73E86E0088D67D /* IMPMTLTexture.swift in Sources */,
+				3115892D1E73E86E0088D67D /* IMPFilter.swift in Sources */,
+				311589491E73E86E0088D67D /* IMPDerivative.swift in Sources */,
+				311589421E73E86E0088D67D /* IMPMotionManager.swift in Sources */,
+				3115893D1E73E86E0088D67D /* IMPHarrisCornerDetector.swift in Sources */,
+				311589401E73E86E0088D67D /* IMPCameraFocus.swift in Sources */,
+				311589321E73E86E0088D67D /* MTLProcessor.swift in Sources */,
+				311589451E73E86E0088D67D /* IMPDisplayLink.swift in Sources */,
+				3115894B1E73E86E0088D67D /* IMPNonMaximumSuppression.swift in Sources */,
+				311589331E73E86E0088D67D /* MTLShader.swift in Sources */,
+				311589481E73E86E0088D67D /* IMPDistribution.swift in Sources */,
+				311589411E73E86E0088D67D /* IMPCameraManager.swift in Sources */,
+				3115892A1E73E86E0088D67D /* IMPQuad.swift in Sources */,
+				3115893E1E73E86E0088D67D /* IMPCameraExposure.swift in Sources */,
+				311589541E73E86E0088D67D /* IMPTextureProvider.swift in Sources */,
+				3115894E1E73E86E0088D67D /* IMPImage.swift in Sources */,
+				311589381E73E86E0088D67D /* IMProcessing.swift in Sources */,
+				3115894A1E73E86E0088D67D /* IMPHarrisCorner.swift in Sources */,
+				3115893A1E73E86E0088D67D /* IMPTypeAliases .swift in Sources */,
+				31E3B47A1E747DE3001998DD /* IMPHoughLinesDetector.swift in Sources */,
+				311589551E73E86E0088D67D /* IMPVideoCache.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -742,11 +756,13 @@
 				CLANG_ENABLE_MODULES = NO;
 				DEAD_CODE_STRIPPING = NO;
 				DEVELOPMENT_TEAM = TCA85S5T49;
-				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_OPTIMIZATION_LEVEL = 3;
 				INFOPLIST_FILE = IMPBaseOperations/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				MTL_FAST_MATH = YES;
 				MTL_HEADER_SEARCH_PATHS = "../../../IMProcessing/Classes/Bridging ../../../IMProcessing/Classes/Shaders";
+				MTL_OPTIMIZATION_LEVEL = s;
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPBaseOperations;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "../../../IMProcessing/Classes/Bridging/IMProcessing-Bridging-Header.h";
