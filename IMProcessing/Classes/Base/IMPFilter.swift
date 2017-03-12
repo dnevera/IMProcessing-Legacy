@@ -64,7 +64,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         didSet{
             oldValue?.texture?.setPurgeableState(.volatile)
             executeNewSourceObservers(source: source)
-            dirty = true
+            //dirty = true
         }
     }
     
@@ -744,7 +744,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
 
     internal func executeDirtyObservers(filter:IMPFilter){
         if observersEnabled {
-            root?.executeDirtyObservers(filter: self)
+            //root?.executeDirtyObservers(filter: self)
             for o in dirtyObservers {
                 o(filter,filter.source,filter._destination)
             }
@@ -842,8 +842,8 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         return (index,true)
     }
 
-    private lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context, name: "IMPFilterBaseResamplerKernel")
-    private lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: "IMPFilterBaseResamplerShader")
+    private lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context)
+    private lazy var resampleShader:IMPShader = IMPShader(context: self.context)
     
     private lazy var resampler:IMPCIFilter = {
         let v = self.prefersRendering ?

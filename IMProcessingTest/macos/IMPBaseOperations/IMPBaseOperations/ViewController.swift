@@ -73,19 +73,47 @@ public class TestFilter: IMPFilter {
         return f
     }()
     
-    override public func configure(_ withName: String?) {
-        super.configure("Test filter")
-        add(function: kernelRed)
-        add(function: kernelEV)
-        add(filter: exposureFilter)
-        add(filter: blurFilter)
-        add(filter: ciBlurFilter)
+    override public func configure() {
+        extendName(suffix: "Test filter")
+        super.configure()
+        
+//        add(function: kernelRed)
+//        add(function: kernelEV)
+//        add(filter: exposureFilter)
+//        add(filter: blurFilter)
+//        add(filter: ciBlurFilter)
+        
+//        add(filter:cannyEdgeDetector) { (destination) in
+//            self.readLines(destination)
+//        }
+        
+        addObserver(newSource: { (source) in
+            self.context.runOperation(.async) {
+                self.harrisCornerDetector.source = source
+            }
+        })
+
+        
+        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+            self.context.runOperation(.async) {
+                self.crosshairGenerator.points = corners
+                self.dirty = true
+            }
+        }
+        
+        add(filter: crosshairGenerator)
+        
+        //add(filter:harrisCornerDetector)
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
     private lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
-}
+    
+    private lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
+    private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
+    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context /*IMPContext(lazy: false)*/)
 
+}
 
 class ViewController: NSViewController {
 
@@ -100,6 +128,7 @@ class ViewController: NSViewController {
         // Do any additional setup after loading the view.
         
         
+        imageView.exactResolutionEnabled = true
         imageView.clearColor = MTLClearColor(red: 0.1, green: 0.2, blue: 0.3, alpha: 1)
         imageView.filter = filter
         

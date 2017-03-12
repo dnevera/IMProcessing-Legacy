@@ -210,7 +210,8 @@ public class IMPView: MTKView {
                 encoder.setRenderPipelineState(pipeline)
                 
                 encoder.setVertexBuffer(vertexBuffer, offset:0, at:0)
-                encoder.setFragmentTexture(sourceTexture.makeTextureView(pixelFormat: self.colorPixelFormat), at:0)
+                //encoder.setFragmentTexture(sourceTexture.makeTextureView(pixelFormat: self.colorPixelFormat), at:0)
+                encoder.setFragmentTexture(sourceTexture, at:0)
                 encoder.setViewport(viewPort)
                 
                 encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)

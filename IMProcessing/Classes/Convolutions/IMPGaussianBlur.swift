@@ -186,8 +186,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var upscaleShader:IMPShader   = {
         let s = IMPShader(context: self.context,
-                          fragmentName: "fragment_blendSource",
-                          name: "GaussianUpscaleShader")
+                          fragmentName: "fragment_blendSource")
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, at: 0)
             commandEncoder.setFragmentTexture((self.source?.texture)!, at:1)
@@ -245,8 +244,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var horizontalShader:IMPShader = {
         let s = IMPShader(context: self.context,
-                          fragmentName: "fragment_gaussianSampledBlur",
-                          name: "GaussianHorizontalShader")
+                          fragmentName: "fragment_gaussianSampledBlur")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             
@@ -261,8 +259,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     lazy var verticalShader:IMPShader = {
         
         let s = IMPShader(context: self.context,
-                          fragmentName: "fragment_gaussianSampledBlur",
-                          name: "GaussianVerticalShader")
+                          fragmentName: "fragment_gaussianSampledBlur")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
 

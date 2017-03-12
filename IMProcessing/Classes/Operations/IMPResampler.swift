@@ -42,7 +42,7 @@ public class IMPResampler: IMPFilter{
         add(filter: resampler)
     }
     
-    private lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: "IMPFilterBaseResamplerShader")
+    private lazy var resampleShader:IMPShader = IMPShader(context: self.context)
     private lazy var resampler:IMPCIFilter = {
         return IMPCoreImageMTLShader.register(shader: self.resampleShader)
     }()

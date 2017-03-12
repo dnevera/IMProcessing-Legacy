@@ -63,6 +63,12 @@ public class IMPHarrisCornerDetector: IMPResampler{
         get{ return nonMaximumSuppression.threshold }
     }
     
+    public override var source: IMPImageProvider? {
+        didSet{
+            self.readCorners(self.destination)
+        }
+    }
+    
     public override func configure() {
         extendName(suffix: "HarrisCornerDetector")
         
@@ -71,22 +77,19 @@ public class IMPHarrisCornerDetector: IMPResampler{
         add(filter: xyDerivative)
         add(filter: blurFilter)
         add(filter: harrisCorner)
-
-        add(filter: nonMaximumSuppression) { [unowned self] (destination) in
-            self.readCorners(destination)
-        }
+        add(filter: nonMaximumSuppression)
         
-        maxSize = 200
+        maxSize = 400
         blurRadius = IMPHarrisCornerDetector.defaultBlurRadius
         sensitivity = IMPHarrisCorner.defaultSensitivity
         threshold = IMPNonMaximumSuppression.defaultThreshold
-        texelRadius = IMPHarrisCornerDetector.defaultTexelRadius
+        texelRadius = IMPHarrisCornerDetector.defaultTexelRadius        
     }
     
-    private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context, name: "HarrisCornerDetector:XYDerivative")
-    private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context, name: "HarrisCornerDetector:Blur")
-    private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context, name: "HarrisCornerDetector:Corner")
-    private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context, name: "HarrisCornerDetector:NonMaximum")
+    private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context)
+    private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context)
+    private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context)
     
     var rawPixels:UnsafeMutablePointer<UInt8>?
     var imageByteSize:Int = 0
@@ -124,7 +127,16 @@ public class IMPHarrisCornerDetector: IMPResampler{
             }
 
             imageByteSize = newSize
-            
+
+            #if os(OSX)
+                guard let command = context.commandBuffer else { return }
+                let blit = command.makeBlitCommandEncoder()
+                blit.synchronize(resource: texture)
+                blit.endEncoding()
+                command.commit()
+                command.waitUntilCompleted()
+            #endif
+
             texture.getBytes(rawPixels!,
                              bytesPerRow: bytesPerRow,
                              from: MTLRegionMake2D(0, 0, texture.width, texture.height),
@@ -134,9 +146,10 @@ public class IMPHarrisCornerDetector: IMPResampler{
             
             for x in stride(from: 0, to: width, by: 1){
                 for y in stride(from: 0, to: height, by: 1){
+                    
                     let colorByte = rawPixels![y * bytesPerRow + x * 4]
                     
-                    if (colorByte > 128) {
+                    if (colorByte > 0) {
                         let xCoordinate = Float(x) / Float(width)
                         let yCoordinate = Float(y) / Float(height) 
                         corners.append(float2(xCoordinate, yCoordinate))

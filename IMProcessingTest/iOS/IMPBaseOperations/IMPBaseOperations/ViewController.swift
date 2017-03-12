@@ -324,10 +324,11 @@ public class TestFilter: IMPFilter {
                     
                     for t in stride(from: 0, to: accumulator.width, by: 1){
                         
-                        let theta = Float(t) * M_PI.float / accumulator.width.float
+                        let theta = t.float * M_PI.float / accumulator.width.float
                         
-                        let r = (Float(x) - center_x ) * cos(theta) + (Float(y) - center_y) * sin(theta)
-                        accumulator.bins[ Int((round(r + accumulator.houghDistance) * accumulator.width.float)) + t] += 1
+                        let r = (x.float - center_x ) * cos(theta) + (y.float - center_y) * sin(theta)
+                        let index = ((round(r + accumulator.houghDistance) * accumulator.width.float)).int + t
+                        accumulator.bins[index] += 1
                     }
                 }
             }
