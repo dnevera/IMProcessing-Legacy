@@ -23,6 +23,7 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
     public override func configure() {
         extendName(suffix: "HoughLinesDetector")
         super.configure()
+        maxSize = 200
     }
     
     var rawPixels:UnsafeMutablePointer<UInt8>?

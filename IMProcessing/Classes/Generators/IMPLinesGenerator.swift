@@ -75,13 +75,22 @@ public class IMPLinesGenerator: IMPFilter {
     
     func updateLines()  {
         pointsShader.points = [float2]()
+        guard let size = source?.size else { return }
+        
+        let thick = float2(1/size.width.float,1/size.height.float)
+        
         for p in _lines {
             pointsShader.points.append(p.p0)
             pointsShader.points.append(p.p1)
+            
+            //for x in stride(from: -width/2, to: width/2, by: 1) {
+                pointsShader.points.append(p.p0+thick)
+                pointsShader.points.append(p.p1+thick)
+            //}
         }
     }
     
-    static var defaultWidth:Float = 40
+    static var defaultWidth:Float = 2
     static var defaultColor:float4 = float4(1,1,0.3,1)
     
     public var width:Float = IMPCrosshairsGenerator.defaultWidth {
@@ -103,9 +112,9 @@ public class IMPLinesGenerator: IMPFilter {
         shader.processor = shader.textureProcessor
         add(filter: shader)
         add(shader: blendShader)
-        width = IMPCrosshairsGenerator.defaultWidth
-        color = IMPCrosshairsGenerator.defaultColor
-        adjustment = IMPCrosshairsGenerator.defaultAdjustment
+        width = IMPLinesGenerator.defaultWidth
+        color = IMPLinesGenerator.defaultColor
+        adjustment = IMPLinesGenerator.defaultAdjustment
     }
     
     private lazy var pointsShader:IMPDrawPointsShader =  {

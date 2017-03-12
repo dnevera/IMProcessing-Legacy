@@ -79,7 +79,7 @@ public class IMPHarrisCornerDetector: IMPResampler{
         add(filter: harrisCorner)
         add(filter: nonMaximumSuppression)
         
-        maxSize = 400
+        maxSize = 200
         blurRadius = IMPHarrisCornerDetector.defaultBlurRadius
         sensitivity = IMPHarrisCorner.defaultSensitivity
         threshold = IMPNonMaximumSuppression.defaultThreshold

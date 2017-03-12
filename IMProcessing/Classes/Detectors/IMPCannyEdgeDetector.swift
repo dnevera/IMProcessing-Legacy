@@ -66,8 +66,7 @@ public class IMPCannyEdgeDetector: IMPResampler{
         add(filter: sobelEdgeFilter)
         add(filter: directionalNonMaximumSuppression)
         add(filter: weakPixelInclusion)
-        
-        maxSize = 800
+                
         blurRadius = IMPCannyEdgeDetector.defaultBlurRadius
     }
     

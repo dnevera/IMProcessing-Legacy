@@ -86,21 +86,31 @@ public class TestFilter: IMPFilter {
 //        add(filter: blurFilter)
 //        add(filter: ciBlurFilter)
         
+        var t1 = Date()
         
-//        addObserver(newSource: { (source) in
-//            self.context.runOperation(.async) {
-//                self.harrisCornerDetector.source = source
-//            }
-//        })
-//        
-//        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
-//            self.context.runOperation(.async) {
-//                self.crosshairGenerator.points = corners
-//            }
-//        }
+        addObserver(newSource: { (source) in
+            self.context.runOperation(.async) {
+                t1 = Date()
+                self.houghLineDetector.source = source
+                self.harrisCornerDetector.source = source
+            }
+        })
         
-//        add(filter: crosshairGenerator)
+        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+            self.context.runOperation(.async) {
+                self.crosshairGenerator.points = corners
+                self.dirty = true
+                print(" corners detector time = \(-t1.timeIntervalSinceNow) ")
+            }
+        }
 
+        houghLineDetector.addObserver { (lines, size) in
+            self.context.runOperation(.async) {
+                self.linesGenerator.lines = lines
+                self.dirty = true
+                print(" lines detector time = \(-t1.timeIntervalSinceNow) ")
+            }
+        }
         
         var lines = [IMPLineSegment]()
         
@@ -108,40 +118,17 @@ public class TestFilter: IMPFilter {
         lines.append(IMPLineSegment(p0: float2(0,0.5), p1: float2(1,0.5)))
         lines.append(IMPLineSegment(p0: float2(0,0.75), p1: float2(1,0.75)))
         
-        
         linesGenerator.lines = lines
         
-        add(filter: linesGenerator)
-        
-//        add(filter:harrisCornerDetector)
-        
-        
-        addObserver(newSource: { (source) in
-            self.context.runOperation(.async) {
-                self.houghLineDetector.source = source
-            }
-        })
-        
-        houghLineDetector.addObserver { (lines, size) in
-            self.context.runOperation(.async) {
-                
-                for (i,s) in lines.enumerated() {
-                    let ay = (s.p1.y-s.p0.y)
-                    let ax = (s.p1.x-s.p0.x)
-                    if ax != 0 {
-                        let a  = ay/ax
-                        print("Line[\(i)] result = \(s) degrees = \(atan(a) * 180 / M_PI.float)")
-                    }
-                }
+        //add(filter: linesGenerator)
+        add(filter: crosshairGenerator)
 
-                self.linesGenerator.lines = lines
-            }
-        }
+//        addObserver(newSource: { (source) in
+//            self.context.runOperation(.async) {
+//                self.houghLineDetector.source = source
+//            }
+//        })
         
-//        add(filter:cannyEdgeDetector) { (destination) in
-//            print("canny props \(self.cannyEdgeDetector.maxSize)")
-//            print("canny props \(self.cannyEdgeDetector.blurRadius)")
-//        }
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
