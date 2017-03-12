@@ -19,16 +19,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     public override var source: IMPImageProvider? {
         didSet{
-            if oldValue?.size == nil {
-                self.update()
-                return
-            }
-            if let size = source?.size,
-                let oldSize = oldValue?.size {
-                if size != oldSize {
-                    self.update()
-                }
-            }
+            self.updateWeights()
         }
     }
     
@@ -117,6 +108,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     func update()  {
         context.runOperation(context.isLazy ? .async : .sync ){
             self.updateWeights()
+            super.dirty = true
         }
     }
     
@@ -167,7 +159,6 @@ public class IMPGaussianBlurFilter: IMPFilter {
         
         weightsTexture = context.device.texture1D(buffer:weights)
         offsetsTexture = context.device.texture1D(buffer:offsets)
-        dirty = true        
     }
 
     

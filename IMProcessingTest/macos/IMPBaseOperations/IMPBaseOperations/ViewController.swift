@@ -16,12 +16,15 @@ public class TestFilter: IMPFilter {
     public var blurRadius:Float = 0 {
         didSet{
             blurFilter.radius = blurRadius
+            cannyEdgeDetector.blurRadius = blurRadius
+            dirty = true
         }
     }
     
     public var ciBlurRadius:Float = 0 {
         didSet{
             ciBlurFilter.setValue(NSNumber(value:ciBlurRadius), forKey: "inputRadius")
+            cannyEdgeDetector.maxSize = CGFloat(400 * ciBlurRadius)
             dirty = true
         }
     }
@@ -83,35 +86,73 @@ public class TestFilter: IMPFilter {
 //        add(filter: blurFilter)
 //        add(filter: ciBlurFilter)
         
-//        add(filter:cannyEdgeDetector) { (destination) in
-//            self.readLines(destination)
+        
+//        addObserver(newSource: { (source) in
+//            self.context.runOperation(.async) {
+//                self.harrisCornerDetector.source = source
+//            }
+//        })
+//        
+//        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+//            self.context.runOperation(.async) {
+//                self.crosshairGenerator.points = corners
+//            }
 //        }
+        
+//        add(filter: crosshairGenerator)
+
+        
+        var lines = [IMPLineSegment]()
+        
+        lines.append(IMPLineSegment(p0: float2(0,0.25), p1: float2(1,0.25)))
+        lines.append(IMPLineSegment(p0: float2(0,0.5), p1: float2(1,0.5)))
+        lines.append(IMPLineSegment(p0: float2(0,0.75), p1: float2(1,0.75)))
+        
+        
+        linesGenerator.lines = lines
+        
+        add(filter: linesGenerator)
+        
+//        add(filter:harrisCornerDetector)
+        
         
         addObserver(newSource: { (source) in
             self.context.runOperation(.async) {
-                self.harrisCornerDetector.source = source
+                self.houghLineDetector.source = source
             }
         })
-
         
-        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+        houghLineDetector.addObserver { (lines, size) in
             self.context.runOperation(.async) {
-                self.crosshairGenerator.points = corners
-                self.dirty = true
+                
+                for (i,s) in lines.enumerated() {
+                    let ay = (s.p1.y-s.p0.y)
+                    let ax = (s.p1.x-s.p0.x)
+                    if ax != 0 {
+                        let a  = ay/ax
+                        print("Line[\(i)] result = \(s) degrees = \(atan(a) * 180 / M_PI.float)")
+                    }
+                }
+
+                self.linesGenerator.lines = lines
             }
         }
         
-        add(filter: crosshairGenerator)
-        
-        //add(filter:harrisCornerDetector)
+//        add(filter:cannyEdgeDetector) { (destination) in
+//            print("canny props \(self.cannyEdgeDetector.maxSize)")
+//            print("canny props \(self.cannyEdgeDetector.blurRadius)")
+//        }
     }
     
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
     private lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
     
+    private lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context: self.context)
     private lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
-    private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
     private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context /*IMPContext(lazy: false)*/)
+
+    private lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
+    private lazy var linesGenerator:IMPLinesGenerator = IMPLinesGenerator(context: self.context)
 
 }
 
@@ -120,7 +161,7 @@ class ViewController: NSViewController {
     lazy var filter:TestFilter = TestFilter(context: self.context)
     lazy var imageView:IMPView = IMPView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
 
-    var context:IMPContext = IMPContext()
+    var context:IMPContext = IMPContext(lazy:true)
     var currentImage:IMPImageProvider? = nil
     
     override func viewDidLoad() {
@@ -141,7 +182,7 @@ class ViewController: NSViewController {
             make.bottom.equalTo(imageView.superview!).offset(-80)
         }
         
-        let blurSlider = NSSlider(value: 0, minValue: 0, maxValue: 32, target: self, action: #selector(sliderHandler(sender:)))
+        let blurSlider = NSSlider(value: 0, minValue: 0, maxValue: 100, target: self, action: #selector(sliderHandler(sender:)))
         blurSlider.tag = 100
         
         view.addSubview(blurSlider)

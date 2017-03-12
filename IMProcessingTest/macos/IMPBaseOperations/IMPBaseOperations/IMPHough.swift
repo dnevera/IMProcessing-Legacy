@@ -126,7 +126,7 @@ public class Hough {
                 
                 let colorByte = image[y * bytesPerRow + x * 4]
                 
-                if colorByte < 1 { continue }
+                if colorByte == 0 { continue }
                 
                 for t in stride(from: 0, to: accumulator.width, by: 1){
                     

@@ -52,7 +52,7 @@ namespace IMProcessing
     //
     // https://forums.developer.apple.com/thread/43570
     //
-    fragment float4 fragment_crosshair__(IMPCrosshairVertexOut fragData [[stage_in]],
+    fragment float4 fragment_line(IMPCrosshairVertexOut in [[stage_in]],
                                       texture2d<float, access::sample> texture    [[ texture(0) ]],
                                       const device float4              &color     [[ buffer(0) ]],
                                       float2 pointCoord  [[point_coord]])
@@ -71,7 +71,7 @@ namespace IMProcessing
                                        float2 pointCoord  [[point_coord]]
                                        ) {
         
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
 
         float2 texcoord = pointCoord;
         float2 dist     = abs(in.center - texcoord);
@@ -80,7 +80,7 @@ namespace IMProcessing
         return float4(color.rgb * axisTest, axisTest);
     }
     
-    fragment float4 fragment_blendCrosshairSource(
+    fragment float4 fragment_blendTextureSource(
                                          IMPVertexOut in [[stage_in]],
                                          texture2d<float, access::sample> texture [[ texture(0) ]],
                                          texture2d<float, access::sample> source  [[ texture(1) ]],

@@ -83,7 +83,7 @@ public class IMPHarrisCornerDetector: IMPResampler{
         blurRadius = IMPHarrisCornerDetector.defaultBlurRadius
         sensitivity = IMPHarrisCorner.defaultSensitivity
         threshold = IMPNonMaximumSuppression.defaultThreshold
-        texelRadius = IMPHarrisCornerDetector.defaultTexelRadius        
+        texelRadius = IMPHarrisCornerDetector.defaultTexelRadius
     }
     
     private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context)
@@ -107,51 +107,23 @@ public class IMPHarrisCornerDetector: IMPResampler{
         
         isReading = true
         
-        if let size = destination.size,
-            let texture = destination.texture?.pixelFormat != .rgba8Uint ?
-                destination.texture?.makeTextureView(pixelFormat: .rgba8Uint) :
-                destination.texture
-        {
-            
-            let width       = Int(size.width)
-            let height      = Int(size.height)
-            
-            let bytesPerRow   = width * 4
-            let newSize = height * bytesPerRow
-            
-            if imageByteSize != newSize {
-                if imageByteSize > 0 {
-                    rawPixels?.deallocate(capacity: imageByteSize)
-                }
-                rawPixels = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize) 
-            }
-
-            imageByteSize = newSize
-
-            #if os(OSX)
-                guard let command = context.commandBuffer else { return }
-                let blit = command.makeBlitCommandEncoder()
-                blit.synchronize(resource: texture)
-                blit.endEncoding()
-                command.commit()
-                command.waitUntilCompleted()
-            #endif
-
-            texture.getBytes(rawPixels!,
-                             bytesPerRow: bytesPerRow,
-                             from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                             mipmapLevel: 0)
-            
+        guard let size = destination.size else { return }
+        
+        let width       = Int(size.width)
+        let height      = Int(size.height)
+        
+        var bytesPerRow:Int = 0
+        if let rawPixels = destination.read(bytes: &rawPixels, length: &imageByteSize, bytesPerRow: &bytesPerRow) {
             var corners = [float2]()
             
             for x in stride(from: 0, to: width, by: 1){
                 for y in stride(from: 0, to: height, by: 1){
                     
-                    let colorByte = rawPixels![y * bytesPerRow + x * 4]
+                    let colorByte = rawPixels[y * bytesPerRow + x * 4]
                     
                     if (colorByte > 0) {
                         let xCoordinate = Float(x) / Float(width)
-                        let yCoordinate = Float(y) / Float(height) 
+                        let yCoordinate = Float(y) / Float(height)
                         corners.append(float2(xCoordinate, yCoordinate))
                     }
                 }

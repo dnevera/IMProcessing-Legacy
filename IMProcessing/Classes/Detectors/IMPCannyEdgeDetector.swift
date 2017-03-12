@@ -60,13 +60,15 @@ public class IMPCannyEdgeDetector: IMPResampler{
         super.configure()
         
         add(function: luminance)
-        add(filter: blurFilter)
+        add(filter: blurFilter) { (source) in
+            print("blurFilter.r = \(self.blurFilter.radius)")
+        }
         add(filter: sobelEdgeFilter)
         add(filter: directionalNonMaximumSuppression)
         add(filter: weakPixelInclusion)
         
+        maxSize = 800
         blurRadius = IMPCannyEdgeDetector.defaultBlurRadius
-        maxSize = 400
     }
     
     private lazy var luminance:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_luminance")

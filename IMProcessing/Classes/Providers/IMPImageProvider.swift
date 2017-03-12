@@ -352,6 +352,57 @@ public extension IMPImageProvider {
 
 public extension IMPImageProvider {
     
+    public func read(bytes: inout UnsafeMutablePointer<UInt8>?, length imageByteSize: inout Int, bytesPerRow: inout Int) ->  UnsafeMutablePointer<UInt8>? {
+        
+        if let size = self.size,
+            let texture = texture?.pixelFormat != .rgba8Uint ?
+                texture?.makeTextureView(pixelFormat: .rgba8Uint) :
+                texture
+        {
+            
+            let width       = Int(size.width)
+            let height      = Int(size.height)
+            
+            bytesPerRow   = width * 4
+            let newSize = height * bytesPerRow
+            
+            if bytes == nil {
+                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
+            }
+            else if imageByteSize != newSize {
+                if imageByteSize > 0 {
+                    bytes?.deallocate(capacity: imageByteSize)
+                }
+                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
+            }
+
+            if bytes == nil { return  nil}
+            
+            imageByteSize = newSize
+            
+            #if os(OSX)
+                guard let command = context.commandBuffer else { return nil }
+                let blit = command.makeBlitCommandEncoder()
+                blit.synchronize(resource: texture)
+                blit.endEncoding()
+                command.commit()
+                command.waitUntilCompleted()
+            #endif
+            
+            texture.getBytes(bytes!,
+                             bytesPerRow: bytesPerRow,
+                             from: MTLRegionMake2D(0, 0, texture.width, texture.height),
+                             mipmapLevel: 0)
+            
+            return bytes
+        }
+        
+        return nil
+    }
+}
+
+public extension IMPImageProvider {
+    
     public func render(to texture: inout MTLTexture?) {
         
         guard  let image = image else { return }

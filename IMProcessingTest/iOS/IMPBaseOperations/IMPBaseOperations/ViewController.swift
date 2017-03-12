@@ -351,60 +351,43 @@ public class TestFilter: IMPFilter {
         
         isReading = true
         
-        if let size = destination.size,
-            let texture = destination.texture?.pixelFormat != .rgba8Uint ?
-                destination.texture?.makeTextureView(pixelFormat: .rgba8Uint) :
-                destination.texture
-        {
+        guard !isReading else { return }
+        
+        isReading = true
+        
+        guard let size = destination.size else { return }
+        
+        let width       = Int(size.width)
+        let height      = Int(size.height)
+        
+        var bytesPerRow:Int = 0
+        if let image = destination.read(bytes: &rawPixels, length: &imageByteSize, bytesPerRow: &bytesPerRow) {
             
-            let width       = Int(size.width)
-            let height      = Int(size.height)
+            let hough = Hough(image: image,
+                              bytesPerRow: bytesPerRow,
+                              width: width,
+                              height: height,
+                              threshold: 90)
             
-            let bytesPerRow   = width * 4
-            let newSize = height * bytesPerRow
+            let lines = hough.getLines()
             
-            if imageByteSize != newSize {
-                if imageByteSize > 0 {
-                    rawPixels?.deallocate(capacity: imageByteSize)
+            for (i,s) in lines.enumerated() {
+                let ay = (s.p1.y-s.p0.y)
+                let ax = (s.p1.x-s.p0.x)
+                if ax != 0 {
+                    let a  = ay/ax
+                    print("Line[\(i)] result = \(s) degrees = \(atan(a) * 180 / M_PI.float)")
                 }
-                rawPixels = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
+                
             }
-            
-            imageByteSize = newSize
-            
-            if let image = rawPixels {
-                texture.getBytes(image,
-                                 bytesPerRow: bytesPerRow,
-                                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                                 mipmapLevel: 0)
-                
-                
-                let hough = Hough(image: rawPixels!,
-                                  bytesPerRow: bytesPerRow,
-                                  width: width,
-                                  height: height,
-                                  threshold: 90)
-                
-                let lines = hough.getLines()
-                for (i,s) in lines.enumerated() {
-                    let ay = (s.p1.y-s.p0.y)
-                    let ax = (s.p1.x-s.p0.x)
-                    if ax != 0 {
-                        let a  = ay/ax
-                        print("Line[\(i)] result = \(s) degrees = \(atan(a) * 180 / M_PI.float)")
-                    }
-                    
-                }
-//                for (i,s) in hough.slopes.enumerated() {
-//                    print("Line[\(i)] result = \(s)")
-//                }
-            }
-
-            isReading = false
+            //                for (i,s) in hough.slopes.enumerated() {
+            //                    print("Line[\(i)] result = \(s)")
+            //                }
         }
+        
+        isReading = false
     }
 
-    
     private lazy var normailzeSizeFilter:IMPResampler = IMPResampler(context: self.context, name: "canyEdageResampler")
 
     private lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)

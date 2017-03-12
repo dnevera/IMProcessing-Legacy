@@ -744,7 +744,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
 
     internal func executeDirtyObservers(filter:IMPFilter){
         if observersEnabled {
-            //root?.executeDirtyObservers(filter: self)
+            root?.executeDirtyObservers(filter: self)
             for o in dirtyObservers {
                 o(filter,filter.source,filter._destination)
             }
