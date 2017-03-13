@@ -24,7 +24,6 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
         extendName(suffix: "HoughLinesDetector")
         super.configure()
         maxSize = 800
-        blurRadius = 12
     }
     
     var rawPixels:UnsafeMutablePointer<UInt8>?
@@ -38,9 +37,16 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
     
     
     private func readLines(_ destination: IMPImageProvider) {
-        guard let size = destination.size else { return }
+        
+        guard let size = destination.size else {
+            isReading = false
+            return
+        }
 
-        guard !isReading else { return }
+        guard !isReading else {
+            isReading = false
+            return
+        }
         isReading = true
 
         let width       = Int(size.width)
@@ -48,7 +54,7 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
         
         var bytesPerRow:Int = 0
         if let rawPixels = destination.read(bytes: &rawPixels, length: &imageByteSize, bytesPerRow: &bytesPerRow) {
-            
+
             let hough = HoughSpace(image: rawPixels,
                                    bytesPerRow: bytesPerRow,
                                    width: width,

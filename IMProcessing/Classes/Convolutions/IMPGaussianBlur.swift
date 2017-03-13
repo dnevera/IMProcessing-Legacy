@@ -54,7 +54,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
             update()
         }
     }
-    
+        
     public override func configure() {
         
         super.configure()
@@ -187,15 +187,13 @@ public class IMPGaussianBlurFilter: IMPFilter {
 
     lazy var downscaleKernel:IMPFunction = {
         let f = IMPFunction(context: self.context,
-                            kernelName: "kernel_passthrough",
-                            name:        "Downscale")
+                            kernelName: "kernel_passthrough")
         return f
     }()
 
     lazy var upscaleKernel:IMPFunction = {
         let f = IMPFunction(context: self.context,
-                            kernelName: "kernel_blendSource",
-                            name:        "Upscale")
+                            kernelName: "kernel_blendSource")
         
         f.optionsHandler = { (function,commandEncoder, input, output) in
             guard let texture = self.source?.texture else { return }
@@ -209,8 +207,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var horizontalKernel:IMPFunction = {
         let f = IMPFunction(context: self.context,
-                            kernelName: "kernel_gaussianSampledBlur",
-                            name:        "GaussianHorizontal")
+                            kernelName: "kernel_gaussianSampledBlur")
         f.optionsHandler = { (function,commandEncoder, input, output) in
             
             commandEncoder.setBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
@@ -222,8 +219,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var verticalKernel:IMPFunction = {
         let f = IMPFunction(context: self.context,
-                            kernelName: "kernel_gaussianSampledBlur",
-                            name:       "GaussianVertiacal")
+                            kernelName: "kernel_gaussianSampledBlur")
         f.optionsHandler = { (function,commandEncoder, input, output) in
             
             commandEncoder.setBuffer(self.vTexelSizeBuffer, offset: 0, at: 0)

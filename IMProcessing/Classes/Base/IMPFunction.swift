@@ -60,10 +60,10 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
         self.kernelName = kernelName
         
         if name != nil {
-            self._name = name!
+            self._name = String.uniqString() + ":" + name!
         }
         else {
-            self._name = context.uid + ":"  + String.uniqString() + ":" + self.kernelName
+            self._name = context.uid + ":" + String.uniqString() + ":" + self.kernelName
         }
     }
     

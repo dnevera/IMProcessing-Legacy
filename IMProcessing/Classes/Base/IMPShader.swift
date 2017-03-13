@@ -139,7 +139,7 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
             self._vertexDescriptor = vd
         }
         if name != nil {
-            self._name = name!
+            self._name = String.uniqString() + ":" + name!
         }
         else {
             self._name = context.uid + ":"  + String.uniqString() + ":" + self.vertexName+":"+self.fragmentName

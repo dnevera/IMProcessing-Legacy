@@ -155,6 +155,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             
             if enabled == false {
                 result.texture = source.texture
+                dirty = false
                 return
             }
 
@@ -171,11 +172,9 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 self.apply(to: &result.texture, commandBuffer: commandBuffer)
            }
             
-            dirty = false
-
-            //print(" filter \(name) \(destinationObservers)")
             executeDestinationObservers(destination: result)
 
+            dirty = false
             return
         }
 
@@ -218,11 +217,10 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             c.complete?(result)
         }
         
-        dirty = false
-        
         executeDestinationObservers(destination: result)
+        dirty = false
     }
-        
+    
     //
     // optimize processing when image < GPU SIZE
     //

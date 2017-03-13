@@ -87,7 +87,7 @@ public class TestFilter: IMPFilter {
 //        add(function: kernelRed)
 //        add(function: kernelEV)
 //        add(filter: exposureFilter)
-        add(filter: blurFilter)
+//        add(filter: blurFilter)
 //        add(filter: ciBlurFilter)
         
         var t1 = Date()
@@ -103,7 +103,7 @@ public class TestFilter: IMPFilter {
         harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
             self.context.runOperation(.async) {
                 self.crosshairGenerator.points = corners
-                self.dirty = true
+                //self.dirty = true
                 print(" corners detector time = \(-t1.timeIntervalSinceNow) ")
             }
         }
@@ -111,13 +111,15 @@ public class TestFilter: IMPFilter {
         houghLineDetector.addObserver { (lines, size) in
             self.context.runOperation(.async) {
                 self.linesGenerator.lines = lines
-                self.dirty = true
+                for l in self.linesGenerator.lines {
+                    print("\(l)")
+                }
+                //self.dirty = true
                 print(" lines detector time = \(-t1.timeIntervalSinceNow) ")
             }
         }
         
         
-        //add(filter: harrisCornerDetectorOverlay)
         //add(filter: crosshairGenerator)
         add(filter: linesGenerator)
 
@@ -129,7 +131,6 @@ public class TestFilter: IMPFilter {
     lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context: self.context)
     lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
     lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context)
-    lazy var harrisCornerDetectorOverlay:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context)
 
     lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
     lazy var linesGenerator:IMPLinesGenerator = IMPLinesGenerator(context: self.context)
@@ -237,14 +238,14 @@ class ViewController: NSViewController {
         }
         else if gesture.buttonMask == 1<<1 {
             
-            switch gesture.state {
-            case .began:
-                filter.harrisCornerDetectorOverlay.enabled = false
-            default:
-                filter.harrisCornerDetectorOverlay.enabled = true
-                
-                break
-            }
+//            switch gesture.state {
+//            case .began:
+//                filter.harrisCornerDetectorOverlay.enabled = false
+//            default:
+//                filter.harrisCornerDetectorOverlay.enabled = true
+//                
+//                break
+//            }
             
             
             filter.dirty = true
