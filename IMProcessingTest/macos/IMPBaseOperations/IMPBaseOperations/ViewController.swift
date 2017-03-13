@@ -80,10 +80,14 @@ public class TestFilter: IMPFilter {
         extendName(suffix: "Test filter")
         super.configure()
         
+//        harrisCornerDetectorOverlay.enabled = false
+        
+//        add(filter:harrisCornerDetectorOverlay)
+
 //        add(function: kernelRed)
 //        add(function: kernelEV)
 //        add(filter: exposureFilter)
-//        add(filter: blurFilter)
+        add(filter: blurFilter)
 //        add(filter: ciBlurFilter)
         
         var t1 = Date()
@@ -112,34 +116,23 @@ public class TestFilter: IMPFilter {
             }
         }
         
-        var lines = [IMPLineSegment]()
         
-        lines.append(IMPLineSegment(p0: float2(0,0.25), p1: float2(1,0.25)))
-        lines.append(IMPLineSegment(p0: float2(0,0.5), p1: float2(1,0.5)))
-        lines.append(IMPLineSegment(p0: float2(0,0.75), p1: float2(1,0.75)))
-        
-        linesGenerator.lines = lines
-        
-        //add(filter: linesGenerator)
-        add(filter: crosshairGenerator)
+        //add(filter: harrisCornerDetectorOverlay)
+        //add(filter: crosshairGenerator)
+        add(filter: linesGenerator)
 
-//        addObserver(newSource: { (source) in
-//            self.context.runOperation(.async) {
-//                self.houghLineDetector.source = source
-//            }
-//        })
-        
     }
     
-    private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
-    private lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
+    lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
+    lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
     
-    private lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context: self.context)
-    private lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
-    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context /*IMPContext(lazy: false)*/)
+    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context: self.context)
+    lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
+    lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context)
+    lazy var harrisCornerDetectorOverlay:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context)
 
-    private lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
-    private lazy var linesGenerator:IMPLinesGenerator = IMPLinesGenerator(context: self.context)
+    lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
+    lazy var linesGenerator:IMPLinesGenerator = IMPLinesGenerator(context: self.context)
 
 }
 
@@ -214,8 +207,50 @@ class ViewController: NSViewController {
             }
         }
         
+        
+        let tap1 = NSPressGestureRecognizer(target: self, action: #selector(clickHandler(gesture:)))
+        tap1.minimumPressDuration = 0.01
+        tap1.buttonMask = 1
+        imageView.addGestureRecognizer(tap1)
+
+        let tap2 = NSPressGestureRecognizer(target: self, action: #selector(clickHandler(gesture:)))
+        tap2.minimumPressDuration = 0.01
+        tap2.buttonMask = 1<<1
+        imageView.addGestureRecognizer(tap2)
+
     }
 
+    func clickHandler(gesture:NSClickGestureRecognizer)  {
+        
+        if  gesture.buttonMask == 1 {
+            
+            print("clickHandler state = \(gesture.state.rawValue)")
+            
+            switch gesture.state {
+            case .began:
+                filter.enabled = false
+            default:
+                filter.enabled = true
+                break
+            }
+            
+        }
+        else if gesture.buttonMask == 1<<1 {
+            
+            switch gesture.state {
+            case .began:
+                filter.harrisCornerDetectorOverlay.enabled = false
+            default:
+                filter.harrisCornerDetectorOverlay.enabled = true
+                
+                break
+            }
+            
+            
+            filter.dirty = true
+        }
+    }
+    
     func sliderHandler(sender:NSSlider)  {
         filter.context.runOperation(.async) {
             switch sender.tag {
