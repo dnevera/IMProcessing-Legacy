@@ -103,7 +103,7 @@ public class TestFilter: IMPFilter {
         harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
             self.context.runOperation(.async) {
                 self.crosshairGenerator.points = corners
-                //self.dirty = true
+                self.dirty = true
                 print(" corners detector time = \(-t1.timeIntervalSinceNow) ")
             }
         }
@@ -111,17 +111,17 @@ public class TestFilter: IMPFilter {
         houghLineDetector.addObserver { (lines, size) in
             self.context.runOperation(.async) {
                 self.linesGenerator.lines = lines
-                for l in self.linesGenerator.lines {
-                    print("\(l)")
-                }
-                //self.dirty = true
+//                for l in self.linesGenerator.lines {
+//                    print("\(l)")
+//                }
+                self.dirty = true
                 print(" lines detector time = \(-t1.timeIntervalSinceNow) ")
             }
         }
         
         
-        //add(filter: crosshairGenerator)
-        add(filter: linesGenerator)
+        add(filter: crosshairGenerator)
+        //add(filter: linesGenerator)
 
     }
     

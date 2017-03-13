@@ -75,15 +75,18 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
                                    width: width,
                                    height: height)
             
-            let lines = hough.getLines()
+            let lines = hough.getLines(threshold: 50)
             
             if lines.count > 0 {
                 for l in linesObserverList {
                     l(lines, size)
                 }
             }
+            
+            rawPixels.deallocate(capacity: imageByteSize)
         }
-        
+        rawPixels = nil
+
         isReading = false
     }
 

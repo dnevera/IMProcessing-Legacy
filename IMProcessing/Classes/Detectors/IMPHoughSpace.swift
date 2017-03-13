@@ -133,7 +133,7 @@ public class HoughSpace {
             
             let rho = (r - (numrho.float - 1) * 0.5) * rhoStep
             
-            if rho < 0 { continue }
+            //if rho < 0 { continue }
             
             let angle = minTheta + n * thetaStep
             
@@ -158,13 +158,31 @@ public class HoughSpace {
             let B = round(nf.y)
             let C = round(nf.z)
             
-            let y1:Float = B == 0 ? imageHeight.float : C/B
-            let x2:Float = A == 0 ? imageWidth.float : C/A
+            var x1:Float=0,y1:Float=0,x2:Float=0,y2:Float=0
             
-            let x1:Float = B == 0 ? x2 : 0
-            let y2:Float = A == 0 ? y1 : 0
+            if A == 0 {
+                y1 = B == 0 ? 1 : C/B/imageHeight.float
+                x2 = 1
+                
+                x1 = B == 0 ? x2 : 0
+                y2 = y1
+            }
+            else if B == 0 {
+                y1 = 1
+                x2 = A == 0 ? 1 : C/A/imageWidth.float
+                
+                x1 = x2
+                y2 = A == 0 ? y1 : 0
+            }
+            else {
+                
+                x1 = 0
+                y1 = C/B / imageHeight.float
+                x2 = 1
+                y2 = (C - A*imageWidth.float)/B / imageHeight.float
+            }
             
-            let delim  = float2(imageWidth.float,imageHeight.float)
+            let delim  = float2(1)// float2(imageWidth.float,imageHeight.float)
             let point1 = clamp(float2(x1,y1)/delim, min: float2(0), max: float2(1))
             let point2 = clamp(float2(x2,y2)/delim, min: float2(0), max: float2(1))
             
