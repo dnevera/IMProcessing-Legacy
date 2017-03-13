@@ -194,6 +194,70 @@ namespace IMProcessing
                    IMProcessing::when_eq(inTexture.get_width(), w) // whe equal read exact texture color
                    );
     }
+    
+    
+    ///  @brief Get a sample acording texture scale factor value.
+    ///
+    ///  @param inTexture       input texture
+    ///  @param scale           scale factor
+    ///  @param gid             position thread in grrid, equal x,y coordiant position of pixel in texure
+    ///
+    ///  @return sampled color value
+    ///
+    inline float4 sampledColor(
+                               texture2d<float, access::sample> inTexture,
+                               float                   scale,
+                               uint2 gid
+                               ){
+        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        
+        float w = float(inTexture.get_width())  * scale;
+        float h = float(inTexture.get_height()) * scale;
+        
+        return mix(inTexture.sample(s, float2(gid) * float2(1.0/w, 1.0/h)),
+                   inTexture.read(gid),
+                   IMProcessing::when_eq(inTexture.get_width(), w) // whe equal read exact texture color
+                   );
+    }
+    
+    
+    ///  @brief Test is there pixel inside in a box or not
+    ///
+    ///  @param v          pixel coordinate
+    ///  @param bottomLeft offset from bottom-left conner
+    ///  @param topRight   offset from top-right conner
+    ///
+    ///  @return 0 or 1
+    ///
+    inline  float coordsIsInsideBox(float2 v, float2 bottomLeft, float2 topRight) {
+        float2 s =  step(bottomLeft, v) - step(topRight, v);
+        return s.x * s.y;
+    }
+    
+    inline float4 sampledColor(
+                                        texture2d<float, access::sample>  inTexture,
+                                        constant IMPRegion               &regionIn,
+                                        float                             scale,
+                                        uint2 gid){
+        
+        float w = float(inTexture.get_width())  * scale;
+        float h = float(inTexture.get_height()) * scale;
+        
+        float2 coords  = float2(gid) * float2(1.0/w,1.0/h);
+        //
+        // для всех пикселей за пределами расчета возвращаем чорную точку с прозрачным альфа-каналом
+        //
+        float  isBoxed = coordsIsInsideBox(coords, float2(regionIn.left,regionIn.bottom), float2(1.0-regionIn.right,1.0-regionIn.top));
+        return sampledColor(inTexture,scale,gid) * isBoxed;
+    }
+    
+    inline float4 sampledColor(
+                               texture2d<float, access::sample>  inTexture,
+                               constant IMPRegion               &regionIn,
+                               uint2 gid){
+        return sampledColor(inTexture,regionIn,1,gid);
+    }
+
 }
 
 #endif

@@ -21,19 +21,7 @@ using namespace metal;
 
 namespace IMProcessing
 {
-    ///  @brief Test is there pixel inside in a box or not
-    ///
-    ///  @param v          pixel coordinate
-    ///  @param bottomLeft offset from bottom-left conner
-    ///  @param topRight   offset from top-right conner
-    ///
-    ///  @return 0 or 1
-    ///
-    inline  float coordsIsInsideBox(float2 v, float2 bottomLeft, float2 topRight) {
-        float2 s =  step(bottomLeft, v) - step(topRight, v);
-        return s.x * s.y;
-    }
-
+   
     vertex IMPVertexOut vertex_transformation(
                                               const device IMPVertex*      vertex_array [[ buffer(0) ]],
                                               const device float4x4&       matrix_model [[ buffer(1) ]],

@@ -80,10 +80,8 @@ public class HoughSpace {
         
         for i in stride(from: 0, to: imageHeight, by: 1){
             for j in stride(from: 0, to: imageWidth, by: 1){
-                
-                let colorByte = image[i * bytesPerRow + j * 4]
-                
-                if colorByte < 128 { continue }
+                                
+                if image[i * bytesPerRow + j * 4] < 128 { continue }
                 
                 for n in 0..<numangle {
                     

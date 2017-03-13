@@ -24,6 +24,10 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
         extendName(suffix: "HoughLinesDetector")
         super.configure()
         maxSize = 800
+        
+        //add(function:houghTransformKernel){ (result) in
+         //   print("houghTransformKernel....")
+        //}
     }
     
     var rawPixels:UnsafeMutablePointer<UInt8>?
@@ -35,6 +39,17 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
     
     private var isReading = false
     
+    private lazy var houghTransformKernel:IMPFunction = {
+        let f = IMPFunction(context: self.context, kernelName: "kernel_houghTransformAtomic")
+        f.optionsHandler = { (function,commandEncoder, input, output) in
+            
+            //commandEncoder.setBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
+            //commandEncoder.setTexture(self.weightsTexture, at:2)
+            //commandEncoder.setTexture(self.offsetsTexture, at:3)
+        }
+
+        return f
+    }()
     
     private func readLines(_ destination: IMPImageProvider) {
         

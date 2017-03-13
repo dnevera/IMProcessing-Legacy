@@ -54,7 +54,11 @@ public class IMPGaussianBlurFilter: IMPFilter {
             update()
         }
     }
-        
+    
+//    public override var prefersRendering: Bool {
+//        return true
+//    }
+    
     public override func configure() {
         
         super.configure()
@@ -68,18 +72,18 @@ public class IMPGaussianBlurFilter: IMPFilter {
 
         }
         
-        if prefersRendering {
+//        if prefersRendering {
             add(shader: downscaleShader, fail: fail)
             add(shader: horizontalShader, fail: fail)
             add(shader: verticalShader, fail: fail)
             add(shader: upscaleShader, fail: fail)
-        }
-        else {
-            add(function: downscaleKernel, fail: fail)
-            add(function: horizontalKernel, fail: fail)
-            add(function: verticalKernel, fail: fail)
-            add(function: upscaleKernel, fail: fail)
-        }
+//        }
+//        else {
+//            add(function: downscaleKernel, fail: fail)
+//            add(function: horizontalKernel, fail: fail)
+//            add(function: verticalKernel, fail: fail)
+//            add(function: upscaleKernel, fail: fail)
+//        }
     }
         
     var sigma:Float {
