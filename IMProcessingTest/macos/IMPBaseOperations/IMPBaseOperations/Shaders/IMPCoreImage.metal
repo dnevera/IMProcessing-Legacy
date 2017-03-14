@@ -25,7 +25,7 @@ kernel void kernel_red(metal::texture2d<float, metal::access::sample> inTexture 
                        metal::uint2 gid [[thread_position_in_grid]])
 {
     float4 inColor = IMProcessing::sampledColor(inTexture,outTexture,gid);
-    inColor.rgb.r = inColor.rgb.r * value;
+    inColor.rgb.r = inColor.rgb.r * 0;
     outTexture.write(inColor, gid);
 }
 

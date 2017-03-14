@@ -33,10 +33,10 @@ public protocol IMPFilterProtocol:IMPContextProvider {
 }
 
 
-open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
+open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
     
     // MARK: - Type aliases
-
+    
     public enum RegisteringError: Error {
         case AlreadyExist
         case NotFound
@@ -47,7 +47,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     public typealias CompleteHandler = ((_ image:IMPImageProvider)->Void)
     public typealias UpdateHandler   = ((_ image:IMPImageProvider) -> Void)
     public typealias FilterHandler   = ((_ filter:IMPFilter, _ source:IMPImageProvider?, _ destination:IMPImageProvider) -> Void)
-
+    
     // MARK: - public
     
     open var prefersRendering:Bool  {
@@ -64,19 +64,12 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         didSet{
             oldValue?.texture?.setPurgeableState(.volatile)
             executeNewSourceObservers(source: source)
-            //dirty = true
         }
     }
     
     public var destination: IMPImageProvider {
         apply(_destination)
         return _destination
-    }
-
-    public var destinationSize:NSSize? = nil {
-        didSet{
-            dirty = true
-        }
     }
     
     public required init(context:IMPContext, name: String? = nil) {
@@ -93,7 +86,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             executeEnablingObservers(filter: self)
         }
     }
-
+    
     public var dirty: Bool = false {
         didSet{
             if dirty {
@@ -143,7 +136,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             dirty = false
             return
         }
-
+        
         guard let size = source.size else {
             dirty = false
             return
@@ -158,8 +151,8 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 dirty = false
                 return
             }
-
-            let newSize = destinationSize ?? self.destinationSize ?? size
+            
+            let newSize = destinationSize ?? size
             
             if result.texture == nil {
                 result.texture = context.device.make2DTexture(size: newSize, pixelFormat: (source.texture?.pixelFormat)!)
@@ -168,40 +161,39 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                 result.texture = result.texture?.reuse(size: newSize)
             }
             
-           context.execute{ [unowned self] (commandBuffer) in
+            context.execute{ [unowned self] (commandBuffer) in
                 self.apply(to: &result.texture, commandBuffer: commandBuffer)
-           }
+            }
             
             executeDestinationObservers(destination: result)
-
+            
             dirty = false
             return
         }
-
-
+        
         var scaledImage = source.image
         
-        if let newsize = destinationSize ??  self.destinationSize,
+        if let newsize = destinationSize ?? source.size,
             let sImage = scaledImage
-            {
-                let originX = sImage.extent.origin.x
-                let originY = sImage.extent.origin.y
-                
-                let scaleX = newsize.width /  sImage.extent.width
-                let scaleY = newsize.height / sImage.extent.height
-                let scale = min(scaleX, scaleY)
-                
-                let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
-                scaledImage = sImage.applying(transform.scaledBy(x: scale, y: scale))
+        {
+            let originX = sImage.extent.origin.x
+            let originY = sImage.extent.origin.y
+            
+            let scaleX = newsize.width /  sImage.extent.width
+            let scaleY = newsize.height / sImage.extent.height
+            let scale = min(scaleX, scaleY)
+            
+            let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
+            scaledImage = sImage.applying(transform.scaledBy(x: scale, y: scale))
         }
         
         result.image = scaledImage
-
+        
         if enabled == false {
             dirty = false
             return
         }
-
+        
         //
         // apply CIFilter chains
         //
@@ -300,7 +292,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         
         resultIn = currentResult
     }
-
+    
     
     public static func == (lhs: IMPFilter, rhs: IMPFilter) -> Bool {
         if let ln = lhs.name, let rn = rhs.name {
@@ -308,7 +300,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         }
         return lhs === rhs
     }
-
+    
     //
     // MARK: - observers
     //
@@ -317,7 +309,6 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     }
     public func addObserver(destinationUpdated observer:@escaping UpdateHandler){
         destinationObservers.append(observer)
-        //print(" filter \(name) \(destinationObservers)")
     }
     public func addObserver(dirty observer:@escaping FilterHandler){
         root?.dirtyObservers.append(observer)
@@ -384,7 +375,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             })
         }
     }
-
+    
     
     //
     // MARK: - create filters chain
@@ -395,20 +386,20 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         let filter = IMPCoreImageMTLKernel.register(function: function)
         appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
     }
-   
+    
     public func add(shader: IMPShader,
                     fail: FailHandler?=nil,
                     complete: CompleteHandler?=nil) {
         let filter = IMPCoreImageMTLShader.register(shader: shader)
         appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
     }
-
+    
     public func add(function name: String,
                     fail: FailHandler?=nil,
                     complete: CompleteHandler?=nil) {
         add(function: IMPFunction(context: context, kernelName: name), fail: fail, complete: complete)
     }
-
+    
     public func add(vertex: String, fragment: String,
                     fail: FailHandler?=nil,
                     complete: CompleteHandler?=nil) {
@@ -422,26 +413,26 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     }
     #if os(iOS)
     public func add(mps: MPSUnaryImageKernel, withName: String? = nil,
-                    fail: FailHandler?=nil,
-                    complete: CompleteHandler?=nil)   {
-        if let newName = withName {
-            mps.label = newName
-        }
-        guard let _ = mps.label else {
-            fatalError(" *** IMPFilter add(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
-        }
-        let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
-        appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    fail: FailHandler?=nil,
+    complete: CompleteHandler?=nil)   {
+    if let newName = withName {
+    mps.label = newName
     }
-
+    guard let _ = mps.label else {
+    fatalError(" *** IMPFilter add(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
+    }
+    let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
+    appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    }
+    
     public func add(mps: IMPMPSUnaryKernelProvider,
-                    fail: FailHandler?=nil,
-                    complete: CompleteHandler?=nil)   {
-        let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
-        appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    fail: FailHandler?=nil,
+    complete: CompleteHandler?=nil)   {
+    let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
+    appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
     }
     #endif
-
+    
     
     //
     // MARK: - insertion at index
@@ -484,35 +475,35 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
                        complete: CompleteHandler?=nil) {
         insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
     }
-
+    
     #if os(iOS)
     public func insert(mps: MPSUnaryImageKernel, withName: String? = nil,
-                       at index: Int,
-                       fail: FailHandler?=nil,
-                       complete: CompleteHandler?=nil) {
-        if let newName = withName {
-            mps.label = newName
-        }
-        guard let _ = mps.label else {
-            fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
-        }
-        let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
-        insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    at index: Int,
+    fail: FailHandler?=nil,
+    complete: CompleteHandler?=nil) {
+    if let newName = withName {
+    mps.label = newName
     }
-
+    guard let _ = mps.label else {
+    fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
+    }
+    let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
+    insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    }
+    
     public func insert(mps: IMPMPSUnaryKernelProvider,
-                       at index: Int,
-                       fail: FailHandler?=nil,
-                       complete: CompleteHandler?=nil) {
-        let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
-        insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    at index: Int,
+    fail: FailHandler?=nil,
+    complete: CompleteHandler?=nil) {
+    let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
+    insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
     }
     #endif
     
     //
     // MARK: - insertion before / after
     //
-
+    
     // Insert CIFilter before/after
     public func insert(filter: CIFilter,
                        before filterName: String,
@@ -535,7 +526,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
         }
     }
-
+    
     // Insert IMPFunction before/after
     public func insert(function: IMPFunction,
                        after filterName: String,
@@ -544,7 +535,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         let filter = IMPCoreImageMTLKernel.register(function: function)
         insert(filter: filter, after: filterName, fail: fail, complete: complete)
     }
- 
+    
     // Insert IMPFunction before/after
     public func insert(shader: IMPShader,
                        after filterName: String,
@@ -569,7 +560,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         let filter = IMPCoreImageMTLShader.register(shader: shader)
         insert(filter: filter, before: filterName, fail: fail, complete: complete)
     }
-
+    
     // Insert IMPFunction by name before/after
     public func insert(function name: String,
                        after filterName: String,
@@ -579,7 +570,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         let filter = IMPCoreImageMTLKernel.register(function: function)
         insert(filter: filter, after: filterName, fail: fail, complete: complete)
     }
-
+    
     public func insert(vertex: String, fragment: String,
                        after filterName: String,
                        fail: FailHandler?=nil,
@@ -587,7 +578,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         insert(shader: IMPShader(context:context, vertexName:vertex, fragmentName:fragment),
                after: filterName, fail: fail, complete: complete)
     }
-
+    
     public func insert(function name: String,
                        before filterName: String,
                        fail: FailHandler?=nil,
@@ -596,7 +587,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         let filter = IMPCoreImageMTLKernel.register(function: function)
         insert(filter: filter, before: filterName, fail: fail, complete: complete)
     }
-
+    
     public func insert(vertex: String, fragment: String,
                        before filterName: String,
                        fail: FailHandler?=nil,
@@ -604,65 +595,65 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         insert(shader: IMPShader(context:context, vertexName:vertex, fragmentName:fragment),
                before: filterName, fail: fail, complete: complete)
     }
-
+    
     // Insert MPS before/after
     #if os(iOS)
     public func insert(mps: MPSUnaryImageKernel, withName: String? = nil,
-                       after filterName: String,
-                       fail: FailHandler?=nil,
-                       complete: CompleteHandler?=nil) {
-        if let newName = withName {
-            mps.label = newName
-        }
-        guard let _ = mps.label else {
-            fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
-        }
-        let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
-        insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    after filterName: String,
+    fail: FailHandler?=nil,
+    complete: CompleteHandler?=nil) {
+    if let newName = withName {
+    mps.label = newName
     }
-
+    guard let _ = mps.label else {
+    fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
+    }
+    let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
+    insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    }
+    
     public func insert(mps: IMPMPSUnaryKernelProvider,
-                       after filterName: String,
-                       fail: FailHandler?=nil,
-                       complete: CompleteHandler?=nil) {
-        let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
-        insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    after filterName: String,
+    fail: FailHandler?=nil,
+    complete: CompleteHandler?=nil) {
+    let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
+    insert(filter: filter, after: filterName, fail: fail, complete: complete)
     }
     
     public func insert(mps: MPSUnaryImageKernel, withName: String? = nil,
-                       before filterName: String,
-                       fail: FailHandler?=nil,
-                       complete: CompleteHandler?=nil) {
-        if let newName = withName {
-            mps.label = newName
-        }
-        guard let _ = mps.label else {
-            fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
-        }
-        let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
-        insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    before filterName: String,
+    fail: FailHandler?=nil,
+    complete: CompleteHandler?=nil) {
+    if let newName = withName {
+    mps.label = newName
     }
-
+    guard let _ = mps.label else {
+    fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
+    }
+    let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
+    insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    }
+    
     public func insert(mps: IMPMPSUnaryKernelProvider,
-                       before filterName: String,
-                       fail: FailHandler?=nil,
-                       complete: CompleteHandler?=nil) {
-        let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
-        insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    before filterName: String,
+    fail: FailHandler?=nil,
+    complete: CompleteHandler?=nil) {
+    let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
+    insert(filter: filter, before: filterName, fail: fail, complete: complete)
     }
     #endif
-
+    
     //
     // MARK: - remove filter from chain
     //
     public func remove(function: IMPFunction) {
         remove(filter: function.name)
     }
-
+    
     public func remove(shader: IMPShader) {
         remove(filter: shader.name)
     }
-
+    
     public func remove(filter name: String){
         var index = 0
         for f in coreImageFilterList{
@@ -683,20 +674,20 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             index += 1
         }
     }
-
+    
     #if os(iOS)
     public func remove(mps: MPSUnaryImageKernel) {
-        guard let name = mps.label else {
-            fatalError(" *** IMPFilter: remove(mps:) mps kernel should contain defined label property...")
-        }
-        remove(filter: name)
+    guard let name = mps.label else {
+    fatalError(" *** IMPFilter: remove(mps:) mps kernel should contain defined label property...")
     }
-
+    remove(filter: name)
+    }
+    
     public func remove(mps: IMPMPSUnaryKernelProvider) {
-        remove(filter: mps.name)
+    remove(filter: mps.name)
     }
     #endif
-
+    
     public func remove(filter: CIFilter) {
         remove(filter: filter.name)
     }
@@ -739,7 +730,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             }
         }
     }
-
+    
     internal func executeDirtyObservers(filter:IMPFilter){
         if observersEnabled {
             root?.executeDirtyObservers(filter: self)
@@ -756,7 +747,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
             }
         }
     }
-
+    
     
     //
     // MARK: - private
@@ -769,9 +760,9 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
     private var destinationObservers:[UpdateHandler] = [UpdateHandler]()
     private var dirtyObservers:[FilterHandler]       = [FilterHandler]()
     private var enablingObservers:[FilterHandler]    = [FilterHandler]()
-
+    
     private var coreImageFilterList:[FilterContainer] = [FilterContainer]()
-
+    
     public struct FilterContainer: Equatable {
         
         var cifilter:CIFilter?        = nil
@@ -839,7 +830,7 @@ open class IMPFilter: IMPFilterProtocol, IMPDestinationSizeProvider, Equatable {
         }
         return (index,true)
     }
-
+    
     private lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context)
     private lazy var resampleShader:IMPShader = IMPShader(context: self.context)
     

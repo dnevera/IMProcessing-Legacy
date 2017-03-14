@@ -11,6 +11,15 @@ import SnapKit
 
 public class TestFilter: IMPFilter {
     
+    public var linesHandler:((_ lines:[IMPLineSegment], _ size:NSSize)->Void)?
+    public var cornersHandler:((_ points:[float2], _ size:NSSize)->Void)?
+    
+    public override var source: IMPImageProvider? {
+        didSet{
+            print(" source = \(source?.size)")
+        }
+    }
+    
     lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     
     public var blurRadius:Float = 0 {
@@ -91,70 +100,154 @@ public class TestFilter: IMPFilter {
 //        add(filter: ciBlurFilter)
         
         var t1 = Date()
+        var t2 = Date()
         
         addObserver(newSource: { (source) in
-            self.context.runOperation(.async) {
+            self.harrisCornerDetector.context.runOperation(.async) {
                 t1 = Date()
-                self.houghLineDetector.source = source
                 self.harrisCornerDetector.source = source
+            }
+            self.houghLineDetector.context.runOperation(.async) {
+                t2 = Date()
+                self.houghLineDetector.source = source
             }
         })
         
         harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
             self.context.runOperation(.async) {
-                self.crosshairGenerator.points = corners
-                self.dirty = true
-                print(" corners detector time = \(-t1.timeIntervalSinceNow) ")
+                self.cornersHandler?(corners,size)
+                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
             }
         }
 
         houghLineDetector.addObserver { (lines, size) in
             self.context.runOperation(.async) {
-                self.linesGenerator.lines = lines
-//                for l in self.linesGenerator.lines {
-//                    print("\(l)")
-//                }
-                self.dirty = true
-                print(" lines detector time = \(-t1.timeIntervalSinceNow) ")
+                self.linesHandler?(lines,size)
+                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
             }
         }
-        
-        
-        add(filter: crosshairGenerator)
-        //add(filter: linesGenerator)
-
     }
     
     lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
     lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
-    
-    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context: self.context)
     lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
-    lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: self.context)
+    
+    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context: IMPContext())
+    lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext())
 
     lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
-    lazy var linesGenerator:IMPLinesGenerator = IMPLinesGenerator(context: self.context)
 
+}
+
+class CanvasView: NSView {
+    
+    var lines = [IMPLineSegment]() {
+        didSet{
+            setNeedsDisplay(bounds)
+        }
+    }
+    
+    var corners = [float2]() {
+        didSet{
+            setNeedsDisplay(bounds)
+        }
+    }
+    
+    
+    func drawLine(segment:IMPLineSegment,
+                  color:NSColor = NSColor(red: 0,   green: 1, blue: 1, alpha: 0.6),
+                  width:CGFloat = 1
+                  ){
+        let path = NSBezierPath()
+        
+        let fillColor = color
+        
+        fillColor.set()
+        path.fill()
+        path.lineWidth = width
+        
+        let p0 = NSPoint(x: segment.p0.x.cgfloat * bounds.size.width,
+                         y: (1-segment.p0.y.cgfloat) * bounds.size.height)
+
+        let p1 = NSPoint(x: segment.p1.x.cgfloat * bounds.size.width,
+                         y: (1-segment.p1.y.cgfloat) * bounds.size.height)
+
+        path.move(to: p0)
+        path.line(to: p1)
+
+        path.stroke()
+    }
+    
+    func drawCrosshair(point:float2,
+                  color:NSColor = NSColor(red: 0,   green: 1, blue: 0, alpha: 1),
+                  width:CGFloat = 10,
+                  thickness:CGFloat = 2
+        ){
+        let w  = (width/bounds.size.width/2).float
+        let h  = (width/bounds.size.height/2).float
+        let p0 = float2(point.x-w, point.y)
+        let p1 = float2(point.x+w, point.y)
+        let p10 = float2(point.x, point.y-h)
+        let p11 = float2(point.x, point.y+h)
+        
+        let segment1 = IMPLineSegment(p0: p0, p1: p1)
+        let segment2 = IMPLineSegment(p0: p10, p1: p11)
+        
+        drawLine(segment: segment1, color: color, width: thickness)
+        drawLine(segment: segment2, color: color, width: thickness)
+    }
+    
+    override func draw(_ dirtyRect: NSRect) {
+        for s in lines {
+            drawLine(segment: s)
+        }
+        
+        for c in corners {
+            drawCrosshair(point: c)
+        }
+    }
 }
 
 class ViewController: NSViewController {
 
-    lazy var filter:TestFilter = TestFilter(context: self.context)
+    lazy var filter:TestFilter = {
+        let f = TestFilter(context: self.context)
+        f.linesHandler = { (lines,size) in
+            DispatchQueue.main.async {
+                self.canvas.lines = lines
+            }
+        }
+        f.cornersHandler = { (points,size) in
+            DispatchQueue.main.async {
+                self.canvas.corners = points
+            }
+        }
+        return f
+    }()
+    
     lazy var imageView:IMPView = IMPView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
 
     var context:IMPContext = IMPContext(lazy:true)
     var currentImage:IMPImageProvider? = nil
+    
+    var canvas = CanvasView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
         
-        imageView.exactResolutionEnabled = true
+        imageView.exactResolutionEnabled = false
         imageView.clearColor = MTLClearColor(red: 0.1, green: 0.2, blue: 0.3, alpha: 1)
         imageView.filter = filter
         
         view.addSubview(imageView)
+        imageView.addSubview(canvas)
+        
+        canvas.wantsLayer = true
+        canvas.layer?.backgroundColor = NSColor.clear.cgColor
+        canvas.autoresizingMask = [.viewWidthSizable, .viewHeightSizable]
         
         imageView.snp.makeConstraints { (make) in
             make.left.equalTo(imageView.superview!).offset(0)
@@ -225,7 +318,7 @@ class ViewController: NSViewController {
         
         if  gesture.buttonMask == 1 {
             
-            print("clickHandler state = \(gesture.state.rawValue)")
+            print("1 clickHandler state = \(gesture.state.rawValue)")
             
             switch gesture.state {
             case .began:
@@ -237,7 +330,9 @@ class ViewController: NSViewController {
             
         }
         else if gesture.buttonMask == 1<<1 {
-            
+           
+            print("2 clickHandler state = \(gesture.state.rawValue)")
+
 //            switch gesture.state {
 //            case .began:
 //                filter.harrisCornerDetectorOverlay.enabled = false

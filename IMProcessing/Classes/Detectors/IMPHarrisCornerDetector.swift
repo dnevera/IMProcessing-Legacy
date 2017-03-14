@@ -115,7 +115,9 @@ public class IMPHarrisCornerDetector: IMPResampler{
         var bytesPerRow:Int = 0
         if let rawPixels = destination.read(bytes: &rawPixels, length: &imageByteSize, bytesPerRow: &bytesPerRow) {
             var corners = [float2]()
-            
+        
+            print("readCorners:  \(width, height) imageByteSize = \(imageByteSize) bytesPerRow = \(bytesPerRow)")
+
             for x in stride(from: 0, to: width, by: 1){
                 for y in stride(from: 0, to: height, by: 1){
                     
@@ -132,8 +134,9 @@ public class IMPHarrisCornerDetector: IMPResampler{
             for o in cornersObserverList {
                 o(corners,size)
             }
-            
             isReading = false
+            self.rawPixels?.deallocate(capacity: imageByteSize)
+            self.rawPixels = nil
         }
     }
     

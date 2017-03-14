@@ -72,8 +72,6 @@ namespace IMProcessing
                                        float2 pointCoord  [[point_coord]]
                                        ) {
         
-        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
-
         float2 texcoord = pointCoord;
         float2 dist     = abs(in.center - texcoord);
         float  axisTest = step(in.spacing, texcoord.y) * step(dist.x, 0.09) + step(in.spacing, texcoord.x) * step(dist.y, 0.09);

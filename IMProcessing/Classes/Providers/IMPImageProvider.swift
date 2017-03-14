@@ -388,7 +388,7 @@ public extension IMPImageProvider {
                 command.commit()
                 command.waitUntilCompleted()
             #endif
-            
+                        
             texture.getBytes(bytes!,
                              bytesPerRow: bytesPerRow,
                              from: MTLRegionMake2D(0, 0, texture.width, texture.height),

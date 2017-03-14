@@ -35,7 +35,7 @@ class IMPDrawLinesCoreMTLShader: IMPCoreImageMTLShader {
             renderEncoder.drawPrimitives(type: .line,
                                          vertexStart: 0,
                                          vertexCount: points.count,
-                                         instanceCount: 1)
+                                         instanceCount: points.count/2)
             renderEncoder.endEncoding()
         }
     }
@@ -84,10 +84,17 @@ public class IMPLinesGenerator: IMPFilter {
             pointsShader.points.append(p.p1)
             
             //for x in stride(from: -width/2, to: width/2, by: 1) {
-                pointsShader.points.append(p.p0+thick)
-                pointsShader.points.append(p.p1+thick)
+                //pointsShader.points.append(p.p0+thick)
+                //pointsShader.points.append(p.p1+thick)
             //}
         }
+        
+//        for p in _lines {
+////            for x in stride(from: -width/2, to: width/2, by: 1) {
+//            pointsShader.points.append(p.p0+thick)
+//            pointsShader.points.append(p.p1+thick)
+////            }
+//        }
     }
     
     static var defaultWidth:Float = 2

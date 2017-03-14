@@ -20,13 +20,12 @@ public class IMPResampler: IMPFilter{
     }
     
     private func updateResampler(){
+        resampler.flush()
         if let size = source?.size,
-            let maxSize = self.maxSize{
+            let maxSize = self.maxSize {
             let scale = fmax(fmin(fmin(maxSize/size.width, maxSize/size.height),1),0.01)
-            let samplefSize = NSSize(width: size.width * scale, height: size.height * scale)
-            if resampler.destinationSize != samplefSize {
-                resampler.destinationSize = samplefSize
-            }
+            resampler.destinationSize = NSSize(width: size.width * scale, height: size.height * scale)
+            print("updateResampler destinationSize = \(resampler.destinationSize, scale, maxSize)")
         }
     }
     
@@ -43,7 +42,5 @@ public class IMPResampler: IMPFilter{
     }
     
     private lazy var resampleShader:IMPShader = IMPShader(context: self.context)
-    private lazy var resampler:IMPCIFilter = {
-        return IMPCoreImageMTLShader.register(shader: self.resampleShader)
-    }()
+    private lazy var resampler:IMPCIFilter = { return IMPCoreImageMTLShader.register(shader: self.resampleShader)}()
 }

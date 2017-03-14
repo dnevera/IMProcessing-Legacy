@@ -41,10 +41,19 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
     var context:IMPContext? = nil
     
-    var source:IMPImageProvider?
+    var source:IMPImageProvider? {
+        didSet{
+            print("\(name) source udpate = \(source?.size)")
+            //destinationSize = nil
+        }
+    }
     var destination:IMPImageProvider?
     
-    public var destinationSize: NSSize? = nil
+    public var destinationSize: NSSize? = nil {
+        didSet{
+            print(" :::::: \(name) destinationSize = \(destinationSize)")
+        }
+    }
 
     var inputImage: CIImage? {
         set{
@@ -123,6 +132,7 @@ extension IMPCIFilter {
         source = nil
         destination?.image = nil
         destination = nil
+        destinationSize = nil
     }
     
     func processBigImage(index:Int) -> CIImage? {
@@ -160,7 +170,7 @@ extension IMPCIFilter {
     
     
     func process(to destinationImage: IMPImageProvider, commandBuffer buffer: MTLCommandBuffer? = nil, command: CommandProcessor? = nil){
-       
+               
         guard let size =  destinationSize ?? source?.size else { return }
         
         guard let context = self.context else { return  }
@@ -174,7 +184,7 @@ extension IMPCIFilter {
             destinationImage.texture = context.device.make2DTexture(size: size,
                                                                     pixelFormat: (source?.texture?.pixelFormat)!)
         }
-                
+        
         let threadgroups = MTLSizeMake(
             (Int(size.width) + self.threadsPerThreadgroup.width) / self.threadsPerThreadgroup.width ,
             (Int(size.height) + self.threadsPerThreadgroup.height) / self.threadsPerThreadgroup.height,

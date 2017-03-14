@@ -24,6 +24,7 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
         extendName(suffix: "HoughLinesDetector")
         super.configure()
         maxSize = 800
+        blurRadius = 4
         
         //add(function:houghTransformKernel){ (result) in
          //   print("houghTransformKernel....")
@@ -70,6 +71,8 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
         var bytesPerRow:Int = 0
         if let rawPixels = destination.read(bytes: &rawPixels, length: &imageByteSize, bytesPerRow: &bytesPerRow) {
 
+            print("readLines width,height \(width,height)")
+            
             let hough = HoughSpace(image: rawPixels,
                                    bytesPerRow: bytesPerRow,
                                    width: width,

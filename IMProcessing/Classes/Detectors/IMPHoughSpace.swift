@@ -168,11 +168,11 @@ public class HoughSpace {
                 y2 = y1
             }
             else if B == 0 {
-                y1 = 1
+                y1 = 0
                 x2 = A == 0 ? 1 : C/A/imageWidth.float
                 
                 x1 = x2
-                y2 = A == 0 ? y1 : 0
+                y2 = A == 0 ? y1 : 1
             }
             else {
                 

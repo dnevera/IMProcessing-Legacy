@@ -83,7 +83,7 @@ public class IMPCrosshairsGenerator: IMPFilter {
         get{ return pointsShader.points }
     }
     
-    static var defaultWidth:Float = 40
+    static var defaultWidth:Float = 15
     static var defaultColor:float4 = float4(0,1,0.3,1)
     
     public var width:Float = IMPCrosshairsGenerator.defaultWidth {
@@ -132,7 +132,8 @@ public class IMPCrosshairsGenerator: IMPFilter {
     }()
     
     private lazy var shader:IMPCIFilter = {
-        return IMPDrawPointsCoreMTLShader.register(shader: self.pointsShader, filter: IMPDrawPointsCoreMTLShader())
+        return IMPDrawPointsCoreMTLShader.register(shader: self.pointsShader,
+                                                   filter: IMPDrawPointsCoreMTLShader())
     }()
 
     private lazy var widthBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.width), options: [])
