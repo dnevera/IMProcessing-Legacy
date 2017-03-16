@@ -13,7 +13,7 @@ public class IMPDerivative: IMPFilter{
     
     public var texelRadius:Float = 1 {
         didSet{
-            memcpy(texelRadiusBuffer.contents(), &texelRadius, texelRadiusBuffer.length)
+            texelRadiusBuffer <- texelRadius
             dirty = true
         }
     }
@@ -31,8 +31,7 @@ public class IMPDerivative: IMPFilter{
         extendName(suffix: "Derivative" + ":" + functionName)
         super.configure()
         add(shader:derivative)
-        texelRadius = 1
-    }        
+    }
     
     open func optionsHandler(shader:IMPShader, command:MTLRenderCommandEncoder, inputTexture:MTLTexture?, outputTexture:MTLTexture?){}
     
@@ -49,5 +48,5 @@ public class IMPDerivative: IMPFilter{
         return s
     }()
     
-    private lazy var texelRadiusBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.texelRadius), options: [])
+    private lazy var texelRadiusBuffer:MTLBuffer = self.context.makeBuffer(from: Float(1))
 }

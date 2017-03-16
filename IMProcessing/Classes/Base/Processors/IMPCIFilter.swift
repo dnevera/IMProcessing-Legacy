@@ -43,7 +43,7 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
     var source:IMPImageProvider? {
         didSet{
-            print("\(name) source udpate = \(source?.size)")
+            //print("\(name) source udpate = \(source?.size)")
             //destinationSize = nil
         }
     }
@@ -51,7 +51,7 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
     public var destinationSize: NSSize? = nil {
         didSet{
-            print(" :::::: \(name) destinationSize = \(destinationSize)")
+            //print(" :::::: \(name) destinationSize = \(destinationSize)")
         }
     }
 
@@ -132,7 +132,7 @@ extension IMPCIFilter {
         source = nil
         destination?.image = nil
         destination = nil
-        destinationSize = nil
+//        destinationSize = nil
     }
     
     func processBigImage(index:Int) -> CIImage? {
@@ -171,7 +171,7 @@ extension IMPCIFilter {
     
     func process(to destinationImage: IMPImageProvider, commandBuffer buffer: MTLCommandBuffer? = nil, command: CommandProcessor? = nil){
                
-        guard let size =  destinationSize ?? source?.size else { return }
+        guard let size =  destinationSize ?? destinationImage.size ?? source?.size else { return }
         
         guard let context = self.context else { return  }
         

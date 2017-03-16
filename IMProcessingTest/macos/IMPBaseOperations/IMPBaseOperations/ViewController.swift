@@ -11,12 +11,14 @@ import SnapKit
 
 public class TestFilter: IMPFilter {
     
-    public var linesHandler:((_ lines:[IMPLineSegment], _ size:NSSize)->Void)?
-    public var cornersHandler:((_ points:[float2], _ size:NSSize)->Void)?
+    public var linesHandler:((_ lines:[IMPLineSegment], _ size:NSSize?)->Void)?
+    public var cornersHandler:((_ points:[float2], _ size:NSSize?)->Void)?
     
     public override var source: IMPImageProvider? {
         didSet{
             print(" source = \(source?.size)")
+            self.linesHandler?([],source?.size)
+            self.cornersHandler?([],source?.size)
         }
     }
     
@@ -96,7 +98,7 @@ public class TestFilter: IMPFilter {
 //        add(function: kernelRed)
 //        add(function: kernelEV)
 //        add(filter: exposureFilter)
-//        add(filter: blurFilter)
+        add(filter: blurFilter)
 //        add(filter: ciBlurFilter)
         
         var t1 = Date()

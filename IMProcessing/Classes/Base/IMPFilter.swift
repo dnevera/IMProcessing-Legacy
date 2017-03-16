@@ -162,7 +162,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
             }
             
             context.execute{ [unowned self] (commandBuffer) in
-                self.apply(to: &result.texture, commandBuffer: commandBuffer)
+                self.apply(to: &result, commandBuffer: commandBuffer)
             }
             
             executeDestinationObservers(destination: result)
@@ -216,7 +216,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     //
     // optimize processing when image < GPU SIZE
     //
-    private func apply(to resultIn: inout MTLTexture?, commandBuffer: MTLCommandBuffer? = nil) {
+    private func apply(to resultIn: inout IMPImageProvider, commandBuffer: MTLCommandBuffer? = nil) {
         
         let source:MTLTexture? = self.source?.texture
         
@@ -224,7 +224,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         
         var currentResult:MTLTexture = input
         
-        if let result = resultIn {
+        if let result = resultIn.texture {
             if result.size != input.size {
                 resampler.source?.texture = input
                 resampler.destinationSize = result.cgsize
@@ -233,7 +233,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
             }
         }
         
-        for c in coreImageFilterList {
+        for (index,c) in coreImageFilterList.enumerated() {
+            
+            let isResult = index == coreImageFilterList.count-1
             
             if let filter = c.cifilter {
                 
@@ -251,9 +253,13 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                     
                     f.destination = f.destination ?? IMPImage(context: context)
                     
-                    f.process(to: f.destination!, commandBuffer: commandBuffer)
-                    
-                    currentResult = (f.destination?.texture)!
+                    //if isResult {
+                    //    f.process(to: resultIn, commandBuffer: commandBuffer)
+                    //}
+                    //else {
+                        f.process(to: f.destination!, commandBuffer: commandBuffer)
+                        currentResult = (f.destination?.texture)!
+                    //}
                 }
                 else {
                     
@@ -263,11 +269,23 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                     
                     guard let image = filter.outputImage else { continue }
                     
-                    self.context.coreImage?.render(image,
-                                                   to: currentResult,
-                                                   commandBuffer: commandBuffer,
-                                                   bounds: image.extent,
-                                                   colorSpace: self._destination.colorSpace)
+//                    if isResult {
+//                        if resultIn.texture == nil {
+//                            resultIn.texture = self.context.device.make2DTexture(size: image.extent.size, pixelFormat: (source?.pixelFormat)!)
+//                        }
+//                        self.context.coreImage?.render(image,
+//                                                       to: resultIn.texture!,
+//                                                       commandBuffer: commandBuffer,
+//                                                       bounds: image.extent,
+//                                                       colorSpace: self._destination.colorSpace)
+//                    }
+//                    else {
+                        self.context.coreImage?.render(image,
+                                                       to: currentResult,
+                                                       commandBuffer: commandBuffer,
+                                                       bounds: image.extent,
+                                                       colorSpace: self._destination.colorSpace)
+//                    }
                 }
             }
             else if let filter = c.filter {
@@ -278,9 +296,15 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                 
                 filter.source?.texture = currentResult
                 
-                filter.apply(to: &filter._destination.texture, commandBuffer: commandBuffer)
+//                if isResult{
+//                       filter.apply(to: &resultIn, commandBuffer: commandBuffer)
+//                    //currentResult = resultIn.texture!
+//                }
+//                else {
+                    filter.apply(to: &filter._destination, commandBuffer: commandBuffer)
+                    currentResult = filter._destination.texture!
+//                }
                 
-                currentResult = filter._destination.texture!
                 
                 filter.executeDestinationObservers(destination: filter._destination)
             }
@@ -289,8 +313,55 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                 comlete(IMPImage(context:context, texture: currentResult))
             }
         }
+
+        let result:MTLTexture = context.device.make2DTexture(size: currentResult.size, pixelFormat: currentResult.pixelFormat)
+    //        if let r = resultIn.texture {
+//            if r.size != currentResult.size {
+//                result = context.device.make2DTexture(size: currentResult.size, pixelFormat: currentResult.pixelFormat)
+//            }
+//        }
+//        else {
+//            result = context.device.make2DTexture(size: currentResult.size, pixelFormat: currentResult.pixelFormat)
+//        }
+//        
+
+
+        if let cb = commandBuffer ?? context.commandBuffer{
+            let blit = cb.makeBlitCommandEncoder()
+            
+            blit.copy(
+                from: currentResult,
+                sourceSlice: 0,
+                sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                sourceSize: currentResult.size,
+                to: result,
+                destinationSlice: 0,
+                destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+            
+            blit.endEncoding()
+            
+            resultIn.texture = result
+            
+        }
+        //else {
+        //    resultIn.texture = currentResult
+        //}
+
         
-        resultIn = currentResult
+        //resampler.source?.texture = currentResult
+        //resampler.destinationSize = resultIn.cgsize
+        //resampler.process(to: resultIn, commandBuffer: commandBuffer)
+        
+        //resultIn.texture = currentResult
+        //resampler.source?.texture = currentResult
+        //resampler.destinationSize = nil
+        //resampler.destination?.texture = resultIn
+        //resampler.destinationSize = currentResult.cgsize
+        //resampler.process(to: resultIn, commandBuffer: commandBuffer)
+        //currentResult = (resampler.destination?.texture)!
+
     }
     
     

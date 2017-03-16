@@ -65,7 +65,8 @@ public class IMPHarrisCornerDetector: IMPResampler{
     
     public override var source: IMPImageProvider? {
         didSet{
-            self.readCorners(self.destination)
+            readCorners(destination)
+            //process()
         }
     }
     
@@ -74,30 +75,26 @@ public class IMPHarrisCornerDetector: IMPResampler{
         
         super.configure()
         
+        maxSize = 400
+        blurRadius = IMPHarrisCornerDetector.defaultBlurRadius
+        sensitivity = IMPHarrisCorner.defaultSensitivity
+        threshold = IMPNonMaximumSuppression.defaultThreshold
+        texelRadius = IMPHarrisCornerDetector.defaultTexelRadius
+        
         add(filter: xyDerivative)
         add(filter: blurFilter)
         add(filter: harrisCorner)
         add(filter: nonMaximumSuppression)
         
-        maxSize = 800
-        blurRadius = IMPHarrisCornerDetector.defaultBlurRadius
-        sensitivity = IMPHarrisCorner.defaultSensitivity
-        threshold = IMPNonMaximumSuppression.defaultThreshold
-        texelRadius = IMPHarrisCornerDetector.defaultTexelRadius
+//        addObserver(destinationUpdated:{ (destination) in
+//            self.readCorners(destination)
+//        })
     }
     
     private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context)
     private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context)
     private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context)
-    
-    var rawPixels:UnsafeMutablePointer<UInt8>?
-    var imageByteSize:Int = 0
-
-    
-    deinit {
-        rawPixels?.deallocate(capacity: imageByteSize)
-    }
     
     private var isReading = false
     
@@ -112,11 +109,12 @@ public class IMPHarrisCornerDetector: IMPResampler{
         let width       = Int(size.width)
         let height      = Int(size.height)
         
-        var bytesPerRow:Int = 0
-        if let rawPixels = destination.read(bytes: &rawPixels, length: &imageByteSize, bytesPerRow: &bytesPerRow) {
+        if let (buffer,bytesPerRow,imageSize) = destination.read() {
+            let rawPixels = buffer.contents().bindMemory(to: UInt8.self, capacity: imageSize)
+
             var corners = [float2]()
         
-            print("readCorners:  \(width, height) imageByteSize = \(imageByteSize) bytesPerRow = \(bytesPerRow)")
+            print(" readCorners:  \(width, height) imageSize = \(imageSize) bytesPerRow = \(bytesPerRow)")
 
             for x in stride(from: 0, to: width, by: 1){
                 for y in stride(from: 0, to: height, by: 1){
@@ -135,8 +133,6 @@ public class IMPHarrisCornerDetector: IMPResampler{
                 o(corners,size)
             }
             isReading = false
-            self.rawPixels?.deallocate(capacity: imageByteSize)
-            self.rawPixels = nil
         }
     }
     

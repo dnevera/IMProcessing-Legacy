@@ -29,8 +29,9 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     public var adjustment:IMPAdjustment!{
         didSet{
-            adjustmentBuffer = adjustmentBuffer ?? context.device.makeBuffer(length: MemoryLayout.size(ofValue: adjustment), options: [])
-            memcpy(adjustmentBuffer.contents(), &adjustment, adjustmentBuffer.length)
+            //adjustmentBuffer = adjustmentBuffer ?? context.device.makeBuffer(length: MemoryLayout.size(ofValue: adjustment), options: [])
+            //memcpy(adjustmentBuffer.contents(), &adjustment, adjustmentBuffer.length)
+            adjustmentBuffer <- adjustment
             update()
         }
     }
@@ -55,16 +56,16 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
     }
     
-//    public override var prefersRendering: Bool {
-//        return true
-//    }
+    public override var prefersRendering: Bool {
+        return true
+    }
     
     public override func configure() {
         
         super.configure()
         
         extendName(suffix: "GaussianBlur")
-        adjustment = IMPGaussianBlurFilter.defaultAdjustment
+        //adjustment = IMPGaussianBlurFilter.defaultAdjustment
         radius = 0
         
         func fail(_ error:RegisteringError) {
@@ -72,18 +73,18 @@ public class IMPGaussianBlurFilter: IMPFilter {
 
         }
         
-//        if prefersRendering {
+        if prefersRendering {
             add(shader: downscaleShader, fail: fail)
             add(shader: horizontalShader, fail: fail)
             add(shader: verticalShader, fail: fail)
             add(shader: upscaleShader, fail: fail)
-//        }
-//        else {
-//            add(function: downscaleKernel, fail: fail)
-//            add(function: horizontalKernel, fail: fail)
-//            add(function: verticalKernel, fail: fail)
-//            add(function: upscaleKernel, fail: fail)
-//        }
+        }
+        else {
+            add(function: downscaleKernel, fail: fail)
+            add(function: horizontalKernel, fail: fail)
+            add(function: verticalKernel, fail: fail)
+            add(function: upscaleKernel, fail: fail)
+        }
     }
         
     var sigma:Float {
@@ -107,7 +108,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     }
     
     
-    var adjustmentBuffer:MTLBuffer!
+    lazy var adjustmentBuffer:MTLBuffer = self.context.makeBuffer(from: defaultAdjustment)
     
     func update()  {
         context.runOperation(context.isLazy ? .async : .sync ){
@@ -176,8 +177,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     }()
     
     
-    lazy var downscaleShader:IMPShader = IMPShader(context: self.context,
-                                                   name:"GaussianDownscaleShader")
+    lazy var downscaleShader:IMPShader = IMPShader(context: self.context)
     
     lazy var upscaleShader:IMPShader   = {
         let s = IMPShader(context: self.context,

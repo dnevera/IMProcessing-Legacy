@@ -15,7 +15,7 @@ public class IMPHarrisCorner: IMPFilter{
 
     public var sensitivity:Float = IMPHarrisCorner.defaultSensitivity {
         didSet{
-            memcpy(sensitivityBuffer.contents(), &sensitivity, sensitivityBuffer.length)
+            sensitivityBuffer <- sensitivity
             dirty = true
         }
     }
@@ -30,7 +30,6 @@ public class IMPHarrisCorner: IMPFilter{
     public override func configure() {
         extendName(suffix: "HarrisCorner")
         super.configure()
-        sensitivity = IMPHarrisCorner.defaultSensitivity
         add(shader:derivative)
     }
     
@@ -43,6 +42,6 @@ public class IMPHarrisCorner: IMPFilter{
         return s
     }()
     
-    private lazy var sensitivityBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.sensitivity), options: [])
+    private lazy var sensitivityBuffer:MTLBuffer =  self.context.makeBuffer(from:defaultSensitivity)
     
 }

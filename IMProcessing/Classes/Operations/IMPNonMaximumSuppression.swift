@@ -13,9 +13,9 @@ public class IMPNonMaximumSuppression: IMPDerivative {
     
     public static let defaultThreshold:Float = 0.2
     
-    public var threshold:Float = IMPNonMaximumSuppression.defaultThreshold {
+    public var threshold:Float = defaultThreshold {
         didSet{
-            memcpy(thresholdBuffer.contents(), &threshold, thresholdBuffer.length)
+            thresholdBuffer <- threshold
             dirty = true
         }
     }
@@ -31,15 +31,17 @@ public class IMPNonMaximumSuppression: IMPDerivative {
     public override func configure() {
         extendName(suffix: "NonMaximumSuppression")
         super.configure()
-        threshold = IMPNonMaximumSuppression.defaultThreshold
     }
     
-    public override func optionsHandler(shader: IMPShader, command: MTLRenderCommandEncoder, inputTexture: MTLTexture?, outputTexture: MTLTexture?) {
+    public override func optionsHandler(shader: IMPShader,
+                                        command: MTLRenderCommandEncoder,
+                                        inputTexture: MTLTexture?,
+                                        outputTexture: MTLTexture?) {
         command.setFragmentBuffer(self.thresholdBuffer, offset: 0, at: 1)
     }
     
     
-    lazy var thresholdBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.threshold), options: [])
+    lazy var thresholdBuffer:MTLBuffer = self.context.makeBuffer(from: defaultThreshold)
     
 }
 
@@ -48,16 +50,16 @@ public class IMPDirectionalNonMaximumSuppression: IMPDerivative {
     public static let defaultUpperThreshold:Float = 0.4
     public static let defaultLowerThreshold:Float = 0.1
     
-    public var upperThreshold:Float = IMPDirectionalNonMaximumSuppression.defaultUpperThreshold {
+    public var upperThreshold:Float = defaultUpperThreshold {
         didSet{
-            memcpy(upperThresholdBuffer.contents(), &upperThreshold, upperThresholdBuffer.length)
+            upperThresholdBuffer <- upperThreshold
             dirty = true
         }
     }
     
-    public var lowerThreshold:Float = IMPDirectionalNonMaximumSuppression.defaultLowerThreshold {
+    public var lowerThreshold:Float = defaultLowerThreshold {
         didSet{
-            memcpy(lowerThresholdBuffer.contents(), &lowerThreshold, lowerThresholdBuffer.length)
+            lowerThresholdBuffer <- lowerThreshold
             dirty = true
         }
     }
@@ -73,8 +75,6 @@ public class IMPDirectionalNonMaximumSuppression: IMPDerivative {
     public override func configure() {
         extendName(suffix: "NonMaximumSuppression")
         super.configure()
-        upperThreshold = IMPDirectionalNonMaximumSuppression.defaultUpperThreshold
-        lowerThreshold = IMPDirectionalNonMaximumSuppression.defaultLowerThreshold
     }
     
     public override func optionsHandler(shader: IMPShader, command: MTLRenderCommandEncoder, inputTexture: MTLTexture?, outputTexture: MTLTexture?) {
@@ -83,6 +83,6 @@ public class IMPDirectionalNonMaximumSuppression: IMPDerivative {
     }
     
     
-    lazy var upperThresholdBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.upperThreshold), options: [])
-    lazy var lowerThresholdBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.lowerThreshold), options: [])
+    lazy var upperThresholdBuffer:MTLBuffer = self.context.makeBuffer(from: defaultUpperThreshold)
+    lazy var lowerThresholdBuffer:MTLBuffer = self.context.makeBuffer(from: defaultLowerThreshold)
 }

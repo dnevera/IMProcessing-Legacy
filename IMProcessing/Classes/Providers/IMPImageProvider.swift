@@ -352,51 +352,96 @@ public extension IMPImageProvider {
 
 public extension IMPImageProvider {
     
-    public func read(bytes: inout UnsafeMutablePointer<UInt8>?, length imageByteSize: inout Int, bytesPerRow: inout Int) ->  UnsafeMutablePointer<UInt8>? {
+    public func read() ->  (buffer:MTLBuffer,bytesPerRow:Int,imageBytes:Int)? {
         
+        //context.wait()
+
         if let size = self.size,
             let texture = texture?.pixelFormat != .rgba8Uint ?
                 texture?.makeTextureView(pixelFormat: .rgba8Uint) :
-                texture
+            texture
         {
-            
+
             let width       = Int(size.width)
             let height      = Int(size.height)
             
-            bytesPerRow   = width * 4
-            let newSize = height * bytesPerRow
+            let bytesPerRow   = width * 4
+            let imageBytes = height * bytesPerRow
             
-            if bytes == nil {
-                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
-            }
-            else if imageByteSize != newSize {
-                if imageByteSize > 0 {
-                    bytes?.deallocate(capacity: imageByteSize)
-                }
-                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
-            }
+            let buffer = self.context.device.makeBuffer(length: imageBytes, options: [])
 
-            if bytes == nil { return  nil}
-            
-            imageByteSize = newSize
-            
-            #if os(OSX)
-                guard let command = context.commandBuffer else { return nil }
-                let blit = command.makeBlitCommandEncoder()
-                blit.synchronize(resource: texture)
+            context.execute(wait: true, complete: {
+                //self.context.resume()
+            }, fail: {
+                fatalError("IMPImageProvider: could not read bytes...")
+            }) { (commandBuffer) in
+                
+                let blit = commandBuffer.makeBlitCommandEncoder()
+                
+                blit.copy(from:          texture,
+                          sourceSlice:  0,
+                          sourceLevel:  0,
+                          sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                          sourceSize:   texture.size,
+                          to:           buffer,
+                          destinationOffset: 0,
+                          destinationBytesPerRow: bytesPerRow,
+                          destinationBytesPerImage: imageBytes)
+                
                 blit.endEncoding()
-                command.commit()
-                command.waitUntilCompleted()
-            #endif
-                        
-            texture.getBytes(bytes!,
-                             bytesPerRow: bytesPerRow,
-                             from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-                             mipmapLevel: 0)
-            
-            return bytes
+            }
+            return (buffer,bytesPerRow,imageBytes)
         }
         
+        
+//        if let size = self.size,
+//            let texture = texture?.pixelFormat != .rgba8Uint ?
+//                texture?.makeTextureView(pixelFormat: .rgba8Uint) :
+//                texture
+//        {
+//            
+//            let width       = Int(size.width)
+//            let height      = Int(size.height)
+//            
+//            bytesPerRow   = width * 4
+//            let newSize = height * bytesPerRow
+//            
+//            if bytes == nil {
+//                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
+//            }
+//            else if imageByteSize != newSize {
+//                if imageByteSize > 0 {
+//                    bytes?.deallocate(capacity: imageByteSize)
+//                }
+//                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
+//            }
+//
+//            if bytes == nil {
+//                context.resume()
+//                return  nil
+//            }
+//            
+//            imageByteSize = newSize
+//            
+//            #if os(OSX)
+//                guard let command = context.commandBuffer else { return nil }
+//                let blit = command.makeBlitCommandEncoder()
+//                blit.synchronize(resource: texture)
+//                blit.endEncoding()
+//                command.commit()
+//                command.waitUntilCompleted()
+//            #endif
+//                        
+//            texture.getBytes(bytes!,
+//                             bytesPerRow: bytesPerRow,
+//                             from: MTLRegionMake2D(0, 0, texture.width, texture.height),
+//                             mipmapLevel: 0)
+//            
+//            context.resume()
+//            return bytes
+//        }
+        
+        //context.resume()
         return nil
     }
 }

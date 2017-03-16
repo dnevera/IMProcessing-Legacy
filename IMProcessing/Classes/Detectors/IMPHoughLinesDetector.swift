@@ -16,26 +16,26 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
     
     public override var source: IMPImageProvider? {
         didSet{
-            self.readLines(self.destination)
+            //self.readLines(self.destination)
+            //process()
+            readLines(destination)
         }
     }
     
     public override func configure() {
         extendName(suffix: "HoughLinesDetector")
         super.configure()
-        maxSize = 800
-        blurRadius = 4
+        maxSize = 400
+        blurRadius = 2
+        
+//        addObserver(destinationUpdated: { (destination) in
+//            self.readLines(destination)
+//
+//        })
         
         //add(function:houghTransformKernel){ (result) in
          //   print("houghTransformKernel....")
         //}
-    }
-    
-    var rawPixels:UnsafeMutablePointer<UInt8>?
-    var imageByteSize:Int = 0
-    
-    deinit {
-        rawPixels?.deallocate(capacity: imageByteSize)
     }
     
     private var isReading = false
@@ -68,17 +68,18 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
         let width       = Int(size.width)
         let height      = Int(size.height)
         
-        var bytesPerRow:Int = 0
-        if let rawPixels = destination.read(bytes: &rawPixels, length: &imageByteSize, bytesPerRow: &bytesPerRow) {
-
-            print("readLines width,height \(width,height)")
+        if let (buffer,bytesPerRow,imageSize) = destination.read() {
+            
+            let rawPixels = buffer.contents().bindMemory(to: UInt8.self, capacity: imageSize)
+            
+            print(" readLines width,height \(width,height)")
             
             let hough = HoughSpace(image: rawPixels,
                                    bytesPerRow: bytesPerRow,
                                    width: width,
                                    height: height)
             
-            let lines = hough.getLines(threshold: 50)
+            let lines = hough.getLines(threshold: 20)
             
             if lines.count > 0 {
                 for l in linesObserverList {
@@ -86,10 +87,7 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
                 }
             }
             
-            rawPixels.deallocate(capacity: imageByteSize)
         }
-        rawPixels = nil
-
         isReading = false
     }
 
