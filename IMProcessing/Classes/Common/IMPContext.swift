@@ -264,8 +264,8 @@ open class IMPContext {
         }
         
         get {
-            return 1
-            //return IMPContext.sharedContainer.currentMaximumTextureSize
+            //return 1
+            return IMPContext.sharedContainer.currentMaximumTextureSize
         }
     }
     
