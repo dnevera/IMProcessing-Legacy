@@ -90,8 +90,7 @@ open class IMPContext {
         return try device.makeLibrary(source: source, options: options)
     }
     
-    fileprivate let semaphore = DispatchSemaphore(value: 1)
-    fileprivate let semaphoreOpertion = DispatchSemaphore(value: 1)
+    fileprivate let semaphore = DispatchSemaphore(value: 3)
     
     open func wait() {
         semaphore.wait()
@@ -175,7 +174,7 @@ open class IMPContext {
             #if DEBUG
                 this.commandQueue?.insertDebugCaptureBoundary()
             #endif
-            //self.semaphoreOpertion.wait()
+
             if let commandBuffer = this.commandBuffer {
                 
                 action(commandBuffer)
@@ -190,7 +189,7 @@ open class IMPContext {
             else {
                 fail?()
             }
-            //self.semaphoreOpertion.signal()
+            
             #if DEBUG
                 this.commandQueue?.insertDebugCaptureBoundary()
             #endif
@@ -201,12 +200,10 @@ open class IMPContext {
     public final func runOperation(_ sync:OperationType = .sync, _ execute:@escaping () -> ()) {
         if sync == .sync {
             if (DispatchQueue.getSpecific(key:dispatchQueueKey) == queueKey) {
-                print("DispatchQueue.getSpecific = \(queueKey)")
                 execute()
             }
             else {
                 dispatchQueue.sync{
-                    print("dispatchQueue.sync = \(queueKey)")
                     execute()
                 }
             }
@@ -221,27 +218,24 @@ open class IMPContext {
     public func makeCopy(texture:MTLTexture) -> MTLTexture? {
         var newTexture:MTLTexture? = nil
         
-        execute(.sync, wait:true) { [unowned self] (commandBuffer) in
+        execute { [unowned self] (commandBuffer) in
             
-            let t = self.device.make2DTexture(size: texture.cgsize, pixelFormat: texture.pixelFormat)
-                
-                let blit = commandBuffer.makeBlitCommandEncoder()
-                
-                blit.copy(
-                    from: texture,
-                    sourceSlice: 0,
-                    sourceLevel: 0,
-                    sourceOrigin: MTLOrigin(x:0,y:0,z:0),
-                    sourceSize: texture.size,
-                    to: t,
-                    destinationSlice: 0,
-                    destinationLevel: 0,
-                    destinationOrigin: MTLOrigin(x:0,y:0,z:0))
-                
-                blit.endEncoding()
-                
-            newTexture = t
+            newTexture = self.device.make2DTexture(size: texture.cgsize, pixelFormat: texture.pixelFormat)
             
+            let blit = commandBuffer.makeBlitCommandEncoder()
+            
+            blit.copy(
+                from: texture,
+                sourceSlice: 0,
+                sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                sourceSize: texture.size,
+                to: newTexture!,
+                destinationSlice: 0,
+                destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+            
+            blit.endEncoding()
         }
         
         return newTexture
@@ -327,20 +321,34 @@ open class IMPContext {
     fileprivate static var sharedContainer = sharedContainerType()
 }
 
-
 public extension IMPContext {
+    
     public func makeBuffer<T>(from value:T, options: MTLResourceOptions = []) -> MTLBuffer {
         var value = value
         return device.makeBuffer(bytes: &value, length: MemoryLayout.size(ofValue: value), options: options)
+    }
+    
+    public func make2DTexture(size: MTLSize,
+                              pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
+                              mode:IMPImageStorageMode = .shared) -> MTLTexture {
+        return device.make2DTexture(size: size, pixelFormat: pixelFormat, mode: mode)
+    }
+    
+    public func make2DTexture(size: NSSize,
+                              pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
+                              mode:IMPImageStorageMode = .shared) -> MTLTexture {
+        return device.make2DTexture(size: size, pixelFormat: pixelFormat, mode: mode)
+    }
+
+    public func make2DTexture(width:Int, height:Int,
+                              pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
+                              mode:IMPImageStorageMode = .shared) -> MTLTexture {
+        return device.make2DTexture(width:width, height:height, pixelFormat: pixelFormat, mode: mode)
     }
 }
 
 infix operator <-: AdditionPrecedence
 
-public enum InvalidAssignment:Error{
-    case length
-    case type
-}
 
 func fatalAssignment<T>(_ left: MTLBuffer, _ right: T) {
     fatalError("MTLBuffer: invalid buffer assighment size: \(left.length) from \(MemoryLayout<T>.size)")

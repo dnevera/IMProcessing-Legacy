@@ -29,8 +29,6 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     public var adjustment:IMPAdjustment!{
         didSet{
-            //adjustmentBuffer = adjustmentBuffer ?? context.device.makeBuffer(length: MemoryLayout.size(ofValue: adjustment), options: [])
-            //memcpy(adjustmentBuffer.contents(), &adjustment, adjustmentBuffer.length)
             adjustmentBuffer <- adjustment
             update()
         }
@@ -65,7 +63,6 @@ public class IMPGaussianBlurFilter: IMPFilter {
         super.configure()
         
         extendName(suffix: "GaussianBlur")
-        //adjustment = IMPGaussianBlurFilter.defaultAdjustment
         radius = 0
         
         func fail(_ error:RegisteringError) {
@@ -177,11 +174,11 @@ public class IMPGaussianBlurFilter: IMPFilter {
     }()
     
     
-    lazy var downscaleShader:IMPShader = IMPShader(context: self.context)
+    lazy var downscaleShader:IMPShader = IMPShader(context: self.context, name:"Blur Downscale Stage #1")
     
     lazy var upscaleShader:IMPShader   = {
         let s = IMPShader(context: self.context,
-                          fragmentName: "fragment_blendSource")
+                          fragmentName: "fragment_blendSource", name:"Blur Upscale Stage #4")
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, at: 0)
             commandEncoder.setFragmentTexture((self.source?.texture)!, at:1)
@@ -235,7 +232,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     lazy var horizontalShader:IMPShader = {
         let s = IMPShader(context: self.context,
-                          fragmentName: "fragment_gaussianSampledBlur")
+                          fragmentName: "fragment_gaussianSampledBlur", name:"Blur Horizontal Stage #2")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             
@@ -250,7 +247,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
     lazy var verticalShader:IMPShader = {
         
         let s = IMPShader(context: self.context,
-                          fragmentName: "fragment_gaussianSampledBlur")
+                          fragmentName: "fragment_gaussianSampledBlur", name:"Blur Vertical Stage #3")
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
 

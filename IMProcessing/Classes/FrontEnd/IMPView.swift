@@ -106,7 +106,7 @@ public class IMPView: MTKView {
     
     var frameCounter = 0
     
-    lazy var frameImage:IMPImage = IMPImage(context: self.context)
+    lazy var frameImage:IMPImageProvider = IMPImage(context: self.context)
     
     class ProcessingOperation: Operation {
         
@@ -126,10 +126,18 @@ public class IMPView: MTKView {
             
             view.context.runOperation(.async) {
                 
-                filter.apply(view.frameImage, with: self.size)
+                filter.destinationSize = self.size
+                view.frameImage = filter.destination
                 
-                view.needProcessing = false
-                view.setNeedsDisplay()
+                if view.frameImage.texture != nil {
+                    
+                    //NSLog("   !!!!!  new frame = \(view.frameImage.texture)")
+                    
+                    //filter.apply(view.frameImage, with: self.size)
+                    
+                    view.needProcessing = false
+                    view.setNeedsDisplay()
+                }
             }
         }
     }

@@ -101,33 +101,33 @@ public class TestFilter: IMPFilter {
         add(filter: blurFilter)
 //        add(filter: ciBlurFilter)
         
-        var t1 = Date()
-        var t2 = Date()
-        
-        addObserver(newSource: { (source) in
-            self.harrisCornerDetector.context.runOperation(.async) {
-                t1 = Date()
-                self.harrisCornerDetector.source = source
-            }
-            self.houghLineDetector.context.runOperation(.async) {
-                t2 = Date()
-                self.houghLineDetector.source = source
-            }
-        })
-        
-        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
-            self.context.runOperation(.async) {
-                self.cornersHandler?(corners,size)
-                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
-            }
-        }
-
-        houghLineDetector.addObserver { (lines, size) in
-            self.context.runOperation(.async) {
-                self.linesHandler?(lines,size)
-                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-            }
-        }
+//        var t1 = Date()
+//        var t2 = Date()
+//        
+//        addObserver(newSource: { (source) in
+//            self.harrisCornerDetector.context.runOperation(.async) {
+//                t1 = Date()
+//                self.harrisCornerDetector.source = source
+//            }
+//            self.houghLineDetector.context.runOperation(.async) {
+//                t2 = Date()
+//                self.houghLineDetector.source = source
+//            }
+//        })
+//
+//        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+//            self.context.runOperation(.async) {
+//                self.cornersHandler?(corners,size)
+//                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
+//            }
+//        }
+//
+//        houghLineDetector.addObserver { (lines, size) in
+//            self.context.runOperation(.async) {
+//                self.linesHandler?(lines,size)
+//                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
+//            }
+//        }
     }
     
     lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!

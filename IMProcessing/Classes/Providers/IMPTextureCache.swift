@@ -12,7 +12,8 @@ import Metal
 typealias IMPTextureQueue = IMPDequeue<MTLTexture>
 
 public class IMPTextureCache: IMPContextProvider {
-    var cache = [Int64:IMPTextureQueue]()
+    
+    private var cache = [Int64:IMPTextureQueue]()
     
     public var context:IMPContext
     
@@ -73,6 +74,23 @@ public class IMPTextureCache: IMPContextProvider {
     
     func hashFor(texture: MTLTexture) -> Int64 {
         return hashFor(size: texture.size, pixelFormat: texture.pixelFormat)
+    }
+    
+    func flush() {
+        print(" flush texture cache ... ")
+        for var (k,q) in cache {
+            var t = q.dequeue()
+            print(" flush texture cache ... [\(k,t?.size)]")
+            while (t != nil) {
+                t?.setPurgeableState(.empty)
+                t = q.dequeue()
+            }
+        }
+        cache.removeAll()
+    }
+    
+    deinit {
+        flush()
     }
     
 }
