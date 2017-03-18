@@ -104,7 +104,7 @@ public class TestFilter: IMPFilter {
         var t1 = Date()
         var t2 = Date()
         
-        addObserver(newSource: { (source) in
+        addObserver(destinationUpdated: { (source) in
             self.harrisCornerDetector.context.runOperation(.async) {
                 t1 = Date()
                 self.harrisCornerDetector.source = source

@@ -357,9 +357,22 @@ public extension IMPContext {
     
     public func makeBuffer<T>(from value:T, options: MTLResourceOptions = []) -> MTLBuffer {
         var value = value
-        return device.makeBuffer(bytes: &value, length: MemoryLayout.size(ofValue: value), options: options)
+        var length = MemoryLayout.size(ofValue: value)
+        if value is Array<Any> {
+            if let v = value as? Array<Any> {
+                length *= v.count
+            }
+        }
+        return device.makeBuffer(bytes: &value, length: length, options: options)
     }
-    
+
+//    public func makeBuffer<T:Array>(from value:T, options: MTLResourceOptions = []) -> MTLBuffer {
+//        var value = value
+//        //return device.makeBuffer(bytes: &value, length: MemoryLayout<T.Iterator.Element>.size * Int(value.count.toIntMax()), options: options)
+//        let length = MemoryLayout.size(ofValue: value) * Int(value.count.toIntMax())
+//        return device.makeBuffer(bytes: &value, length: length, options: options)
+//    }
+
     public func make2DTexture(size: MTLSize,
                               pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
                               mode:IMPImageStorageMode = .shared) -> MTLTexture {
@@ -389,5 +402,12 @@ func fatalAssignment<T>(_ left: MTLBuffer, _ right: T) {
 public func <-<T> (left: MTLBuffer, right: T) {
     guard left.length == MemoryLayout<T>.size else { fatalAssignment(left, right); return }
     var value = right
+    memcpy(left.contents(), &value, left.length)
+}
+
+public func <-<T:Collection> (left: MTLBuffer, right: T) {
+    var value = right
+    let size = MemoryLayout.size(ofValue: value) * Int(value.count.toIntMax())
+    guard left.length == size else { fatalAssignment(left, right); return }
     memcpy(left.contents(), &value, left.length)
 }

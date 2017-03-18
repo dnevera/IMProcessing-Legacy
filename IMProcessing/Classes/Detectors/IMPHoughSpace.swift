@@ -7,16 +7,14 @@
 //
 
 import Foundation
+import Metal
 
-import Foundation
-
-public class HoughSpace {
+public class IMPHoughSpace {
     
     
     public let imageWidth:Int
     public let imageHeight:Int
     public let bytesPerRow:Int
-    public let image:UnsafeMutablePointer<UInt8>
     
     public let rhoStep:Float
     public let thetaStep:Float
@@ -33,7 +31,7 @@ public class HoughSpace {
                 maxTheta:Float = M_PI.float ) {
         
         self.bytesPerRow = bytesPerRow
-        self.image = image
+        //self.image = image
         
         imageWidth = width
         imageHeight = height
@@ -43,14 +41,110 @@ public class HoughSpace {
         self.minTheta = minTheta
         self.maxTheta = maxTheta
         
-        transform(rho: rhoStep, theta: thetaStep, min_theta: minTheta, max_theta: maxTheta)
+        transform(image: image, rho: rhoStep, theta: thetaStep, min_theta: minTheta, max_theta: maxTheta)
+    }
+
+    public init?(image:IMPImageProvider,
+                rhoStep:Float = 1,
+                thetaStep:Float = M_PI.float/180,
+                minTheta:Float = 0,
+                maxTheta:Float = M_PI.float ) {
+        
+        if let texture = image.texture?.pixelFormat != .rgba8Uint ?
+            image.texture?.makeTextureView(pixelFormat: .rgba8Uint) :
+            image.texture
+        {
+            imageWidth       = Int(texture.size.width)
+            imageHeight      = Int(texture.size.height)
+            
+            self.bytesPerRow   = imageWidth * 4
+        }
+        else {
+            return nil
+        }
+        
+        self.rhoStep = rhoStep
+        self.thetaStep = thetaStep
+        self.minTheta = minTheta
+        self.maxTheta = maxTheta
+
+        updateSettings()
+        
+        let context = image.context
+        var buffers = [MTLBuffer?]()
+        
+        //let accumBuffer     = context.device.makeBuffer(bytes: _accum, length: MemoryLayout<Int>.size * _accum.count, options: [.storageModeShared]) //context.makeBuffer(from: _accum)
+        let accumBuffer     = context.device.makeBuffer(bytes: _accum, length: MemoryLayout<Int>.size * _accum.count, options: .storageModeManaged)
+        let accumSizeBuffer = context.makeBuffer(from: _accum.count)
+        let numrhoBuffer    = context.makeBuffer(from: numrho)
+        let numangleBuffer  = context.makeBuffer(from: numangle)
+        let rhoStepBuffer   = context.makeBuffer(from: rhoStep)
+        let thetaStepBuffer = context.makeBuffer(from: thetaStep)
+        let minThetaBuffer  = context.makeBuffer(from: minTheta)
+        let regionInBuffer  = context.makeBuffer(from: IMPRegion())
+     
+        buffers.append(accumBuffer)
+        buffers.append(accumSizeBuffer)
+        buffers.append(numrhoBuffer)
+        buffers.append(numangleBuffer)
+        buffers.append(rhoStepBuffer)
+        buffers.append(thetaStepBuffer)
+        buffers.append(minThetaBuffer)
+        buffers.append(regionInBuffer)
+        
+        let bufferOffsets = [Int](repeating: 0, count: buffers.count)
+
+        let houghTransformKernel:IMPFunction = IMPFunction(context: context, kernelName: "kernel_houghTransformAtomic")
+
+        houghTransformKernel.optionsHandler = { (function:IMPFunction, command:MTLComputeCommandEncoder, source:MTLTexture?, destination:MTLTexture?) -> Void in
+            //command.setBuffers(buffers, offsets: bufferOffsets, with: NSRange(location: 0,length: buffers.count))
+            command.setBuffer(accumBuffer,     offset: 0, at: 0)
+            command.setBuffer(accumSizeBuffer, offset: 0, at: 1)
+            command.setBuffer(numrhoBuffer,    offset: 0, at: 2)
+            command.setBuffer(numangleBuffer,  offset: 0, at: 3)
+            command.setBuffer(rhoStepBuffer,   offset: 0, at: 4)
+            command.setBuffer(thetaStepBuffer, offset: 0, at: 5)
+            command.setBuffer(minThetaBuffer,  offset: 0, at: 6)
+            command.setBuffer(regionInBuffer,  offset: 0, at: 7)
+            print("  -------  1")
+        }
+        
+        let filter = IMPFilter(context: context)
+
+        filter.add(function: houghTransformKernel)
+        filter.source = image
+
+        print("  -------  2")
+
+        let dest = filter.destination
+        
+        //filter.addObserver(destinationUpdated:{ (destination) in
+        filter.context.execute(action: { (commandBuffer) in
+            let blit = commandBuffer.makeBlitCommandEncoder()
+            blit.synchronize(resource: accumBuffer)
+            blit.endEncoding()
+            print("  -------  3")
+        })
+
+        print("  -------  4")
+
+        memcpy(&_accum, accumBuffer.contents(), _accum.count * MemoryLayout<Int>.size)
+        
+        print(" accum = \(self._accum[0], self._accum[1])")
+        //})
+        //filter.process()
+    }
+    
+    private func updateSettings() {
+        numangle = round((self.maxTheta - self.minTheta) / self.thetaStep).int
+        _accum = [Int](repeating:0, count:(numangle+2) * (numrho+2))
     }
     
     //
     // https://github.com/opencv/opencv/blob/master/modules/imgproc/src/hough.cpp
     //
     
-    var _accum = [Int]()
+    private var _accum = [Int]()
     
     var numangle:Int = 0 {
         didSet{
@@ -67,16 +161,19 @@ public class HoughSpace {
         }
     }
     
-    lazy var numrho:Int   = round(((self.imageWidth.float + self.imageHeight.float) * 2 + 1) / self.rhoStep).int
-    lazy var _tabSin:[Float] = [Float](repeating:0, count:self.numangle)
-    lazy var _tabCos:[Float] = [Float](repeating:0, count:self.numangle)
-    
-    public func transform(rho:Float, theta:Float, min_theta:Float, max_theta:Float) {
+    private lazy var numrho:Int   = round(((self.imageWidth.float + self.imageHeight.float) * 2 + 1) / self.rhoStep).int
+    private lazy var _tabSin:[Float] = [Float](repeating:0, count:self.numangle)
+    private lazy var _tabCos:[Float] = [Float](repeating:0, count:self.numangle)
+    //private let image:UnsafeMutablePointer<UInt8>
+
+    private func transform(image:UnsafeMutablePointer<UInt8>, rho:Float, theta:Float, min_theta:Float, max_theta:Float) {
         
         // stage 1. fill accumulator
         
-        numangle = round((max_theta - min_theta) / theta).int
-        _accum = [Int](repeating:0, count:(numangle+2) * (numrho+2))
+        //numangle = round((max_theta - min_theta) / theta).int
+        //_accum = [Int](repeating:0, count:(numangle+2) * (numrho+2))
+        
+        updateSettings()
         
         for i in stride(from: 0, to: imageHeight, by: 1){
             for j in stride(from: 0, to: imageWidth, by: 1){

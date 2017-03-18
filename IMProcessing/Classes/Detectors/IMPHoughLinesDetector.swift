@@ -18,7 +18,23 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
         didSet{
             //self.readLines(self.destination)
             //process()
-            readLines(destination)
+            //readLines(destination)
+            
+            let hough = IMPHoughSpace(image: self.destination)
+            
+            guard let size = destination.size else {
+                return
+            }
+            
+            if let lines = hough?.getLines(threshold: 20) {
+                print("   size = \(size)")
+                print(lines)
+                if lines.count > 0 {
+                    for l in linesObserverList {
+                        l(lines, size)
+                    }
+                }
+            }
         }
     }
     
@@ -37,6 +53,7 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
          //   print("houghTransformKernel....")
         //}
     }
+    
     
     private var isReading = false
     
@@ -74,7 +91,7 @@ public class IMPHoughLinesDetector: IMPCannyEdgeDetector {
             
             print(" readLines width,height \(width,height)")
             
-            let hough = HoughSpace(image: rawPixels,
+            let hough = IMPHoughSpace(image: rawPixels,
                                    bytesPerRow: bytesPerRow,
                                    width: width,
                                    height: height)

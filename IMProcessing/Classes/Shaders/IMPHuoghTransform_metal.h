@@ -32,7 +32,8 @@ typedef struct {
 
 kernel void kernel_houghTransformAtomic(
                                         texture2d<float, access::sample>   inTexture   [[texture(0)]],
-                                        device   atomic_uint               *accum      [[ buffer(0)]],
+                                        texture2d<float, access::sample>   outTexture  [[texture(1)]],
+                                        device   atomic_int               *accum       [[ buffer(0)]],
                                         constant uint                      &accumsize  [[ buffer(1)]],
                                         constant uint                      &numrho     [[ buffer(2)]],
                                         constant uint                      &numangle   [[ buffer(3)]],
@@ -55,13 +56,15 @@ kernel void kernel_houghTransformAtomic(
             float r = round( float(gid.x) * cos(angle) * irho + float(gid.y) * sin(angle) * irho);
             r += (numrho - 1) / 2;
             
-            uint index = uint((n+1) * (numrho+2) + r+1);
+            int index = int((n+1) * (numrho+2) + r+1);
             
-            device atomic_uint *a = (accum + index);
+            device atomic_int *a = &accum[index];
             
             atomic_fetch_add_explicit(a, 1, memory_order_relaxed);
         }
-    }    
+    }
+//    device atomic_int *a = &accum[1];
+//    atomic_fetch_add_explicit(a, 1, memory_order_relaxed);
 }
 
 
