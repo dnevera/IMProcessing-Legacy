@@ -89,18 +89,15 @@ public class IMPCoreImageMTLKernel: IMPCIFilter{
     override public func textureProcessor(_ commandBuffer: MTLCommandBuffer,
                                    _ threadgroups: MTLSize,
                                    _ threadsPerThreadgroup: MTLSize,
-                                   _ source: IMPImageProvider,
-                                   _ destination: IMPImageProvider) {
+                                   _ sourceTexture: MTLTexture,
+                                   _ destinationTexture: MTLTexture) {
         if let kernel = function{
-            if let sourceTexture      = source.texture,
-                let destinationTexture = destination.texture{
-                IMPCoreImageMTLKernel.imageProcessor(kernel: kernel,
-                                                     commandBuffer: commandBuffer,
-                                                     threadgroups: threadgroups,
-                                                     threadsPerThreadgroup: threadsPerThreadgroup,
-                                                     input: sourceTexture,
-                                                     output: destinationTexture)
-            }
+            IMPCoreImageMTLKernel.imageProcessor(kernel: kernel,
+                                                 commandBuffer: commandBuffer,
+                                                 threadgroups: threadgroups,
+                                                 threadsPerThreadgroup: threadsPerThreadgroup,
+                                                 input: sourceTexture,
+                                                 output: destinationTexture)
         }
     }
     

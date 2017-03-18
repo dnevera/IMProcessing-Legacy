@@ -241,6 +241,38 @@ open class IMPContext {
         return newTexture
     }
     
+    public func makeCopy(texture:MTLTexture, to:IMPContext) -> MTLTexture? {
+        
+        if to === self {
+            return makeCopy(texture: texture)
+        }
+        
+        var newTexture:MTLTexture? = nil
+        
+        to.execute { [unowned to] (commandBuffer) in
+            
+            newTexture = to.device.make2DTexture(size: texture.size, pixelFormat: texture.pixelFormat)
+            
+            let blit = commandBuffer.makeBlitCommandEncoder()
+            
+            blit.copy(
+                from: texture,
+                sourceSlice: 0,
+                sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                sourceSize: texture.size,
+                to: newTexture!,
+                destinationSlice: 0,
+                destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+            
+            blit.endEncoding()
+        }
+        
+        return newTexture
+    }
+
+    
     public var textureCache:IMPTextureCache {
         return _textureCache
     }

@@ -65,8 +65,7 @@ public class IMPHarrisCornerDetector: IMPResampler{
     
     public override var source: IMPImageProvider? {
         didSet{
-            readCorners(destination)
-            //process()
+            self.process()
         }
     }
     
@@ -86,9 +85,11 @@ public class IMPHarrisCornerDetector: IMPResampler{
         add(filter: harrisCorner)
         add(filter: nonMaximumSuppression)
         
-//        addObserver(destinationUpdated:{ (destination) in
-//            self.readCorners(destination)
-//        })
+        addObserver(destinationUpdated:{ (destination) in
+            self.context.runOperation(.async) {
+                self.readCorners(destination)
+            }
+        })
     }
     
     private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context)
@@ -114,8 +115,6 @@ public class IMPHarrisCornerDetector: IMPResampler{
 
             var corners = [float2]()
         
-            print(" readCorners:  \(width, height) imageSize = \(imageSize) bytesPerRow = \(bytesPerRow)")
-
             for x in stride(from: 0, to: width, by: 1){
                 for y in stride(from: 0, to: height, by: 1){
                     

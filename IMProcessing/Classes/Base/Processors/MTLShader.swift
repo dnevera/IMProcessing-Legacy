@@ -64,14 +64,11 @@ public class IMPCoreImageMTLShader: IMPCIFilter{
     override public func textureProcessor(_ commandBuffer: MTLCommandBuffer,
                                    _ threadgroups: MTLSize,
                                    _ threadsPerThreadgroup: MTLSize,
-                                   _ source: IMPImageProvider,
-                                   _ destination: IMPImageProvider) {
+                                   _ sourceTexture: MTLTexture,
+                                   _ destinationTexture: MTLTexture) {
                 
-        if let sourceTexture = source.texture,
-            let shader   = self.shader,
-            let vertices = shader.vertices,
-            let destinationTexture = destination.texture
-            {
+        if let shader   = self.shader,
+            let vertices = shader.vertices {
             
             let renderEncoder = shader.commandEncoder(from: commandBuffer, width: destinationTexture)
             

@@ -352,10 +352,8 @@ public extension IMPImageProvider {
 
 public extension IMPImageProvider {
     
-    public func read() ->  (buffer:MTLBuffer,bytesPerRow:Int,imageBytes:Int)? {
+    public func read(commandBuffer:MTLCommandBuffer?=nil) ->  (buffer:MTLBuffer,bytesPerRow:Int,imageBytes:Int)? {
         
-        //context.wait()
-
         if let size = self.size,
             let texture = texture?.pixelFormat != .rgba8Uint ?
                 texture?.makeTextureView(pixelFormat: .rgba8Uint) :
@@ -370,12 +368,8 @@ public extension IMPImageProvider {
             
             let buffer = self.context.device.makeBuffer(length: imageBytes, options: [])
 
-            context.execute(wait: true, complete: {
-                //self.context.resume()
-            }, fail: {
-                fatalError("IMPImageProvider: could not read bytes...")
-            }) { (commandBuffer) in
-                
+            
+            func readblit(commandBuffer:MTLCommandBuffer){
                 let blit = commandBuffer.makeBlitCommandEncoder()
                 
                 blit.copy(from:          texture,
@@ -389,6 +383,31 @@ public extension IMPImageProvider {
                           destinationBytesPerImage: imageBytes)
                 
                 blit.endEncoding()
+            }
+            
+            
+            if let command = commandBuffer {
+                readblit(commandBuffer: command)
+            }
+            else {
+                context.execute(wait: true) { (commandBuffer) in
+                    
+                    readblit(commandBuffer: commandBuffer)
+                    
+                    //                let blit = commandBuffer.makeBlitCommandEncoder()
+                    //
+                    //                blit.copy(from:          texture,
+                    //                          sourceSlice:  0,
+                    //                          sourceLevel:  0,
+                    //                          sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                    //                          sourceSize:   texture.size,
+                    //                          to:           buffer,
+                    //                          destinationOffset: 0,
+                    //                          destinationBytesPerRow: bytesPerRow,
+                    //                          destinationBytesPerImage: imageBytes)
+                    //                
+                    //                blit.endEncoding()
+                }
             }
             return (buffer,bytesPerRow,imageBytes)
         }

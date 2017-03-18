@@ -32,32 +32,33 @@ class IMPCIFilterConstructor: NSObject, CIFilterConstructor {
 
 public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
-   public typealias CommandProcessor = ((
+    public typealias CommandProcessor = ((
         _ commandBuffer:MTLCommandBuffer,
         _ threadgroups:MTLSize,
         _ threadsPerThreadgroup:MTLSize,
-        _ source:IMPImageProvider,
-        _ destinationTexture:IMPImageProvider)->Void)
+        _ sourceTexture:MTLTexture,
+        _ destinationTexture:MTLTexture
+        )->Void)
     
-    var context:IMPContext? = nil
-    
-    var source:IMPImageProvider? {
-        didSet{
-            print("\(name) source udpate = \(source?.size)")
+    public var context:IMPContext {
+        set {
+            _context = newValue
+        }
+        get {
+            return _context
         }
     }
-    var destination:IMPImageProvider?
     
-    public var destinationSize: NSSize? = nil {
-        didSet{
-            print(" :::::: \(name) destinationSize = \(destinationSize)")
-        }
-    }
-
-    var inputImage: CIImage? {
+    private lazy var _context:IMPContext = IMPContext()
+    
+    public var source:IMPImageProvider?
+    fileprivate lazy var destination:IMPImageProvider = IMPImage(context: self.context)
+    
+    public var destinationSize: NSSize? = nil
+    public var inputImage: CIImage? {
         set{
             if source == nil {
-                if let context = context, let image = newValue {
+                if let image = newValue {
                     source = IMPImage(context: context)
                     source?.image = image
                 }
@@ -100,12 +101,12 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     var kernelIndex:Int? = 0
  
     public func textureProcessor(
-    _ commandBuffer:MTLCommandBuffer,
-    _ threadgroups:MTLSize,
-    _ threadsPerThreadgroup:MTLSize,
-    _ source:IMPImageProvider,
-    _ destination:IMPImageProvider) -> Void {
-        
+        _ commandBuffer:MTLCommandBuffer,
+        _ threadgroups:MTLSize,
+        _ threadsPerThreadgroup:MTLSize,
+        _ source:MTLTexture,
+        _ destination:MTLTexture
+        ) -> Void {
     }
 }
 
@@ -129,8 +130,7 @@ extension IMPCIFilter {
     public func flush() {
         source?.image = nil
         source = nil
-        destination?.image = nil
-        destination = nil
+        destination.image = nil
         destinationSize = nil
     }
     
@@ -145,7 +145,7 @@ extension IMPCIFilter {
     }
     
     func processCIImage(command:@escaping CommandProcessor) -> CIImage? {
-        return process(command: command)?.image
+        return process(command: command).image
     }
     
 
@@ -156,62 +156,23 @@ extension IMPCIFilter {
         return nil
     }
     
-    func process(command:@escaping CommandProcessor) -> IMPImageProvider? {
-
-        guard let context = self.context else { return nil }
+    func process(command:@escaping CommandProcessor) -> IMPImageProvider {
+                
+        guard let size =  destinationSize ?? source?.size else { return IMPImage(context: context) }
+        guard let format =  source?.texture?.pixelFormat else { return IMPImage(context: context) }
         
-        destination = destination ?? IMPImage(context: context)
-
-        process(to: destination!, command: command)
+        destination.texture = destination.texture?.reuse(size: size) ?? context.make2DTexture(size: size, pixelFormat: format)
+        
+        if let texture = destination.texture {
+            process(to: texture, command: command)
+        }
         
         return destination
     }
     
-    
-    func process(to destinationImage: IMPImageProvider, commandBuffer buffer: MTLCommandBuffer? = nil, command: CommandProcessor? = nil){
-               
-        guard let size =  destinationSize ?? source?.size else { return }
-        
-        guard let context = self.context else { return  }
-        
-        var destinationImage = destinationImage
-        
-        if let texture = destinationImage.texture {
-            destinationImage.texture = texture.reuse(size: size)
-        }
-        else{
-            destinationImage.texture = context.device.make2DTexture(size: size,
-                                                                    pixelFormat: (source?.texture?.pixelFormat)!)
-        }
-        
-        let threadgroups = MTLSizeMake(
-            (Int(size.width) + self.threadsPerThreadgroup.width) / self.threadsPerThreadgroup.width ,
-            (Int(size.height) + self.threadsPerThreadgroup.height) / self.threadsPerThreadgroup.height,
-            1);
-        
-        if let commandBuffer = buffer {
-            if let command = command{
-                command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
-            }
-            else {
-                self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
-            }
-        }
-        else {
-            context.execute { (commandBuffer) in
-                if let command = command{
-                    command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
-                }
-                else {
-                    self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destinationImage)
-                }
-            }
-        }
-    }
-    
     func process(to destinationTexture: MTLTexture, commandBuffer buffer: MTLCommandBuffer? = nil, command: CommandProcessor? = nil){
-        
-        guard let context = self.context else { return  }
+                
+        guard let sourceTexture = source?.texture else { return }
         
         let size =  destinationTexture.cgsize
 
@@ -220,28 +181,23 @@ extension IMPCIFilter {
             (Int(size.height) + self.threadsPerThreadgroup.height) / self.threadsPerThreadgroup.height,
             1);
         
-        destination = destination ?? IMPImage(context: context)
-        
-        destination?.texture = destinationTexture
-        
         if let commandBuffer = buffer {
             if let command = command{
-                command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destination!)
+                command(commandBuffer, threadgroups, self.threadsPerThreadgroup, sourceTexture, destinationTexture)
             }
             else {
-                self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, destination!)
+                self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, sourceTexture, destinationTexture)
             }
         }
         else {
             context.execute { (commandBuffer) in
                 if let command = command{
-                    command(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, self.destination!)
+                    command(commandBuffer, threadgroups, self.threadsPerThreadgroup, sourceTexture, destinationTexture)
                 }
                 else {
-                    self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, self.source!, self.destination!)
+                    self.processor?(commandBuffer, threadgroups, self.threadsPerThreadgroup, sourceTexture, destinationTexture)
                 }
             }
         }
     }
-
 }

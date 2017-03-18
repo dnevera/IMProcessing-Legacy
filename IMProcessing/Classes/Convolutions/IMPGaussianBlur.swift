@@ -54,9 +54,9 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
     }
     
-    public override var prefersRendering: Bool {
-        return true
-    }
+//    public override var prefersRendering: Bool {
+//        return false
+//    }
     
     public override func configure() {
         

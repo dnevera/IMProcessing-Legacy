@@ -25,7 +25,6 @@ public class IMPResampler: IMPFilter{
             let maxSize = self.maxSize {
             let scale = fmax(fmin(fmin(maxSize/size.width, maxSize/size.height),1),0.01)
             resampler.destinationSize = NSSize(width: size.width * scale, height: size.height * scale)
-            print("updateResampler destinationSize = \(resampler.destinationSize, scale, maxSize)")
         }
     }
     
