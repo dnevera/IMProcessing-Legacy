@@ -155,14 +155,21 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
 
             let newSize = destinationSize ?? size
             
-            context.execute{ (commandBuffer) in
-                result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: commandBuffer)
-            }
-            
-            executeDestinationObservers(destination: result)
-            
-            dirty = false
-            
+//            context.execute(.sync, complete: {
+//                
+//                self.executeDestinationObservers(destination: result)
+//                self.dirty = false
+//
+//            }, action: { (commandBuffer) in
+//                
+//                result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: commandBuffer)
+//                
+//            })
+
+            result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: nil)
+            self.executeDestinationObservers(destination: result)
+            self.dirty = false
+
             return result
         }
         
@@ -220,79 +227,95 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         
         guard let colorSpace =  source?.colorSpace else { return nil }
         
-        guard let commandBuffer = commandBuffer ?? context.commandBuffer else { return nil }
+        //guard let commandBuffer = commandBuffer ?? context.commandBuffer else { return nil }
         
-        let device = commandBuffer.device
+        //let device = commandBuffer.device
         
         var currentResult = input
         
         for c in coreImageFilterList {
             
-            if let filter = c.cifilter {
+            context.execute(.sync, complete: { 
                 
-                if filter.isKind(of: IMPCIFilter.self) {
+                if let filter = c.filter {
+                    filter.executeDestinationObservers(destination: filter._destination)
+                }
+                
+            }, fail: {
+                
+            }, action: { (commandBuffer) in
+                
+                let device = commandBuffer.device
+                
+                if let filter = c.cifilter {
                     
-                    guard let f = (filter as? IMPCIFilter) else {
-                        continue
+                    if filter.isKind(of: IMPCIFilter.self) {
+                        
+                        guard let f = (filter as? IMPCIFilter) else {
+                            return
+                        }
+                        
+                        let dsize = f.destinationSize ?? currentResult.cgsize
+                        
+                        let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
+                        
+                        if f.source == nil {
+                            f.source = IMPImage(context: self.context)
+                        }
+                        
+                        f.source?.texture = currentResult
+                        f.process(to: tmp, commandBuffer: commandBuffer)
+                        
+                        currentResult = tmp
+                    }
+                    else {
+                        let dsize = currentResult.cgsize
+                        let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
+                        
+                        filter.setValue(CIImage(mtlTexture: currentResult,
+                                                options:  [kCIImageColorSpace: colorSpace]),
+                                        forKey: kCIInputImageKey)
+                        
+                        guard let image = filter.outputImage else { return }
+                        
+                        self.context.coreImage?.render(image,
+                                                       to: tmp,
+                                                       commandBuffer: commandBuffer,
+                                                       bounds: image.extent,
+                                                       colorSpace: colorSpace)
+                        
+                        currentResult = tmp
+                    }
+                }
+                else if let filter = c.filter {
+                    
+                    //context.execute(complete: {
+                    //    filter.executeDestinationObservers(destination: filter._destination)
+                    //}, action: { (commandBuffer) in
+                    
+                    if filter.source == nil {
+                        filter.source = IMPImage(context: self.context)
                     }
                     
-                    let dsize = f.destinationSize ?? currentResult.cgsize
-                    
-                    let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
-                    
-                    if f.source == nil {
-                        f.source = IMPImage(context: context)
+                    filter.source?.texture = currentResult
+                    if let t = filter.apply(size: nil,
+                                            pixelFormat: pixelFormat,
+                                            commandBuffer: commandBuffer){
+                        currentResult = t
+                    }
+                    else {
+                        return
                     }
                     
-                    f.source?.texture = currentResult
-                    f.process(to: tmp, commandBuffer: commandBuffer)
-                    
-                    currentResult = tmp
+                    filter._destination.texture = currentResult
+                    //})
                 }
-                else {
-                    let dsize = currentResult.cgsize
-                    let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
-                    
-                    filter.setValue(CIImage(mtlTexture: currentResult,
-                                            options:  [kCIImageColorSpace: colorSpace]),
-                                    forKey: kCIInputImageKey)
-                    
-                    guard let image = filter.outputImage else { continue }
-                    
-                    self.context.coreImage?.render(image,
-                                                   to: tmp,
-                                                   commandBuffer: commandBuffer,
-                                                   bounds: image.extent,
-                                                   colorSpace: colorSpace)
-                    
-                    currentResult = tmp
-                }
-            }
-            else if let filter = c.filter {
-                
-                if filter.source == nil {
-                    filter.source = IMPImage(context: context)
-                }
-                
-                filter.source?.texture = currentResult
-                if let t = filter.apply(size: nil,
-                                        pixelFormat: pixelFormat,
-                                        commandBuffer: commandBuffer){
-                    currentResult = t
-                }
-                else {
-                    return nil
-                }
-                
-                filter._destination.texture = currentResult
-                filter.executeDestinationObservers(destination: filter._destination)
-            }
+            })
             
             if let comlete = c.complete {
-                comlete(IMPImage(context:context, texture: currentResult))
+                comlete(IMPImage(context:self.context, texture: currentResult))
             }
         }
-
         return currentResult
     }
     
@@ -724,10 +747,10 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     }
     
     internal func executeDestinationObservers(destination:IMPImageProvider?){
-        //(" filter \(name) \(destinationObservers)")
         if observersEnabled {
             if let d = destination {
                 for o in destinationObservers {
+                    print ("executeDestinationObservers ---->  filter \(name) \(destinationObservers)")
                     o(d)
                 }
             }

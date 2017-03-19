@@ -108,10 +108,10 @@ public class IMPGaussianBlurFilter: IMPFilter {
     lazy var adjustmentBuffer:MTLBuffer = self.context.makeBuffer(from: defaultAdjustment)
     
     func update()  {
-        context.runOperation(context.isLazy ? .async : .sync ){
+        //context.runOperation(context.isLazy ? .async : .sync ){
             self.updateWeights()
             super.dirty = true
-        }
+        //}
     }
     
     func updateWeights(){

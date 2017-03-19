@@ -184,6 +184,7 @@ open class IMPContext {
                 if !this.isLazy || wait {
                     commandBuffer.waitUntilCompleted()
                 }
+                
                 complete?()
             }
             else {

@@ -175,9 +175,9 @@ public class IMPHoughSpace {
         
         updateSettings()
         
-        for i in stride(from: 0, to: imageHeight, by: 1){
-            for j in stride(from: 0, to: imageWidth, by: 1){
-                                
+        for j in stride(from: 0, to: imageWidth, by: 1){
+            for i in stride(from: 0, to: imageHeight, by: 1){
+                
                 if image[i * bytesPerRow + j * 4] < 128 { continue }
                 
                 for n in 0..<numangle {

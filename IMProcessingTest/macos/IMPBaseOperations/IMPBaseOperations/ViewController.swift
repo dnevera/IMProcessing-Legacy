@@ -98,9 +98,11 @@ public class TestFilter: IMPFilter {
 //        add(function: kernelRed)
 //        add(function: kernelEV)
 //        add(filter: exposureFilter)
-        add(filter: blurFilter)
+//        add(filter: blurFilter)
 //        add(filter: ciBlurFilter)
-        
+
+//        add(filter: houghLineDetector)
+
         var t1 = Date()
         var t2 = Date()
         
@@ -126,6 +128,9 @@ public class TestFilter: IMPFilter {
             self.context.runOperation(.async) {
                 self.linesHandler?(lines,size)
                 print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
+                for l in lines {
+                    //print(l)
+                }
             }
         }
     }
@@ -229,7 +234,7 @@ class ViewController: NSViewController {
     
     lazy var imageView:IMPView = IMPView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
 
-    var context:IMPContext = IMPContext(lazy:true)
+    var context:IMPContext = IMPContext(lazy:false)
     var currentImage:IMPImageProvider? = nil
     
     var canvas = CanvasView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))

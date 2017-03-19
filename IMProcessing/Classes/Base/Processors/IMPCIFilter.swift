@@ -170,8 +170,8 @@ extension IMPCIFilter {
         return destination
     }
     
-    func process(to destinationTexture: MTLTexture, commandBuffer buffer: MTLCommandBuffer? = nil, command: CommandProcessor? = nil){
-                
+    func process(to destinationTexture: MTLTexture, commandBuffer buffer: MTLCommandBuffer? = nil, command: CommandProcessor? = nil){        
+        
         guard let sourceTexture = source?.texture else { return }
         
         let size =  destinationTexture.cgsize

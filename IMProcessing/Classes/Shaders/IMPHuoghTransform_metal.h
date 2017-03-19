@@ -32,16 +32,16 @@ typedef struct {
 
 kernel void kernel_houghTransformAtomic(
                                         texture2d<float, access::sample>   inTexture   [[texture(0)]],
-                                        texture2d<float, access::sample>   outTexture  [[texture(1)]],
-                                        device   atomic_int               *accum       [[ buffer(0)]],
-                                        constant uint                      &accumsize  [[ buffer(1)]],
-                                        constant uint                      &numrho     [[ buffer(2)]],
-                                        constant uint                      &numangle   [[ buffer(3)]],
-                                        constant float                     &rhoStep    [[ buffer(4)]],
-                                        constant float                     &thetaStep  [[ buffer(5)]],
-                                        constant float                     &minTheta   [[ buffer(6)]],
-                                        constant IMPRegion                 &regionIn   [[ buffer(7)]],
-                                        uint2 gid [[thread_position_in_grid]]
+                                        texture2d<float, access::write>    outTexture  [[texture(1)]],
+                                        volatile device   atomic_uint      *accum      [[ buffer(0)]],
+                                        constant uint                      &numrho     [[ buffer(1)]],
+                                        constant uint                      &numangle   [[ buffer(2)]],
+                                        constant float                     &rhoStep    [[ buffer(3)]],
+                                        constant float                     &thetaStep  [[ buffer(4)]],
+                                        constant float                     &minTheta   [[ buffer(5)]],
+                                        constant IMPRegion                 &regionIn   [[ buffer(6)]],
+                                        uint2 gid [[thread_position_in_grid]],
+                                        uint tid [[thread_index_in_threadgroup]]
                                         )
 {
     
@@ -55,16 +55,15 @@ kernel void kernel_houghTransformAtomic(
             
             float r = round( float(gid.x) * cos(angle) * irho + float(gid.y) * sin(angle) * irho);
             r += (numrho - 1) / 2;
+            angle += thetaStep;
             
             int index = int((n+1) * (numrho+2) + r+1);
             
-            device atomic_int *a = &accum[index];
-            
-            atomic_fetch_add_explicit(a, 1, memory_order_relaxed);
+            atomic_fetch_add_explicit(&accum[index], 1, memory_order_relaxed);
         }
     }
-//    device atomic_int *a = &accum[1];
-//    atomic_fetch_add_explicit(a, 1, memory_order_relaxed);
+    
+    outTexture.write(inColor,gid);
 }
 
 
