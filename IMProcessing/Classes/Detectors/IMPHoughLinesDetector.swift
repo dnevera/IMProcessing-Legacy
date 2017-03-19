@@ -25,7 +25,7 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     public override func configure() {
         
-        cannyEdge.maxSize = 200
+        cannyEdge.maxSize = 800
         cannyEdge.blurRadius = 2
         
         extendName(suffix: "HoughLinesDetector")
@@ -33,9 +33,12 @@ public class IMPHoughLinesDetector: IMPFilter {
         
         updateSettings()
         
+        var t = Date()
+        
         add(filter:cannyEdge) { (result) in
             self.cannyEdgeImage = result
             self.updateSettings()
+            t = Date()
         }
         
         add(function:houghTransformKernel)
@@ -45,9 +48,15 @@ public class IMPHoughLinesDetector: IMPFilter {
             guard let size = self.cannyEdgeImage?.size else { return }
 
             self.accum = self.accumBuffer.contents().bindMemory(to: UInt32.self, capacity: self.accumBuffer.length)
+
+            print(" ### Hough transform time = \(-t.timeIntervalSinceNow)")
             
-            let lines = self.getLines(threshold: 20)
-            
+            var t1 = Date()
+
+            let lines = self.getLines(threshold: 100)
+
+            print(" ### Hough transform line detector time = \(-t1.timeIntervalSinceNow)")
+
             if lines.count > 0 {
                 for l in self.linesObserverList {
                     l(lines, size)
@@ -148,7 +157,7 @@ public class IMPHoughLinesDetector: IMPFilter {
         
         // stage 3. sort
         _sorted_accum = _sorted_accum.sorted { return $0.1>$1.1 }
-                
+        
         
         // stage 4. store the first min(total,linesMax) lines to the output buffer
         let linesMax = min(linesMax, _sorted_accum.count)
@@ -158,15 +167,13 @@ public class IMPHoughLinesDetector: IMPFilter {
         var lines = [IMPLineSegment]()
         
         for i in 0..<linesMax {
-            
-            
+                        
             let idx = Float(_sorted_accum[i].0)
             let n = floorf(idx * scale) - 1
             let f = (n+1) * (Float(numrho)+2)
             let r = idx - f - 1
             
             let rho = (r - (Float(numrho) - 1) * 0.5) * rhoStep
-            
             
             let angle = minTheta + n * thetaStep
             
@@ -228,47 +235,47 @@ public class IMPHoughLinesDetector: IMPFilter {
     }
 
     
-    private var isReading = false
-    
-    
-    private func readLines(_ destination: IMPImageProvider) {
-        
-        guard let size = destination.size else {
-            isReading = false
-            return
-        }
-
-        guard !isReading else {
-            isReading = false
-            return
-        }
-        isReading = true
-
-        let width       = Int(size.width)
-        let height      = Int(size.height)
-        
-        if let (buffer,bytesPerRow,imageSize) = destination.read() {
-            
-            let rawPixels = buffer.contents().bindMemory(to: UInt8.self, capacity: imageSize)
-            
-            print(" readLines width,height \(width,height)")
-            
-            let hough = IMPHoughSpace(image: rawPixels,
-                                   bytesPerRow: bytesPerRow,
-                                   width: width,
-                                   height: height)
-            
-            let lines = hough.getLines(threshold: 20)
-            
-            if lines.count > 0 {
-                for l in linesObserverList {
-                    l(lines, size)
-                }
-            }
-            
-        }
-        isReading = false
-    }
+//    private var isReading = false
+//    
+//    
+//    private func readLines(_ destination: IMPImageProvider) {
+//        
+//        guard let size = destination.size else {
+//            isReading = false
+//            return
+//        }
+//
+//        guard !isReading else {
+//            isReading = false
+//            return
+//        }
+//        isReading = true
+//
+//        let width       = Int(size.width)
+//        let height      = Int(size.height)
+//        
+//        if let (buffer,bytesPerRow,imageSize) = destination.read() {
+//            
+//            let rawPixels = buffer.contents().bindMemory(to: UInt8.self, capacity: imageSize)
+//            
+//            print(" readLines width,height \(width,height)")
+//            
+//            let hough = IMPHoughSpace(image: rawPixels,
+//                                   bytesPerRow: bytesPerRow,
+//                                   width: width,
+//                                   height: height)
+//            
+//            let lines = hough.getLines(threshold: 20)
+//            
+//            if lines.count > 0 {
+//                for l in linesObserverList {
+//                    l(lines, size)
+//                }
+//            }
+//            
+//        }
+//        isReading = false
+//    }
 
     func addObserver(lines observer: @escaping LinesListObserver) {
         linesObserverList.append(observer)

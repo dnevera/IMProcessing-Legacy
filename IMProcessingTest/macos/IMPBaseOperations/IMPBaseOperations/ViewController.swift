@@ -128,9 +128,9 @@ public class TestFilter: IMPFilter {
             self.context.runOperation(.async) {
                 self.linesHandler?(lines,size)
                 print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-                for l in lines {
-                    //print(l)
-                }
+                //for l in lines {
+                //    print(l)
+                //}
             }
         }
     }
@@ -139,8 +139,8 @@ public class TestFilter: IMPFilter {
     lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
     lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
     
-    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  self.context)
-    lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  self.context)
+    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext())
+    lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
 
     lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
 

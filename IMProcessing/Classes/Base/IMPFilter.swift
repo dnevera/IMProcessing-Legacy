@@ -227,10 +227,6 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         
         guard let colorSpace =  source?.colorSpace else { return nil }
         
-        //guard let commandBuffer = commandBuffer ?? context.commandBuffer else { return nil }
-        
-        //let device = commandBuffer.device
-        
         var currentResult = input
         
         for c in coreImageFilterList {
@@ -289,10 +285,6 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                 }
                 else if let filter = c.filter {
                     
-                    //context.execute(complete: {
-                    //    filter.executeDestinationObservers(destination: filter._destination)
-                    //}, action: { (commandBuffer) in
-                    
                     if filter.source == nil {
                         filter.source = IMPImage(context: self.context)
                     }
@@ -308,7 +300,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                     }
                     
                     filter._destination.texture = currentResult
-                    //})
+
                 }
             })
             
@@ -750,7 +742,6 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         if observersEnabled {
             if let d = destination {
                 for o in destinationObservers {
-                    print ("executeDestinationObservers ---->  filter \(name) \(destinationObservers)")
                     o(d)
                 }
             }
