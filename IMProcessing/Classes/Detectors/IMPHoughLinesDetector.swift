@@ -8,6 +8,7 @@
 
 import Foundation
 import Metal
+import Darwin
 
 
 public class IMPHoughLinesDetector: IMPFilter {
@@ -16,16 +17,19 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     public override var source: IMPImageProvider? {
         didSet{
-            //self.readLines(self.destination)
             process()
         }
     }
     
     private lazy var cannyEdge:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
     
+    private var scaleFactor:CGFloat = 1
+    
     public override func configure() {
         
         cannyEdge.maxSize = 800
+        resultDownscale.maxSize = 400
+        
         cannyEdge.blurRadius = 2
         
         extendName(suffix: "HoughLinesDetector")
@@ -33,36 +37,30 @@ public class IMPHoughLinesDetector: IMPFilter {
         
         updateSettings()
         
-        var t = Date()
-        
-        add(filter:cannyEdge) { (result) in
-            self.cannyEdgeImage = result
-            self.updateSettings()
-            t = Date()
-        }
-        
-        add(function:houghTransformKernel)
-        
-        self.addObserver(destinationUpdated:{ (result) in
-            
-            guard let size = self.cannyEdgeImage?.size else { return }
-
-            self.accum = self.accumBuffer.contents().bindMemory(to: UInt32.self, capacity: self.accumBuffer.length)
-
-            print(" ### Hough transform time = \(-t.timeIntervalSinceNow)")
-            
-            var t1 = Date()
-
-            let lines = self.getLines(threshold: 100)
-
-            print(" ### Hough transform line detector time = \(-t1.timeIntervalSinceNow)")
-
+        func linesHandlerCallback(){
+            guard let size = cannyEdgeImage?.size else { return }
+            let lines = getLines()
             if lines.count > 0 {
-                for l in self.linesObserverList {
+                for l in linesObserverList {
                     l(lines, size)
                 }
             }
-        })
+        }
+
+        add(filter:cannyEdge) { (result) in
+            self.cannyEdgeImage = result
+            self.updateSettings()
+        }
+        
+        add(filter:resultDownscale)
+
+        add(function:houghTransformKernel)
+        
+        add(function:houghSpaceLocalMaximumsKernel) { (result) in
+            self.context.runOperation(.sync, { 
+                linesHandlerCallback()
+            })
+        }
     }
     
     private var cannyEdgeImage:IMPImageProvider?
@@ -88,12 +86,24 @@ public class IMPHoughLinesDetector: IMPFilter {
         }
     }
     
+    public var threshold:Int = 100
+    
     private func updateSettings() {
         numangle = UInt32(round((maxTheta - minTheta) / thetaStep))
         if let size = cannyEdgeImage?.cgsize {
+            
             numrho = UInt32(round(((size.width.float + size.height.float) * 2 + 1) / rhoStep))
+            
             accumSize = (numangle+2) * (numrho+2)
             accumBuffer = self.accumBufferGetter()
+            
+            maximumsBuffer = self.maximumsBufferGetter()
+            houghSpaceLocalMaximumsKernel.preferedDimension = MTLSizeMake(Int(numrho),Int( numangle),1)
+            
+            maximumsCountBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size,
+                                                                 options: .storageModeShared)
+            
+            scaleFactor = cannyEdge.maxSize!/resultDownscale.maxSize!
         }
     }
     
@@ -108,14 +118,27 @@ public class IMPHoughLinesDetector: IMPFilter {
         return context.device.makeBuffer(length: MemoryLayout<UInt32>.size * Int(accumSize), options: .storageModeShared)
     }
     
+    func maximumsBufferGetter() -> MTLBuffer {
+        //
+        // to echange data should be .storageModeShared!!!!
+        //
+        return context.device.makeBuffer(length: MemoryLayout<uint2>.size * Int(accumSize), options: .storageModeShared)
+    }
+
+    
     
     private lazy var accumBuffer:MTLBuffer = self.accumBufferGetter()
+    private lazy var maximumsBuffer:MTLBuffer = self.maximumsBufferGetter()
+    private lazy var maximumsCountBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
     private lazy var regionInBuffer:MTLBuffer  = self.context.makeBuffer(from: IMPRegion())
+    
+    private lazy var resultDownscale:IMPResampler = IMPResampler(context: self.context)
     
     private lazy var houghTransformKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_houghTransformAtomic")
         
         f.optionsHandler = { (function, command, input, output) in
+            
             command.setBuffer(self.accumBuffer,     offset: 0, at: 0)
             command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   at: 1)
             command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), at: 2)
@@ -128,16 +151,40 @@ public class IMPHoughLinesDetector: IMPFilter {
         return f
     }()
     
-    private var accum:UnsafeMutablePointer<UInt32>? //[UInt32] = [UInt32]()
+    private lazy var houghSpaceLocalMaximumsKernel:IMPFunction = {
+        let f = IMPFunction(context: self.context, kernelName: "kernel_houghSpaceLocalMaximums")
+        
+        f.optionsHandler = { (function, command, input, output) in
+            
+            command.setBuffer(self.accumBuffer,         offset: 0, at: 0)
+            command.setBuffer(self.maximumsBuffer,      offset: 0, at: 1)
+            command.setBuffer(self.maximumsCountBuffer, offset: 0, at: 2)
+            
+            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   at: 3)
+            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), at: 4)
+            command.setBytes(&self.threshold, length: MemoryLayout.size(ofValue: self.threshold), at: 5)
+        }
+        
+        return f
+    }()
     
-    func getLines(linesMax:Int = 50, threshold:Int = 50) -> [IMPLineSegment]  {
+    private func getGPULocalMaximums() -> [uint2] {
         
-        guard let _accum = accum else { return [] }
+        let count = Int(maximumsCountBuffer.contents().bindMemory(to: uint.self,
+                                                                       capacity: MemoryLayout<uint>.size).pointee)
         
-        guard let size = cannyEdgeImage?.size else {return []}
+        var maximums = [uint2](repeating:uint2(0), count:  count)
+        
+        memcpy(&maximums, maximumsBuffer.contents(), MemoryLayout<uint2>.size * count)
+        
+        return maximums.sorted { return $0.y>$1.y }
+    }
+    
+    private func getCPULocalMaximums() -> [uint2] {
+        let _accum = self.accumBuffer.contents().bindMemory(to: UInt32.self, capacity: self.accumBuffer.length)
         
         // stage 2. find local maximums
-        var _sorted_accum = [(Int,Int)]()
+        var _sorted_accum = [uint2]()
         
         for r in stride(from: 0, to: Int(numrho), by: 1) {
             for n in stride(from: 0, to: Int(numangle), by: 1){
@@ -150,14 +197,22 @@ public class IMPHoughLinesDetector: IMPFilter {
                 if( bins > threshold &&
                     bins > Int(_accum[base - 1]) && bins >= Int(_accum[base + 1]) &&
                     bins > Int(_accum[base - Int(numrho) - 2]) && bins >= Int(_accum[base + Int(numrho) + 2]) ){
+                    _sorted_accum.append(uint2(UInt32(base),UInt32(bins)))
                 }
-                _sorted_accum.append((base,bins))
             }
         }
         
         // stage 3. sort
-        _sorted_accum = _sorted_accum.sorted { return $0.1>$1.1 }
+        return _sorted_accum.sorted { return $0.y>$1.y }
+    }
+    
+    private func getLines(linesMax:Int = 50) -> [IMPLineSegment]  {
+        guard var size = cannyEdgeImage?.size else {return []}
         
+        size.width /= scaleFactor
+        size.height /= scaleFactor
+        
+        let _sorted_accum = getCPULocalMaximums()
         
         // stage 4. store the first min(total,linesMax) lines to the output buffer
         let linesMax = min(linesMax, _sorted_accum.count)
@@ -167,8 +222,8 @@ public class IMPHoughLinesDetector: IMPFilter {
         var lines = [IMPLineSegment]()
         
         for i in 0..<linesMax {
-                        
-            let idx = Float(_sorted_accum[i].0)
+            
+            let idx = Float(_sorted_accum[i].x)
             let n = floorf(idx * scale) - 1
             let f = (n+1) * (Float(numrho)+2)
             let r = idx - f - 1
@@ -222,7 +277,7 @@ public class IMPHoughLinesDetector: IMPFilter {
                 y2 = (C - A*size.width.float)/B / size.height.float
             }
             
-            let delim  = float2(1)// float2(imageWidth.float,imageHeight.float)
+            let delim  = float2(1)
             let point1 = clamp(float2(x1,y1)/delim, min: float2(0), max: float2(1))
             let point2 = clamp(float2(x2,y2)/delim, min: float2(0), max: float2(1))
             

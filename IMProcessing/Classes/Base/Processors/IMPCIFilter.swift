@@ -49,6 +49,8 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
         }
     }
     
+    public var preferedDimension:MTLSize?
+    
     private lazy var _context:IMPContext = IMPContext()
     
     public var source:IMPImageProvider?
@@ -176,10 +178,24 @@ extension IMPCIFilter {
         
         let size =  destinationTexture.cgsize
 
-        let threadgroups = MTLSizeMake(
-            (Int(size.width) + self.threadsPerThreadgroup.width) / self.threadsPerThreadgroup.width ,
-            (Int(size.height) + self.threadsPerThreadgroup.height) / self.threadsPerThreadgroup.height,
-            1);
+        
+        var threadgroups:MTLSize
+        
+        let width = threadsPerThreadgroup.width
+        let height = threadsPerThreadgroup.height
+        
+        if let dim = preferedDimension {
+            threadgroups = MTLSizeMake(
+                (dim.width + width - 1) / width ,
+                (dim.height + height - 1) / height,
+                1)
+        }
+        else {
+            threadgroups = MTLSizeMake(
+                (Int(size.width) + width - 1) / width ,
+                (Int(size.height) + height - 1) / height,
+                1);
+        }
         
         if let commandBuffer = buffer {
             if let command = command{

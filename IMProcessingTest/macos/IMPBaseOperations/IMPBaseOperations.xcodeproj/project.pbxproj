@@ -16,6 +16,7 @@
 		313303C61E6DE94C00CEAD30 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313303C51E6DE94C00CEAD30 /* Metal.framework */; };
 		313303C81E6DE95200CEAD30 /* MetalKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 313303C71E6DE95200CEAD30 /* MetalKit.framework */; };
 		313D53A91E6ECBE4007CB97F /* IMPFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313D53A81E6ECBE4007CB97F /* IMPFileManager.swift */; };
+		31B400231E7FD1B4004BF7EC /* IMPBitonicSort.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B400221E7FD1B4004BF7EC /* IMPBitonicSort.swift */; };
 		31E3B4D21E751E25001998DD /* IMPPhotoPlate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E3B47E1E751E25001998DD /* IMPPhotoPlate.swift */; };
 		31E3B4D31E751E25001998DD /* IMPQuad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E3B47F1E751E25001998DD /* IMPQuad.swift */; };
 		31E3B4D41E751E25001998DD /* IMPTransformModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E3B4801E751E25001998DD /* IMPTransformModel.swift */; };
@@ -81,6 +82,7 @@
 		313303C51E6DE94C00CEAD30 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		313303C71E6DE95200CEAD30 /* MetalKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MetalKit.framework; path = System/Library/Frameworks/MetalKit.framework; sourceTree = SDKROOT; };
 		313D53A81E6ECBE4007CB97F /* IMPFileManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFileManager.swift; sourceTree = "<group>"; };
+		31B400221E7FD1B4004BF7EC /* IMPBitonicSort.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPBitonicSort.swift; path = Algorithms/IMPBitonicSort.swift; sourceTree = "<group>"; };
 		31E3B47E1E751E25001998DD /* IMPPhotoPlate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPhotoPlate.swift; sourceTree = "<group>"; };
 		31E3B47F1E751E25001998DD /* IMPQuad.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPQuad.swift; sourceTree = "<group>"; };
 		31E3B4801E751E25001998DD /* IMPTransformModel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTransformModel.swift; sourceTree = "<group>"; };
@@ -222,9 +224,18 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		31B400211E7FD16D004BF7EC /* Algorithms */ = {
+			isa = PBXGroup;
+			children = (
+				31B400221E7FD1B4004BF7EC /* IMPBitonicSort.swift */,
+			);
+			name = Algorithms;
+			sourceTree = "<group>";
+		};
 		31E3B47B1E751E25001998DD /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				31B400211E7FD16D004BF7EC /* Algorithms */,
 				31E3B47C1E751E25001998DD /* Base */,
 				31E3B48A1E751E25001998DD /* Bridging */,
 				31E3B4901E751E25001998DD /* Common */,
@@ -583,6 +594,7 @@
 				31E3B4D61E751E25001998DD /* IMPFilter.swift in Sources */,
 				313D53A91E6ECBE4007CB97F /* IMPFileManager.swift in Sources */,
 				31E3B4F21E751E25001998DD /* IMPDistribution.swift in Sources */,
+				31B400231E7FD1B4004BF7EC /* IMPBitonicSort.swift in Sources */,
 				31E3B4FA1E751E25001998DD /* IMPMTLDevice.swift in Sources */,
 				31E3B4FC1E751E25001998DD /* IMPTextureCache.swift in Sources */,
 				31E3B4D91E751E25001998DD /* IMPCIFilter.swift in Sources */,

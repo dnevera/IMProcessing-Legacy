@@ -20,6 +20,24 @@ public class IMPCoreImageMTLKernel: IMPCIFilter{
         }
     }
     
+    public override var preferedDimension: MTLSize? {
+        set {
+            function?.preferedDimension = newValue
+        }
+        get {
+            return function?.preferedDimension
+        }
+    }
+    
+    public override var threadsPerThreadgroup: MTLSize {
+        set{
+            function?.threadsPerThreadgroup = newValue
+        }
+        get{
+            return (function?.threadsPerThreadgroup ?? MTLSize(width: 16,height: 16,depth: 1))
+        }
+    }
+    
     static var registeredFunctionList:[IMPFunction] = [IMPFunction]()
     static var registeredFilterList:[String:IMPCoreImageMTLKernel] = [String:IMPCoreImageMTLKernel]()
     
@@ -148,10 +166,21 @@ public class IMPCoreImageMTLKernel: IMPCIFilter{
             let height = destinationTexture.size.height
             
             let threadsPerThreadgroup = kernel.threadsPerThreadgroup
-            let threadgroups = MTLSizeMake(
-                (width + threadsPerThreadgroup.width) / threadsPerThreadgroup.width ,
-                (height + threadsPerThreadgroup.width) / threadsPerThreadgroup.height,
-                1);
+            
+            var threadgroups:MTLSize
+            
+            if let dim = kernel.preferedDimension {
+                threadgroups = MTLSizeMake(
+                    (dim.width + threadsPerThreadgroup.width) / threadsPerThreadgroup.width ,
+                    (dim.height + threadsPerThreadgroup.height) / threadsPerThreadgroup.height,
+                    1)                
+            }
+            else {
+                threadgroups = MTLSizeMake(
+                    (width + threadsPerThreadgroup.width) / threadsPerThreadgroup.width ,
+                    (height + threadsPerThreadgroup.height) / threadsPerThreadgroup.height,
+                    1)
+            }
             
             IMPCoreImageMTLKernel.imageProcessor(kernel: kernel,
                                                  commandBuffer: commandBuffer,

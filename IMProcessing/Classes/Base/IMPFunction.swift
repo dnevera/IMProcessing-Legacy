@@ -20,29 +20,29 @@ public protocol IMPDestinationSizeProvider {
 
 public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equatable {
     
-    public struct GroupSize {
-        public var width:Int  = 16
-        public var height:Int = 16
-    }
-    
     public var destinationSize: NSSize?
     public var kernelName:String
-    public var name:String {
-        return _name
-    }
+    public var name:String { return _name }
     public var context:IMPContext
-    public var groupSize:GroupSize = GroupSize()
-    public var threadsPerThreadgroup:MTLSize {
-        return MTLSizeMake(groupSize.width, groupSize.height, 1)
-    }
+    public lazy var threadsPerThreadgroup:MTLSize = {
+        let w = self.pipeline.threadExecutionWidth
+        let h = self.pipeline.maxTotalThreadsPerThreadgroup / w
+        return MTLSizeMake(w, h, 1)
+    }()
+    public var preferedDimension:MTLSize?
+
     public var kernel:MTLFunction? { return _kernel }
     public var library:MTLLibrary { return context.defaultLibrary }
-    public var pipeline:MTLComputePipelineState? { return _pipeline }
+    public var pipeline:MTLComputePipelineState { return _pipeline }
     
     public func commandEncoder(from buffer: MTLCommandBuffer) -> MTLComputeCommandEncoder {
         let encoder = buffer.makeComputeCommandEncoder()
-        encoder.setComputePipelineState(pipeline!)
+        encoder.setComputePipelineState(pipeline)
         return encoder
+    }
+    
+    public var maxThreads:Int {
+        return pipeline.maxTotalThreadsPerThreadgroup
     }
     
     let _name:String
@@ -75,7 +75,7 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
         return self.library.makeFunction(name: self.kernelName)
     }()
     
-    private lazy var _pipeline:MTLComputePipelineState? = {
+    private lazy var _pipeline:MTLComputePipelineState = {
         if self.kernel == nil {
             fatalError(" *** IMPFunction: \(self.name) has not found...")
         }
