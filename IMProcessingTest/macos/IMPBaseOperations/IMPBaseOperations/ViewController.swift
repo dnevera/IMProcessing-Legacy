@@ -97,7 +97,7 @@ public class TestFilter: IMPFilter {
 
 //        add(function: kernelRed)
 //        add(function: kernelEV)
-//        add(filter: exposureFilter)
+        add(filter: exposureFilter)
 //        add(filter: blurFilter)
 //        add(filter: ciBlurFilter)
 
@@ -362,7 +362,8 @@ class ViewController: NSViewController {
             case 101:
                 self.filter.ciBlurRadius = sender.floatValue
             case 102:
-                self.filter.inputEV = sender.floatValue
+                //self.filter.inputEV = sender.floatValue
+                self.filter.ci_inputEV = sender.floatValue
             default:
                 break
             }

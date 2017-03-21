@@ -10,7 +10,7 @@ import Foundation
 import Metal
 import Accelerate
 
-public class IMPResampler: IMPFilter{
+open class IMPResampler: IMPFilter{
     
     public var maxSize:CGFloat? {
         didSet{
@@ -34,7 +34,7 @@ public class IMPResampler: IMPFilter{
         }
     }
     
-    public override func configure() {
+    open override func configure() {
         extendName(suffix: "Resampler")
         super.configure()
         add(filter: resampler)

@@ -86,7 +86,7 @@ public class IMPHoughLinesDetector: IMPFilter {
         }
     }
     
-    public var threshold:Int = 100
+    public var threshold:Int = 128
     
     private func updateSettings() {
         numangle = UInt32(round((maxTheta - minTheta) / thetaStep))
