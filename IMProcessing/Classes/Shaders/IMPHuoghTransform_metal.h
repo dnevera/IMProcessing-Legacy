@@ -9,12 +9,10 @@
 #ifndef IMPHuoghTransform_metal_h
 #define IMPHuoghTransform_metal_h
 
+#ifdef __METAL_VERSION__
 
 #include <metal_stdlib>
 using namespace metal;
-
-
-#ifdef __METAL_VERSION__
 
 #include "IMPSwift-Bridging-Metal.h"
 #include "IMPFlowControl_metal.h"
@@ -22,7 +20,6 @@ using namespace metal;
 #include "IMPColorSpaces_metal.h"
 #include "IMPBlending_metal.h"
 
-using namespace metal;
 
 #ifdef __cplusplus
 

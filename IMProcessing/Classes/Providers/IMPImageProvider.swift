@@ -127,9 +127,18 @@ public extension IMPImageProvider {
                 storageMode:IMPImageStorageMode? = nil,
                 maxSize: CGFloat = 0,
                 orientation:IMPImageOrientation? = nil){
-        self.init(context:context, storageMode: storageMode)
-        self.image = prepareImage(image: CIImage(contentsOf: url, options: [kCIImageColorSpace: colorSpace]),
-                                  maxSize: maxSize, orientation: orientation)
+        #if os(iOS)
+            self.init(context:context, storageMode: storageMode)
+            self.image = prepareImage(image: CIImage(contentsOf: url, options: [kCIImageColorSpace: colorSpace]),
+                                      maxSize: maxSize, orientation: orientation)
+        #elseif os(OSX)
+            let image = NSImage(byReferencing: url)
+            self.init(context: context,
+                      image: image,
+                      storageMode:storageMode,
+                      maxSize:maxSize,
+                      orientation:orientation)
+        #endif
     }
     
     public init(context: IMPContext,
@@ -224,7 +233,6 @@ public extension IMPImageProvider {
     }
     
     public mutating func update(_ inputImage:NSImage){
-        //image = CIImage(image: inputImage)
         #if os(OSX)
             guard let data = inputImage.tiffRepresentation else { return }
             image = CIImage(data: data, options: [kCIImageColorSpace: colorSpace])

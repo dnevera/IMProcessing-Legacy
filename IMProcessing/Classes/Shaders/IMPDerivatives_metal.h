@@ -9,12 +9,10 @@
 #ifndef IMPDerivative_metal_h
 #define IMPDerivative_metal_h
 
+#ifdef __METAL_VERSION__
 
 #include <metal_stdlib>
 using namespace metal;
-
-
-#ifdef __METAL_VERSION__
 
 #include "IMPSwift-Bridging-Metal.h"
 #include "IMPFlowControl_metal.h"

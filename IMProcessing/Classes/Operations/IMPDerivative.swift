@@ -13,7 +13,7 @@ public class IMPDerivative: IMPFilter{
     
     public var texelRadius:Float = 1 {
         didSet{
-            texelRadiusBuffer <- texelRadius
+            //texelRadiusBuffer <- texelRadius
             dirty = true
         }
     }
@@ -42,11 +42,12 @@ public class IMPDerivative: IMPFilter{
                           fragmentName: self.functionName)
         
         s.optionsHandler = { (shader, commandEncoder, input, output) in
-            commandEncoder.setFragmentBuffer(self.texelRadiusBuffer, offset: 0, at: 0)
+            //commandEncoder.setFragmentBuffer(self.texelRadiusBuffer, offset: 0, at: 0)
+            commandEncoder.setFragmentBytes(&self.texelRadius,length:MemoryLayout<Float>.size,at:0)
             self.optionsHandler(shader: shader, command: commandEncoder, inputTexture: input, outputTexture: output)
         }
         return s
     }()
     
-    private lazy var texelRadiusBuffer:MTLBuffer = self.context.makeBuffer(from: Float(1))
+    //private lazy var texelRadiusBuffer:MTLBuffer = self.context.makeBuffer(from: Float(1))
 }
