@@ -29,6 +29,7 @@
 
 #include "IMPColorProcessing_metal.h"
 #include "IMPHuoghTransform_metal.h"
+#include "IMPMorphology_metal.h"
 
 //#include "IMPHistogram_metal.h"
 //#include "IMPHistogramLayer_metal.h"

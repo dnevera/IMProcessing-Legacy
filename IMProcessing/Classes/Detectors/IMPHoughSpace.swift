@@ -43,6 +43,28 @@ public class IMPHoughSpace {
         transform(image: image, rho: rhoStep, theta: thetaStep, min_theta: minTheta, max_theta: maxTheta)
     }
 
+    public init(points:[float2],
+                width:Int,
+                height:Int,
+                rhoStep:Float = 1,
+                thetaStep:Float = M_PI.float/180,
+                minTheta:Float = 0,
+                maxTheta:Float = M_PI.float ) {
+        
+        self.bytesPerRow = width
+        
+        imageWidth = width
+        imageHeight = height
+        
+        self.rhoStep = rhoStep
+        self.thetaStep = thetaStep
+        self.minTheta = minTheta
+        self.maxTheta = maxTheta
+        
+        transform(points: points, rho: rhoStep, theta: thetaStep, min_theta: minTheta, max_theta: maxTheta)
+    }
+    
+
     
     private func updateSettings() {
         numangle = round((self.maxTheta - self.minTheta) / self.thetaStep).int
@@ -95,8 +117,28 @@ public class IMPHoughSpace {
                 }
             }
         }
-        
     }
+    
+    private func transform(points:[float2], rho:Float, theta:Float, min_theta:Float, max_theta:Float) {
+        
+        // stage 1. fill accumulator
+        
+        updateSettings()
+        
+        for p in points{
+            for n in 0..<numangle {
+                let x = p.x * imageWidth.float
+                let y = p.y * imageHeight.float
+                var r = round( x * _tabCos[n] + y * _tabSin[n] )
+                
+                r += (numrho.float - 1) / 2
+                
+                let index = (n+1) * (numrho+2) + r.int+1
+                _accum[index] += 1
+            }
+        }
+    }
+    
     
     public func getLines(linesMax:Int = 50, threshold:Int = 50) -> [IMPLineSegment]  {
         

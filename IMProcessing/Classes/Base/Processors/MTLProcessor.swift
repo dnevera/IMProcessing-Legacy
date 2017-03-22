@@ -136,8 +136,6 @@ public class IMPCoreImageMTLKernel: IMPCIFilter{
             handler(kernel, commandEncoder, input, output)
         }
         
-        print(" dispatch: group size == \(threadgroups) threads/group = \(threadsPerThreadgroup) grid size = \(threadgroups.width*threadsPerThreadgroup.width, threadgroups.height*threadsPerThreadgroup.height)")
-
         commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadsPerThreadgroup)
         commandEncoder.endEncoding()
     }

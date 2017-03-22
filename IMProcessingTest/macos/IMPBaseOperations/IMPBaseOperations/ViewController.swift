@@ -27,7 +27,10 @@ public class TestFilter: IMPFilter {
     public var blurRadius:Float = 0 {
         didSet{
             blurFilter.radius = blurRadius
-            cannyEdgeDetector.blurRadius = blurRadius
+            erosion.dimensions = (Int(blurRadius),Int(blurRadius))
+            dilation.dimensions = (Int(blurRadius),Int(blurRadius))
+            //erosion.dimensions.height = Int(blurRadius)
+            //cannyEdgeDetector.blurRadius = blurRadius
             dirty = true
         }
     }
@@ -36,6 +39,7 @@ public class TestFilter: IMPFilter {
         didSet{
             ciBlurFilter.setValue(NSNumber(value:ciBlurRadius), forKey: "inputRadius")
             cannyEdgeDetector.maxSize = CGFloat(400 * ciBlurRadius)
+            houghLineDetector.threshold = Int(ciBlurRadius * 10)
             dirty = true
         }
     }
@@ -93,7 +97,6 @@ public class TestFilter: IMPFilter {
         
 //        harrisCornerDetectorOverlay.enabled = false
         
-//        add(filter:harrisCornerDetectorOverlay)
 
 //        add(function: kernelRed)
 //        add(function: kernelEV)
@@ -103,24 +106,44 @@ public class TestFilter: IMPFilter {
 
 //        add(filter: houghLineDetector)
 
+        //add(filter:harrisCornerDetector)
+        add(filter:dilation)
+
         var t1 = Date()
         var t2 = Date()
         
-        addObserver(destinationUpdated: { (source) in
-            self.harrisCornerDetector.context.runOperation(.async) {
-                t1 = Date()
-                self.harrisCornerDetector.source = source
-            }
-            self.houghLineDetector.context.runOperation(.async) {
-                t2 = Date()
-                self.houghLineDetector.source = source
-            }
-        })
+//        addObserver(destinationUpdated: { (source) in
+//            self.harrisCornerDetector.context.runOperation(.async) {
+//                t1 = Date()
+//                self.harrisCornerDetector.source = source
+//            }
+//            self.houghLineDetector.context.runOperation(.async) {
+//                t2 = Date()
+//                self.houghLineDetector.source = source
+//            }
+//        })
 
         harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
             self.context.runOperation(.async) {
-                self.cornersHandler?(corners,size)
-                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
+                //self.cornersHandler?(corners,size)
+                
+//                let hough = IMPHoughSpace(points: corners, width: Int(size.width), height: Int(size.height))
+//                let lines = hough.getLines(linesMax: 50, threshold: 150)
+//                
+//                let p1lines = [IMPLineSegment](lines)
+//                var linesout = [IMPLineSegment]()
+//                
+//                for l in lines {
+//                    for p in p1lines {
+//                        if (p != l) && l.isParallel(toLine: p) && p.distanceTo(parallelLine: l) > (1/size.width * 50).float {
+//                            print(" p = \(p,l)")
+//                            linesout.append(p)
+//                        }
+//                    }
+//                }
+//                
+//                self.linesHandler?(linesout,size)
+//                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
             }
         }
 
@@ -128,12 +151,13 @@ public class TestFilter: IMPFilter {
             self.context.runOperation(.async) {
                 self.linesHandler?(lines,size)
                 print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-                //for l in lines {
-                //    print(l)
-                //}
             }
         }
     }
+    
+    
+    lazy var erosion:IMPMorphology = IMPErosion(context: self.context)
+    lazy var dilation:IMPMorphology = IMPDilation(context: self.context)
     
     lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
     lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
@@ -368,6 +392,8 @@ class ViewController: NSViewController {
                 break
             }
         }
+        
+        print("filter.ciBlurRadius = \(filter.ciBlurRadius)")
     }
     
     override var representedObject: Any? {

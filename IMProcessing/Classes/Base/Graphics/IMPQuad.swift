@@ -13,8 +13,12 @@ import Accelerate
 public let IMPMinimumPoint:Float = FLT_EPSILON
 public let IMPEPSPoint:Float = (1+FLT_EPSILON)
 
-public struct IMPLineSegment {
+public struct IMPLineSegment: Equatable {
     
+    public static func == (lhs: IMPLineSegment, rhs: IMPLineSegment) -> Bool {
+        return lhs.p0 == rhs.p0 && lhs.p1 == rhs.p1
+    }
+
     public let p0:float2
     public let p1:float2
     
