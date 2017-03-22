@@ -189,6 +189,7 @@ extension IMPCIFilter {
                 (dim.width + width - 1) / width ,
                 (dim.height + height - 1) / height,
                 1)
+
         }
         else {
             threadgroups = MTLSizeMake(

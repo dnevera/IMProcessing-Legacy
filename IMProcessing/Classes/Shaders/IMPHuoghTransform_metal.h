@@ -56,28 +56,43 @@ kernel void kernel_houghTransformAtomic(
     }
 }
 
-
 kernel void kernel_houghSpaceLocalMaximums(
-                                           constant uint      *accum     [[ buffer(0)]],
-                                           device uint2       *maximums  [[ buffer(1)]],
-                                           device atomic_uint *count     [[ buffer(2)]],
-                                           constant uint      &numrho    [[ buffer(3)]],
-                                           constant uint      &numangle  [[ buffer(4)]],
-                                           constant uint      &threshold [[ buffer(5)]],
-                                           uint2 gid [[thread_position_in_grid]]
-                                           )
+                                            constant uint      *accum     [[ buffer(0)]],
+                                            device uint2       *maximums  [[ buffer(1)]],
+                                            device atomic_uint *count     [[ buffer(2)]],
+                                            constant uint      &numrho    [[ buffer(3)]],
+                                            constant uint      &numangle  [[ buffer(4)]],
+                                            constant uint      &threshold [[ buffer(5)]],
+                                            uint2 tid       [[thread_position_in_threadgroup]],
+                                            uint2 groupSize [[threads_per_threadgroup]]
+                                            
+                                            )
 {
-    uint base = (gid.y+1) * (numrho+2) + gid.x + 1;
-    uint bins = accum[base];
-    
-    if (bins == 0) { return; }
-    
-    if(bins > threshold &&
-       bins > accum[base - 1] && bins >= accum[base + 1] &&
-       bins > accum[base - numrho - 2] && bins >= accum[base + numrho + 2] ){
+    for (uint x=0; x<groupSize.x; x++){
         
-        uint index = atomic_fetch_add_explicit(count, 1, memory_order_relaxed);
-        maximums[index] = uint2(base,bins);
+        uint rx = x * groupSize.x + tid.x;
+        
+        if (rx>=numrho) break;
+        
+        for (uint y=0; y<groupSize.y; y++){
+            
+            uint ry = y * groupSize.y + tid.y;
+            
+            if (ry>=numangle) break;
+            
+            uint base = (ry+1) * (numrho+2) + rx + 1;
+            uint bins = accum[base];
+            
+            if (bins == 0) { continue; }
+
+            if(bins > threshold &&
+               bins > accum[base - 1] && bins >= accum[base + 1] &&
+               bins > accum[base - numrho - 2] && bins >= accum[base + numrho + 2] ){
+                
+                uint index = atomic_fetch_add_explicit(count, 1, memory_order_relaxed);
+                maximums[index] = uint2(base,bins);
+            }
+        }
     }
 }
 

@@ -15,20 +15,40 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     public typealias LinesListObserver = ((_ lines: [IMPLineSegment], _ imageSize:NSSize) -> Void)
     
-    public override var source: IMPImageProvider? {
-        didSet{
-            process()
+    public override var source: IMPImageProvider? { didSet{ process() } }
+    
+    public var maxSize:CGFloat? {
+        set{
+            cannyEdge.maxSize = newValue
+            updateSettings()
+            dirty = true
         }
+        get{ return cannyEdge.maxSize }
     }
     
-    private lazy var cannyEdge:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
+    public var blurRadius:Float {
+        set{
+            cannyEdge.blurRadius = newValue
+            dirty = true
+        }
+        get { return cannyEdge.blurRadius }
+    }
     
-    private var scaleFactor:CGFloat = 1
+    public var rhoStep:Float   = 1 { didSet{updateSettings()} }
     
+    public var thetaStep:Float = M_PI.float/180.float{ didSet{updateSettings()} }
+    
+    public var minTheta:Float  = 0 { didSet{updateSettings()} }
+    
+    public var maxTheta:Float  = M_PI.float{ didSet{updateSettings()} }
+    
+    public var threshold:Int = 128 { didSet{process()} }
+    
+    public var linesMax:Int = 50 { didSet{process()} }
+
     public override func configure() {
         
         cannyEdge.maxSize = 800
-        resultDownscale.maxSize = 400
         
         cannyEdge.blurRadius = 2
         
@@ -52,8 +72,6 @@ public class IMPHoughLinesDetector: IMPFilter {
             self.updateSettings()
         }
         
-        add(filter:resultDownscale)
-
         add(function:houghTransformKernel)
         
         add(function:houghSpaceLocalMaximumsKernel) { (result) in
@@ -65,29 +83,6 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     private var cannyEdgeImage:IMPImageProvider?
     
-    public var rhoStep:Float   = 1 {
-        didSet{
-            updateSettings()
-        }
-    }
-    public var thetaStep:Float = M_PI.float/180.float{
-        didSet{
-            updateSettings()
-        }
-    }
-    public var minTheta:Float  = 0 {
-        didSet{
-            updateSettings()
-        }
-    }
-    public var maxTheta:Float  = M_PI.float{
-        didSet{
-            updateSettings()
-        }
-    }
-    
-    public var threshold:Int = 128
-    
     private func updateSettings() {
         numangle = UInt32(round((maxTheta - minTheta) / thetaStep))
         if let size = cannyEdgeImage?.cgsize {
@@ -98,12 +93,11 @@ public class IMPHoughLinesDetector: IMPFilter {
             accumBuffer = self.accumBufferGetter()
             
             maximumsBuffer = self.maximumsBufferGetter()
-            houghSpaceLocalMaximumsKernel.preferedDimension = MTLSizeMake(Int(numrho),Int( numangle),1)
+            let threads = houghSpaceLocalMaximumsKernel.threadsPerThreadgroup
+            houghSpaceLocalMaximumsKernel.preferedDimension = MTLSizeMake(Int(numrho)/threads.width,Int(numangle)/threads.height,1)
             
             maximumsCountBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size,
                                                                  options: .storageModeShared)
-            
-            scaleFactor = cannyEdge.maxSize!/resultDownscale.maxSize!
         }
     }
     
@@ -124,15 +118,12 @@ public class IMPHoughLinesDetector: IMPFilter {
         //
         return context.device.makeBuffer(length: MemoryLayout<uint2>.size * Int(accumSize), options: .storageModeShared)
     }
-
     
     
     private lazy var accumBuffer:MTLBuffer = self.accumBufferGetter()
     private lazy var maximumsBuffer:MTLBuffer = self.maximumsBufferGetter()
     private lazy var maximumsCountBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
     private lazy var regionInBuffer:MTLBuffer  = self.context.makeBuffer(from: IMPRegion())
-    
-    private lazy var resultDownscale:IMPResampler = IMPResampler(context: self.context)
     
     private lazy var houghTransformKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_houghTransformAtomic")
@@ -168,10 +159,12 @@ public class IMPHoughLinesDetector: IMPFilter {
         return f
     }()
     
+    private lazy var cannyEdge:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
+
     private func getGPULocalMaximums() -> [uint2] {
         
         let count = Int(maximumsCountBuffer.contents().bindMemory(to: uint.self,
-                                                                       capacity: MemoryLayout<uint>.size).pointee)
+                                                                  capacity: MemoryLayout<uint>.size).pointee)
         
         var maximums = [uint2](repeating:uint2(0), count:  count)
         
@@ -206,16 +199,13 @@ public class IMPHoughLinesDetector: IMPFilter {
         return _sorted_accum.sorted { return $0.y>$1.y }
     }
     
-    private func getLines(linesMax:Int = 50) -> [IMPLineSegment]  {
+    private func getLines() -> [IMPLineSegment]  {
         guard var size = cannyEdgeImage?.size else {return []}
         
-        size.width /= scaleFactor
-        size.height /= scaleFactor
-        
-        let _sorted_accum = getCPULocalMaximums()
+        let _sorted_accum = getGPULocalMaximums()
         
         // stage 4. store the first min(total,linesMax) lines to the output buffer
-        let linesMax = min(linesMax, _sorted_accum.count)
+        let linesMax = min(self.linesMax, _sorted_accum.count)
         
         let scale:Float = 1/(Float(numrho)+2)
         
