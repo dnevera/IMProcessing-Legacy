@@ -29,7 +29,6 @@ public class TestFilter: IMPFilter {
             blurFilter.radius = blurRadius
             erosion.dimensions = (Int(blurRadius),Int(blurRadius))
             dilation.dimensions = (Int(blurRadius),Int(blurRadius))
-            //erosion.dimensions.height = Int(blurRadius)
             //cannyEdgeDetector.blurRadius = blurRadius
             dirty = true
         }
@@ -108,24 +107,25 @@ public class TestFilter: IMPFilter {
 
         //add(filter:harrisCornerDetector)
         add(filter:dilation)
+        add(filter:erosion)
 
         var t1 = Date()
         var t2 = Date()
         
-//        addObserver(destinationUpdated: { (source) in
-//            self.harrisCornerDetector.context.runOperation(.async) {
-//                t1 = Date()
-//                self.harrisCornerDetector.source = source
-//            }
-//            self.houghLineDetector.context.runOperation(.async) {
-//                t2 = Date()
-//                self.houghLineDetector.source = source
-//            }
-//        })
+        addObserver(destinationUpdated: { (source) in
+            self.harrisCornerDetector.context.runOperation(.async) {
+                t1 = Date()
+                self.harrisCornerDetector.source = source
+            }
+            self.houghLineDetector.context.runOperation(.async) {
+                t2 = Date()
+                self.houghLineDetector.source = source
+            }
+        })
 
         harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
             self.context.runOperation(.async) {
-                //self.cornersHandler?(corners,size)
+                self.cornersHandler?(corners,size)
                 
 //                let hough = IMPHoughSpace(points: corners, width: Int(size.width), height: Int(size.height))
 //                let lines = hough.getLines(linesMax: 50, threshold: 150)
