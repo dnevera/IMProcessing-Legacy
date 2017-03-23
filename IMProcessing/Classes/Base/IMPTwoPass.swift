@@ -80,9 +80,7 @@ open class IMPTwoPass: IMPFilter {
         let f = IMPFunction(context: self.context, kernelName: self.kernelName)
         
         f.optionsHandler = { (function, commandEncoder, input, output) in
-            //var d:uint = uint(self.dimensions.width)
             commandEncoder.setBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
-            //commandEncoder.setBytes(&d,length:MemoryLayout<uint>.size,at:1)
             self.optionsHandler(passnumber: .first,
                                 function: function,
                                 command: commandEncoder,

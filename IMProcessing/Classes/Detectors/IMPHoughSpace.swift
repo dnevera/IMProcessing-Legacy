@@ -139,9 +139,7 @@ public class IMPHoughSpace {
         }
     }
     
-    
-    public func getLines(linesMax:Int = 50, threshold:Int = 50) -> [IMPLineSegment]  {
-        
+    public func getLocalMaximums(threshold:Int = 50) -> [(index:Int,bins:Int)] {
         // stage 2. find local maximums
         var _sorted_accum = [(Int,Int)]()
         
@@ -159,30 +157,84 @@ public class IMPHoughSpace {
         }
         
         // stage 3. sort
-        _sorted_accum = _sorted_accum.sorted { return $0.1>$1.1 }
-
-        
-        // stage 4. store the first min(total,linesMax) lines to the output buffer
-        let linesMax = min(linesMax, _sorted_accum.count)
+        return _sorted_accum.sorted { return $0.1>$1.1 }
+    }
+    
+    public func getPoint(from space:  [(index:Int,bins:Int)], at index: Int) -> (rho:Float,theta:Float,capcity:Int) {
         
         let scale:Float = 1/(numrho.float+2)
+
+        let idx = space[index].index.float
+        let n = floorf(idx * scale) - 1
+        let f = (n+1) * (numrho.float+2)
+        let r = idx - f - 1
+        
+        let rho = (r - (numrho.float - 1) * 0.5) * rhoStep
+        let theta = minTheta + n * thetaStep
+        
+        return (rho,theta,space[index].bins)
+    }
+    
+    public func getSquares(squaresMax:Int = 50, threshold:Int = 50, minDistance:Float = 20, distanceThreshold:Float=10, thetaTreshold:Float = M_PI.float/180 * 5) -> [IMPQuad] {
+        let space = getLocalMaximums(threshold: threshold)
+        
+        // stage 4. store the first min(total,linesMax) lines to the output buffer
+        let sMax = min(squaresMax, space.count)
+        
+        var squares = [IMPQuad]()
+        
+        let t1 = Date()
+        
+        for i1 in 0..<sMax {
+            
+            let (rho1,theta1,cap1) = getPoint(from: space, at: i1)
+            
+            for i2 in 0..<sMax {
+                
+                if i1 == i2 { continue }
+                
+                let (rho2,theta2,cap2) = getPoint(from: space, at: i2)
+                
+                if abs(rho1-rho2) < minDistance { continue }
+                
+                if abs(rho1+rho2) < distanceThreshold {
+                    if abs(theta1-theta2) < thetaTreshold ||
+                        abs(theta1-(theta2-M_PI.float)) < thetaTreshold ||
+                        abs((theta1-M_PI.float)-theta2) < thetaTreshold {
+                        
+                        print("  ->>> parallel[\(i1,i2)][\(cap1,cap2)] == rho1,rho2 = \(rho1+rho2) \(rho1,rho2) theta1,theta2 = \(theta1 * 180/M_PI.float,theta2 * 180/M_PI.float)")
+                    }
+                }
+                
+                if abs(abs(theta1-theta2) - M_PI.float/2) < thetaTreshold {
+                        //print("  -<<< ortho[\(i1,i2)][\(cap1,cap2)]    == rho1,rho2 = \(rho1+rho2) \(rho1,rho2) theta1,theta2 = \(theta1 * 180/M_PI.float,theta2 * 180/M_PI.float)")
+                }
+            }
+            
+            print("\n -- - - - - -- \n")
+        }
+        
+        
+        print(" squares time = \(-t1.timeIntervalSinceNow)")
+        
+        return squares
+    }
+    
+    public func getLines(linesMax:Int = 50, threshold:Int = 50) -> [IMPLineSegment]  {
+        
+        let space = getLocalMaximums(threshold: threshold)
+        
+        // stage 4. store the first min(total,linesMax) lines to the output buffer
+        let linesMax = min(linesMax, space.count)
         
         var lines = [IMPLineSegment]()
 
         for i in 0..<linesMax {
-            let idx = _sorted_accum[i].0.float
-            let n = floorf(idx * scale) - 1
-            let f = (n+1) * (numrho.float+2)
-            let r = idx - f - 1
+
+            let (rho,theta,_) = getPoint(from: space, at: i)
             
-            let rho = (r - (numrho.float - 1) * 0.5) * rhoStep
-            
-            //if rho < 0 { continue }
-            
-            let angle = minTheta + n * thetaStep
-            
-            let a = cos(angle)
-            let b = sin(angle)
+            let a = cos(theta)
+            let b = sin(theta)
             
             let x0 = a * rho
             let y0 = b * rho
@@ -191,11 +243,6 @@ public class IMPHoughSpace {
             
             let nv = IMPLineSegment(p0: float2(0), p1: np)
             
-            //
-            // a*x + b*y = c => floa3.x/y/z
-            // x = (c - b*y)/a
-            // y = (c - a*x)/b
-            //
             let nf = nv.normalForm(toPoint: np)
             
             let A = round(nf.x)

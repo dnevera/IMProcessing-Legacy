@@ -11,7 +11,63 @@ import Metal
 import Darwin
 
 
+//public protocol IMPHoughSpaceFilter{
+//    var maxSize:CGFloat? {get set}
+//    var blurRadius:Float {get set}
+//}
+
+fileprivate class IMPHoughSpaceCannyEdge:IMPCannyEdgeDetector{}
+
+fileprivate class IMPHoughSpaceHarrisConner:IMPResampler{
+    
+    var blurRadius:Float {
+        set{
+            blurFilter.radius = newValue
+            dirty = true
+        }
+        get { return blurFilter.radius }
+    }
+    
+    override func configure() {
+        extendName(suffix: "HoughSpace HarrisCornerDetector")
+        
+        super.configure()
+        
+        blurFilter.radius = 2
+        xyDerivative.texelRadius = 1.5
+        harrisCorner.sensitivity = 10
+        nonMaximumSuppression.threshold = 0.2
+        
+        add(filter: xyDerivative)
+        add(filter: blurFilter)
+        add(filter: harrisCorner)
+        add(filter: nonMaximumSuppression)
+    }
+    
+    private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context)
+    private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context)
+    private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context)
+}
+
+
 public class IMPHoughLinesDetector: IMPFilter {
+    
+    public enum Filtering {
+        case edges
+        case crossLines
+    }
+    
+    private var filtering:Filtering
+    
+    public init(context: IMPContext, name: String? = nil, filtering:Filtering = .edges) {
+        self.filtering = filtering
+        super.init(context: context, name: name)
+    }
+    
+    public required init(context: IMPContext, name: String?) {
+        fatalError("IMPHoughLinesDetector.init(context:name:) could not been ovverided")
+    }
     
     public typealias LinesListObserver = ((_ lines: [IMPLineSegment], _ imageSize:NSSize) -> Void)
     
@@ -19,19 +75,29 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     public var maxSize:CGFloat? {
         set{
-            cannyEdge.maxSize = newValue
+            if filtering == .edges {
+                cannyEdge.maxSize = newValue
+            }
+            else {
+                crossLines.maxSize = newValue
+            }
             updateSettings()
             dirty = true
         }
-        get{ return cannyEdge.maxSize }
+        get{ return filtering == .edges ? cannyEdge.maxSize : crossLines.maxSize }
     }
     
     public var blurRadius:Float {
         set{
-            cannyEdge.blurRadius = newValue
+            if filtering == .edges {
+                cannyEdge.blurRadius = newValue
+            }
+            else {
+                crossLines.blurRadius = newValue
+            }
             dirty = true
         }
-        get { return cannyEdge.blurRadius }
+        get { return filtering == .edges ? cannyEdge.blurRadius : crossLines.blurRadius }
     }
     
     public var rhoStep:Float   = 1 { didSet{updateSettings()} }
@@ -42,15 +108,20 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     public var maxTheta:Float  = M_PI.float{ didSet{updateSettings()} }
     
-    public var threshold:Int = 128 { didSet{process()} }
+    public var threshold:Int = 20 { didSet{process()} }
     
-    public var linesMax:Int = 50 { didSet{process()} }
+    public var linesMax:Int = 20 { didSet{process()} }
 
     public override func configure() {
         
-        cannyEdge.maxSize = 800
-        
-        cannyEdge.blurRadius = 2
+        if filtering == .edges {
+            cannyEdge.maxSize = 800
+            cannyEdge.blurRadius = 2
+        }
+        else {
+            crossLines.maxSize = 800
+            crossLines.blurRadius = 2
+        }
         
         extendName(suffix: "HoughLinesDetector")
         super.configure()
@@ -58,7 +129,7 @@ public class IMPHoughLinesDetector: IMPFilter {
         updateSettings()
         
         func linesHandlerCallback(){
-            guard let size = cannyEdgeImage?.size else { return }
+            guard let size = edgesImage?.size else { return }
             let lines = getLines()
             if lines.count > 0 {
                 for l in linesObserverList {
@@ -67,9 +138,17 @@ public class IMPHoughLinesDetector: IMPFilter {
             }
         }
 
-        add(filter:cannyEdge) { (result) in
-            self.cannyEdgeImage = result
-            self.updateSettings()
+        if filtering == .edges {
+            add(filter:cannyEdge) { (result) in
+                self.edgesImage = result
+                self.updateSettings()
+            }
+        }
+        else{
+            add(filter: crossLines) { (result) in
+                self.edgesImage = result
+                self.updateSettings()
+            }
         }
         
         add(function:houghTransformKernel)
@@ -81,11 +160,11 @@ public class IMPHoughLinesDetector: IMPFilter {
         }
     }
     
-    private var cannyEdgeImage:IMPImageProvider?
+    private var edgesImage:IMPImageProvider?
     
     private func updateSettings() {
         numangle = UInt32(round((maxTheta - minTheta) / thetaStep))
-        if let size = cannyEdgeImage?.cgsize {
+        if let size = edgesImage?.cgsize {
             
             numrho = UInt32(round(((size.width.float + size.height.float) * 2 + 1) / rhoStep))
             
@@ -160,6 +239,7 @@ public class IMPHoughLinesDetector: IMPFilter {
     }()
     
     private lazy var cannyEdge:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
+    private lazy var crossLines:IMPHoughSpaceHarrisConner = IMPHoughSpaceHarrisConner(context: self.context)
 
     private func getGPULocalMaximums() -> [uint2] {
         
@@ -200,7 +280,7 @@ public class IMPHoughLinesDetector: IMPFilter {
     }
     
     private func getLines() -> [IMPLineSegment]  {
-        guard var size = cannyEdgeImage?.size else {return []}
+        guard var size = edgesImage?.size else {return []}
         
         let _sorted_accum = getGPULocalMaximums()
         

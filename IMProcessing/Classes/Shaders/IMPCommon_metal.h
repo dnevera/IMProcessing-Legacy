@@ -96,17 +96,6 @@ namespace IMProcessing
         return c;
     }
     
-//    inline float3 clipcolor(float3 c) {
-//        return clipcolor_wlum(c,lum(c));
-//    }
-//    
-//    inline float3 setlum(float3 c, float l) {
-//        float ll = lum(c);
-//        float d = l - ll;
-//        c = c + float3(d);
-//        return clipcolor_wlum(c,ll);
-//    }
-//
     inline float3 clipcolor(float3 c) {
         float l = lum(c);
         float n = min(min(c.r, c.g), c.b);
@@ -258,6 +247,65 @@ namespace IMProcessing
         return sampledColor(inTexture,regionIn,1,gid);
     }
 
+    
+    constexpr sampler cornerSampler(address::clamp_to_edge, filter::linear, coord::normalized);
+    
+    class LineColors {
+        
+        public:
+        
+        float3 left;
+        float3 center;
+        float3 right;
+        
+        float leftIntensity;
+        float centerIntensity;
+        float rightIntensity;
+                
+        METAL_FUNC LineColors() {}
+        
+        METAL_FUNC LineColors(texture2d<float, access::sample> texture,
+                              const float2 texCoord,
+                              float y,
+                              float radius
+                              ) {
+            
+            float x = radius/float(texture.get_width());
+            
+            left   = texture.sample(cornerSampler, texCoord + float2(-x,y)).rgb;
+            center = texture.sample(cornerSampler, texCoord + float2( 0,y)).rgb;
+            right  = texture.sample(cornerSampler, texCoord + float2( x,y)).rgb;
+            leftIntensity   = left.r;
+            rightIntensity  = right.r;
+            centerIntensity = center.r;
+        }
+        
+        float leftLuma(){
+            return IMProcessing::lum(left);
+        }
+        float centerLuma(){
+            return IMProcessing::lum(center);
+        }
+        float rightLuma(){
+            return IMProcessing::lum(right);
+        }
+        
+    };
+    
+    class CornerColors {
+        public:
+        LineColors top;
+        LineColors mid;
+        LineColors bottom;
+        
+        METAL_FUNC CornerColors(texture2d<float, access::sample> texture, const float2 texCoord, float radius){
+            float y = radius/float(texture.get_height());
+            top    = LineColors(texture,texCoord,-y,radius);
+            mid    = LineColors(texture,texCoord, 0,radius);
+            bottom = LineColors(texture,texCoord, y,radius);
+        };
+    };
+    
 }
 
 #endif

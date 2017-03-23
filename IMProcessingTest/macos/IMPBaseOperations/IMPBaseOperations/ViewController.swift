@@ -58,7 +58,14 @@ public class TestFilter: IMPFilter {
             dirty = true
         }
     }
-    
+
+    public var medianDim:Float = 0 {
+        didSet{
+            median.dimensions = Int(medianDim)
+            dirty = true
+        }
+    }
+
     public var redAmount:Float = 1 {
         didSet{
             dirty = true
@@ -97,67 +104,74 @@ public class TestFilter: IMPFilter {
         add(filter: blurFilter)
         add(filter: ciContrast)
 
-//        add(filter: houghLineDetector)
-//        add(filter:harrisCornerDetector)
-
+        add(filter: median)
         add(filter: dilation)
         add(filter: erosion)
-        add(filter: posterize)
+//        add(filter: posterize)
 
+//        add(filter: houghLineDetector)
+        
+        add(filter: harrisCornerDetector)
+        //add(filter: cannyEdgeDetector)
+        
         var t1 = Date()
         var t2 = Date()
         
         addObserver(destinationUpdated: { (source) in
-            self.harrisCornerDetector.context.runOperation(.async) {
-                t1 = Date()
-                self.harrisCornerDetector.source = source
-            }
-            self.houghLineDetector.context.runOperation(.async) {
-                t2 = Date()
-                self.houghLineDetector.source = source
-            }
+//            self.harrisCornerDetector.context.runOperation(.async) {
+//                t1 = Date()
+//                self.harrisCornerDetector.source = source
+//            }
+//            self.houghLineDetector.context.runOperation(.async) {
+//                t2 = Date()
+//                self.houghLineDetector.source = source
+//            }
         })
 
-        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
-            self.context.runOperation(.async) {
-                self.cornersHandler?(corners,size)
-                
+//        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+//            self.context.runOperation(.async) {
+//                self.cornersHandler?(corners,size)
+//                
 //                let hough = IMPHoughSpace(points: corners, width: Int(size.width), height: Int(size.height))
 //                let lines = hough.getLines(linesMax: 50, threshold: 150)
 //                
 //                let p1lines = [IMPLineSegment](lines)
 //                var linesout = [IMPLineSegment]()
+//
+//                let squares = hough.getSquares(squaresMax: 50, threshold: 20)
 //                
-//                for l in lines {
-//                    for p in p1lines {
-//                        if (p != l) && l.isParallel(toLine: p) && p.distanceTo(parallelLine: l) > (1/size.width * 50).float {
-//                            print(" p = \(p,l)")
-//                            linesout.append(p)
-//                        }
-//                    }
-//                }
-//                
-//                self.linesHandler?(linesout,size)
-//                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
-            }
-        }
-
-        houghLineDetector.addObserver { (lines, size) in
-            self.context.runOperation(.async) {
-                self.linesHandler?(lines,size)
-                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-            }
-        }
+////                for l in lines {
+////                    for p in p1lines {
+////                        if (p != l) && l.isParallel(toLine: p) && p.distanceTo(parallelLine: l) > (1/size.width * 50).float {
+////                            print(" p = \(p,l)")
+////                            linesout.append(p)
+////                        }
+////                    }
+////                }
+////                
+////                self.linesHandler?(linesout,size)
+////                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
+//            }
+//        }
+//
+//        houghLineDetector.addObserver { (lines, size) in
+//            self.context.runOperation(.async) {
+//                self.linesHandler?(lines,size)
+//                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
+//            }
+//        }
     }
     
     lazy var posterize:IMPPosterize = IMPPosterize(context: self.context)
     
+    lazy var median:IMPTwoPassMedian = IMPTwoPassMedian(context: self.context)
+
     lazy var erosion:IMPMorphology = IMPErosion(context: self.context)
     lazy var dilation:IMPMorphology = IMPDilation(context: self.context)
     
     lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
     
-    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext())
+    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext(), filtering:.edges)
     lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
 
     lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
@@ -346,8 +360,22 @@ class ViewController: NSViewController {
         }
 
         
+        let medianSlider = NSSlider(value: 3, minValue: 3, maxValue: 16, target: self, action: #selector(sliderHandler(sender:)))
+        medianSlider.floatValue = 0
+        medianSlider.tag = 105
+        
+        view.addSubview(medianSlider)
+        
+        medianSlider.snp.makeConstraints { (make) in
+            make.left.equalTo(contrastSlider.snp.right).offset(20)
+            make.bottom.equalTo(medianSlider.superview!.snp.bottom).offset(-20)
+            make.width.equalTo(200)
+        }
+        
+
+        
         IMPFileManager.sharedInstance.add { (file, type) in
-            self.currentImage = IMPImage(context: self.context, path: file)
+            self.currentImage = IMPImage(context: self.context, path: file, maxSize: 1000)
             NSLog("open file \(file)")
             self.filter.source = self.currentImage
         }
@@ -411,6 +439,8 @@ class ViewController: NSViewController {
                 self.filter.levels = sender.floatValue
             case 104:
                 self.filter.contrastLevel = sender.floatValue
+            case 105:
+                self.filter.medianDim = sender.floatValue
             default:
                 break
             }
