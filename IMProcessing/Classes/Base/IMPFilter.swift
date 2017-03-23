@@ -239,6 +239,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                 
             }, fail: {
                 
+                NSLog("IMPFilter applying failed .... ")
+                
             }, action: { (commandBuffer) in
                 
                 let device = commandBuffer.device

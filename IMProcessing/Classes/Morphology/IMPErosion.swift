@@ -8,7 +8,6 @@
 
 import Foundation
 
-
 public class IMPErosion: IMPMorphology {
     
     required public init(context: IMPContext, name: String? = nil) {

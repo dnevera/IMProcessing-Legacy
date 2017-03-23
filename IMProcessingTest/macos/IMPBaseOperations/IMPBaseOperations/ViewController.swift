@@ -27,35 +27,34 @@ public class TestFilter: IMPFilter {
     public var blurRadius:Float = 0 {
         didSet{
             blurFilter.radius = blurRadius
-            erosion.dimensions = (Int(blurRadius),Int(blurRadius))
-            dilation.dimensions = (Int(blurRadius),Int(blurRadius))
-            //cannyEdgeDetector.blurRadius = blurRadius
-            dirty = true
-        }
-    }
-    
-    public var ciBlurRadius:Float = 0 {
-        didSet{
-            ciBlurFilter.setValue(NSNumber(value:ciBlurRadius), forKey: "inputRadius")
-            cannyEdgeDetector.maxSize = CGFloat(400 * ciBlurRadius)
-            houghLineDetector.threshold = Int(ciBlurRadius * 10)
+//            cannyEdgeDetector.blurRadius = blurRadius
             dirty = true
         }
     }
     
     public var inputEV:Float = 0 {
         didSet{
-            print("exposure MTL EV = \(inputEV)")
-            print("exposure CI EV = \(ci_inputEV)")
             dirty = true
         }
     }
-    
-    public var ci_inputEV:Float = 0 {
+
+    public var contrastLevel:Float = 0 {
         didSet{
-            exposureFilter.setValue(ci_inputEV, forKey: "inputEV")
-            print("exposure MTL EV = \(inputEV)")
-            print("exposure CI EV = \(ci_inputEV)")
+            ciContrast.setValue(contrastLevel, forKey: "inputContrast")
+            dirty = true
+        }
+    }
+    public var opening:Float = 0 {
+        didSet{
+            erosion.dimensions = (Int(opening),Int(opening))
+            dilation.dimensions = (Int(opening),Int(opening))
+            dirty = true
+        }
+    }
+
+    public var levels:Float = 0 {
+        didSet{
+            posterize.levels = levels
             dirty = true
         }
     }
@@ -94,20 +93,16 @@ public class TestFilter: IMPFilter {
         extendName(suffix: "Test filter")
         super.configure()
         
-//        harrisCornerDetectorOverlay.enabled = false
-        
-
-//        add(function: kernelRed)
-//        add(function: kernelEV)
-        add(filter: exposureFilter)
-//        add(filter: blurFilter)
-//        add(filter: ciBlurFilter)
+        add(function: kernelEV)
+        add(filter: blurFilter)
+        add(filter: ciContrast)
 
 //        add(filter: houghLineDetector)
+//        add(filter:harrisCornerDetector)
 
-        //add(filter:harrisCornerDetector)
-        add(filter:dilation)
-        add(filter:erosion)
+        add(filter: dilation)
+        add(filter: erosion)
+        add(filter: posterize)
 
         var t1 = Date()
         var t2 = Date()
@@ -155,18 +150,21 @@ public class TestFilter: IMPFilter {
         }
     }
     
+    lazy var posterize:IMPPosterize = IMPPosterize(context: self.context)
     
     lazy var erosion:IMPMorphology = IMPErosion(context: self.context)
     lazy var dilation:IMPMorphology = IMPDilation(context: self.context)
     
-    lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
-    lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
     lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
     
     lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext())
     lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
 
     lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
+
+    lazy var ciExposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
+    lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
+    lazy var ciContrast:CIFilter = CIFilter(name:"CIColorControls")!
 
 }
 
@@ -186,8 +184,8 @@ class CanvasView: NSView {
     
     
     func drawLine(segment:IMPLineSegment,
-                  color:NSColor = NSColor(red: 0,   green: 1, blue: 1, alpha: 0.6),
-                  width:CGFloat = 1
+                  color:NSColor = NSColor(red: 1,   green: 1, blue: 0.1, alpha: 1),
+                  width:CGFloat = 2
                   ){
         let path = NSBezierPath()
         
@@ -210,9 +208,9 @@ class CanvasView: NSView {
     }
     
     func drawCrosshair(point:float2,
-                  color:NSColor = NSColor(red: 0,   green: 1, blue: 0, alpha: 1),
-                  width:CGFloat = 10,
-                  thickness:CGFloat = 2
+                  color:NSColor = NSColor(red: 0,   green: 1, blue: 0.3, alpha: 1),
+                  width:CGFloat = 20,
+                  thickness:CGFloat = 4
         ){
         let w  = (width/bounds.size.width/2).float
         let h  = (width/bounds.size.height/2).float
@@ -298,38 +296,60 @@ class ViewController: NSViewController {
             make.width.equalTo(200)
         }
         
-        let ciBlurSlider = NSSlider(value: 0, minValue: 0, maxValue: 32, target: self, action: #selector(sliderHandler(sender:)))
-        ciBlurSlider.floatValue = 0
-        ciBlurSlider.tag = 101
-        
-        view.addSubview(ciBlurSlider)
-        
-        ciBlurSlider.snp.makeConstraints { (make) in
-            make.left.equalTo(blurSlider.snp.right).offset(20)
-            make.bottom.equalTo(ciBlurSlider.superview!.snp.bottom).offset(-20)
-            make.width.equalTo(200)
-        }
-
         let evSlider = NSSlider(value: 0, minValue: -3, maxValue: 3, target: self, action: #selector(sliderHandler(sender:)))
         evSlider.floatValue = 0
-        evSlider.tag = 102
+        evSlider.tag = 101
         
         view.addSubview(evSlider)
         
         evSlider.snp.makeConstraints { (make) in
-            make.left.equalTo(ciBlurSlider.snp.right).offset(20)
+            make.left.equalTo(blurSlider.snp.right).offset(20)
             make.bottom.equalTo(evSlider.superview!.snp.bottom).offset(-20)
+            make.width.equalTo(200)
+        }
+
+        let openingSlider = NSSlider(value: 0, minValue: 0, maxValue: 32, target: self, action: #selector(sliderHandler(sender:)))
+        openingSlider.floatValue = 0
+        openingSlider.tag = 102
+        
+        view.addSubview(openingSlider)
+        
+        openingSlider.snp.makeConstraints { (make) in
+            make.left.equalTo(evSlider.snp.right).offset(20)
+            make.bottom.equalTo(openingSlider.superview!.snp.bottom).offset(-20)
+            make.width.equalTo(200)
+        }
+
+        
+        let posterizeSlider = NSSlider(value: 0, minValue: 4, maxValue: 32, target: self, action: #selector(sliderHandler(sender:)))
+        posterizeSlider.floatValue = 0
+        posterizeSlider.tag = 103
+        
+        view.addSubview(posterizeSlider)
+        
+        posterizeSlider.snp.makeConstraints { (make) in
+            make.left.equalTo(openingSlider.snp.right).offset(20)
+            make.bottom.equalTo(posterizeSlider.superview!.snp.bottom).offset(-20)
+            make.width.equalTo(200)
+        }
+
+        let contrastSlider = NSSlider(value: 0, minValue: 0, maxValue: 10, target: self, action: #selector(sliderHandler(sender:)))
+        contrastSlider.floatValue = 0
+        contrastSlider.tag = 104
+        
+        view.addSubview(contrastSlider)
+        
+        contrastSlider.snp.makeConstraints { (make) in
+            make.left.equalTo(posterizeSlider.snp.right).offset(20)
+            make.bottom.equalTo(contrastSlider.superview!.snp.bottom).offset(-20)
             make.width.equalTo(200)
         }
 
         
         IMPFileManager.sharedInstance.add { (file, type) in
-            if let im = NSImage(contentsOfFile: file) {
-                //self.currentImage = IMPImage(context: self.context, path: file)
-                self.currentImage = IMPImage(context: self.context, image: im)
-                NSLog("open file \(file)")
-                self.filter.source = self.currentImage
-            }
+            self.currentImage = IMPImage(context: self.context, path: file)
+            NSLog("open file \(file)")
+            self.filter.source = self.currentImage
         }
         
         
@@ -384,16 +404,19 @@ class ViewController: NSViewController {
             case 100:
                 self.filter.blurRadius = sender.floatValue
             case 101:
-                self.filter.ciBlurRadius = sender.floatValue
+                self.filter.inputEV = sender.floatValue
             case 102:
-                //self.filter.inputEV = sender.floatValue
-                self.filter.ci_inputEV = sender.floatValue
+                self.filter.opening = sender.floatValue
+            case 103:
+                self.filter.levels = sender.floatValue
+            case 104:
+                self.filter.contrastLevel = sender.floatValue
             default:
                 break
             }
         }
         
-        print("filter.ciBlurRadius = \(filter.ciBlurRadius)")
+        print("  slider v = \(sender.floatValue, sender.tag)")
     }
     
     override var representedObject: Any? {
