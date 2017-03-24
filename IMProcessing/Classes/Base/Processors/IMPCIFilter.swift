@@ -198,6 +198,8 @@ extension IMPCIFilter {
                 1);
         }
         
+        print("kernel grid size groups = \(threadgroups), group size = \(threadsPerThreadgroup)")
+        
         if let commandBuffer = buffer {
             if let command = command{
                 command(commandBuffer, threadgroups, self.threadsPerThreadgroup, sourceTexture, destinationTexture)

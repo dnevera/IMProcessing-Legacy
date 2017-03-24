@@ -105,19 +105,21 @@ public class TestFilter: IMPFilter {
         add(filter: ciContrast)
 
         add(filter: median)
-        add(filter: dilation)
-        add(filter: erosion)
 //        add(filter: posterize)
+
+        add(filter: edgels)
+//        add(filter: dilation)
+//        add(filter: erosion)
 
 //        add(filter: houghLineDetector)
         
-        add(filter: harrisCornerDetector)
-        //add(filter: cannyEdgeDetector)
+//        add(filter: harrisCornerDetector)
+//        add(filter: cannyEdgeDetector)
         
-        var t1 = Date()
-        var t2 = Date()
-        
-        addObserver(destinationUpdated: { (source) in
+//        var t1 = Date()
+//        var t2 = Date()
+//        
+//        addObserver(destinationUpdated: { (source) in
 //            self.harrisCornerDetector.context.runOperation(.async) {
 //                t1 = Date()
 //                self.harrisCornerDetector.source = source
@@ -126,7 +128,7 @@ public class TestFilter: IMPFilter {
 //                t2 = Date()
 //                self.houghLineDetector.source = source
 //            }
-        })
+//        })
 
 //        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
 //            self.context.runOperation(.async) {
@@ -161,6 +163,8 @@ public class TestFilter: IMPFilter {
 //            }
 //        }
     }
+    
+    lazy var edgels:IMPEdgelsDetector = IMPEdgelsDetector(context: self.context)
     
     lazy var posterize:IMPPosterize = IMPPosterize(context: self.context)
     
@@ -375,7 +379,7 @@ class ViewController: NSViewController {
 
         
         IMPFileManager.sharedInstance.add { (file, type) in
-            self.currentImage = IMPImage(context: self.context, path: file, maxSize: 1000)
+            self.currentImage = IMPImage(context: self.context, path: file, maxSize: 2000)
             NSLog("open file \(file)")
             self.filter.source = self.currentImage
         }

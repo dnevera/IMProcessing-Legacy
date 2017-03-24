@@ -24,63 +24,6 @@ using namespace metal;
 
 #ifdef __cplusplus
 
-//class LineColors {
-//    
-//public:
-//    
-//    float3 left;
-//    float3 center;
-//    float3 right;
-//
-//    float3 leftIntensity;
-//    float3 centerIntensity;
-//    float3 rightIntensity;
-//
-//    
-//    METAL_FUNC LineColors() {}
-//    
-//    METAL_FUNC LineColors(texture2d<float, access::sample> texture,
-//                          const float2 texCoord,
-//                          float y,
-//                          float radius
-//                          ) {
-//        
-//        float x = radius/float(texture.get_width());
-//        
-//        left   = texture.sample(cornerSampler, texCoord + float2(-x,y)).rgb;
-//        center = texture.sample(cornerSampler, texCoord + float2( 0,y)).rgb;
-//        right  = texture.sample(cornerSampler, texCoord + float2( x,y)).rgb;
-//        leftIntensity   = left.r;
-//        rightIntensity  = right.r;
-//        centerIntensity = center.r;
-//    }
-//    
-//    float leftLuma(){
-//        return IMProcessing::lum(left);
-//    }
-//    float centerLuma(){
-//        return IMProcessing::lum(center);
-//    }
-//    float rightLuma(){
-//        return IMProcessing::lum(right);
-//    }
-//    
-//};
-//
-//class CornerColors {
-//public:
-//    LineColors top;
-//    LineColors mid;
-//    LineColors bottom;
-//    
-//    METAL_FUNC CornerColors(texture2d<float, access::sample> texture, const float2 texCoord, float radius){
-//        float y = radius/float(texture.get_height());
-//        top    = LineColors(texture,texCoord,-y,radius);
-//        mid    = LineColors(texture,texCoord, 0,radius);
-//        bottom = LineColors(texture,texCoord, y,radius);
-//    };
-//};
-//
 fragment float4 fragment_xyDerivative(
                                       IMPVertexOut in [[stage_in]],
                                       texture2d<float, access::sample> texture [[ texture(0) ]],
@@ -88,7 +31,7 @@ fragment float4 fragment_xyDerivative(
                                       ) {
     
     IMProcessing::CornerColors corner(texture,in.texcoord.xy,radius);
-
+    
     float vd = - corner.top.leftLuma() - corner.top.centerLuma() - corner.top.rightLuma() \
     + corner.bottom.leftLuma() + corner.bottom.centerLuma() + corner.bottom.rightLuma();
     
@@ -133,14 +76,14 @@ fragment float4 fragment_nonMaximumSuppression(
     finalValue = step(threshold, finalValue);
     
     return float4(finalValue, finalValue, finalValue, 1.0);
-
+    
 }
 
 fragment float4 fragment_directionalSobelEdge(
-                                      IMPVertexOut in [[stage_in]],
-                                      texture2d<float, access::sample> texture [[ texture(0) ]],
-                                      const device float &radius [[ buffer(0) ]]
-                                      ) {
+                                              IMPVertexOut in [[stage_in]],
+                                              texture2d<float, access::sample> texture [[ texture(0) ]],
+                                              const device float &radius [[ buffer(0) ]]
+                                              ) {
     
     IMProcessing::CornerColors corner(texture,in.texcoord.xy,radius);
     
@@ -208,14 +151,14 @@ fragment float4 fragment_directionalNonMaximumSuppression(
     multiplier = multiplier * thresholdCompliance;
     
     return float4(multiplier, multiplier, multiplier, 1.0);
-
+    
 }
 
 fragment float4 fragment_weakPixelInclusion(
-                                      IMPVertexOut in [[stage_in]],
-                                      texture2d<float, access::sample> texture [[ texture(0) ]],
-                                      const device float &radius [[ buffer(0) ]]
-                                      ) {
+                                            IMPVertexOut in [[stage_in]],
+                                            texture2d<float, access::sample> texture [[ texture(0) ]],
+                                            const device float &radius [[ buffer(0) ]]
+                                            ) {
     
     IMProcessing::CornerColors corner(texture,in.texcoord.xy,radius);
     
@@ -228,6 +171,75 @@ fragment float4 fragment_weakPixelInclusion(
     
     return float4(float3(sumTest * pixelTest), 1.0);
 }
+
+inline float gaussianDerivativeComponent(
+                                         texture2d<float, access::sample> source,
+                                         float2 texCoord,
+                                         float2 texelSize,
+                                         const int offset,
+                                         const int pitch ) {
+    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+
+    float3 rgb = source.sample(s, (texCoord + texelSize * float2( offset * pitch))).rgb;
+    return IMProcessing::max_component(rgb);
+
+    //float3 hvs = IMProcessing::rgb_2_HSV(rgb);
+    //return IMProcessing::max_component(hvs)+IMProcessing::max_component(rgb);
+}
+
+inline float gaussianDerivative(
+                                texture2d<float, access::sample> source,
+                                texture2d<float, access::write> destination,
+                                const uint2 gid,
+                                float2 texelSize,
+                                const int pitch ) {
+    
+    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    
+    float2 texCoord  = float2(gid) / float2(destination.get_width(),destination.get_height());
+    
+    float color;
+    color  = -3 * gaussianDerivativeComponent(source, texCoord, texelSize, -2, pitch);
+    color += -5 * gaussianDerivativeComponent(source, texCoord, texelSize, -1, pitch);
+    color +=  5 * gaussianDerivativeComponent(source, texCoord, texelSize,  1, pitch);
+    color +=  3 * gaussianDerivativeComponent(source, texCoord, texelSize,  2, pitch);
+    
+    return abs(color);
+}
+
+kernel void kernel_gaussianDerivative(
+                                      texture2d<float, access::sample> source     [[texture(0)]],
+                                      texture2d<float, access::write> destination [[texture(1)]],
+                                      uint2 pid [[thread_position_in_grid]]
+                                      ){
+    
+    float2 texelSizeX = float2(1,0)/float2(destination.get_width(),1);
+    float2 texelSizeY = float2(0,1)/float2(1,destination.get_height());
+    constexpr uint pitch = 1;
+    
+    float gx   = gaussianDerivative(source,destination,pid, texelSizeX, pitch);
+    float gy   = gaussianDerivative(source,destination,pid, texelSizeY, pitch);
+    
+    float gx1 = gaussianDerivative(source,destination, uint2(pid.x-1,pid.y), texelSizeX, pitch);
+    float gx2 = gaussianDerivative(source,destination, uint2(pid.x+1,pid.y), texelSizeX, pitch);
+    
+    float gy1 = gaussianDerivative(source,destination,uint2(pid.x,pid.y-1), texelSizeY, pitch);
+    float gy2 = gaussianDerivative(source,destination,uint2(pid.x,pid.y+1), texelSizeY, pitch);
+    
+    
+    float3 color = float3(0);
+    
+    if (gx > 1 && gx1 > 1 && gx2 > 1){
+        color.rgb = float3(1);
+    }
+    
+    if (gy > 1 && gy1 > 1 && gy2 > 1){
+        color.rgb = float3(1);
+    }
+    
+    destination.write(float4(color,1),pid);
+}
+
 
 #endif // __cplusplus
 #endif //__METAL_VERSION__
