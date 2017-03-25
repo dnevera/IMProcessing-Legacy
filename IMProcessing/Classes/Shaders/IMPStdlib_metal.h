@@ -34,6 +34,7 @@
 #include "IMPPosterize_metal.h"
 #include "IMPMedian_metal.h"
 #include "IMPEdgelsDetector_metal.h"
+#include "IMPSobelEdges_metal.h"
 
 //#include "IMPHistogram_metal.h"
 //#include "IMPHistogramLayer_metal.h"

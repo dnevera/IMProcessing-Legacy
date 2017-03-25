@@ -23,6 +23,30 @@ using namespace metal;
 
 #ifdef __cplusplus
 
+inline void houghTransformAtomic(
+                                 volatile device   atomic_uint      *accum,
+                                 constant uint                      &numrho,
+                                 constant uint                      &numangle,
+                                 constant float                     &rhoStep,
+                                 constant float                     &thetaStep,
+                                 constant float                     &minTheta,
+                                 uint2 gid
+                                 )
+{
+    float angle = minTheta;
+    float irho  = 1/rhoStep;
+    for (uint n=0; n<numangle; n++) {
+        
+        float r = round( float(gid.x) * cos(angle) * irho + float(gid.y) * sin(angle) * irho);
+        r += (numrho - 1) / 2;
+        angle += thetaStep;
+        
+        int index = int((n+1) * (numrho+2) + r+1);
+        
+        atomic_fetch_add_explicit(&accum[index], 1, memory_order_relaxed);
+    }
+}
+
 kernel void kernel_houghTransformAtomic(
                                         texture2d<float, access::sample>   inTexture   [[texture(0)]],
                                         texture2d<float, access::write>    outTexture  [[texture(1)]],
@@ -40,33 +64,51 @@ kernel void kernel_houghTransformAtomic(
     float4 inColor = IMProcessing::sampledColor(inTexture,regionIn,1,gid);
     
     if (inColor.a>0 && inColor.r > 0){
-        
-        float angle = minTheta;
-        float irho  = 1/rhoStep;
-        for (uint n=0; n<numangle; n++) {
-            
-            float r = round( float(gid.x) * cos(angle) * irho + float(gid.y) * sin(angle) * irho);
-            r += (numrho - 1) / 2;
-            angle += thetaStep;
-            
-            int index = int((n+1) * (numrho+2) + r+1);
-            
-            atomic_fetch_add_explicit(&accum[index], 1, memory_order_relaxed);
+        houghTransformAtomic(accum,numrho,numangle,rhoStep,thetaStep,minTheta,gid);
+    }
+}
+
+kernel void kernel_houghTransformAtomicOriented(
+                                                texture2d<float, access::sample>   inTexture   [[texture(0)]],
+                                                texture2d<float, access::write>    outTexture  [[texture(1)]],
+                                                volatile device   atomic_uint      *accumHorizontal    [[ buffer(0)]],
+                                                volatile device   atomic_uint      *accumVertical      [[ buffer(1)]],
+                                                constant uint                      &numrho     [[ buffer(2)]],
+                                                constant uint                      &numangle   [[ buffer(3)]],
+                                                constant float                     &rhoStep    [[ buffer(4)]],
+                                                constant float                     &thetaStep  [[ buffer(5)]],
+                                                constant float                     &minTheta   [[ buffer(6)]],
+                                                constant IMPRegion                 &regionIn   [[ buffer(7)]],
+                                                uint2 gid [[thread_position_in_grid]]
+                                                )
+{
+    
+    float4 inColor = IMProcessing::sampledColor(inTexture,regionIn,1,gid);
+    
+    if (inColor.a>0){
+        if ( inColor.g > 0) {
+            houghTransformAtomic(accumHorizontal,numrho,numangle,rhoStep,thetaStep,minTheta,gid);
+        }
+        else if (inColor.b > 0){
+            houghTransformAtomic(accumVertical,numrho,numangle,rhoStep,thetaStep,minTheta,gid);
         }
     }
 }
 
-kernel void kernel_houghSpaceLocalMaximums(
-                                            constant uint      *accum     [[ buffer(0)]],
-                                            device uint2       *maximums  [[ buffer(1)]],
-                                            device atomic_uint *count     [[ buffer(2)]],
-                                            constant uint      &numrho    [[ buffer(3)]],
-                                            constant uint      &numangle  [[ buffer(4)]],
-                                            constant uint      &threshold [[ buffer(5)]],
-                                            uint2 tid       [[thread_position_in_threadgroup]],
-                                            uint2 groupSize [[threads_per_threadgroup]]
-                                            
-                                            )
+kernel void kernel_houghSpaceLocalMaximums__(
+                                             constant uint      *accumHorizontal     [[ buffer(0)]],
+                                             constant uint      *accumVertical       [[ buffer(1)]],
+                                             device uint2       *maximumsHorizontal  [[ buffer(2)]],
+                                             device uint2       *maximumsVertical    [[ buffer(3)]],
+                                             device atomic_uint *countHorizontal     [[ buffer(4)]],
+                                             device atomic_uint *countVertical       [[ buffer(5)]],
+                                             constant uint      &numrho    [[ buffer(6)]],
+                                             constant uint      &numangle  [[ buffer(7)]],
+                                             constant uint      &threshold [[ buffer(8)]],
+                                             uint2 tid       [[thread_position_in_threadgroup]],
+                                             uint2 groupSize [[threads_per_threadgroup]]
+                                             
+                                             )
 {
     for (uint x=0; x<groupSize.x; x++){
         
@@ -81,10 +123,139 @@ kernel void kernel_houghSpaceLocalMaximums(
             if (ry>=numangle) break;
             
             uint base = (ry+1) * (numrho+2) + rx + 1;
+            
+            uint bins = accumHorizontal[base];
+            
+            if (bins != 0) {
+                if(bins > threshold &&
+                   bins > accumHorizontal[base - 1] && bins >= accumHorizontal[base + 1] &&
+                   bins > accumHorizontal[base - numrho - 2] && bins >= accumHorizontal[base + numrho + 2] ){
+                    
+                    uint index = atomic_fetch_add_explicit(countHorizontal, 1, memory_order_relaxed);
+                    maximumsHorizontal[index] = uint2(base,bins);
+                }
+            }
+            
+            bins = accumVertical[base];
+            
+            if (bins != 0) {
+                if(bins > threshold &&
+                   bins > accumVertical[base - 1] && bins >= accumVertical[base + 1] &&
+                   bins > accumVertical[base - numrho - 2] && bins >= accumVertical[base + numrho + 2] ){
+                    
+                    uint index = atomic_fetch_add_explicit(countVertical, 1, memory_order_relaxed);
+                    maximumsVertical[index] = uint2(base,bins);
+                }
+            }
+            
+        }
+    }
+}
+
+
+
+/**
+ Optimized version
+ */
+kernel void kernel_houghSpaceLocalMaximumsOriented(
+                                           constant uint      *accumHorizontal     [[ buffer(0)]],
+                                           constant uint      *accumVertical       [[ buffer(1)]],
+                                           device uint2       *maximumsHorizontal  [[ buffer(2)]],
+                                           device uint2       *maximumsVertical    [[ buffer(3)]],
+                                           device atomic_uint *countHorizontal     [[ buffer(4)]],
+                                           device atomic_uint *countVertical       [[ buffer(5)]],
+                                           constant uint      &numrho    [[ buffer(6)]],
+                                           constant uint      &numangle  [[ buffer(7)]],
+                                           constant uint      &threshold [[ buffer(8)]],
+                                           
+                                           uint2 groupSize [[threads_per_threadgroup]],
+                                           uint2 groupId   [[threadgroup_position_in_grid]],
+                                           uint2 gridSize  [[threadgroups_per_grid]],
+                                           uint2 pid [[thread_position_in_grid]]
+                                           
+                                           
+                                           )
+{
+    
+    uint width  = numrho;
+    uint height = numangle;
+    
+    uint gw = (width+gridSize.x-1)/gridSize.x;
+    uint gh = (height+gridSize.y-1)/gridSize.y;
+    
+    for (uint y=0; y<gh; y+=1){
+        
+        uint ry = y + groupId.y * gh;
+        if (ry > height) break;
+        
+        for (uint x=0; x<gw; x+=1){
+            
+            uint rx = x + groupId.x * gw;
+            if (rx > width) break;
+            
+            uint base = (ry+1) * (numrho+2) + rx + 1;
+            uint bins = accumHorizontal[base];
+            
+            if(bins > threshold &&
+               bins > accumHorizontal[base - 1] && bins >= accumHorizontal[base + 1] &&
+               bins > accumHorizontal[base - numrho - 2] && bins >= accumHorizontal[base + numrho + 2] ){
+                
+                uint index = atomic_fetch_add_explicit(countHorizontal, 1, memory_order_relaxed);
+                maximumsHorizontal[index] = uint2(base,bins);
+            }
+            
+            bins = accumVertical[base];
+
+            if(bins > threshold &&
+               bins > accumVertical[base - 1] && bins >= accumVertical[base + 1] &&
+               bins > accumVertical[base - numrho - 2] && bins >= accumVertical[base + numrho + 2] ){
+                
+                uint index = atomic_fetch_add_explicit(countVertical, 1, memory_order_relaxed);
+                maximumsVertical[index] = uint2(base,bins);
+            }
+        }
+    }
+}
+
+
+kernel void kernel_houghSpaceLocalMaximums(
+                                           constant uint      *accum     [[ buffer(0)]],
+                                           device uint2       *maximums  [[ buffer(1)]],
+                                           device atomic_uint *count     [[ buffer(2)]],
+                                           constant uint      &numrho    [[ buffer(3)]],
+                                           constant uint      &numangle  [[ buffer(4)]],
+                                           constant uint      &threshold [[ buffer(5)]],
+                                           
+                                           uint2 groupSize [[threads_per_threadgroup]],
+                                           uint2 groupId   [[threadgroup_position_in_grid]],
+                                           uint2 gridSize  [[threadgroups_per_grid]],
+                                           uint2 pid [[thread_position_in_grid]]
+                                           
+                                           
+                                           )
+{
+    
+    uint width  = numrho;
+    uint height = numangle;
+    
+    uint gw = (width+gridSize.x-1)/gridSize.x;
+    uint gh = (height+gridSize.y-1)/gridSize.y;
+    
+    for (uint y=0; y<gh; y+=1){
+        
+        uint ry = y + groupId.y * gh;
+        if (ry > height) break;
+        
+        for (uint x=0; x<gw; x+=1){
+            
+            uint rx = x + groupId.x * gw;
+            if (rx > width) break;
+            
+            uint base = (ry+1) * (numrho+2) + rx + 1;
             uint bins = accum[base];
             
             if (bins == 0) { continue; }
-
+            
             if(bins > threshold &&
                bins > accum[base - 1] && bins >= accum[base + 1] &&
                bins > accum[base - numrho - 2] && bins >= accum[base + numrho + 2] ){

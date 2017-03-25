@@ -182,9 +182,6 @@ inline float gaussianDerivativeComponent(
 
     float3 rgb = source.sample(s, (texCoord + texelSize * float2( offset * pitch))).rgb;
     return IMProcessing::max_component(rgb);
-
-    //float3 hvs = IMProcessing::rgb_2_HSV(rgb);
-    //return IMProcessing::max_component(hvs)+IMProcessing::max_component(rgb);
 }
 
 inline float gaussianDerivative(
@@ -207,7 +204,7 @@ inline float gaussianDerivative(
     return abs(color);
 }
 
-kernel void kernel_gaussianDerivative(
+kernel void kernel_gaussianDerivativeEdge(
                                       texture2d<float, access::sample> source     [[texture(0)]],
                                       texture2d<float, access::write> destination [[texture(1)]],
                                       uint2 pid [[thread_position_in_grid]]

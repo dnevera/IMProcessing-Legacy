@@ -198,7 +198,7 @@ extension IMPCIFilter {
                 1);
         }
         
-        print("kernel grid size groups = \(threadgroups), group size = \(threadsPerThreadgroup)")
+        //print("kernel grid size groups = \(threadgroups), group size = \(threadsPerThreadgroup)")
         
         if let commandBuffer = buffer {
             if let command = command{

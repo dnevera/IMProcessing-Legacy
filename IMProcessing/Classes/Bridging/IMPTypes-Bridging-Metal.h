@@ -42,6 +42,16 @@ extern "C" {
 #endif
     
     typedef struct {
+        float2 position;
+        float2 slope;
+    } IMPEdgel;
+    
+    typedef struct{
+        IMPEdgel array[1024];
+    }IMPEdgelList;
+
+    
+    typedef struct {
         float left;
         float right;
         float top;

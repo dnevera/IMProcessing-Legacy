@@ -26,7 +26,7 @@ import Metal
 
  */
 
-public class IMPCannyEdgeDetector: IMPResampler{
+public class IMPCannyEdges: IMPResampler{
     
     public static let defaultBlurRadius:Float = 2
     
@@ -65,7 +65,7 @@ public class IMPCannyEdgeDetector: IMPResampler{
         add(filter: directionalNonMaximumSuppression)
         add(filter: weakPixelInclusion)
         
-        blurRadius = IMPCannyEdgeDetector.defaultBlurRadius
+        blurRadius = IMPCannyEdges.defaultBlurRadius
     }
     
     private lazy var luminance:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_luminance")

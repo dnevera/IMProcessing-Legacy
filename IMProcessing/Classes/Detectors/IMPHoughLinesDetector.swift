@@ -16,7 +16,7 @@ import Darwin
 //    var blurRadius:Float {get set}
 //}
 
-fileprivate class IMPHoughSpaceCannyEdge:IMPCannyEdgeDetector{}
+fileprivate class IMPHoughSpaceCannyEdge:IMPCannyEdges{}
 
 fileprivate class IMPHoughSpaceHarrisConner:IMPResampler{
     
@@ -108,9 +108,9 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     public var maxTheta:Float  = M_PI.float{ didSet{updateSettings()} }
     
-    public var threshold:Int = 20 { didSet{process()} }
+    public var threshold:Int = 50 { didSet{process()} }
     
-    public var linesMax:Int = 20 { didSet{process()} }
+    public var linesMax:Int = 50 { didSet{process()} }
 
     public override func configure() {
         
@@ -162,6 +162,10 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     private var edgesImage:IMPImageProvider?
     
+    lazy var regionSize:Int = {
+        return Int(sqrt(Float(self.houghSpaceLocalMaximumsKernel.maxThreads)))
+    }()
+    
     private func updateSettings() {
         numangle = UInt32(round((maxTheta - minTheta) / thetaStep))
         if let size = edgesImage?.cgsize {
@@ -172,9 +176,13 @@ public class IMPHoughLinesDetector: IMPFilter {
             accumBuffer = self.accumBufferGetter()
             
             maximumsBuffer = self.maximumsBufferGetter()
-            let threads = houghSpaceLocalMaximumsKernel.threadsPerThreadgroup
-            houghSpaceLocalMaximumsKernel.preferedDimension = MTLSizeMake(Int(numrho)/threads.width,Int(numangle)/threads.height,1)
             
+            //let threads = houghSpaceLocalMaximumsKernel.threadsPerThreadgroup
+            //houghSpaceLocalMaximumsKernel.preferedDimension = MTLSizeMake(Int(numrho)/threads.width,Int(numangle)/threads.height,1)
+            
+            houghSpaceLocalMaximumsKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
+            houghSpaceLocalMaximumsKernel.preferedDimension =  MTLSize(width: self.regionSize, height: self.regionSize, depth: 1)
+
             maximumsCountBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size,
                                                                  options: .storageModeShared)
         }
@@ -238,7 +246,7 @@ public class IMPHoughLinesDetector: IMPFilter {
         return f
     }()
     
-    private lazy var cannyEdge:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
+    private lazy var cannyEdge:IMPCannyEdges = IMPCannyEdges(context: self.context)
     private lazy var crossLines:IMPHoughSpaceHarrisConner = IMPHoughSpaceHarrisConner(context: self.context)
 
     private func getGPULocalMaximums() -> [uint2] {

@@ -11,13 +11,13 @@ import SnapKit
 
 public class TestFilter: IMPFilter {
     
-    public var linesHandler:((_ lines:[IMPLineSegment], _ size:NSSize?)->Void)?
+    public var linesHandler:((_ h:[IMPLineSegment],_ v:[IMPLineSegment], _ size:NSSize?)->Void)?
     public var cornersHandler:((_ points:[float2], _ size:NSSize?)->Void)?
     
     public override var source: IMPImageProvider? {
         didSet{
             print(" source = \(source?.size)")
-            self.linesHandler?([],source?.size)
+            self.linesHandler?([],[],source?.size)
             self.cornersHandler?([],source?.size)
         }
     }
@@ -100,69 +100,57 @@ public class TestFilter: IMPFilter {
         extendName(suffix: "Test filter")
         super.configure()
         
-        add(function: kernelEV)
-        add(filter: blurFilter)
-        add(filter: ciContrast)
+//        add(filter: median)
 
-        add(filter: median)
+//        add(function: kernelEV)
+//        add(filter: blurFilter)
+//        add(filter: ciContrast)
+
 //        add(filter: posterize)
 
-        add(filter: edgels)
-//        add(filter: dilation)
-//        add(filter: erosion)
+//        add(filter: edgels)
+        
+        add(filter: dilation)
+        add(filter: erosion)
 
-//        add(filter: houghLineDetector)
+        //add(filter:gDerivativeEdges)
+        //add(filter:sobelEdges)
+        
+//        add(filter: lineDetector)
         
 //        add(filter: harrisCornerDetector)
 //        add(filter: cannyEdgeDetector)
         
-//        var t1 = Date()
-//        var t2 = Date()
-//        
-//        addObserver(destinationUpdated: { (source) in
-//            self.harrisCornerDetector.context.runOperation(.async) {
-//                t1 = Date()
-//                self.harrisCornerDetector.source = source
-//            }
-//            self.houghLineDetector.context.runOperation(.async) {
-//                t2 = Date()
-//                self.houghLineDetector.source = source
-//            }
-//        })
+        var t1 = Date()
+        var t2 = Date()
+        
+        addObserver(destinationUpdated: { (source) in
+            self.harrisCornerDetector.context.runOperation(.async) {
+                t1 = Date()
+                self.harrisCornerDetector.source = source
+            }
+            self.lineDetector.context.runOperation(.async) {
+                t2 = Date()
+                self.lineDetector.source = source
+            }
+        })
 
-//        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
-//            self.context.runOperation(.async) {
-//                self.cornersHandler?(corners,size)
-//                
-//                let hough = IMPHoughSpace(points: corners, width: Int(size.width), height: Int(size.height))
-//                let lines = hough.getLines(linesMax: 50, threshold: 150)
-//                
-//                let p1lines = [IMPLineSegment](lines)
-//                var linesout = [IMPLineSegment]()
-//
-//                let squares = hough.getSquares(squaresMax: 50, threshold: 20)
-//                
-////                for l in lines {
-////                    for p in p1lines {
-////                        if (p != l) && l.isParallel(toLine: p) && p.distanceTo(parallelLine: l) > (1/size.width * 50).float {
-////                            print(" p = \(p,l)")
-////                            linesout.append(p)
-////                        }
-////                    }
-////                }
-////                
-////                self.linesHandler?(linesout,size)
-////                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
-//            }
-//        }
-//
-//        houghLineDetector.addObserver { (lines, size) in
-//            self.context.runOperation(.async) {
-//                self.linesHandler?(lines,size)
-//                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-//            }
-//        }
+        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+            self.context.runOperation(.async) {
+                self.cornersHandler?(corners,size)
+            }
+        }
+
+        lineDetector.addObserver(lines: { (horsontal, vertical, size) in
+            self.context.runOperation(.async) {
+                self.linesHandler?(horsontal, vertical, size)
+                print(" lines[n:\(horsontal.count, vertical.count)] detector time = \(-t2.timeIntervalSinceNow) ")
+            }
+        })
     }
+    
+    lazy var gDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
+    lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)
     
     lazy var edgels:IMPEdgelsDetector = IMPEdgelsDetector(context: self.context)
     
@@ -173,8 +161,10 @@ public class TestFilter: IMPFilter {
     lazy var erosion:IMPMorphology = IMPErosion(context: self.context)
     lazy var dilation:IMPMorphology = IMPDilation(context: self.context)
     
-    lazy var cannyEdgeDetector:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
+    lazy var cannyEdgeDetector:IMPCannyEdges = IMPCannyEdges(context: self.context)
     
+    lazy var lineDetector:IMPLinesDetector = IMPLinesDetector(context:  IMPContext())
+
     lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext(), filtering:.edges)
     lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
 
@@ -188,7 +178,13 @@ public class TestFilter: IMPFilter {
 
 class CanvasView: NSView {
     
-    var lines = [IMPLineSegment]() {
+    var hlines = [IMPLineSegment]() {
+        didSet{
+            setNeedsDisplay(bounds)
+        }
+    }
+    
+    var vlines = [IMPLineSegment]() {
         didSet{
             setNeedsDisplay(bounds)
         }
@@ -202,7 +198,7 @@ class CanvasView: NSView {
     
     
     func drawLine(segment:IMPLineSegment,
-                  color:NSColor = NSColor(red: 1,   green: 1, blue: 0.1, alpha: 1),
+                  color:NSColor,
                   width:CGFloat = 2
                   ){
         let path = NSBezierPath()
@@ -245,8 +241,12 @@ class CanvasView: NSView {
     }
     
     override func draw(_ dirtyRect: NSRect) {
-        for s in lines {
-            drawLine(segment: s)
+        for s in hlines {
+            drawLine(segment: s, color:  NSColor(red: 0,   green: 0.9, blue: 0.1, alpha: 1))
+        }
+        
+        for s in vlines {
+            drawLine(segment: s, color: NSColor(red: 0,   green: 0.1, blue: 0.9, alpha: 1))
         }
         
         for c in corners {
@@ -259,9 +259,10 @@ class ViewController: NSViewController {
 
     lazy var filter:TestFilter = {
         let f = TestFilter(context: self.context)
-        f.linesHandler = { (lines,size) in
+        f.linesHandler = { (h, v, size) in
             DispatchQueue.main.async {
-                self.canvas.lines = lines
+                self.canvas.hlines = h
+                self.canvas.vlines = v
             }
         }
         f.cornersHandler = { (points,size) in
