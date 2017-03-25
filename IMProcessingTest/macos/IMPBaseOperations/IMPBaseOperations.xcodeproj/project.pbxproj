@@ -22,6 +22,9 @@
 		314F9F3E1E83C49B00DD3FA2 /* IMPMedian.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314F9F3D1E83C49B00DD3FA2 /* IMPMedian.swift */; };
 		314F9F401E83C59700DD3FA2 /* IMPTwoPass.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314F9F3F1E83C59700DD3FA2 /* IMPTwoPass.swift */; };
 		314F9F421E83C8EF00DD3FA2 /* IMPMedian_metal.h in Resources */ = {isa = PBXBuildFile; fileRef = 314F9F411E83C8EF00DD3FA2 /* IMPMedian_metal.h */; };
+		3154A70C1E868ED900B21D22 /* IMPLineSegment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3154A70B1E868ED900B21D22 /* IMPLineSegment.swift */; };
+		3154A70E1E868F0D00B21D22 /* IMPTriangle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3154A70D1E868F0D00B21D22 /* IMPTriangle.swift */; };
+		3154A7101E8690EF00B21D22 /* IMPPolarLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3154A70F1E8690EF00B21D22 /* IMPPolarLine.swift */; };
 		317132381E8544B000C416F8 /* IMPGaussianDerivativeEdges.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317132371E8544B000C416F8 /* IMPGaussianDerivativeEdges.swift */; };
 		317C61711E85165600AF16D5 /* IMPEdgelsDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 317C61701E85165600AF16D5 /* IMPEdgelsDetector.swift */; };
 		31A4D3111E864FDF0001DF12 /* IMPSobelEdges.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31A4D3101E864FDF0001DF12 /* IMPSobelEdges.swift */; };
@@ -104,6 +107,9 @@
 		314F9F3D1E83C49B00DD3FA2 /* IMPMedian.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMedian.swift; sourceTree = "<group>"; };
 		314F9F3F1E83C59700DD3FA2 /* IMPTwoPass.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTwoPass.swift; sourceTree = "<group>"; };
 		314F9F411E83C8EF00DD3FA2 /* IMPMedian_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPMedian_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
+		3154A70B1E868ED900B21D22 /* IMPLineSegment.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPLineSegment.swift; sourceTree = "<group>"; };
+		3154A70D1E868F0D00B21D22 /* IMPTriangle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPTriangle.swift; sourceTree = "<group>"; };
+		3154A70F1E8690EF00B21D22 /* IMPPolarLine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPolarLine.swift; sourceTree = "<group>"; };
 		317132371E8544B000C416F8 /* IMPGaussianDerivativeEdges.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPGaussianDerivativeEdges.swift; sourceTree = "<group>"; };
 		317C61701E85165600AF16D5 /* IMPEdgelsDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPEdgelsDetector.swift; sourceTree = "<group>"; };
 		317C61721E8516AD00AF16D5 /* IMPEdgelsDetector_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPEdgelsDetector_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
@@ -397,8 +403,11 @@
 		31E3B47D1E751E25001998DD /* Graphics */ = {
 			isa = PBXGroup;
 			children = (
-				31E3B47E1E751E25001998DD /* IMPPhotoPlate.swift */,
+				3154A70F1E8690EF00B21D22 /* IMPPolarLine.swift */,
+				3154A70B1E868ED900B21D22 /* IMPLineSegment.swift */,
+				3154A70D1E868F0D00B21D22 /* IMPTriangle.swift */,
 				31E3B47F1E751E25001998DD /* IMPQuad.swift */,
+				31E3B47E1E751E25001998DD /* IMPPhotoPlate.swift */,
 				31E3B4801E751E25001998DD /* IMPTransformModel.swift */,
 				31E3B4811E751E25001998DD /* IMPVertices.swift */,
 			);
@@ -723,9 +732,11 @@
 				31B400231E7FD1B4004BF7EC /* IMPBitonicSort.swift in Sources */,
 				31E3B4FA1E751E25001998DD /* IMPMTLDevice.swift in Sources */,
 				31E3B4FC1E751E25001998DD /* IMPTextureCache.swift in Sources */,
+				3154A70E1E868F0D00B21D22 /* IMPTriangle.swift in Sources */,
 				31E3B4D91E751E25001998DD /* IMPCIFilter.swift in Sources */,
 				31E3B4DC1E751E25001998DD /* MTLShader.swift in Sources */,
 				31E3B4E91E751E25001998DD /* IMPCameraExtentions.swift in Sources */,
+				3154A7101E8690EF00B21D22 /* IMPPolarLine.swift in Sources */,
 				31E3B4EE1E751E25001998DD /* IMPCameraSession.swift in Sources */,
 				31E3B4E41E751E25001998DD /* IMPGaussianBlur.swift in Sources */,
 				31F0F5091E76B75D003A59EA /* IMPHoughSpace.swift in Sources */,
@@ -745,6 +756,7 @@
 				31E3B4EB1E751E25001998DD /* IMPCameraManager.swift in Sources */,
 				314F9F3E1E83C49B00DD3FA2 /* IMPMedian.swift in Sources */,
 				31B6FDE71E82B986009C11B8 /* RowView.swift in Sources */,
+				3154A70C1E868ED900B21D22 /* IMPLineSegment.swift in Sources */,
 				31E3B4EF1E751E25001998DD /* IMPDisplayLink.swift in Sources */,
 				317132381E8544B000C416F8 /* IMPGaussianDerivativeEdges.swift in Sources */,
 				31E3B4F11E751E25001998DD /* IMPCrosshairsGenerator.swift in Sources */,

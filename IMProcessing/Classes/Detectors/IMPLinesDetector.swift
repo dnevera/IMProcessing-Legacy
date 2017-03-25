@@ -13,7 +13,7 @@ import Metal
 public class IMPLinesDetector: IMPResampler {
     
     
-    public typealias LinesListObserver = ((_ horisontal: [IMPLineSegment], _ vertical: [IMPLineSegment], _ imageSize:NSSize) -> Void)
+    public typealias LinesListObserver = ((_ horisontal: [IMPPolarLine], _ vertical: [IMPPolarLine], _ imageSize:NSSize) -> Void)
     
     public override var source: IMPImageProvider? { didSet{ process() } }
     
@@ -27,21 +27,21 @@ public class IMPLinesDetector: IMPResampler {
     
     public var maxTheta:Float  = M_PI.float{ didSet{updateSettings()} }
     
-    public var threshold:Int = 75 { didSet{process()} }
+    public var threshold:Int = 50 { didSet{dirty = true} }
     
-    public var linesMax:Int = 128 { didSet{process()} }
+    public var linesMax:Int = 175 { didSet{dirty = true} }
     
     public var radius:Int = 8 {
         didSet{
             erosion.dimensions = (radius,radius)
             dilation.dimensions = (radius,radius)
-            process()
+            dirty = true
         }
     }
     
     public override func configure() {
         
-        maxSize = 600
+        maxSize = 800
         //sobelEdges.rasterSize = 2
         erosion.dimensions = (radius,radius)
         dilation.dimensions = (radius,radius)
@@ -70,13 +70,11 @@ public class IMPLinesDetector: IMPResampler {
             self.edgesImage = result
             self.updateSettings()
         }
-    
+        
         add(function:houghTransformKernel)
         
         add(function:houghSpaceLocalMaximumsKernel) { (result) in
-            self.context.runOperation(.sync, {
-                linesHandlerCallback()
-            })
+            linesHandlerCallback()
         }
     }
     
@@ -183,6 +181,7 @@ public class IMPLinesDetector: IMPResampler {
     
     lazy var gaussDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
     lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)
+    //lazy var sobelEdges:IMPRasterizedSobelEdges = IMPRasterizedSobelEdges(context: self.context)
     
     private func getGPULocalMaximums(_ countBuff:MTLBuffer, _ maximumsBuff:MTLBuffer) -> [uint2] {
         
@@ -194,7 +193,7 @@ public class IMPLinesDetector: IMPResampler {
     }
     
     
-    private func getLines(what:Int) -> [IMPLineSegment]  {
+    private func getLines(what:Int) -> [IMPPolarLine]  {
         guard var size = edgesImage?.size else {return []}
         
         let _sorted_accum = what == 0 ? getGPULocalMaximums(maximumsCountHorizonBuffer,maximumsHorizonBuffer) :
@@ -205,11 +204,12 @@ public class IMPLinesDetector: IMPResampler {
         
         let scale:Float = 1/(Float(numrho)+2)
         
-        var lines = [IMPLineSegment]()
+        var lines = [IMPPolarLine]()
         
-        //for i in 0..<linesMax 
         var i = 0
         repeat {
+            
+            if i >= linesMax - 1 { break }
             
             let idx = Float(_sorted_accum[i].x)
             i += 1
@@ -225,81 +225,10 @@ public class IMPLinesDetector: IMPResampler {
             
             let angle = minTheta + n * thetaStep
             
-            let a = cos(angle)
-            let b = sin(angle)
+            let line = IMPPolarLine(rho: rho, theta: angle)
             
-            let x0 = a * rho
-            let y0 = b * rho
+            lines.append(line)
             
-            let np = float2(x0,y0)
-            
-            let nv = IMPLineSegment(p0: float2(0), p1: np)
-            
-            //
-            // a*x + b*y = c => floa3.x/y/z
-            // x = (c - b*y)/a
-            // y = (c - a*x)/b
-            //
-            let nf = nv.normalForm(toPoint: np)
-            
-            let A = round(nf.x)
-            let B = round(nf.y)
-            let C = round(nf.z)
-            
-            var x1:Float=0,y1:Float=0,x2:Float=0,y2:Float=0
-            
-            if A == 0 {
-                y1 = B == 0 ? 1 : C/B/size.height.float
-                x2 = 1
-                
-                x1 = B == 0 ? x2 : 0
-                y2 = y1
-            }
-            else if B == 0 {
-                y1 = 0
-                x2 = A == 0 ? 1 : C/A/size.width.float
-                
-                x1 = x2
-                y2 = A == 0 ? y1 : 1
-            }
-            else {
-                if angle.degrees >= 45 && angle.degrees <= 135 {
-                    //y = (r - x cos(t)) / sin(t)
-                    x1 = 0
-                    y1 = (rho - x1 * a) / b / size.height.float
-                    
-                    x2 = size.width.float
-                    y2 = (rho - x2 * a) / b / size.height.float
-                    x2 /= size.width.float
-
-                }
-                else{
-                    //x = (r - y sin(t)) / cos(t);
-                    y1 = 0
-                    x1 = (r - y1 * b) / a / size.width.float
-                    y2 = size.height.float
-                    x2 = (r - y1 * b) / a / size.width.float
-                    y2 /= size.height.float
-                }
-            }
-            
-            let delim  = float2(1)
-            let point1 = clamp(float2(x1,y1)/delim, min: float2(0), max: float2(1))
-            let point2 = clamp(float2(x2,y2)/delim, min: float2(0), max: float2(1))
-            
-            let segment = IMPLineSegment(p0: point1, p1: point2)
-            
-            if segment.p0.x == 0 && segment.p0.y == 0 && segment.p1.x == 1 && segment.p1.y == 0 {
-                continue
-            }
-            if segment.p0.x == 0 && segment.p0.y == 0 && segment.p1.x == 0 && segment.p1.y == 1 {
-                continue
-            }
-            if segment.p0.x == 1 && segment.p0.y == 0 && segment.p1.x == 1 && segment.p1.y == 1 {
-                continue
-            }
-            
-            lines.append(segment)
         } while lines.count < linesMax && i < linesMax
         
         return lines

@@ -103,12 +103,12 @@ public:
         return intersection;
     }
     
-    thread Edgel start, end;
+    Edgel start, end;
     float2 slope;
     bool remove, start_corner, end_corner;
     
     uint currentIndex = 0;
-    Edgel supportEdgels[1024];
+    //Edgel supportEdgels[1024];
     
     bool operator==(const LineSegment rhs) const {
         return (start.position.x == rhs.start.position.x &&
@@ -186,9 +186,12 @@ inline void findLineSegment(thread Edgel *edgels, uint count/*, device atomic_ui
     
     uint s = 0;
     thread LineSegment lineSegments[maxLength];
+    thread Edgel       supportEdgels[maxLength];
     thread LineSegment lineSegmentInRun;
+
     Edgel start;
     Edgel end;
+    
     
     uint countIn = count;
     

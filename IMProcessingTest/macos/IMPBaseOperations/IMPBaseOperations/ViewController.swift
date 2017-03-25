@@ -8,10 +8,11 @@
 
 import Cocoa
 import SnapKit
+import Accelerate
 
 public class TestFilter: IMPFilter {
     
-    public var linesHandler:((_ h:[IMPLineSegment],_ v:[IMPLineSegment], _ size:NSSize?)->Void)?
+    public var linesHandler:((_ h:[IMPPolarLine],_ v:[IMPPolarLine], _ size:NSSize?)->Void)?
     public var cornersHandler:((_ points:[float2], _ size:NSSize?)->Void)?
     
     public override var source: IMPImageProvider? {
@@ -109,10 +110,11 @@ public class TestFilter: IMPFilter {
 
 //        add(filter: posterize)
 
-//        add(filter: edgels)
         
 //        add(filter: dilation)
 //        add(filter: erosion)
+
+        add(filter: edgels)
 
 //        add(filter:gDerivativeEdges)
 //        add(filter:sobelEdges)
@@ -130,10 +132,10 @@ public class TestFilter: IMPFilter {
 //                t1 = Date()
 //                self.harrisCornerDetector.source = source
 //            }
-            self.lineDetector.context.runOperation(.async) {
-                t2 = Date()
-                self.lineDetector.source = source
-            }
+//            self.lineDetector.context.runOperation(.async) {
+//                t2 = Date()
+//                self.lineDetector.source = source
+//            }
         })
 
 //        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
@@ -143,12 +145,21 @@ public class TestFilter: IMPFilter {
 //            }
 //        }
 
-        lineDetector.addObserver(lines: { (horsontal, vertical, size) in
-            self.context.runOperation(.async) {
-                print(" lines[n:\(horsontal.count, vertical.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-                self.linesHandler?(horsontal, vertical, size)
-            }
-        })
+//        lineDetector.addObserver(lines: { (horisontal, vertical, size) in
+//            self.context.runOperation(.async) {
+//                print(" lines[n:\(horisontal.count, vertical.count)] detector time = \(-t2.timeIntervalSinceNow) ")
+//
+//                //let quads = self.squaresDetector(horizontalLines: horsontal, verticalLines: horsontal, size: size)
+//                
+//                //let cartezianH  = IMPLineSegment(line: horsontal, size: size)
+//                //let cartezianV  = IMPLineSegment(line: vertical, size: size)
+//                
+//                let h = self.filterByDensity(lines: horisontal, theta: M_PI_2.float, size: Int(size.width), count: 16)
+//                let v = self.filterByDensity(lines: vertical, theta: 0, size: Int(size.height), count: 16)
+//                
+//                self.linesHandler?(h, v, size)
+//            }
+//        })
     }
     
     lazy var gDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
@@ -175,7 +186,50 @@ public class TestFilter: IMPFilter {
     lazy var ciExposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
     lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
     lazy var ciContrast:CIFilter = CIFilter(name:"CIColorControls")!
+    
+    
+    
+    
+    func filterByDensity(lines:[IMPPolarLine], theta:Float, size:Int, count:Int = 8) -> [IMPPolarLine] {
+        
+        let horizontalLines = lines.sorted { return  $0.rho<$1.rho }
+        
+        var densityKernel = size/count
+        var density = [Int: [Float]]()
+        
+        for p in horizontalLines {
+            let di = Int(floor(p.rho/densityKernel.float))
+            
+            if density[di] == nil {
+                density[di] = [Float]() //float3(0,MAXFLOAT,0)
+            }
+            density[di]!.append(p.rho)
+        }
+        
+        var result = [IMPPolarLine]()
+        for k in density.keys.sorted() {
+            guard let d = density[k] else { continue }
 
+            if d.count > 1 {
+                var mean:Float = 0
+                var sigma:Float = 0
+                let median = d.count/2
+                vDSP_normalize(d, 1, nil, 0, &mean, &sigma, vDSP_Length(d.count))
+                print(" d[\(k)] = \(d) mean = \(mean) sigma = \(sigma)")
+                //result.append(IMPPolarLine(rho: mean -  sign(mean) * sigma, theta: theta))
+                //result.append(IMPPolarLine(rho: mean + sign(mean) * sigma, theta: theta))
+                result.append(IMPPolarLine(rho: d[median], theta: theta))
+                //result.append(IMPPolarLine(rho: mean, theta: theta))
+            }
+        }
+        
+        return result
+    }
+    
+    func squaresDetector(horizontalLines:[IMPPolarLine],verticalLines:[IMPPolarLine], size:NSSize) -> [IMPQuad] {
+        var quads = [IMPQuad]()
+        return quads
+    }
 }
 
 class CanvasView: NSView {
@@ -265,8 +319,16 @@ class ViewController: NSViewController {
         let f = TestFilter(context: self.context)
         f.linesHandler = { (h, v, size) in
             DispatchQueue.main.async {
-                self.canvas.hlines = h
-                self.canvas.vlines = v
+                var hh = [IMPLineSegment]()
+                for i in h {
+                    hh.append(IMPLineSegment(line:i,size:size!))
+                }
+                var vv = [IMPLineSegment]()
+                for i in v {
+                    vv.append(IMPLineSegment(line:i,size:size!))
+                }
+                self.canvas.hlines = hh
+                self.canvas.vlines = vv
             }
         }
         f.cornersHandler = { (points,size) in
