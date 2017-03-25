@@ -9,12 +9,21 @@
 import Foundation
 import Metal
 
-public class IMPSobelEdges:IMPFilter{
+public class IMPSobelEdges:IMPFilter{    
+    public override func configure() {
+        extendName(suffix: "SobelEdges")
+        super.configure()
+        add(function: sebelEdgesKernel)
+    }
+    private lazy var sebelEdgesKernel:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_sobelEdges")
+}
 
+public class IMPRasterizedSobelEdges:IMPFilter{
+    
     public var rasterSize:uint = 1 { didSet{ dirty = true } }
     
     public override func configure() {
-        extendName(suffix: "SobelEdges")
+        extendName(suffix: "RasterizedSobelEdges")
         super.configure()
         
         sebelEdgesKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
@@ -24,12 +33,9 @@ public class IMPSobelEdges:IMPFilter{
     
     private lazy var sebelEdgesKernel:IMPFunction = {
         
-        let f = IMPFunction(context: self.context, kernelName: "kernel_sobelEdges")
+        let f = IMPFunction(context: self.context, kernelName: "kernel_rasterizedSobelEdges")
         f.optionsHandler = { (function, command, input, output) in
             command.setBytes(&self.rasterSize,length:MemoryLayout<uint>.size,at:0)
-            if let texture = self.source?.texture {
-                command.setTexture(texture, at: 2)
-            }
         }
         return f
     }()

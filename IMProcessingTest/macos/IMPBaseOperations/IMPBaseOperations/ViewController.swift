@@ -48,6 +48,7 @@ public class TestFilter: IMPFilter {
         didSet{
             erosion.dimensions = (Int(opening),Int(opening))
             dilation.dimensions = (Int(opening),Int(opening))
+            lineDetector.radius = Int(opening)
             dirty = true
         }
     }
@@ -110,41 +111,42 @@ public class TestFilter: IMPFilter {
 
 //        add(filter: edgels)
         
-        add(filter: dilation)
-        add(filter: erosion)
+//        add(filter: dilation)
+//        add(filter: erosion)
 
-        //add(filter:gDerivativeEdges)
-        //add(filter:sobelEdges)
+//        add(filter:gDerivativeEdges)
+//        add(filter:sobelEdges)
         
 //        add(filter: lineDetector)
         
 //        add(filter: harrisCornerDetector)
 //        add(filter: cannyEdgeDetector)
         
-        var t1 = Date()
+//        var t1 = Date()
         var t2 = Date()
         
         addObserver(destinationUpdated: { (source) in
-            self.harrisCornerDetector.context.runOperation(.async) {
-                t1 = Date()
-                self.harrisCornerDetector.source = source
-            }
+//            self.harrisCornerDetector.context.runOperation(.async) {
+//                t1 = Date()
+//                self.harrisCornerDetector.source = source
+//            }
             self.lineDetector.context.runOperation(.async) {
                 t2 = Date()
                 self.lineDetector.source = source
             }
         })
 
-        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
-            self.context.runOperation(.async) {
-                self.cornersHandler?(corners,size)
-            }
-        }
+//        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
+//            self.context.runOperation(.async) {
+//                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
+//                self.cornersHandler?(corners,size)
+//            }
+//        }
 
         lineDetector.addObserver(lines: { (horsontal, vertical, size) in
             self.context.runOperation(.async) {
-                self.linesHandler?(horsontal, vertical, size)
                 print(" lines[n:\(horsontal.count, vertical.count)] detector time = \(-t2.timeIntervalSinceNow) ")
+                self.linesHandler?(horsontal, vertical, size)
             }
         })
     }

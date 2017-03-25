@@ -8,7 +8,6 @@
 
 import Foundation
 import Metal
-import Darwin
 
 
 public class IMPLinesDetector: IMPResampler {
@@ -18,11 +17,7 @@ public class IMPLinesDetector: IMPResampler {
     
     public override var source: IMPImageProvider? { didSet{ process() } }
     
-    public override var maxSize:CGFloat? {
-        didSet{
-            updateSettings()
-        }
-    }
+    public override var maxSize:CGFloat? { didSet{ updateSettings() } }
     
     public var rhoStep:Float   = 1 { didSet{updateSettings()} }
     
@@ -32,14 +27,24 @@ public class IMPLinesDetector: IMPResampler {
     
     public var maxTheta:Float  = M_PI.float{ didSet{updateSettings()} }
     
-    public var threshold:Int = 100 { didSet{process()} }
+    public var threshold:Int = 75 { didSet{process()} }
     
-    public var linesMax:Int = 20 { didSet{process()} }
+    public var linesMax:Int = 128 { didSet{process()} }
+    
+    public var radius:Int = 8 {
+        didSet{
+            erosion.dimensions = (radius,radius)
+            dilation.dimensions = (radius,radius)
+            process()
+        }
+    }
     
     public override func configure() {
         
-        maxSize = 640
-        sobelEdges.rasterSize = 1
+        maxSize = 600
+        //sobelEdges.rasterSize = 2
+        erosion.dimensions = (radius,radius)
+        dilation.dimensions = (radius,radius)
         
         extendName(suffix: "HoughLinesDetector")
         super.configure()
@@ -49,7 +54,6 @@ public class IMPLinesDetector: IMPResampler {
         func linesHandlerCallback(){
             guard let size = edgesImage?.size else { return }
             let h = getLines(what: 0)
-            print("------")
             let v = getLines(what: 1)
             if h.count > 0 || v.count > 0 {
                 for l in linesObserverList {
@@ -58,6 +62,8 @@ public class IMPLinesDetector: IMPResampler {
             }
         }
         
+        add(filter: dilation)
+        add(filter: erosion)
         add(filter:gaussDerivativeEdges)
         
         add(filter:sobelEdges) { (result) in
@@ -134,6 +140,9 @@ public class IMPLinesDetector: IMPResampler {
     
     private lazy var regionInBuffer:MTLBuffer  = self.context.makeBuffer(from: IMPRegion())
     
+    private lazy var erosion:IMPMorphology = IMPErosion(context: self.context)
+    private lazy var dilation:IMPMorphology = IMPDilation(context: self.context)
+
     private lazy var houghTransformKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_houghTransformAtomicOriented")
         
@@ -198,9 +207,12 @@ public class IMPLinesDetector: IMPResampler {
         
         var lines = [IMPLineSegment]()
         
-        for i in 0..<linesMax {
+        //for i in 0..<linesMax 
+        var i = 0
+        repeat {
             
             let idx = Float(_sorted_accum[i].x)
+            i += 1
             let n = floorf(idx * scale) - 1
             let f = (n+1) * (Float(numrho)+2)
             let r = idx - f - 1
@@ -277,8 +289,18 @@ public class IMPLinesDetector: IMPResampler {
             
             let segment = IMPLineSegment(p0: point1, p1: point2)
             
+            if segment.p0.x == 0 && segment.p0.y == 0 && segment.p1.x == 1 && segment.p1.y == 0 {
+                continue
+            }
+            if segment.p0.x == 0 && segment.p0.y == 0 && segment.p1.x == 0 && segment.p1.y == 1 {
+                continue
+            }
+            if segment.p0.x == 1 && segment.p0.y == 0 && segment.p1.x == 1 && segment.p1.y == 1 {
+                continue
+            }
+            
             lines.append(segment)
-        }
+        } while lines.count < linesMax && i < linesMax
         
         return lines
     }

@@ -56,10 +56,26 @@ inline float3 sobelEdgeGradientIntensity(
     return float3(0, slope);
 }
 
+
 kernel void kernel_sobelEdges(
+                              texture2d<float, access::sample> derivative  [[texture(0)]],
+                              texture2d<float, access::write>  destination [[texture(1)]],
+                              uint2 gid [[thread_position_in_grid]]
+                              )
+{
+    float3 slope = sobelEdgeGradientIntensity(derivative, gid.x, gid.y);
+    if (length(slope)>0 && (slope.y>=1 || slope.z>=1)){
+        destination.write(float4(slope,1),gid);
+    }
+    else {
+        destination.write(float4(float3(0),1),gid);
+    }
+ }
+
+
+kernel void kernel_rasterizedSobelEdges(
                           texture2d<float, access::sample> derivative  [[texture(0)]],
                           texture2d<float, access::write>  destination [[texture(1)]],
-                          texture2d<float, access::sample> source      [[texture(2)]],
                           constant uint                   &rasterSize  [[buffer(0)]],
                                                     
                           uint2 groupId   [[threadgroup_position_in_grid]],
@@ -103,7 +119,8 @@ kernel void kernel_sobelEdges(
             if( prev1 > 0.0f && prev1 >= prev2 && prev1 >= current.r ) {
                 float3 slope = sobelEdgeGradientIntensity(derivative, rx, ry);
                 if (length(slope)>0){
-                    destination.write(float4(slope,1),gid-uint2(2));
+                    if (slope.y>=1 || slope.z>=1)
+                    destination.write(float4(slope,1),gid-uint2(rasterSize));
                 }
             }
             prev2 = prev1;
@@ -131,7 +148,8 @@ kernel void kernel_sobelEdges(
             if( prev1 > 0.0f && prev1 >= prev2 && prev1 >= current.r ) {
                 float3 slope = sobelEdgeGradientIntensity(derivative, rx, ry);
                 if (length(slope)>0){
-                    destination.write(float4(slope,1),gid-uint2(2));
+                    if (slope.y>1 || slope.z>=1)
+                    destination.write(float4(slope,1),gid-uint2(rasterSize));
                 }
             }
             prev2 = prev1;
