@@ -108,7 +108,7 @@ public:
     bool remove, start_corner, end_corner;
     
     uint currentIndex = 0;
-    //Edgel supportEdgels[1024];
+    Edgel supportEdgels[1024];
     
     bool operator==(const LineSegment rhs) const {
         return (start.position.x == rhs.start.position.x &&

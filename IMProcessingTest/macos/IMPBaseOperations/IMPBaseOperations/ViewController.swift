@@ -102,6 +102,8 @@ public class TestFilter: IMPFilter {
         extendName(suffix: "Test filter")
         super.configure()
         
+        add(filter: segments)
+        
 //        add(filter: median)
 
 //        add(function: kernelEV)
@@ -114,7 +116,7 @@ public class TestFilter: IMPFilter {
 //        add(filter: dilation)
 //        add(filter: erosion)
 
-        add(filter: edgels)
+//        add(filter: edgels)
 
 //        add(filter:gDerivativeEdges)
 //        add(filter:sobelEdges)
@@ -161,6 +163,8 @@ public class TestFilter: IMPFilter {
 //            }
 //        })
     }
+    
+    lazy var segments:IMPSegmentsDetector = IMPSegmentsDetector(context: self.context)
     
     lazy var gDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
     lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)

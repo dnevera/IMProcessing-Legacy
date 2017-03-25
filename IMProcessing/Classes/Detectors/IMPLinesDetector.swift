@@ -46,7 +46,7 @@ public class IMPLinesDetector: IMPResampler {
         erosion.dimensions = (radius,radius)
         dilation.dimensions = (radius,radius)
         
-        extendName(suffix: "HoughLinesDetector")
+        extendName(suffix: "LinesDetector")
         super.configure()
         
         updateSettings()
