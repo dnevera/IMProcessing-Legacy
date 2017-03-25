@@ -49,6 +49,7 @@ public class IMPLinesDetector: IMPResampler {
         func linesHandlerCallback(){
             guard let size = edgesImage?.size else { return }
             let h = getLines(what: 0)
+            print("------")
             let v = getLines(what: 1)
             if h.count > 0 || v.count > 0 {
                 for l in linesObserverList {
@@ -206,6 +207,10 @@ public class IMPLinesDetector: IMPResampler {
             
             let rho = (r - (Float(numrho) - 1) * 0.5) * rhoStep
             
+            if abs(rho) > sqrt(size.height.float * size.height.float + size.width.float * size.width.float){
+                continue
+            }
+            
             let angle = minTheta + n * thetaStep
             
             let a = cos(angle)
@@ -246,11 +251,24 @@ public class IMPLinesDetector: IMPResampler {
                 y2 = A == 0 ? y1 : 1
             }
             else {
-                
-                x1 = 0
-                y1 = C/B / size.height.float
-                x2 = 1
-                y2 = (C - A*size.width.float)/B / size.height.float
+                if angle.degrees >= 45 && angle.degrees <= 135 {
+                    //y = (r - x cos(t)) / sin(t)
+                    x1 = 0
+                    y1 = (rho - x1 * a) / b / size.height.float
+                    
+                    x2 = size.width.float
+                    y2 = (rho - x2 * a) / b / size.height.float
+                    x2 /= size.width.float
+
+                }
+                else{
+                    //x = (r - y sin(t)) / cos(t);
+                    y1 = 0
+                    x1 = (r - y1 * b) / a / size.width.float
+                    y2 = size.height.float
+                    x2 = (r - y1 * b) / a / size.width.float
+                    y2 /= size.height.float
+                }
             }
             
             let delim  = float2(1)

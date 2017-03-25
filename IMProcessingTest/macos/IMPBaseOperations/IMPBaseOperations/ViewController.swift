@@ -219,6 +219,8 @@ class CanvasView: NSView {
         path.line(to: p1)
 
         path.stroke()
+        
+        path.close()
     }
     
     func drawCrosshair(point:float2,
