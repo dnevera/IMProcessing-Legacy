@@ -14,6 +14,13 @@ open class IMPResampler: IMPFilter{
     
     public var maxSize:CGFloat? {
         didSet{
+            if maxSize == nil {
+                remove(filter:resampler)
+            } else {
+                insert(filter: resampler, at: 0){ (source) in
+                    self.complete?(source)
+                }
+            }
             updateResampler()
             dirty = true
         }
@@ -34,10 +41,15 @@ open class IMPResampler: IMPFilter{
         }
     }
     
-    open override func configure() {
+    var complete:CompleteHandler? = nil
+    
+    open override func configure(complete:CompleteHandler?=nil) {
+        self.complete = complete
         extendName(suffix: "Resampler")
         super.configure()
-        add(filter: resampler)
+        //add(filter: resampler){ (source) in
+        //    complete?(source)
+        //}
     }
     
     private lazy var resampleShader:IMPShader = IMPShader(context: self.context)

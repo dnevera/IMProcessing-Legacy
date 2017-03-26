@@ -12,10 +12,12 @@ public class IMPPosterize: IMPFilter{
     
     public var levels:Float = 10 { didSet{ dirty = true } }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "IPosterize")
         super.configure()
-        add(function:kernel)
+        add(function:kernel){ (source) in
+            complete?(source)
+        }
     }
     
     private lazy var kernel:IMPFunction = {

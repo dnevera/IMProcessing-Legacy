@@ -10,10 +10,13 @@ import Foundation
 import Metal
 
 public class IMPSobelEdges:IMPFilter{    
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "SobelEdges")
         super.configure()
-        add(function: sebelEdgesKernel)
+        add(function: sebelEdgesKernel){ (source) in
+            complete?(source)
+        }
+
     }
     private lazy var sebelEdgesKernel:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_sobelEdges")
 }
@@ -22,13 +25,16 @@ public class IMPRasterizedSobelEdges:IMPFilter{
     
     public var rasterSize:uint = 1 { didSet{ dirty = true } }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "RasterizedSobelEdges")
         super.configure()
         
         sebelEdgesKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
         sebelEdgesKernel.preferedDimension =  MTLSize(width: self.regionSize, height: self.regionSize, depth: 1)
-        add(function: sebelEdgesKernel)
+        add(function: sebelEdgesKernel){ (source) in
+            complete?(source)
+        }
+
     }
     
     private lazy var sebelEdgesKernel:IMPFunction = {

@@ -28,7 +28,7 @@ fileprivate class IMPHoughSpaceHarrisConner:IMPResampler{
         get { return blurFilter.radius }
     }
     
-    override func configure() {
+    override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "HoughSpace HarrisCornerDetector")
         
         super.configure()
@@ -41,7 +41,9 @@ fileprivate class IMPHoughSpaceHarrisConner:IMPResampler{
         add(filter: xyDerivative)
         add(filter: blurFilter)
         add(filter: harrisCorner)
-        add(filter: nonMaximumSuppression)
+        add(filter: nonMaximumSuppression){ (source) in
+            complete?(source)
+        }
     }
     
     private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context)
@@ -112,7 +114,7 @@ public class IMPHoughLinesDetector: IMPFilter {
     
     public var linesMax:Int = 50 { didSet{process()} }
 
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         
         if filtering == .edges {
             cannyEdge.maxSize = 800
@@ -154,9 +156,10 @@ public class IMPHoughLinesDetector: IMPFilter {
         add(function:houghTransformKernel)
         
         add(function:houghSpaceLocalMaximumsKernel) { (result) in
-            self.context.runOperation(.sync, { 
+            //self.context.runOperation(.sync, {
                 linesHandlerCallback()
-            })
+            //})
+            complete?(result)
         }
     }
     

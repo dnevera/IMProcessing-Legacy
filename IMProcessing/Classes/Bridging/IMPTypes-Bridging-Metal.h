@@ -50,6 +50,11 @@ extern "C" {
         IMPEdgel array[1024];
     }IMPEdgelList;
 
+    typedef struct {
+        float2 point;
+        float4 slops; // x - left, y - top, z - bottom, w - right
+    } IMPCorner;
+
     
     typedef struct {
         float left;

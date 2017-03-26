@@ -29,7 +29,7 @@ public class IMPSegmentsDetector: IMPResampler{
         
     }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "SegmentsDetector")
         super.configure()
         
@@ -59,7 +59,10 @@ public class IMPSegmentsDetector: IMPResampler{
         //{ (result) in
         //    self.tmpTexture = result.texture
         //}
-        add(function: segmentsKernelY)
+        add(function: segmentsKernelY){ (source) in
+            complete?(source)
+        }
+
     }
     
     private var tmpTexture:MTLTexture?

@@ -120,7 +120,7 @@ public:
 };
 
 inline float3 edgeGradientIntensity(
-                                    texture2d<float> source      [[texture(2)]],
+                                    texture2d<float> source ,
                                     int x, int y
                                     )
 {

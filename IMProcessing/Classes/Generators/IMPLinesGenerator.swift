@@ -111,14 +111,20 @@ public class IMPLinesGenerator: IMPFilter {
         }
     }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "CrosshairGenerator")
+        super.configure()
+        
         shader.processor = shader.textureProcessor
-        add(filter: shader)
-        add(shader: blendShader)
+        
         width = IMPLinesGenerator.defaultWidth
         color = IMPLinesGenerator.defaultColor
         adjustment = IMPLinesGenerator.defaultAdjustment
+
+        add(filter: shader)
+        add(shader: blendShader){ (source) in
+            complete?(source)
+        }
     }
     
     private lazy var pointsShader:IMPDrawPointsShader =  {

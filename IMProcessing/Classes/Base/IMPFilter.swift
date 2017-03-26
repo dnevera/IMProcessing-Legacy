@@ -17,7 +17,8 @@ import Metal
 import CoreImage
 
 public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider {
-    
+    typealias CompleteHandler = ((_ image:IMPImageProvider)->Void)
+
     var  name:             String?           {get    }
     var  source:           IMPImageProvider? {get set}
     var  destination:      IMPImageProvider  {get    }
@@ -27,7 +28,7 @@ public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider
     
     init(context:IMPContext, name: String?)
     
-    func configure()
+    func configure(complete:CompleteHandler?)
 }
 
 open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
@@ -109,7 +110,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         }()
     }
     
-    open func configure(){}
+    open func configure(complete:CompleteHandler?=nil){}
     
     public func flush(){
         source?.image = nil

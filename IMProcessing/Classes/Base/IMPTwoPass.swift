@@ -54,10 +54,13 @@ open class IMPTwoPass: IMPFilter {
         fatalError("init(context:name:) has not been implemented")
     }
     
-    open override func configure() {
+    open override func configure(complete:CompleteHandler?=nil) {
         super.configure()
         add(function: horizontalKernel)
-        add(function: verticalKernel)
+        add(function: verticalKernel){ (source) in
+            complete?(source)
+        }
+
     }
     
     private var kernelName:String

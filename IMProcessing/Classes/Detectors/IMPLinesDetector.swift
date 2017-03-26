@@ -39,7 +39,7 @@ public class IMPLinesDetector: IMPResampler {
         }
     }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         
         maxSize = 800
         //sobelEdges.rasterSize = 2
@@ -75,6 +75,7 @@ public class IMPLinesDetector: IMPResampler {
         
         add(function:houghSpaceLocalMaximumsKernel) { (result) in
             linesHandlerCallback()
+            complete?(result)
         }
     }
     

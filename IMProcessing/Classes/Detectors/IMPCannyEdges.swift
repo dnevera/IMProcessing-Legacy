@@ -55,17 +55,19 @@ public class IMPCannyEdges: IMPResampler{
     }
 
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "CannyEdgeDetector")
         super.configure()
         
+        blurRadius = IMPCannyEdges.defaultBlurRadius
+
         add(function: luminance)
         add(filter: blurFilter)
         add(filter: sobelEdgeFilter)
         add(filter: directionalNonMaximumSuppression)
-        add(filter: weakPixelInclusion)
-        
-        blurRadius = IMPCannyEdges.defaultBlurRadius
+        add(filter: weakPixelInclusion){ (source) in
+            complete?(source)
+        }
     }
     
     private lazy var luminance:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_luminance")

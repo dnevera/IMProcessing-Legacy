@@ -17,8 +17,8 @@ public class IMPXYDerivative: IMPDerivative {
         fatalError("IMPXYDerivative:init(context:name:functionName:) has been already implemented")
     }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "XY")
-        super.configure()
+        super.configure(complete: complete)
     }
 }

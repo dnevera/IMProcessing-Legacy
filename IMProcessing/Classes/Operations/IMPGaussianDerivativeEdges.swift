@@ -12,9 +12,11 @@ public class IMPGaussianDerivativeEdges: IMPFilter{
     
     var pitch:Int = 1
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?) {
         extendName(suffix: "GaussianDerivativeEdges")
-        add(function: gaussianDerivative)
+        add(function: gaussianDerivative){ (source) in
+            complete?(source)
+        }
     }
     lazy var gaussianDerivative:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_gaussianDerivativeEdge")

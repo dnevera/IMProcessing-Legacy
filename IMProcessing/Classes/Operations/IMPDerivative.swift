@@ -22,10 +22,12 @@ public class IMPDerivative: IMPFilter{
         fatalError("IMPBasicDerivative.init(context:name:) has not been implemented, use init(context:name:functionName:)")
     }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "Derivative" + ":" + functionName)
         super.configure()
-        add(shader:derivative)
+        add(shader:derivative){ (source) in
+            complete?(source)
+        }
     }
     
     open func optionsHandler(shader:IMPShader, command:MTLRenderCommandEncoder, inputTexture:MTLTexture?, outputTexture:MTLTexture?){}

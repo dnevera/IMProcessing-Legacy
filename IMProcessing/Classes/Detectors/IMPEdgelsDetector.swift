@@ -238,7 +238,7 @@ public class IMPEdgelsDetector: IMPResampler{
     
     public var rasterSize:uint = 5
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "EdgelsDetector")
         super.configure()
         

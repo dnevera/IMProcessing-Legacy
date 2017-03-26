@@ -158,23 +158,23 @@ kernel void kernel_houghSpaceLocalMaximums__(
  Optimized version
  */
 kernel void kernel_houghSpaceLocalMaximumsOriented(
-                                           constant uint      *accumHorizontal     [[ buffer(0)]],
-                                           constant uint      *accumVertical       [[ buffer(1)]],
-                                           device uint2       *maximumsHorizontal  [[ buffer(2)]],
-                                           device uint2       *maximumsVertical    [[ buffer(3)]],
-                                           device atomic_uint *countHorizontal     [[ buffer(4)]],
-                                           device atomic_uint *countVertical       [[ buffer(5)]],
-                                           constant uint      &numrho    [[ buffer(6)]],
-                                           constant uint      &numangle  [[ buffer(7)]],
-                                           constant uint      &threshold [[ buffer(8)]],
-                                           
-                                           uint2 groupSize [[threads_per_threadgroup]],
-                                           uint2 groupId   [[threadgroup_position_in_grid]],
-                                           uint2 gridSize  [[threadgroups_per_grid]],
-                                           uint2 pid [[thread_position_in_grid]]
-                                           
-                                           
-                                           )
+                                                   constant uint      *accumHorizontal     [[ buffer(0)]],
+                                                   constant uint      *accumVertical       [[ buffer(1)]],
+                                                   device uint2       *maximumsHorizontal  [[ buffer(2)]],
+                                                   device uint2       *maximumsVertical    [[ buffer(3)]],
+                                                   device atomic_uint *countHorizontal     [[ buffer(4)]],
+                                                   device atomic_uint *countVertical       [[ buffer(5)]],
+                                                   constant uint      &numrho    [[ buffer(6)]],
+                                                   constant uint      &numangle  [[ buffer(7)]],
+                                                   constant uint      &threshold [[ buffer(8)]],
+                                                   
+                                                   uint2 groupSize [[threads_per_threadgroup]],
+                                                   uint2 groupId   [[threadgroup_position_in_grid]],
+                                                   uint2 gridSize  [[threadgroups_per_grid]],
+                                                   uint2 pid [[thread_position_in_grid]]
+                                                   
+                                                   
+                                                   )
 {
     
     uint width  = numrho;
@@ -205,7 +205,7 @@ kernel void kernel_houghSpaceLocalMaximumsOriented(
             }
             
             bins = accumVertical[base];
-
+            
             if(bins > threshold &&
                bins > accumVertical[base - 1] && bins >= accumVertical[base + 1] &&
                bins > accumVertical[base - numrho - 2] && bins >= accumVertical[base + numrho + 2] ){

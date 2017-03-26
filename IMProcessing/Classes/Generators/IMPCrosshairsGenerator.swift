@@ -97,11 +97,14 @@ public class IMPCrosshairsGenerator: IMPFilter {
         }
     }
 
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "CrosshairGenerator")
         shader.processor = shader.textureProcessor
         add(filter: shader)
-        add(shader: blendShader)
+        add(shader: blendShader){ (source) in
+            complete?(source)
+        }
+
         width = IMPCrosshairsGenerator.defaultWidth
         color = IMPCrosshairsGenerator.defaultColor
         adjustment = IMPCrosshairsGenerator.defaultAdjustment

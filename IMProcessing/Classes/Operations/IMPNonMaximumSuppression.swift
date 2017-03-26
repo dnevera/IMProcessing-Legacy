@@ -28,9 +28,9 @@ public class IMPNonMaximumSuppression: IMPDerivative {
         fatalError("IMPNonMaximumSuppression:init(context:name:functionName:) has been already implemented")
     }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "NonMaximumSuppression")
-        super.configure()
+        super.configure(complete:complete)
     }
     
     public override func optionsHandler(shader: IMPShader,
@@ -72,9 +72,9 @@ public class IMPDirectionalNonMaximumSuppression: IMPDerivative {
         fatalError("IMPDirectionalNonMaximumSuppression:init(context:name:functionName:) has been already implemented")
     }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "NonMaximumSuppression")
-        super.configure()
+        super.configure(complete:complete)
     }
     
     public override func optionsHandler(shader: IMPShader, command: MTLRenderCommandEncoder, inputTexture: MTLTexture?, outputTexture: MTLTexture?) {

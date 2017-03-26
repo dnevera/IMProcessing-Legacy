@@ -13,10 +13,12 @@ open class IMPMedian: IMPFilter {
     
     public var dimensions:Int = 3 { didSet{ dirty = true } }
     
-    open override func configure() {
+    open override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "IMPMedian")
         super.configure()
-        add(function: medianKernel)
+        add(function: medianKernel){ (source) in
+            complete?(source)
+        }
     }
     
     private lazy var medianKernel:IMPFunction = {
@@ -43,9 +45,9 @@ open class IMPTwoPassMedian: IMPTwoPass {
         fatalError("init(context:kernelName:name:) could not been overrided")
     }
     
-    open override func configure() {
+    open override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "IMPMedian")
-        super.configure()
+        super.configure(complete:complete)
     }
     
     open override func optionsHandler(passnumber: IMPTwoPass.PassNumber,

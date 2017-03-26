@@ -54,7 +54,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
     }
         
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         
         super.configure()
         
@@ -70,13 +70,19 @@ public class IMPGaussianBlurFilter: IMPFilter {
             add(shader: downscaleShader, fail: fail)
             add(shader: horizontalShader, fail: fail)
             add(shader: verticalShader, fail: fail)
-            add(shader: upscaleShader, fail: fail)
+            add(shader: upscaleShader, fail: fail){ (source) in
+                complete?(source)
+            }
+
         }
         else {
             add(function: downscaleKernel, fail: fail)
             add(function: horizontalKernel, fail: fail)
             add(function: verticalKernel, fail: fail)
-            add(function: upscaleKernel, fail: fail)
+            add(function: upscaleKernel, fail: fail){ (source) in
+                complete?(source)
+            }
+
         }
     }
         

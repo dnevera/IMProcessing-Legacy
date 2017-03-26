@@ -11,7 +11,7 @@ import Metal
 
 public class IMPHarrisCorner: IMPFilter{
 
-    public static let defaultSensitivity:Float = 10
+    public static let defaultSensitivity:Float = 16
 
     public var sensitivity:Float = IMPHarrisCorner.defaultSensitivity {
         didSet{
@@ -27,10 +27,12 @@ public class IMPHarrisCorner: IMPFilter{
         super.init(context: context, name: name)
     }
     
-    public override func configure() {
+    public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "HarrisCorner")
         super.configure()
-        add(shader:derivative)
+        add(shader:derivative){ (source) in
+            complete?(source)
+        }
     }
     
     private lazy var derivative:IMPShader = {
