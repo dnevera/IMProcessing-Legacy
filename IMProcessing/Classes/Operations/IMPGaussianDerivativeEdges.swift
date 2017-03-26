@@ -9,11 +9,19 @@
 import Foundation
 
 public class IMPGaussianDerivativeEdges: IMPFilter{
+    
+    var pitch:Int = 1
+    
     public override func configure() {
         extendName(suffix: "GaussianDerivativeEdges")
         add(function: gaussianDerivative)
     }
     lazy var gaussianDerivative:IMPFunction = {
-        return IMPFunction(context: self.context, kernelName: "kernel_gaussianDerivativeEdge")
+        let f = IMPFunction(context: self.context, kernelName: "kernel_gaussianDerivativeEdge")
+        f.optionsHandler = { (function, command, input, output) in
+            var p = uint(self.pitch)
+            command.setBytes(&p,length:MemoryLayout<uint>.size,at:0)
+        }
+        return f
     }()
 }

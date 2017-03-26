@@ -69,7 +69,7 @@ public class IMPHoughLinesDetector: IMPFilter {
         fatalError("IMPHoughLinesDetector.init(context:name:) could not been ovverided")
     }
     
-    public typealias LinesListObserver = ((_ lines: [IMPLineSegment], _ imageSize:NSSize) -> Void)
+    public typealias LinesListObserver = ((_ lines: [IMPPolarLine], _ imageSize:NSSize) -> Void)
     
     public override var source: IMPImageProvider? { didSet{ process() } }
     
@@ -249,17 +249,17 @@ public class IMPHoughLinesDetector: IMPFilter {
     private lazy var cannyEdge:IMPCannyEdges = IMPCannyEdges(context: self.context)
     private lazy var crossLines:IMPHoughSpaceHarrisConner = IMPHoughSpaceHarrisConner(context: self.context)
 
-    private func getGPULocalMaximums() -> [uint2] {
-        
-        let count = Int(maximumsCountBuffer.contents().bindMemory(to: uint.self,
-                                                                  capacity: MemoryLayout<uint>.size).pointee)
-        
-        var maximums = [uint2](repeating:uint2(0), count:  count)
-        
-        memcpy(&maximums, maximumsBuffer.contents(), MemoryLayout<uint2>.size * count)
-        
-        return maximums.sorted { return $0.y>$1.y }
-    }
+//    private func getGPULocalMaximums() -> [uint2] {
+//        
+//        let count = Int(maximumsCountBuffer.contents().bindMemory(to: uint.self,
+//                                                                  capacity: MemoryLayout<uint>.size).pointee)
+//        
+//        var maximums = [uint2](repeating:uint2(0), count:  count)
+//        
+//        memcpy(&maximums, maximumsBuffer.contents(), MemoryLayout<uint2>.size * count)
+//        
+//        return maximums.sorted { return $0.y>$1.y }
+//    }
     
     private func getCPULocalMaximums() -> [uint2] {
         let _accum = self.accumBuffer.contents().bindMemory(to: UInt32.self, capacity: self.accumBuffer.length)
@@ -287,85 +287,138 @@ public class IMPHoughLinesDetector: IMPFilter {
         return _sorted_accum.sorted { return $0.y>$1.y }
     }
     
-    private func getLines() -> [IMPLineSegment]  {
+    
+    private func getGPULocalMaximums(_ countBuff:MTLBuffer, _ maximumsBuff:MTLBuffer) -> [uint2] {
+        
+        let count = Int(countBuff.contents().bindMemory(to: uint.self,
+                                                        capacity: MemoryLayout<uint>.size).pointee)
+        var maximums = [uint2](repeating:uint2(0), count:  count)
+        memcpy(&maximums, maximumsBuff.contents(), MemoryLayout<uint2>.size * count)
+        return maximums.sorted { return $0.y>$1.y }
+    }
+    
+
+    
+    private func getLines() -> [IMPPolarLine]  {
         guard var size = edgesImage?.size else {return []}
         
-        let _sorted_accum = getGPULocalMaximums()
+        let _sorted_accum = getGPULocalMaximums(maximumsCountBuffer,maximumsBuffer)
         
         // stage 4. store the first min(total,linesMax) lines to the output buffer
         let linesMax = min(self.linesMax, _sorted_accum.count)
         
         let scale:Float = 1/(Float(numrho)+2)
         
-        var lines = [IMPLineSegment]()
+        var lines = [IMPPolarLine]()
         
-        for i in 0..<linesMax {
+        var i = 0
+        repeat {
+            
+            if i >= linesMax - 1 { break }
             
             let idx = Float(_sorted_accum[i].x)
+            i += 1
             let n = floorf(idx * scale) - 1
             let f = (n+1) * (Float(numrho)+2)
             let r = idx - f - 1
             
             let rho = (r - (Float(numrho) - 1) * 0.5) * rhoStep
             
+            if abs(rho) > sqrt(size.height.float * size.height.float + size.width.float * size.width.float){
+                continue
+            }
+            
             let angle = minTheta + n * thetaStep
             
-            let a = cos(angle)
-            let b = sin(angle)
+            let line = IMPPolarLine(rho: rho, theta: angle)
             
-            let x0 = a * rho
-            let y0 = b * rho
+            lines.append(line)
             
-            let np = float2(x0,y0)
-            
-            let nv = IMPLineSegment(p0: float2(0), p1: np)
-            
-            //
-            // a*x + b*y = c => floa3.x/y/z
-            // x = (c - b*y)/a
-            // y = (c - a*x)/b
-            //
-            let nf = nv.normalForm(toPoint: np)
-            
-            let A = round(nf.x)
-            let B = round(nf.y)
-            let C = round(nf.z)
-            
-            var x1:Float=0,y1:Float=0,x2:Float=0,y2:Float=0
-            
-            if A == 0 {
-                y1 = B == 0 ? 1 : C/B/size.height.float
-                x2 = 1
-                
-                x1 = B == 0 ? x2 : 0
-                y2 = y1
-            }
-            else if B == 0 {
-                y1 = 0
-                x2 = A == 0 ? 1 : C/A/size.width.float
-                
-                x1 = x2
-                y2 = A == 0 ? y1 : 1
-            }
-            else {
-                
-                x1 = 0
-                y1 = C/B / size.height.float
-                x2 = 1
-                y2 = (C - A*size.width.float)/B / size.height.float
-            }
-            
-            let delim  = float2(1)
-            let point1 = clamp(float2(x1,y1)/delim, min: float2(0), max: float2(1))
-            let point2 = clamp(float2(x2,y2)/delim, min: float2(0), max: float2(1))
-            
-            let segment = IMPLineSegment(p0: point1, p1: point2)
-            
-            lines.append(segment)
-        }
+        } while lines.count < linesMax && i < linesMax
         
         return lines
     }
+
+    
+//    private func getLines() -> [IMPLineSegment]  {
+//        guard var size = edgesImage?.size else {return []}
+//        
+//        let _sorted_accum = getGPULocalMaximums()
+//        
+//        // stage 4. store the first min(total,linesMax) lines to the output buffer
+//        let linesMax = min(self.linesMax, _sorted_accum.count)
+//        
+//        let scale:Float = 1/(Float(numrho)+2)
+//        
+//        var lines = [IMPLineSegment]()
+//        
+//        for i in 0..<linesMax {
+//            
+//            let idx = Float(_sorted_accum[i].x)
+//            let n = floorf(idx * scale) - 1
+//            let f = (n+1) * (Float(numrho)+2)
+//            let r = idx - f - 1
+//            
+//            let rho = (r - (Float(numrho) - 1) * 0.5) * rhoStep
+//            
+//            let angle = minTheta + n * thetaStep
+//            
+//            let a = cos(angle)
+//            let b = sin(angle)
+//            
+//            let x0 = a * rho
+//            let y0 = b * rho
+//            
+//            let np = float2(x0,y0)
+//            
+//            let nv = IMPLineSegment(p0: float2(0), p1: np)
+//            
+//            //
+//            // a*x + b*y = c => floa3.x/y/z
+//            // x = (c - b*y)/a
+//            // y = (c - a*x)/b
+//            //
+//            let nf = nv.normalForm(toPoint: np)
+//            
+//            let A = round(nf.x)
+//            let B = round(nf.y)
+//            let C = round(nf.z)
+//            
+//            var x1:Float=0,y1:Float=0,x2:Float=0,y2:Float=0
+//            
+//            if A == 0 {
+//                y1 = B == 0 ? 1 : C/B/size.height.float
+//                x2 = 1
+//                
+//                x1 = B == 0 ? x2 : 0
+//                y2 = y1
+//            }
+//            else if B == 0 {
+//                y1 = 0
+//                x2 = A == 0 ? 1 : C/A/size.width.float
+//                
+//                x1 = x2
+//                y2 = A == 0 ? y1 : 1
+//            }
+//            else {
+//                
+//                x1 = 0
+//                y1 = C/B / size.height.float
+//                x2 = 1
+//                y2 = (C - A*size.width.float)/B / size.height.float
+//            }
+//            
+//            let delim  = float2(1)
+//            let point1 = clamp(float2(x1,y1)/delim, min: float2(0), max: float2(1))
+//            let point2 = clamp(float2(x2,y2)/delim, min: float2(0), max: float2(1))
+//            
+//            let segment = IMPLineSegment(p0: point1, p1: point2)
+//            
+//            lines.append(segment)
+//        }
+//        
+//        return lines
+//    }
 
     
 //    private var isReading = false

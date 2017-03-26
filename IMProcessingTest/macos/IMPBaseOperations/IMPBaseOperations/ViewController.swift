@@ -102,7 +102,7 @@ public class TestFilter: IMPFilter {
         extendName(suffix: "Test filter")
         super.configure()
         
-        add(filter: segments)
+//        add(filter: segments)
         
 //        add(filter: median)
 
@@ -126,14 +126,20 @@ public class TestFilter: IMPFilter {
 //        add(filter: harrisCornerDetector)
 //        add(filter: cannyEdgeDetector)
         
-//        var t1 = Date()
+        var t1 = Date()
         var t2 = Date()
         
         addObserver(destinationUpdated: { (source) in
-//            self.harrisCornerDetector.context.runOperation(.async) {
-//                t1 = Date()
-//                self.harrisCornerDetector.source = source
-//            }
+            self.harrisCornerDetector.context.runOperation(.async) {
+                t1 = Date()
+                self.harrisCornerDetector.source = source
+            }
+            
+            self.houghLineDetector.context.runOperation(.async) {
+                t2 = Date()
+                self.houghLineDetector.source = source
+            }
+            
 //            self.lineDetector.context.runOperation(.async) {
 //                t2 = Date()
 //                self.lineDetector.source = source
@@ -159,9 +165,17 @@ public class TestFilter: IMPFilter {
 //                let h = self.filterByDensity(lines: horisontal, theta: M_PI_2.float, size: Int(size.width), count: 16)
 //                let v = self.filterByDensity(lines: vertical, theta: 0, size: Int(size.height), count: 16)
 //                
-//                self.linesHandler?(h, v, size)
+//                self.linesHandler?(horisontal, vertical, size)
 //            }
 //        })
+//        
+        houghLineDetector.addObserver(lines: { (lines, size) in
+            self.context.runOperation(.async) {
+                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")                
+                self.linesHandler?(lines, [], size)
+            }
+        })
+
     }
     
     lazy var segments:IMPSegmentsDetector = IMPSegmentsDetector(context: self.context)

@@ -179,7 +179,7 @@ inline float gaussianDerivativeComponent(
                                          const int offset,
                                          const int pitch ) {
     constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
-
+    
     float3 rgb = source.sample(s, (texCoord + texelSize * float2( offset * pitch))).rgb;
     return IMProcessing::max_component(rgb);
 }
@@ -205,14 +205,16 @@ inline float gaussianDerivative(
 }
 
 kernel void kernel_gaussianDerivativeEdge(
-                                      texture2d<float, access::sample> source     [[texture(0)]],
-                                      texture2d<float, access::write> destination [[texture(1)]],
-                                      uint2 pid [[thread_position_in_grid]]
-                                      ){
+                                          texture2d<float, access::sample> source     [[texture(0)]],
+                                          texture2d<float, access::write> destination [[texture(1)]],
+                                          constant uint                   &pitch  [[buffer(0)]],
+                                          
+                                          uint2 pid [[thread_position_in_grid]]
+                                          ){
     
     float2 texelSizeX = float2(1,0)/float2(destination.get_width(),1);
     float2 texelSizeY = float2(0,1)/float2(1,destination.get_height());
-    constexpr uint pitch = 1;
+    //constexpr uint pitch = 5;
     
     float gx   = gaussianDerivative(source,destination,pid, texelSizeX, pitch);
     float gy   = gaussianDerivative(source,destination,pid, texelSizeY, pitch);
@@ -234,7 +236,7 @@ kernel void kernel_gaussianDerivativeEdge(
         color.rgb = float3(1);
     }
     
-    destination.write(float4(color,1),pid);
+    destination.write(float4(color,1),pid - uint2(pitch-1));
 }
 
 

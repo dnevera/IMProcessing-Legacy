@@ -9,53 +9,72 @@
 import Metal
 
 public class IMPSegmentsDetector: IMPResampler{
+
+    lazy var scanWidth:Int = 40
     
-    lazy var kernleSize:Int = {
-        return Int(sqrt(Float(self.segmentsKernel.maxThreads)))
+    lazy var scanLength:Int = {
+        //return Int(sqrt(Float(self.segmentsKernel.maxThreads)))
+        return self.segmentsKernelX.maxThreads/self.scanWidth
     }()
     
-//    public override var source: IMPImageProvider? {
-//        didSet{
-//            if let size = source?.size {
-//                let gw = (Int(size.width)+regionSize-1)/regionSize
-//                let gh = (Int(size.height)+regionSize-1)/regionSize
-//            }
-//        }
-//        
-//    }
+    public override var source: IMPImageProvider? {
+        didSet{
+            if let size = source?.size {
+                let gw = (Int(size.width)+scanWidth-1)/scanWidth
+                let gh = (Int(size.height)+scanWidth-1)/scanWidth
+                segmentsKernelX.preferedDimension = MTLSize(width: gw, height: scanWidth, depth: 1)
+                segmentsKernelY.preferedDimension = MTLSize(width: scanWidth, height: gh, depth: 1)
+            }
+        }
+        
+    }
     
     public override func configure() {
         extendName(suffix: "SegmentsDetector")
         super.configure()
         
-        erosion.dimensions = (Int(4),Int(4))
-        dilation.dimensions = (Int(4/2),Int(4/2))
-        blur.radius = 2
+        maxSize = 600
         
+        dilation.dimensions = (Int(4),Int(4))
+        erosion.dimensions = dilation.dimensions
+        //blur.radius = 1.5
+        
+        segmentsKernelX.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
+        segmentsKernelY.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
+        //segmentsKernel.preferedDimension     = MTLSize(width: 400, height: self.scanWidth, depth: 1)
 
-        add(filter: blur)
-        add(filter: dilation)
+        gaussDerivativeEdges.pitch = 1
+
+        //add(filter: blur)
         add(filter: erosion)
-
+        add(filter: dilation)
+        
+        //add(filter: canny)
+        
         add(filter: gaussDerivativeEdges)
+        
         add(filter: sobelEdges)
         
-        segmentsKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
-        segmentsKernel.preferedDimension     = MTLSize(width: self.kernleSize, height: self.kernleSize, depth: 1)
-
-        add(function: segmentsKernel)
+        add(function: segmentsKernelX)
+        //{ (result) in
+        //    self.tmpTexture = result.texture
+        //}
+        add(function: segmentsKernelY)
     }
     
+    private var tmpTexture:MTLTexture?
+    
+    private lazy var canny:IMPCannyEdges = IMPCannyEdges(context: self.context)
+
     private lazy var blur:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
     private lazy var erosion:IMPErosion = IMPErosion(context: self.context)
     private lazy var dilation:IMPDilation = IMPDilation(context: self.context)
-
     
     lazy var gaussDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
     lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)
 
-    lazy var segmentsKernel:IMPFunction = {
-        let f = IMPFunction(context: self.context, kernelName: "kernel_segmentsDetector")
+    lazy var segmentsKernelX:IMPFunction = {
+        let f = IMPFunction(context: self.context, kernelName: "kernel_segmentsDetectorX")
         f.optionsHandler = { (function, command, input, output) in
 //            memset(self.edegelSizeBuffer.contents(),0,MemoryLayout<uint>.size)
 //            
@@ -69,4 +88,15 @@ public class IMPSegmentsDetector: IMPResampler{
         return f
 
     }()
+    
+    lazy var segmentsKernelY:IMPFunction = {
+        let f = IMPFunction(context: self.context, kernelName: "kernel_segmentsDetectorY")
+        f.optionsHandler = { (function, command, input, output) in
+            //if let texture = self.tmpTexture {
+            //    command.setTexture(texture, at: 2)
+            //}
+        }
+        return f
+    }()
+
 }
