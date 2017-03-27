@@ -69,7 +69,7 @@ public class IMPSegmentsDetector: IMPResampler{
     
     private lazy var canny:IMPCannyEdges = IMPCannyEdges(context: self.context)
 
-    private lazy var blur:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    private lazy var blur:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     private lazy var erosion:IMPErosion = IMPErosion(context: self.context)
     private lazy var dilation:IMPDilation = IMPDilation(context: self.context)
     

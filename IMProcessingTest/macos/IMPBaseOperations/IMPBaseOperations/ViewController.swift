@@ -23,7 +23,7 @@ public class TestFilter: IMPFilter {
         }
     }
     
-    lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    lazy var blurFilter:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     
     public var blurRadius:Float = 0 {
         didSet{
@@ -117,8 +117,8 @@ public class TestFilter: IMPFilter {
 //        add(filter: posterize)
 
         
-//        add(filter: dilation)
         add(filter: erosion)
+        add(filter: dilation)
 
 //        add(filter: edgels)
 
@@ -162,13 +162,6 @@ public class TestFilter: IMPFilter {
         })
 
         
-        cornersDetector.addObserver { (corners:[IMPCorner], size:NSSize) in
-            self.context.runOperation(.async) {
-                print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
-                self.cornersHandler?(corners,size)
-            }
-        }
-
         harrisCornerDetector.addObserver { (corners:[IMPCorner], size:NSSize) in
             self.context.runOperation(.async) {
                 print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
@@ -221,15 +214,12 @@ public class TestFilter: IMPFilter {
 
     lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext(), filtering:.edges)
     lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
-
-    lazy var cornersDetector:IMPCornersDetector = IMPCornersDetector(context: self.context)
     
     lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
 
     lazy var ciExposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
     lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
     lazy var ciContrast:CIFilter = CIFilter(name:"CIColorControls")!
-    
     
     
     

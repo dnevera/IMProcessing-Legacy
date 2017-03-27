@@ -343,7 +343,7 @@ public class IMPEdgelsDetector: IMPResampler{
     }
     
     private lazy var gaussianDerivative:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
-    private lazy var blur:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    private lazy var blur:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     private lazy var erosion:IMPErosion = IMPErosion(context: self.context)
     private lazy var dilation:IMPDilation = IMPDilation(context: self.context)
     

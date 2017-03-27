@@ -73,6 +73,8 @@ public class IMPHarrisCornerDetector: IMPResampler{
         }
     }
     
+    public var pointsMax:Int = 4096 { didSet{ pointsBuffer = self.pointsBufferGetter() } }
+
     public override func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "HarrisCornerDetector")
         
@@ -113,14 +115,13 @@ public class IMPHarrisCornerDetector: IMPResampler{
         return context.device.makeBuffer(length: MemoryLayout<IMPCorner>.size * Int(pointsMax), options: .storageModeShared)
     }
     
-    public let pointsMax:uint = 4096
     fileprivate lazy var pointsBuffer:MTLBuffer = self.pointsBufferGetter()
     fileprivate lazy var pointsCountBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
     
     lazy var edgeDetector:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
 
     private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context)
-    private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    private lazy var blurFilter:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context)
     private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context)
     
@@ -213,115 +214,4 @@ public class IMPHarrisCornerDetector: IMPResampler{
     }
     
     private lazy var cornersObserverList = [PointsListObserver]()
-}
-
-
-
-
-public class IMPCornersDetector: IMPResampler {
-    
-    public typealias PointsListObserver = ((_ corners: [IMPCorner], _ imageSize:NSSize) -> Void)
-
-    public var passImmediatelyProcessing = true
-
-    public override var source: IMPImageProvider? {
-        didSet{
-            if passImmediatelyProcessing {
-                self.process()
-            }
-        }
-    }
-    
-    public override func configure(complete:CompleteHandler?=nil) {
-        extendName(suffix: "CornersDetector")
-        
-        maxSize = 400
-        harrisCornerDetector.maxSize = nil
-        harrisCornerDetector.passImmediatelyProcessing = false
-
-        super.configure(){ (source) in
-            print(" configure source size = \(source.size)")
-
-            //self.edgeDetector.source = source
-        }
-        
-        add(filter: harrisCornerDetector) { (result) in
-            let pointsCountBuffer = self.harrisCornerDetector.pointsCountBuffer
-            let count = Int(pointsCountBuffer.contents().bindMemory(to: uint.self,
-                                                            capacity: MemoryLayout<uint>.size).pointee)
-            
-            self.regionScannerKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
-            self.regionScannerKernel.preferedDimension = MTLSize(width: count, height: 1, depth: 1)
-        }
-        
-        add(function: regionScannerKernel){ (source) in
-            print(" add source size = \(source.size)")
-            self.readCorners(source)
-            complete?(source)
-        }
-    }
-    
-    lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
-    
-    //lazy var edgeDetector:IMPCannyEdges = IMPCannyEdges(context:  IMPContext())
-    //lazy var edgeDetector:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
-    
-    private lazy var regionScannerKernel:IMPFunction = {
-        let f = IMPFunction(context: self.context, kernelName: "kernel_pointsRegionScanner")
-        
-        f.optionsHandler = { (function, command, input, output) in
-            
-            command.setBuffer(self.harrisCornerDetector.pointsBuffer,      offset: 0, at: 0)
-            command.setBuffer(self.harrisCornerDetector.pointsCountBuffer, offset: 0, at: 1)
-            
-            var mmx = uint(self.harrisCornerDetector.pointsMax)
-            command.setBytes(&mmx, length: MemoryLayout.size(ofValue: mmx), at: 2)
-            
-            command.setBuffer(self.cornersBuffer, offset: 0, at: 3)
-
-//            if let texture = self.edgeDetector.destination.texture {
-//                command.setTexture(texture, at: 2)
-//            }
-            if let texture = self.harrisCornerDetector.derivativeTexture {
-                command.setTexture(texture, at: 2)
-            }
-
-        }
-        
-        return f
-    }()
-
-    fileprivate lazy var cornersBuffer:MTLBuffer = self.context.device.makeBuffer(
-        length: MemoryLayout<IMPCorner>.size * Int(self.harrisCornerDetector.pointsMax),
-        options: .storageModeShared)
-
-    
-    fileprivate func getPoints(_ countBuff:MTLBuffer, _ maximumsBuff:MTLBuffer) -> [IMPCorner] {
-        
-        let count = Int(countBuff.contents().bindMemory(to: uint.self,
-                                                        capacity: MemoryLayout<uint>.size).pointee)
-        
-        var maximums = [IMPCorner](repeating:IMPCorner(), count:  count)
-        
-        memcpy(&maximums, maximumsBuff.contents(), MemoryLayout<IMPCorner>.size * count)
-        
-        return maximums //.sorted { return $0.y>$1.y }
-    }
-
-    
-    fileprivate func readCorners(_ destination: IMPImageProvider) {
-        guard let size = destination.size else { return }
-        
-        let points = getPoints(harrisCornerDetector.pointsCountBuffer,cornersBuffer)
-        
-        for o in cornersObserverList {
-            o(points,size)
-        }
-    }
-    
-    func addObserver(corners observer: @escaping PointsListObserver) {
-        cornersObserverList.append(observer)
-    }
-    private lazy var cornersObserverList = [PointsListObserver]()
-
 }

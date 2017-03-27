@@ -23,160 +23,6 @@ using namespace metal;
 
 #ifdef __cplusplus
 
-//typedef struct {
-//};
-
-inline float2 edgeSlope(texture2d<float, access::sample> source, texture2d<float, access::write> destination, int x, int y ){
-    float4 inColor = IMProcessing::sampledColor(source, destination, uint2(x,y));
-    return  source.read(uint2(x, y)).rb;
-}
-
-inline float2 edgeSlope__(texture2d<float> source, int x, int y )
-{
-    float gx =  source.read(uint2(x-1, y-1)).r;
-    
-    gx += 2 * source.read(uint2( x, y-1)).r;
-    gx += source.read(uint2(x+1, y-1)).r;
-    gx -= source.read(uint2(x-1, y+1)).r;
-    gx -= 2 * source.read(uint2(x, y+1)).r;
-    gx -= source.read(uint2(x+1, y+1)).r;
-    
-    float gy = source.read(uint2( x-1, y-1)).r;
-    gy += 2 * source.read(uint2( x-1, y)).r;
-    gy += source.read(uint2( x-1, y+1)).r;
-    gy -= source.read(uint2( x+1, y-1)).r;
-    gy -= 2 * source.read(uint2( x+1, y)).r;
-    gy -= source.read(uint2( x+1, y+1)).r;
-    
-    float2 slope = float2(gx, gy);
-    
-    if (gx!=0 && gy!=0){
-        slope = normalize(float2(gx, gy));
-    }
-    
-    return slope;
-}
-
-
-kernel void kernel_pointsRegionScanner(
-                                       texture2d<float, access::sample> suppression      [[texture(0)]],
-                                       texture2d<float, access::write>  destination      [[texture(1)]],
-                                       texture2d<float, access::sample> source           [[texture(2)]],
-                                       
-                                       constant float2  *points     [[ buffer(0) ]],
-                                       constant uint    &size       [[ buffer(1) ]],
-                                       constant uint    &pointsMax  [[ buffer(2) ]],
-                                       device   IMPCorner *corners [[ buffer(3) ]],
-                                       
-                                       uint  pointIndex  [[thread_position_in_grid]]
-                                )
-{
-    uint width  = suppression.get_width();
-    uint height = suppression.get_height();
-    
-    int  regionSize = 32;
-    int2 point = int2(points[pointIndex] * float2(width,height));
-    
-    IMPCorner corner;
-    corner.point = points[pointIndex];
-    corner.slops = float4(0);
-
-    //
-    // scan left half
-    //
-    //
-    float slope_summ = 0;
-    float count = 0;
-    
-    for(int x = -regionSize/2; x<0; x++ ){
-        for(int y = -regionSize/2; y<regionSize/2; y++ ){
-            
-            int2 gid = int2(point+int2(x,y));
-            
-            float2 slope = edgeSlope(source, destination, gid.x, gid.y);
-            
-            slope_summ += slope.x;
-            count += 1;
-            
-            destination.write(float4(slope,0,1),uint2(gid));
-        }
-    }
-    
-    corner.slops.x = slope_summ;//count;
-    
-    slope_summ = 0;
-    count = 0;
-    
-    //
-    // scan right half
-    //
-    for(int x = 1; x<=regionSize/2; x++ ){
-        for(int y = -regionSize/2; y<=regionSize/2; y++ ){
-            
-            int2 gid = int2(point+int2(x,y));
-            
-            float2 slope = edgeSlope(source, destination, gid.x, gid.y);
-            
-            slope_summ += slope.x;
-            count += 1;
-            
-            destination.write(float4(slope,0,1),uint2(gid));
-        }
-    }
-    
-    corner.slops.w = slope_summ;//count;
-    
-    slope_summ = 0;
-    count = 0;
-    
-    //
-    // scan top half
-    //
-    for(int x = -regionSize/2; x<=regionSize/2; x++ ){
-        for(int y = -regionSize/2; y<0; y++ ){
-            
-            int2 gid = int2(point+int2(x,y));
-            
-            float2 slope = edgeSlope(source, destination, gid.x, gid.y);
-            
-            slope_summ += slope.y;
-            count += 1;
-            
-            destination.write(float4(slope,0,1),uint2(gid));
-        }
-    }
-    
-    corner.slops.y = slope_summ;//count;
-
-    slope_summ = 0;
-    count = 0;
-    
-    //
-    // scan top half
-    //
-    for(int x = -regionSize/2; x<=regionSize/2; x++ ){
-        for(int y = 1; y<=regionSize/2; y++ ){
-            
-            int2 gid = int2(point+int2(x,y));
-            
-            float2 slope = edgeSlope(source, destination, gid.x, gid.y);
-            
-            slope_summ += slope.y;
-            count += 1;
-            
-            //destination.write(float4(slope,0,1),uint2(gid));
-        }
-    }
-    
-    corner.slops.z = slope_summ;//count;
-    
-    if (length(corner.slops)>0){
-        corner.slops = normalize(corner.slops);
-    }
-    
-    
-    corners[pointIndex] = corner;
-}
 
 inline float2 getSlops(int startx, int endx, int starty, int endy, uint2 gid,
                        texture2d<float>  derivative,
@@ -188,14 +34,9 @@ inline float2 getSlops(int startx, int endx, int starty, int endy, uint2 gid,
         for(int j = starty; j<endy; j++ ){
             uint2 gid2 = uint2(int2(gid)+int2(i,j));
             float2 s = derivative.read(gid2).xy;
-            //destination.write(float4(s,0,1),gid2);
             slops += s;
         }
     }
-    
-    //if (length(slops)>0){
-    //    slops = normalize(slops);
-    //}
     
     return slops.yx;
 }
@@ -253,18 +94,11 @@ kernel void kernel_pointsScanner(
                 corner.slops.y  = getSlops(rs, re, rs, 0,   gid, derivative,destination).y;
                 corner.slops.z  = getSlops(rs, re, 0,  re,  gid, derivative,destination).y;
                 corner.slops.w  = getSlops(0,  re, rs, re,  gid, derivative,destination).x;
-                //corner.slops.xw += getSlops(rs, 0,  0,  re, gid,derivative,destination).xy;
-                
-                //corner.slops.z = getSlops(rs,re,1,re,gid,derivative).y;
-                //corner.slops.y = getSlops(rs,re,rs,0,gid,derivative).y;
 
                 if (length(corner.slops)){
                     corner.slops = normalize(corner.slops);
                 }
-                
-                //corner.slops.y = getSlops(rs,re,rs,0,gid,derivative).y;
-                //corner.slops.z = getSlops(rs,re,0,re,gid,derivative).y;
-                
+                                
                 corners[index] = corner;
             }
         }

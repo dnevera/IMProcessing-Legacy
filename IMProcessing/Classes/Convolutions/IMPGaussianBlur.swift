@@ -15,7 +15,7 @@ import Foundation
 import Accelerate
 import simd
 
-public class IMPGaussianBlurFilter: IMPFilter {
+public class IMPGaussianBlur: IMPFilter {
     
     public override var source: IMPImageProvider? {
         didSet{
@@ -42,13 +42,13 @@ public class IMPGaussianBlurFilter: IMPFilter {
     
     public var radius:Float = 0 {
         didSet{
-            if radius < IMPGaussianBlurFilter.radiusRange.minimum {
+            if radius < IMPGaussianBlur.radiusRange.minimum {
                 radius = 0
             }
             else {
-                radius = fmin(IMPGaussianBlurFilter.radiusRange.maximum,
+                radius = fmin(IMPGaussianBlur.radiusRange.maximum,
                               fmax(radius,
-                                   IMPGaussianBlurFilter.radiusRange.minimum))
+                                   IMPGaussianBlur.radiusRange.minimum))
             }
             update()
         }
@@ -133,7 +133,7 @@ public class IMPGaussianBlurFilter: IMPFilter {
         var offsets:[Float] = [Float]()
         var weights:[Float] = [Float]()
         
-        if radius > IMPGaussianBlurFilter.radiusRange.minimum {
+        if radius > IMPGaussianBlur.radiusRange.minimum {
             var
             factor = float2(1/newSize.width.float, 0)
             memcpy(hTexelSizeBuffer.contents(), &factor, hTexelSizeBuffer.length)

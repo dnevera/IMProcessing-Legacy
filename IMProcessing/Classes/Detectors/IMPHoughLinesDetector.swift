@@ -47,7 +47,7 @@ fileprivate class IMPHoughSpaceHarrisConner:IMPResampler{
     }
     
     private lazy var xyDerivative:IMPXYDerivative = IMPXYDerivative(context: self.context)
-    private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    private lazy var blurFilter:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context)
     private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context)
 }

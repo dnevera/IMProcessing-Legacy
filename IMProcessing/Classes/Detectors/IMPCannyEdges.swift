@@ -72,7 +72,7 @@ public class IMPCannyEdges: IMPResampler{
     
     private lazy var luminance:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_luminance")
     
-    private lazy var blurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    private lazy var blurFilter:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     private lazy var directionalNonMaximumSuppression:IMPDirectionalNonMaximumSuppression = IMPDirectionalNonMaximumSuppression(context: self.context)
 
     private lazy var sobelEdgeFilter:IMPDerivative = IMPDerivative(context: self.context, functionName: "fragment_directionalSobelEdge")
