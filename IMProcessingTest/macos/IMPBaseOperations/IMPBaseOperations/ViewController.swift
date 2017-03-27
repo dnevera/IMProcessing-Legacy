@@ -137,26 +137,27 @@ public class TestFilter: IMPFilter {
         
 //        add(filter: cannyEdgeDetector)
         
+        let resampler = IMPResampler(context:context)
+        resampler.maxSize = 600
         
         addObserver(destinationUpdated: { (source) in
-//            self.cornersDetector.context.runOperation(.async) {
-//                t1 = Date()
-//                self.cornersDetector.source = source
-//            }
-
+        
+            resampler.source = source
+            let dest = resampler.destination
+            
             self.harrisCornerDetector.context.runOperation(.async) {
                 t1 = Date()
-                self.harrisCornerDetector.source = source
+                self.harrisCornerDetector.source = dest
             }
             
-//            self.houghLineDetector.context.runOperation(.async) {
-//                t2 = Date()
-//                self.houghLineDetector.source = source
-//            }
+            self.houghLineDetector.context.runOperation(.async) {
+                t2 = Date()
+                self.houghLineDetector.source = dest
+            }
             
 //            self.lineDetector.context.runOperation(.async) {
 //                t2 = Date()
-//                self.lineDetector.source = source
+//                self.lineDetector.source = dest
 //            }
             
         })
@@ -169,35 +170,34 @@ public class TestFilter: IMPFilter {
             }
         }
 
-//        lineDetector.addObserver(lines: { (horisontal, vertical, size) in
-//            self.context.runOperation(.async) {
-//                print(" lines[n:\(horisontal.count, vertical.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-//
-//                //let quads = self.squaresDetector(horizontalLines: horsontal, verticalLines: horsontal, size: size)
-//                
-//                //let cartezianH  = IMPLineSegment(line: horsontal, size: size)
-//                //let cartezianV  = IMPLineSegment(line: vertical, size: size)
-//                
-//                let h = self.filterByDensity(lines: horisontal, theta: M_PI_2.float, size: Int(size.width), count: 16)
-//                let v = self.filterByDensity(lines: vertical, theta: 0, size: Int(size.height), count: 16)
-//                
-//                self.linesHandler?(horisontal, vertical, size)
-//            }
-//        })
-//        
-//        houghLineDetector.addObserver(lines: { (lines, size) in
-//            self.context.runOperation(.async) {
-//                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-//                self.linesHandler?(lines, [], size)
-//            }
-//        })
+        lineDetector.addObserver(lines: { (horisontal, vertical, size) in
+            self.context.runOperation(.async) {
+                print(" lines[n:\(horisontal.count, vertical.count)] detector time = \(-t2.timeIntervalSinceNow) ")
+
+                //let quads = self.squaresDetector(horizontalLines: horsontal, verticalLines: horsontal, size: size)
+                
+                //let h = self.filterByDensity(lines: horisontal, theta: M_PI_2.float, size: Int(size.width), count: 16)
+                //let v = self.filterByDensity(lines: vertical, theta: 0, size: Int(size.height), count: 16)
+                
+                self.linesHandler?(horisontal, vertical, size)
+            }
+        })
+        
+        houghLineDetector.addObserver(lines: { (lines, size) in
+            self.context.runOperation(.async) {
+                print(" lines[n:\(lines.count)] detector time = \(-t2.timeIntervalSinceNow) ")
+                self.linesHandler?(lines, [], size)
+            }
+        })
 
     }
     
     lazy var segments:IMPSegmentsDetector = IMPSegmentsDetector(context: self.context)
     
     lazy var gDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
-    lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)
+    //lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)
+    lazy var sobelEdges:IMPSobelEdgesGradient = IMPSobelEdgesGradient(context: self.context)
+    //lazy var sobelEdges:IMPSobelEdgesRasterized = IMPSobelEdgesRasterized(context: self.context)
     
     lazy var edgels:IMPEdgelsDetector = IMPEdgelsDetector(context: self.context)
     
@@ -210,9 +210,9 @@ public class TestFilter: IMPFilter {
     
     lazy var cannyEdgeDetector:IMPCannyEdges = IMPCannyEdges(context: self.context)
     
-    lazy var lineDetector:IMPLinesDetector = IMPLinesDetector(context:  IMPContext())
+    lazy var lineDetector:IMPOrientedLinesDetector = IMPOrientedLinesDetector(context:  IMPContext())
 
-    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext(), filtering:.edges)
+    lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext())
     lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
     
     lazy var crosshairGenerator:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)

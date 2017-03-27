@@ -56,9 +56,10 @@ public class IMPCannyEdges: IMPResampler{
 
     
     public override func configure(complete:CompleteHandler?=nil) {
+        
         extendName(suffix: "CannyEdgeDetector")
         super.configure()
-        
+            
         blurRadius = IMPCannyEdges.defaultBlurRadius
 
         add(function: luminance)
@@ -75,6 +76,9 @@ public class IMPCannyEdges: IMPResampler{
     private lazy var blurFilter:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     private lazy var directionalNonMaximumSuppression:IMPDirectionalNonMaximumSuppression = IMPDirectionalNonMaximumSuppression(context: self.context)
 
-    private lazy var sobelEdgeFilter:IMPDerivative = IMPDerivative(context: self.context, functionName: "fragment_directionalSobelEdge")
+    private lazy var sobelEdgeFilter:IMPSobelEdges = IMPSobelEdges(context: self.context)
+    //private lazy var sobelEdgeFilter:IMPDerivative = IMPDerivative(context: self.context, functionName: "fragment_directionalSobelEdge")
+    //private lazy var sobelEdgeFilter:IMPSobelEdgesGradient = IMPSobelEdgesGradient(context: self.context)
+    
     private lazy var weakPixelInclusion:IMPDerivative = IMPDerivative(context: self.context, functionName: "fragment_weakPixelInclusion")
 }

@@ -10,7 +10,6 @@ import Foundation
 import Metal
 import Accelerate
 
-
 /** Harris corner detector
  
  First pass: reduce to luminance and take the derivative of the luminance texture (GPUImageXYDerivativeFilter)
@@ -25,7 +24,7 @@ import Accelerate
  Sources:  https://github.com/BradLarson/GPUImage2
  
  */
-public class IMPHarrisCornerDetector: IMPResampler{
+public class IMPHarrisCornerDetector: IMPDetector{
     
     public typealias PointsListObserver = ((_ corners: [IMPCorner], _ imageSize:NSSize) -> Void)
     
@@ -63,16 +62,7 @@ public class IMPHarrisCornerDetector: IMPResampler{
         get{ return nonMaximumSuppression.threshold }
     }
     
-    public var passImmediatelyProcessing = true
-    
-    public override var source: IMPImageProvider? {
-        didSet{
-            if passImmediatelyProcessing {
-                self.process()
-            }
-        }
-    }
-    
+   
     public var pointsMax:Int = 4096 { didSet{ pointsBuffer = self.pointsBufferGetter() } }
 
     public override func configure(complete:CompleteHandler?=nil) {
@@ -80,7 +70,6 @@ public class IMPHarrisCornerDetector: IMPResampler{
         
         super.configure()
         
-        maxSize = 800
         blurRadius  = IMPHarrisCornerDetector.defaultBlurRadius
         sensitivity = IMPHarrisCorner.defaultSensitivity
         threshold   = IMPNonMaximumSuppression.defaultThreshold
@@ -124,10 +113,6 @@ public class IMPHarrisCornerDetector: IMPResampler{
     private lazy var blurFilter:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     private lazy var harrisCorner:IMPHarrisCorner = IMPHarrisCorner(context: self.context)
     private lazy var nonMaximumSuppression:IMPNonMaximumSuppression = IMPNonMaximumSuppression(context: self.context)
-    
-    private lazy var regionSize:Int = {
-        return Int(sqrt(Float(self.pointsScannerKernel.maxThreads)))
-    }()
     
     private lazy var pointsScannerKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_pointsScanner")

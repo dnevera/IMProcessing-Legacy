@@ -1,6 +1,7 @@
 //: Playground - noun: a place where people can play
 
 import Cocoa
+import Metal
 
 var str = "Hello, playground"
 
@@ -12,3 +13,8 @@ a.indices.count.toIntMax()
 
 
 MemoryLayout.size(ofValue: a) * Int(a.count.toIntMax())
+
+let dev = MTLCreateSystemDefaultDevice()
+let d = dev?.maxThreadsPerThreadgroup
+
+print(d)

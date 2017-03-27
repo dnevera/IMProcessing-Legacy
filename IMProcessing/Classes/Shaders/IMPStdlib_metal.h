@@ -37,6 +37,8 @@
 #include "IMPSobelEdges_metal.h"
 #include "IMPSegmentsDetector_metal.h"
 #include "IMPHarrisCornersDetector_metal.h"
+#include "IMPHarrisCorners_metal.h"
+#include "IMPConvolution_metal.h"
 
 //#include "IMPHistogram_metal.h"
 //#include "IMPHistogramLayer_metal.h"

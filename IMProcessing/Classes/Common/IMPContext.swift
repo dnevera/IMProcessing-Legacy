@@ -158,6 +158,11 @@ open class IMPContext {
         return self.commandQueue?.makeCommandBuffer()
     }
     
+    public var maxThreads:MTLSize {
+        return device.maxThreadsPerThreadgroup
+    }
+
+    
     ///  The main idea context execution: all filters should put commands in context queue within the one execution.
     ///
     ///  - parameter closure: execution context

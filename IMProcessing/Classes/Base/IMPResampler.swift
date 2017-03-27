@@ -47,9 +47,6 @@ open class IMPResampler: IMPFilter{
         self.complete = complete
         extendName(suffix: "Resampler")
         super.configure()
-        //add(filter: resampler){ (source) in
-        //    complete?(source)
-        //}
     }
     
     private lazy var resampleShader:IMPShader = IMPShader(context: self.context)

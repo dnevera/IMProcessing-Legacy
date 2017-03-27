@@ -78,7 +78,7 @@ kernel void kernel_median3x3(texture2d<float, access::sample> source  [[texture(
     float2 texelSize = float2(1)/float2(source.get_width(),source.get_height());
     float2 texCoord  = float2(gid)*texelSize;
     
-    IMProcessing::CornerColors corner(source,texCoord,1);
+    IMProcessing::Kernel3x3Colors corner(source,texCoord,1);
     
     
     float3 v[6];

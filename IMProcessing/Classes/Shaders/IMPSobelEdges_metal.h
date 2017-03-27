@@ -28,135 +28,93 @@ using namespace metal;
 #define EDGELSONLINE 5
 
 
-inline float3 sobelEdgeGradientIntensity(
-                                    texture2d<float> source      [[texture(2)]],
-                                    int x, int y
-                                    )
+kernel void kernel_directionalSobelEdge(
+                                        texture2d<float, access::sample> source  [[texture(0)]],
+                                        texture2d<float, access::write>  destination [[texture(1)]],
+                                        const device float3x3 &Gx [[ buffer(0) ]],
+                                        const device float3x3 &Gy [[ buffer(1) ]],
+                                        uint2 gid [[thread_position_in_grid]]
+                                        )
 {
-    float gx =  source.read(uint2(x-1, y-1)).r;
-    gx += 2 * source.read(uint2( x, y-1)).r;
-    gx += source.read(uint2(x+1, y-1)).r;
-    gx -= source.read(uint2(x-1, y+1)).r;
-    gx -= 2 * source.read(uint2(x, y+1)).r;
-    gx -= source.read(uint2(x+1, y+1)).r;
+    IMProcessing::Kernel3x3Colors corner(source,destination,gid,1);
     
-    float gy = source.read(uint2( x-1, y-1)).r;
-    gy += 2 * source.read(uint2( x-1, y)).r;
-    gy += source.read(uint2( x-1, y+1)).r;
-    gy -= source.read(uint2( x+1, y-1)).r;
-    gy -= 2 * source.read(uint2( x+1, y)).r;
-    gy -= source.read(uint2( x+1, y+1)).r;
+    float2 g(corner.convolveLuma(Gx),corner.convolveLuma(Gy));
     
-    float2 slope = float2(gx, gy);
+    float  m = length(g);
+    float2 d = normalize(g);
     
-    if (gx!=0 && gy!=0){
-        slope = normalize(float2(gx, gy));
+    // Offset by 1-sin(pi/8) to set to 0 if near axis, 1 if away
+    d = sign(d) * floor(abs(d) + 0.617316);
+    
+    // Place -1.0 - 1.0 within 0 - 1.0
+    d = (d + 1.0) * 0.5;
+    
+    destination.write( float4(m, d.x, d.y, 1.0),gid);
+}
+
+inline float3 sobelEdgeGradientIntensity(texture2d<float> source,
+                                         texture2d<float, access::write>  destination,
+                                         const device float3x3 &Gx [[ buffer(0) ]],
+                                         const device float3x3 &Gy [[ buffer(1) ]],
+                                         uint2 gid)
+{
+    
+    IMProcessing::Kernel3x3Colors corner(source,destination,gid,1);
+    
+    float2 g(corner.convolveLuma(Gx),corner.convolveLuma(Gy));
+    
+    float2 slope = float2(g.y, g.x);
+    
+    if (length(slope)>0){
+        slope = normalize(slope);
     }
     
     return float3(0, slope);
 }
 
 
-kernel void kernel_sobelEdges(
-                              texture2d<float, access::sample> derivative  [[texture(0)]],
-                              texture2d<float, access::write>  destination [[texture(1)]],
-                              uint2 gid [[thread_position_in_grid]]
-                              )
+kernel void kernel_sobelEdgesGradient(
+                                      texture2d<float, access::sample> derivative  [[texture(0)]],
+                                      texture2d<float, access::write>  destination [[texture(1)]],
+                                      const device float3x3 &Gx [[ buffer(0) ]],
+                                      const device float3x3 &Gy [[ buffer(1) ]],
+                                      uint2 gid [[thread_position_in_grid]]
+                                      )
 {
-    float3 slope = sobelEdgeGradientIntensity(derivative, gid.x, gid.y);
+    float3 slope = sobelEdgeGradientIntensity(derivative, destination, Gx, Gy, gid);
+    
     if (length(slope)>0 && (slope.y>=1 || slope.z>=1)){
         destination.write(float4(slope,1),gid);
     }
     else {
         destination.write(float4(float3(0),1),gid);
     }
- }
-
-
-kernel void kernel_rasterizedSobelEdges(
-                          texture2d<float, access::sample> derivative  [[texture(0)]],
-                          texture2d<float, access::write>  destination [[texture(1)]],
-                          constant uint                   &rasterSize  [[buffer(0)]],
-                                                    
-                          uint2 groupId   [[threadgroup_position_in_grid]],
-                          uint2 gridSize  [[threadgroups_per_grid]],
-                          uint2 pid [[thread_position_in_grid]]
-                          )
-{
-    uint width  = destination.get_width();
-    uint height = destination.get_height();
-    
-    uint gw = (width+gridSize.x-1)/gridSize.x;
-    uint gh = (height+gridSize.y-1)/gridSize.y;
-    
-    for (uint y=0; y<gh; y+=1){
-        uint ry = y + groupId.y * gh;
-        if (ry > height) break;
-        for (uint x=0; x<gw; x+=1){
-            uint rx = x + groupId.x * gw;
-            if (rx > width) break;
-            destination.write(float4(0), uint2(rx,ry));
-        }
-    }
-    
-    for (uint y=0; y<gh; y+=rasterSize){
-        float prev1 =0.0, prev2 = 0.0;
-        
-        uint ry = y + groupId.y * gh;
-        
-        if (ry > height) break;
-        
-        for (uint x=0; x<gw; x+=1){
-            
-            uint rx = x + groupId.x * gw;
-            
-            if (rx > width) break;
-            
-            uint2 gid(rx,ry);
-            
-            float3 current = derivative.read(gid).rgb;
-            
-            if( prev1 > 0.0f && prev1 >= prev2 && prev1 >= current.r ) {
-                float3 slope = sobelEdgeGradientIntensity(derivative, rx, ry);
-                if (length(slope)>0){
-                    if (slope.y>=1 || slope.z>=1)
-                    destination.write(float4(slope,1),gid-uint2(rasterSize));
-                }
-            }
-            prev2 = prev1;
-            prev1 = current.r;
-        }
-    }
-    
-    for (uint x=0; x<gw; x+=rasterSize){
-        float prev1 =0.0, prev2 = 0.0;
-        
-        uint rx = x + groupId.x * gw;
-        
-        if (rx > width) break;
-        
-        for (uint y=0; y<gh; y+=1){
-            
-            uint ry = y + groupId.y * gh;
-            
-            if (ry > width) break;
-            
-            uint2 gid(rx,ry);
-            
-            float3 current = derivative.read(gid).rgb;
-            
-            if( prev1 > 0.0f && prev1 >= prev2 && prev1 >= current.r ) {
-                float3 slope = sobelEdgeGradientIntensity(derivative, rx, ry);
-                if (length(slope)>0){
-                    if (slope.y>1 || slope.z>=1)
-                    destination.write(float4(slope,1),gid-uint2(rasterSize));
-                }
-            }
-            prev2 = prev1;
-            prev1 = current.r;
-        }
-    }
 }
+
+
+
+//
+// GPUImage2
+//
+//
+// fragment float4 fragment_sobelEdge(
+//                                   IMPVertexOut in [[stage_in]],
+//                                   texture2d<float, access::sample> texture [[ texture(0) ]],
+//                                   const device float &radius [[ buffer(0) ]]
+//                                   ) {
+//
+//    IMProcessing::Kernel3x3Colors corner(texture,in.texcoord.xy,radius);
+//
+//    float x = -corner.top.leftLuma() - 2.0 * corner.top.centerLuma() - corner.top.rightLuma() + \
+//    corner.bottom.leftLuma() + 2.0 * corner.bottom.centerLuma() + corner.bottom.rightLuma();
+//
+//    float y = -corner.bottom.leftLuma() - 2.0 * corner.mid.leftLuma() -  corner.top.leftLuma() + \
+//    corner.bottom.rightLuma() + 2.0 * corner.mid.rightLuma() + corner.top.rightLuma();
+//
+//    float mag = length(float2(x, y)) * 1;
+//
+//    return float4(float3(mag),1);
+//}
 
 #endif // __cplusplus
 #endif // __METAL_VERSION__

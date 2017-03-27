@@ -30,7 +30,7 @@ fragment float4 fragment_xyDerivative(
                                       const device float &radius [[ buffer(0) ]]
                                       ) {
     
-    IMProcessing::CornerColors corner(texture,in.texcoord.xy,radius);
+    IMProcessing::Kernel3x3Colors corner(texture,in.texcoord.xy,radius);
     
     float vd = - corner.top.leftLuma() - corner.top.centerLuma() - corner.top.rightLuma() \
     + corner.bottom.leftLuma() + corner.bottom.centerLuma() + corner.bottom.rightLuma();
@@ -55,7 +55,7 @@ fragment float4 fragment_nonMaximumSuppression(
                                                const device float               &threshold [[ buffer(1) ]]
                                                ) {
     
-    IMProcessing::CornerColors corner(texture,in.texcoord.xy, radius);
+    IMProcessing::Kernel3x3Colors corner(texture,in.texcoord.xy, radius);
     
     // Use a tiebreaker for pixels to the left and immediately above this one
     
@@ -77,54 +77,6 @@ fragment float4 fragment_nonMaximumSuppression(
     
     return float4(finalValue, finalValue, finalValue, 1.0);
     
-}
-
-fragment float4 fragment_directionalSobelEdge(
-                                              IMPVertexOut in [[stage_in]],
-                                              texture2d<float, access::sample> texture [[ texture(0) ]],
-                                              const device float &radius [[ buffer(0) ]]
-                                              ) {
-    
-    IMProcessing::CornerColors corner(texture,in.texcoord.xy,radius);
-    
-    float2 gradientDirection;
-    gradientDirection.x = -corner.bottom.leftLuma() - 2.0 * corner.mid.leftLuma() \
-    - corner.top.leftLuma() + corner.bottom.rightLuma() + 2.0 * corner.mid.rightLuma() + corner.top.rightLuma();
-    
-    gradientDirection.y = -corner.top.leftLuma() - 2.0 * corner.top.centerLuma() \
-    - corner.top.rightLuma() + corner.bottom.leftLuma() + 2.0 * corner.bottom.centerLuma() + corner.bottom.rightLuma();
-    
-    float gradientMagnitude = length(gradientDirection);
-    float2 normalizedDirection = normalize(gradientDirection);
-    
-    // Offset by 1-sin(pi/8) to set to 0 if near axis, 1 if away
-    normalizedDirection = sign(normalizedDirection) * floor(abs(normalizedDirection) + 0.617316);
-    
-    // Place -1.0 - 1.0 within 0 - 1.0
-    normalizedDirection = (normalizedDirection + 1.0) * 0.5;
-    
-    return float4(gradientMagnitude, normalizedDirection.x, normalizedDirection.y, 1.0);
-}
-
-
-fragment float4 fragment_harrisCorner(
-                                      IMPVertexOut in [[stage_in]],
-                                      texture2d<float, access::sample> texture [[ texture(0) ]],
-                                      const device float &sensitivity [[ buffer(0)  ]]
-                                      ) {
-    constexpr float k = 0.04;
-    
-    // (Ix^2,Iy^2)
-    float3 I2 = texture.sample(IMProcessing::cornerSampler, in.texcoord.xy).rgb;
-    
-    float I2S = I2.x + I2.y;
-    
-    float Ixy2 = (I2.z * 2.0) - 1.0;
-    
-    // R = Ix^2 * Iy^2 - Ixy * Ixy - k * (Ix^2 + Iy^2)^2
-    float cornerness = I2.x * I2.y - Ixy2 * Ixy2 - k * I2S * I2S;
-    
-    return float4(float3(cornerness * sensitivity), 1.0);
 }
 
 fragment float4 fragment_directionalNonMaximumSuppression(
@@ -160,7 +112,7 @@ fragment float4 fragment_weakPixelInclusion(
                                             const device float &radius [[ buffer(0) ]]
                                             ) {
     
-    IMProcessing::CornerColors corner(texture,in.texcoord.xy,radius);
+    IMProcessing::Kernel3x3Colors corner(texture,in.texcoord.xy,radius);
     
     float sum = corner.bottom.leftLuma() + corner.top.rightLuma() + corner.top.leftLuma() + \
     corner.bottom.rightLuma() + corner.mid.leftLuma() + corner.mid.rightLuma() + corner.bottom.centerLuma() +\

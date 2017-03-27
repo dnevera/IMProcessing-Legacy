@@ -43,7 +43,7 @@ public class IMPSegmentsDetector: IMPResampler{
         segmentsKernelY.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
         //segmentsKernel.preferedDimension     = MTLSize(width: 400, height: self.scanWidth, depth: 1)
 
-        gaussDerivativeEdges.pitch = 1
+        //gaussDerivativeEdges.pitch = 1
 
         //add(filter: blur)
         add(filter: erosion)
@@ -51,7 +51,7 @@ public class IMPSegmentsDetector: IMPResampler{
         
         //add(filter: canny)
         
-        add(filter: gaussDerivativeEdges)
+        //add(filter: gaussDerivativeEdges)
         
         add(filter: sobelEdges)
         
@@ -73,8 +73,8 @@ public class IMPSegmentsDetector: IMPResampler{
     private lazy var erosion:IMPErosion = IMPErosion(context: self.context)
     private lazy var dilation:IMPDilation = IMPDilation(context: self.context)
     
-    lazy var gaussDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
-    lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)
+    //lazy var gaussDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
+    lazy var sobelEdges:IMPSobelEdgesGradient = IMPSobelEdgesGradient(context: self.context)
 
     lazy var segmentsKernelX:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_segmentsDetectorX")

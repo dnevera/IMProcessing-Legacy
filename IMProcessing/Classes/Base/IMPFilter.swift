@@ -29,6 +29,8 @@ public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider
     init(context:IMPContext, name: String?)
     
     func configure(complete:CompleteHandler?)
+    
+    func process(with resampleSize:NSSize?)
 }
 
 open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
