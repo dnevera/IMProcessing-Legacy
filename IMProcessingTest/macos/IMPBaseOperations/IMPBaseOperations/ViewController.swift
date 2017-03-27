@@ -109,36 +109,30 @@ public class TestFilter: IMPFilter {
 //        add(filter: segments)
         
 //        add(filter: median)
-
+//
 //        add(function: kernelEV)
 //        add(filter: blurFilter)
 //        add(filter: ciContrast)
 
-//        add(filter: posterize)
-
+        add(filter: posterize)
         
         add(filter: erosion)
         add(filter: dilation)
 
 //        add(filter: edgels)
-
 //        add(filter:gDerivativeEdges)
 //        add(filter:sobelEdges)
+//        add(filter: cannyEdgeDetector)
         
 //        add(filter: lineDetector)
-        
 //        add(filter: harrisCornerDetector)
-        
 //        cornersDetector.addObserver(newSource: { (source) in
 //            t1 = Date()
 //        })
-        
 //        add(filter: cornersDetector)
         
-//        add(filter: cannyEdgeDetector)
-        
         let resampler = IMPResampler(context:context)
-        resampler.maxSize = 600
+        resampler.maxSize = 800
         
         addObserver(destinationUpdated: { (source) in
         
@@ -150,15 +144,15 @@ public class TestFilter: IMPFilter {
                 self.harrisCornerDetector.source = dest
             }
             
-            self.houghLineDetector.context.runOperation(.async) {
-                t2 = Date()
-                self.houghLineDetector.source = dest
-            }
-            
-//            self.lineDetector.context.runOperation(.async) {
+//            self.houghLineDetector.context.runOperation(.async) {
 //                t2 = Date()
-//                self.lineDetector.source = dest
+//                self.houghLineDetector.source = dest
 //            }
+            
+            self.lineDetector.context.runOperation(.async) {
+                t2 = Date()
+                self.lineDetector.source = dest
+            }
             
         })
 
@@ -288,7 +282,7 @@ class CanvasView: NSView {
     
     func drawLine(segment:IMPLineSegment,
                   color:NSColor,
-                  width:CGFloat = 2
+                  width:CGFloat = 1.2
                   ){
         let path = NSBezierPath()
         

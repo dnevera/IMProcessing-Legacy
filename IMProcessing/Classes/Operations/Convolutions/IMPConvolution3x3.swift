@@ -28,9 +28,7 @@ public class IMPConvolution3x3: IMPFilter {
         extendName(suffix: "IMPConvolution3x3" + ":" + functionName)
         super.configure()
         kernelMatrices = kernels()
-        
-        print("IMPConvolution3x3 -> \(kernelMatrices)")
-        
+                
         add(function:convolution){ (source) in
             complete?(source)
         }
