@@ -44,7 +44,7 @@ public class IMPPolarLine{
         return abs(theta - theta2) > minTheta
     }
     
-    // the long nasty wikipedia line-intersection equation...bleh...
+    // the long nasty wikipedia line-intersection equation
     public func intersect(with line2: IMPPolarLine) -> float2 {
         let p1 = lineSegment
         let p2 = line2.lineSegment

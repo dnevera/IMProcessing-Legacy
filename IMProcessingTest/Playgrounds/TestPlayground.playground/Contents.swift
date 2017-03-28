@@ -18,3 +18,13 @@ let dev = MTLCreateSystemDefaultDevice()
 let d = dev?.maxThreadsPerThreadgroup
 
 print(d)
+
+
+var bits = 0b0000
+
+bits |= 0b0001
+bits |= 0b0010
+bits |= 0b0100
+bits |= 0b1000
+
+(((bits % 0b1111) == 0) && bits>0)
