@@ -70,7 +70,17 @@ extension IMPCorner: Equatable {
         
         if thresholdDirection(threshold: threshold) == .leftTop {
             let d = corner.thresholdDirection(threshold: threshold)
-            if d == .rightTop || d == .leftBottom || d == .rightBottom {
+            if d == .rightTop {
+                //if abs(corner.point.y - point.y) < threshold {
+                    return d
+                //}
+            }
+            if d == .leftBottom {
+                //if abs(corner.point.x - point.x) < threshold {
+                    return d
+                //}
+            }
+            if d == .rightBottom {
                 return d
             }
         }
@@ -88,7 +98,7 @@ public class IMPPatch {
     var isCompleted:Bool { return (((mask % 0b1111) == 0) && mask>0) }
     var mask:UInt8 = 0b0000
     
-    func addCorner(corner:IMPCorner, place:IMPCorner.Direction) -> Bool {
+    func addCorner(corner:IMPCorner, place:IMPCorner.Direction, threshold:Float = 0.1) -> Bool {
         
         if isCompleted {
             return false
@@ -98,11 +108,25 @@ public class IMPPatch {
         case .leftTop:
             if (mask & 0b1000) == 0 { lt = corner; return true }
         case .rightTop:
-            if (mask & 0b0100) == 0 { rt = corner; return true }
+            if (mask & 0b0100) == 0 {
+                if abs(corner.point.y - lt.point.y)<=threshold {
+                    rt = corner;
+                    return true
+                }
+            }
         case .leftBottom:
-            if (mask & 0b0010) == 0 { lb = corner; return true }
+            if (mask & 0b0010) == 0 {
+                if abs(corner.point.x - lt.point.x)<=threshold {
+                    lb = corner;
+                    return true
+                }
+            }
         case .rightBottom:
-            if (mask & 0b0001) == 0 { rb = corner; return true}
+            if (mask & 0b0001) == 0 {
+                if abs(corner.point.x - rt.point.x)<=threshold {
+                    rb = corner; return true
+                }
+            }
         default:
             return false
         }
@@ -255,10 +279,10 @@ public class TestFilter: IMPFilter {
 //                self.houghLineDetector.source = dest
 //            }
             
-            self.lineDetector.context.runOperation(.async) {
-                t2 = Date()
-                self.lineDetector.source = dest
-            }
+//            self.lineDetector.context.runOperation(.async) {
+//                t2 = Date()
+//                self.lineDetector.source = dest
+//            }
             
         })
 
@@ -270,7 +294,7 @@ public class TestFilter: IMPFilter {
                 let patches = self.matchPatches(corners: corners, size:size)
                 
                 self.cornersHandler?(corners,size)
-                //self.patchesHandler?(patches,size)
+                self.patchesHandler?(patches,size)
             }
         }
 
