@@ -93,8 +93,11 @@ public class IMPPatch {
     
     let theta:Float
     
-    public init(theta:Float = 0) {
+    public init(lt: IMPCorner, theta:Float = 0) {
         self.theta = theta
+        defer{
+            self.lt = lt
+        }
     }
     
     var lt = IMPCorner() {didSet{ mask |= 0b1000  }}
@@ -105,29 +108,47 @@ public class IMPPatch {
     var isCompleted:Bool { return (((mask % 0b1111) == 0) && mask>0) }
     var mask:UInt8 = 0b0000
     
-    func addCorner(corner:IMPCorner, place:IMPCorner.Direction, threshold:Float = 0.1) -> Bool {
+    func addCorner(corner:IMPCorner, place:IMPCorner.Direction, threshold:Float = 0.1, thetaThreshold:Float = Float.pi/90) -> Bool {
         
         if isCompleted { return false }
         
         switch place {
         case .leftTop:
+            
             if (mask & 0b1000) == 0 { lt = corner; return true }
+            
         case .rightTop:
             if (mask & 0b0100) == 0 {
                 
                 let segment = IMPLineSegment(p0: float2(corner.point.x,0), p1: float2(corner.point.x,1))
                 let normal  = segment.normalIntersection(point: lt.point)
                 
-                print(" ----> lt = \(lt.point) normal = \(normal) corner = \(corner.point)")
-                
-                if abs(corner.point.y - lt.point.y)<=threshold {
+                let a = normal.y - corner.point.y
+                let b = lt.point.x - normal.x
+                let t = abs(atan(a/b))
+        
+                //print(" ----> lt = \(lt.point) normal = \(normal) corner = \(corner.point) a/b= \(a,b) t \(t, t.degrees)")
+
+                if abs(corner.point.y - lt.point.y)<=threshold &&
+                    t <= thetaThreshold {
                     rt = corner;
                     return true
                 }
             }
         case .leftBottom:
             if (mask & 0b0010) == 0 {
-                if abs(corner.point.x - lt.point.x)<=threshold {
+                
+                let segment = IMPLineSegment(p0: float2(0,corner.point.y), p1: float2(1,corner.point.y))
+                let normal  = segment.normalIntersection(point: lt.point)
+                
+                let a = normal.x - corner.point.x
+                let b = lt.point.y - normal.y
+                let t = abs(atan(a/b))
+
+                print(" ----> lt = \(lt.point) normal = \(normal) corner = \(corner.point) a/b= \(a,b) t \(t, t.degrees)")
+
+                if abs(corner.point.x - lt.point.x)<=threshold &&
+                    t <= thetaThreshold {
                     lb = corner;
                     return true
                 }
@@ -303,8 +324,8 @@ public class TestFilter: IMPFilter {
             self.context.runOperation(.async) {
                 print(" corners[n:\(corners.count)] detector time = \(-t1.timeIntervalSinceNow) ")
 
-                let oppositThreshold:Float = 0.6
-                let nonOrientedThreshold:Float = 0.3
+                let oppositThreshold:Float = 0.5
+                let nonOrientedThreshold:Float = 0.4
 
                 let filtered = corners.filter { (corner) -> Bool in
                     
@@ -431,10 +452,10 @@ public class TestFilter: IMPFilter {
                 continue
             }
             
-            let patch = IMPPatch()
-            if !patch.addCorner(corner: current, place: currentDirection) {
-                continue
-            }
+            let patch = IMPPatch(lt:current)
+            //if !patch.addCorner(corner: current, place: currentDirection) {
+            //    continue
+            //}
             
             for next in sorted {
                 
