@@ -29,17 +29,17 @@ public class IMPPolarLine{
         set{ vector.y = newValue }
         get{ return vector.y }
     }
-    
+        
     //
     // http://stackoverflow.com/questions/10533233/opencv-c-obj-c-advanced-square-detection
     //
     
-    public func isPair(to line2:IMPPolarLine, minTheta:Float = M_PI.float/32) -> Bool {
+    public func isPair(to line2:IMPPolarLine, minTheta:Float = Float.pi/32) -> Bool {
         
-        if theta < minTheta { theta +=  M_PI.float }
+        if theta < minTheta { theta +=  Float.pi }
         
         var theta2 = line2.theta
-        if theta2 < minTheta { theta2 += M_PI.float }
+        if theta2 < minTheta { theta2 += Float.pi }
         
         return abs(theta - theta2) > minTheta
     }
@@ -81,6 +81,6 @@ public class IMPPolarLine{
 
 extension IMPPolarLine: Equatable{
     public static func == (lhs: IMPPolarLine, rhs: IMPPolarLine) -> Bool {
-        return (abs(lhs.rho - rhs.rho) < FLT_EPSILON) && (abs(lhs.theta - rhs.theta) < FLT_EPSILON)
+        return (abs(lhs.rho - rhs.rho) < Float.ulpOfOne) && (abs(lhs.theta - rhs.theta) < Float.ulpOfOne)
     }
 }

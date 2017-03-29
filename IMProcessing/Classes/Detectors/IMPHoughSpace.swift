@@ -26,9 +26,9 @@ public class IMPHoughSpace {
                 width:Int,
                 height:Int,
                 rhoStep:Float = 1,
-                thetaStep:Float = M_PI.float/180,
+                thetaStep:Float = Float.pi/180,
                 minTheta:Float = 0,
-                maxTheta:Float = M_PI.float ) {
+                maxTheta:Float = Float.pi ) {
         
         self.bytesPerRow = bytesPerRow
         
@@ -47,9 +47,9 @@ public class IMPHoughSpace {
                 width:Int,
                 height:Int,
                 rhoStep:Float = 1,
-                thetaStep:Float = M_PI.float/180,
+                thetaStep:Float = Float.pi/180,
                 minTheta:Float = 0,
-                maxTheta:Float = M_PI.float ) {
+                maxTheta:Float = Float.pi ) {
         
         self.bytesPerRow = width
         
@@ -175,7 +175,7 @@ public class IMPHoughSpace {
         return (rho,theta,space[index].bins)
     }
     
-    public func getSquares(squaresMax:Int = 50, threshold:Int = 50, minDistance:Float = 20, distanceThreshold:Float=10, thetaTreshold:Float = M_PI.float/180 * 5) -> [IMPQuad] {
+    public func getSquares(squaresMax:Int = 50, threshold:Int = 50, minDistance:Float = 20, distanceThreshold:Float=10, thetaTreshold:Float = Float.pi/180 * 5) -> [IMPQuad] {
         let space = getLocalMaximums(threshold: threshold)
         
         // stage 4. store the first min(total,linesMax) lines to the output buffer
@@ -199,14 +199,14 @@ public class IMPHoughSpace {
                 
                 if abs(rho1+rho2) < distanceThreshold {
                     if abs(theta1-theta2) < thetaTreshold ||
-                        abs(theta1-(theta2-M_PI.float)) < thetaTreshold ||
-                        abs((theta1-M_PI.float)-theta2) < thetaTreshold {
+                        abs(theta1-(theta2-Float.pi)) < thetaTreshold ||
+                        abs((theta1-Float.pi)-theta2) < thetaTreshold {
                         
-                        print("  ->>> parallel[\(i1,i2)][\(cap1,cap2)] == rho1,rho2 = \(rho1+rho2) \(rho1,rho2) theta1,theta2 = \(theta1 * 180/M_PI.float,theta2 * 180/M_PI.float)")
+                        print("  ->>> parallel[\(i1,i2)][\(cap1,cap2)] == rho1,rho2 = \(rho1+rho2) \(rho1,rho2) theta1,theta2 = \(theta1 * 180/Float.pi,theta2 * 180/Float.pi)")
                     }
                 }
                 
-                if abs(abs(theta1-theta2) - M_PI.float/2) < thetaTreshold {
+                if abs(abs(theta1-theta2) - Float.pi/2) < thetaTreshold {
                         //print("  -<<< ortho[\(i1,i2)][\(cap1,cap2)]    == rho1,rho2 = \(rho1+rho2) \(rho1,rho2) theta1,theta2 = \(theta1 * 180/M_PI.float,theta2 * 180/M_PI.float)")
                 }
             }

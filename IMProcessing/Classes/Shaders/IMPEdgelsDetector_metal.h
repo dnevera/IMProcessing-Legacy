@@ -250,7 +250,7 @@ inline void findLineSegment(thread Edgel *edgels, uint count/*, device atomic_ui
             float u1 = 0;
             float u2 = 50000;
             float2 slope = (lineSegmentInRun.start.position - lineSegmentInRun.end.position);
-            float2 orientation = float2( -start.slope.y, start.slope.x );
+            //float2 orientation = float2( -start.slope.y, start.slope.x );
             
             if (abs (slope.x) <= abs(slope.y)) {
                 
@@ -289,7 +289,7 @@ inline void findLineSegment(thread Edgel *edgels, uint count/*, device atomic_ui
 
             // switch startpoint and endpoint according to orientation of edge
             
-            float2 p = end.position - start.position;
+//            float2 p = end.position - start.position;
 //            float  d = dot(p,orientation);
             
 //            if( dot( end.position - start.position, orientation ) < 0.0f ) {

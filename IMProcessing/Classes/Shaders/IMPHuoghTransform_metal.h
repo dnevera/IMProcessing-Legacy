@@ -63,7 +63,7 @@ kernel void kernel_houghTransformAtomic(
     
     float4 inColor = IMProcessing::sampledColor(inTexture,regionIn,1,gid);
     
-    if (inColor.a>0 && inColor.r > 0){
+    if (inColor.a>0 && inColor.b > 0){
         houghTransformAtomic(accum,numrho,numangle,rhoStep,thetaStep,minTheta,gid);
     }
 }
@@ -94,64 +94,6 @@ kernel void kernel_houghTransformAtomicOriented(
         }
     }
 }
-
-kernel void kernel_houghSpaceLocalMaximums__(
-                                             constant uint      *accumHorizontal     [[ buffer(0)]],
-                                             constant uint      *accumVertical       [[ buffer(1)]],
-                                             device uint2       *maximumsHorizontal  [[ buffer(2)]],
-                                             device uint2       *maximumsVertical    [[ buffer(3)]],
-                                             device atomic_uint *countHorizontal     [[ buffer(4)]],
-                                             device atomic_uint *countVertical       [[ buffer(5)]],
-                                             constant uint      &numrho    [[ buffer(6)]],
-                                             constant uint      &numangle  [[ buffer(7)]],
-                                             constant uint      &threshold [[ buffer(8)]],
-                                             uint2 tid       [[thread_position_in_threadgroup]],
-                                             uint2 groupSize [[threads_per_threadgroup]]
-                                             
-                                             )
-{
-    for (uint x=0; x<groupSize.x; x++){
-        
-        uint rx = x * groupSize.x + tid.x;
-        
-        if (rx>=numrho) break;
-        
-        for (uint y=0; y<groupSize.y; y++){
-            
-            uint ry = y * groupSize.y + tid.y;
-            
-            if (ry>=numangle) break;
-            
-            uint base = (ry+1) * (numrho+2) + rx + 1;
-            
-            uint bins = accumHorizontal[base];
-            
-            if (bins != 0) {
-                if(bins > threshold &&
-                   bins > accumHorizontal[base - 1] && bins >= accumHorizontal[base + 1] &&
-                   bins > accumHorizontal[base - numrho - 2] && bins >= accumHorizontal[base + numrho + 2] ){
-                    
-                    uint index = atomic_fetch_add_explicit(countHorizontal, 1, memory_order_relaxed);
-                    maximumsHorizontal[index] = uint2(base,bins);
-                }
-            }
-            
-            bins = accumVertical[base];
-            
-            if (bins != 0) {
-                if(bins > threshold &&
-                   bins > accumVertical[base - 1] && bins >= accumVertical[base + 1] &&
-                   bins > accumVertical[base - numrho - 2] && bins >= accumVertical[base + numrho + 2] ){
-                    
-                    uint index = atomic_fetch_add_explicit(countVertical, 1, memory_order_relaxed);
-                    maximumsVertical[index] = uint2(base,bins);
-                }
-            }
-            
-        }
-    }
-}
-
 
 
 /**
@@ -254,7 +196,7 @@ kernel void kernel_houghSpaceLocalMaximums(
             uint base = (ry+1) * (numrho+2) + rx + 1;
             uint bins = accum[base];
             
-            if (bins == 0) { continue; }
+            //if (bins == 0) { continue; }
             
             if(bins > threshold &&
                bins > accum[base - 1] && bins >= accum[base + 1] &&
@@ -312,6 +254,64 @@ kernel void kernel_bitonicSortUInt2(
     array[rightId] = mix(lesser,greater,step(0.5,float(sortIncreasing)));
     
 }
+
+
+//kernel void kernel_houghSpaceLocalMaximums__(
+//                                             constant uint      *accumHorizontal     [[ buffer(0)]],
+//                                             constant uint      *accumVertical       [[ buffer(1)]],
+//                                             device uint2       *maximumsHorizontal  [[ buffer(2)]],
+//                                             device uint2       *maximumsVertical    [[ buffer(3)]],
+//                                             device atomic_uint *countHorizontal     [[ buffer(4)]],
+//                                             device atomic_uint *countVertical       [[ buffer(5)]],
+//                                             constant uint      &numrho    [[ buffer(6)]],
+//                                             constant uint      &numangle  [[ buffer(7)]],
+//                                             constant uint      &threshold [[ buffer(8)]],
+//                                             uint2 tid       [[thread_position_in_threadgroup]],
+//                                             uint2 groupSize [[threads_per_threadgroup]]
+//
+//                                             )
+//{
+//    for (uint x=0; x<groupSize.x; x++){
+//
+//        uint rx = x * groupSize.x + tid.x;
+//
+//        if (rx>=numrho) break;
+//
+//        for (uint y=0; y<groupSize.y; y++){
+//
+//            uint ry = y * groupSize.y + tid.y;
+//
+//            if (ry>=numangle) break;
+//
+//            uint base = (ry+1) * (numrho+2) + rx + 1;
+//
+//            uint bins = accumHorizontal[base];
+//
+//            if (bins != 0) {
+//                if(bins > threshold &&
+//                   bins > accumHorizontal[base - 1] && bins >= accumHorizontal[base + 1] &&
+//                   bins > accumHorizontal[base - numrho - 2] && bins >= accumHorizontal[base + numrho + 2] ){
+//
+//                    uint index = atomic_fetch_add_explicit(countHorizontal, 1, memory_order_relaxed);
+//                    maximumsHorizontal[index] = uint2(base,bins);
+//                }
+//            }
+//
+//            bins = accumVertical[base];
+//
+//            if (bins != 0) {
+//                if(bins > threshold &&
+//                   bins > accumVertical[base - 1] && bins >= accumVertical[base + 1] &&
+//                   bins > accumVertical[base - numrho - 2] && bins >= accumVertical[base + numrho + 2] ){
+//
+//                    uint index = atomic_fetch_add_explicit(countVertical, 1, memory_order_relaxed);
+//                    maximumsVertical[index] = uint2(base,bins);
+//                }
+//            }
+//
+//        }
+//    }
+//}
 
 
 #endif // __cplusplus

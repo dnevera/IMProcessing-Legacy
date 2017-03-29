@@ -523,7 +523,7 @@ public extension IMPImageProvider {
                 width: width, height: height, mipmapped: false)
             
             if texture != nil {
-                texture?.setPurgeableState(.volatile)
+                //texture?.setPurgeableState(.volatile)
             }
             
             if storageMode == .shared {

@@ -41,7 +41,7 @@ public class IMPImage: IMPImageProvider {
     
     public var image: CIImage? {
         set{
-            _texture?.setPurgeableState(.empty)
+           //_texture?.setPurgeableState(.empty)
             _texture = nil
             _image = newValue
         }

@@ -10,8 +10,8 @@ import Foundation
 import simd
 import Accelerate
 
-public let IMPMinimumPoint:Float = FLT_EPSILON
-public let IMPEPSPoint:Float = (1+FLT_EPSILON)
+public let IMPMinimumPoint:Float = Float.ulpOfOne
+public let IMPEPSPoint:Float = (1+Float.ulpOfOne)
 
 public struct IMPLineSegment: Equatable {
     
@@ -72,7 +72,7 @@ public struct IMPLineSegment: Equatable {
                 y1 = 0
                 x1 = (rho - y1 * b) / a / size.width.float
                 y2 = size.height.float
-                x2 = (rho - y1 * b) / a / size.width.float
+                x2 = (rho - y2 * b) / a / size.width.float
                 y2 /= size.height.float
             }
         }

@@ -15,15 +15,15 @@ public class IMPHoughSpaceDetector: IMPDetector {
     
     public var rhoStep:Float   = 1 { didSet{updateSettings()} }
     
-    public var thetaStep:Float = M_PI.float/180.float{ didSet{updateSettings()} }
+    public var thetaStep:Float = Float.pi/180.float{ didSet{updateSettings()} }
     
     public var minTheta:Float  = 0 { didSet{updateSettings()} }
     
-    public var maxTheta:Float  = M_PI.float{ didSet{updateSettings()} }
+    public var maxTheta:Float  = Float.pi{ didSet{updateSettings()} }
     
-    public var threshold:Int = 50 { didSet{dirty = true} }
+    public var threshold:Int = 32 { didSet{dirty = true} }
     
-    public var linesMax:Int = 175 { didSet{dirty = true} }
+    public var linesMax:Int = 100 { didSet{dirty = true} }
     
     internal var edgesImage:IMPImageProvider?
     
@@ -51,7 +51,7 @@ public class IMPHoughSpaceDetector: IMPDetector {
         var i = 0
         repeat {
             
-            if i >= linesMax - 1 { break }
+            if i > linesMax - 1 { break }
             
             let idx = Float(_sorted_accum[i].x)
             i += 1
@@ -61,17 +61,13 @@ public class IMPHoughSpaceDetector: IMPDetector {
             
             let rho = (r - (Float(numrho) - 1) * 0.5) * rhoStep
             
-            if abs(rho) > sqrt(size.height.float * size.height.float + size.width.float * size.width.float){
-                continue
-            }
-            
             let angle = minTheta + n * thetaStep
             
             let line = IMPPolarLine(rho: rho, theta: angle)
             
             lines.append(line)
             
-        } while lines.count < linesMax && i < linesMax
+        } while lines.count <= linesMax && i <= linesMax
         
         return lines
     }

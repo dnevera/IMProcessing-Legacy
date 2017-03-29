@@ -82,7 +82,7 @@ public class IMPTextureCache: IMPContextProvider {
             var t = q.dequeue()
             print(" flush texture cache ... [\(k,t?.size)]")
             while (t != nil) {
-                t?.setPurgeableState(.empty)
+               //t?.setPurgeableState(.empty)
                 t = q.dequeue()
             }
         }

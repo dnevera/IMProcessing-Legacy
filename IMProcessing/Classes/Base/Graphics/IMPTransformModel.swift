@@ -20,7 +20,7 @@ public struct IMPProjectionModel{
     
     var projectionMatrix  = float4x4(matrix_identity_float4x4)
     
-    public var fovy:Float = M_PI.float/2
+    public var fovy:Float = Float.pi/2
     public var aspect:Float = 1
     public var near:Float = 0
     public var far:Float = 1
