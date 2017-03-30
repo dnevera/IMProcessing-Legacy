@@ -101,6 +101,30 @@ public class IMPPatch {
         }
     }
     
+    func find(at place:IMPCorner.Direction, withIn corners: [IMPCorner], threshold:Float = 0.2) -> IMPCorner? {
+        
+        var dist:Float = 10000
+        
+        var next:IMPCorner?
+        
+        for c in corners{
+            
+            if c.thresholdDirection(threshold: threshold) == .leftTop { continue }
+
+            let d = c.thresholdDirection(threshold: threshold)
+            
+            if d == place {
+                let newDist = distance(lt.point, c.point)
+                if dist > newDist {
+                    next = c
+                    dist = newDist
+                }
+            }
+        }
+        
+        return next
+    }
+    
     var lt = IMPCorner() {didSet{ mask |= 0b1000  }}
     var rt = IMPCorner() {didSet{ mask |= 0b0100  }}
     var lb = IMPCorner() {didSet{ mask |= 0b0010  }}
@@ -450,7 +474,7 @@ public class TestFilter: IMPFilter {
                 let patches = self.matchPatches(corners: sorted, size:size)
                 
                 self.cornersHandler?(sorted,size)
-               // self.patchesHandler?(patches,size)
+               self.patchesHandler?(patches,size)
                 //self.linesHandler?(lines,[],size)
             }
         }
@@ -520,19 +544,32 @@ public class TestFilter: IMPFilter {
         var patches = [IMPPatch]()
 
         for (i,current) in corners.enumerated() {
+            
             if current.thresholdDirection() != .leftTop { continue }
             
             let patch = IMPPatch(lt: current)
             
-            for next in corners {
-                
-                if next == current { continue }
-                if next.thresholdDirection() == .leftTop { continue }
-                
-                if patch.addCorner(corner: next) {
-                    if patch.isCompleted { break }
-                }
+            if let next = patch.find(at: .rightTop, withIn: corners) {
+                patch.rt = next
             }
+
+            if let next = patch.find(at: .leftBottom, withIn: corners) {
+                patch.lb = next
+            }
+
+            if let next = patch.find(at: .rightBottom, withIn: corners) {
+                patch.rb = next
+            }
+
+//            for next in corners {
+//                
+//                if next == current { continue }
+//                if next.thresholdDirection() == .leftTop { continue }
+//                
+//                if patch.addCorner(corner: next) {
+//                    if patch.isCompleted { break }
+//                }
+//            }
             if patch.isCompleted {
                 patches.append(patch)
             }
