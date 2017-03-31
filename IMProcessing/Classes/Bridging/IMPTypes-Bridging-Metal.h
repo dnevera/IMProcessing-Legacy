@@ -53,6 +53,7 @@ extern "C" {
     typedef struct {
         float2 point;
         float4 slops; // x - left, y - top, z - bottom, w - right
+        float4 color;
     } IMPCorner;
 
     

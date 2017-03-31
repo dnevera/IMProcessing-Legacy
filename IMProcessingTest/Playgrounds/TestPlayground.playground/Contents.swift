@@ -2,6 +2,7 @@
 
 import Cocoa
 import Metal
+import simd
 
 var str = "Hello, playground"
 
@@ -28,3 +29,45 @@ bits |= 0b0100
 bits |= 0b1000
 
 (((bits % 0b1111) == 0) && bits>0)
+
+let PassportCC24:[[float3]] = [
+    [
+        float3(115,82,68),   // dark skin
+        float3(194,150,130), // light skin
+        float3(98,122,157),  // blue sky
+        float3(87,108,67),   // foliage
+        float3(133,128,177), // blue flower
+        float3(103,189,170)  // bluish flower
+    ],
+    
+    [
+        float3(214,126,44), // orange
+        float3(80,91,166),  // purplish blue
+        float3(193,90,99),  // moderate red
+        float3(94,60,108),  // purple
+        float3(157,188,64), // yellow green
+        float3(224,163,46)  // orange yellow
+    ],
+    
+    [
+        float3(56,61,150),  // blue
+        float3(79,148,73),  // green
+        float3(175,54,60),  // red
+        float3(231,199,31), // yellow
+        float3(187,86,149), // magenta
+        float3(8,133,161),  // cyan
+    ],
+    
+    [
+        float3(243,243,242), // white
+        float3(200,200,200), // neutral 8
+        float3(160,160,160), // neutral 6,5
+        float3(122,122,121), // neutral 5
+        float3(85,85,85),    // neutral 3.5
+        float3(52,52,52)     // black
+    ]
+]
+
+print(PassportCC24)
+print(PassportCC24.count,PassportCC24[0].count)
+

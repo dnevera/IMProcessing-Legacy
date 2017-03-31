@@ -15,7 +15,7 @@ func IMPstep(_ edge:Float, _ x:Float) -> Float {
 
 public extension float3{
     
-    public func tohsv() -> float3 {
+    public func rgb2hsv() -> float3 {
         let K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0)
         let p = mix(float4(self.bg, K.wz),
                     float4(self.gb, K.xy),
@@ -27,7 +27,7 @@ public extension float3{
         return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x)
     }
     
-    public func torgb() -> float3 {
+    public func hsv2rgb() -> float3 {
         let K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
         let p = abs(fract(self.xxx + K.xyz) * float3(6.0) - K.www);
         return self.z * mix(K.xxx, clamp(p - K.xxx, min: 0.0, max: 1.0), t: self.y);

@@ -23,7 +23,9 @@ public class IMPAdaptiveThreshold: IMPFilter {
             self.luminanceOutput = source
         }
         add(filter: boxBlur)
-        add(function: adaptiveKernel)
+        add(function: adaptiveKernel) { (source) in
+            complete?(source)
+        }
     }
     
     private lazy var luminance:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_luminance")

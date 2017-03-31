@@ -147,7 +147,7 @@ public class IMPHarrisCornerDetector: IMPDetector{
         
         memcpy(&maximums, maximumsBuff.contents(), MemoryLayout<IMPCorner>.size * count)
         
-        return maximums.sorted { return $0.point.x<$1.point.x /*&& $0.point.y<$1.point.y*/ }
+        return maximums //.sorted { return $0.point.x<$1.point.x /*&& $0.point.y<$1.point.y*/ }
     }
 
     fileprivate func readCorners(_ destination: IMPImageProvider) {

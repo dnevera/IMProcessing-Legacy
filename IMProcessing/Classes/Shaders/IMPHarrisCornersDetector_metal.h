@@ -46,7 +46,7 @@ kernel void kernel_pointsScanner(
                                  texture2d<float, access::write>  destination      [[texture(1)]],
                                  texture2d<float, access::sample>  derivative      [[texture(2)]],
                                  
-                                  device   IMPCorner      *corners   [[ buffer(0) ]],
+                                 device            IMPCorner      *corners   [[ buffer(0) ]],
                                  volatile device   atomic_uint    *count     [[ buffer(1) ]],
                                  constant          uint           &pointsMax [[ buffer(2) ]],
                                  
@@ -61,7 +61,7 @@ kernel void kernel_pointsScanner(
     uint gw = (width+gridSize.x-1)/gridSize.x;
     uint gh = (height+gridSize.y-1)/gridSize.y;
     
-
+    
     int regionSize = 24;
     int rs = -regionSize/2;
     int re = regionSize/2+1;
@@ -80,12 +80,13 @@ kernel void kernel_pointsScanner(
             
             float3 color = suppression.read(gid).rgb;
             
-            if (color.r > 0) {
+            if (color.g > 0) {
                 
                 uint index = atomic_fetch_add_explicit(count, 1, memory_order_relaxed);
                 if (index > pointsMax) {
                     return;
                 }
+                
                 IMPCorner corner;
                 corner.point = float2(gid)/float2(width,height);
                 corner.slops = float4(0);
@@ -94,11 +95,11 @@ kernel void kernel_pointsScanner(
                 corner.slops.y  = getSlops(rs, re, rs, 0,   gid, derivative,destination).y;
                 corner.slops.z  = getSlops(rs, re, 0,  re,  gid, derivative,destination).y;
                 corner.slops.w  = getSlops(0,  re, rs, re,  gid, derivative,destination).x;
-
+                
                 if (length(corner.slops)){
                     corner.slops = normalize(corner.slops);
                 }
-                                
+                
                 corners[index] = corner;
             }
         }

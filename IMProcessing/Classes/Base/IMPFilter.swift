@@ -112,7 +112,13 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         }()
     }
     
-    open func configure(complete:CompleteHandler?=nil){}
+    open func configure(complete:CompleteHandler?=nil){
+        if let c = complete {
+            addObserver(destinationUpdated: { (destination) in
+                c(destination)
+            })
+        }
+    }
     
     public func flush(){
         source?.image = nil
