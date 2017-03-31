@@ -242,10 +242,13 @@ public class TestFilter: IMPFilter {
     }
     
     lazy var blurFilter:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
+    lazy var boxBlurFilter:IMPBoxBlur = IMPBoxBlur(context: self.context)
+    lazy var adaptiveThreshold:IMPAdaptiveThreshold = IMPAdaptiveThreshold(context:self.context)
     
     public var blurRadius:Float = 0 {
         didSet{
             blurFilter.radius = blurRadius
+            boxBlurFilter.radius = blurRadius
 //            cannyEdgeDetector.blurRadius = blurRadius
             dirty = true
         }
@@ -327,15 +330,17 @@ public class TestFilter: IMPFilter {
         var t2 = Date()
 
         
+//          add(filter: adaptiveThreshold)
 //        add(filter: segments)
         
 //        add(filter: median)
 //
 //        add(function: kernelEV)
 //        add(filter: blurFilter)
+//        add(filter: boxBlurFilter)
 //        add(filter: ciContrast)
 
-        add(filter: posterize)
+//        add(filter: posterize)
         
         add(filter: erosion)
         add(filter: dilation)
@@ -383,10 +388,10 @@ public class TestFilter: IMPFilter {
             }
       
             
-            self.cornerLinesDetector.context.runOperation(.async) {
-                t2 = Date()
-                self.cornerLinesDetector.source = dest
-            }
+//            self.cornerLinesDetector.context.runOperation(.async) {
+//                t2 = Date()
+//                self.cornerLinesDetector.source = dest
+//            }
 
         })
 
@@ -474,7 +479,7 @@ public class TestFilter: IMPFilter {
                 let patches = self.matchPatches(corners: sorted, size:size)
                 
                 self.cornersHandler?(sorted,size)
-               self.patchesHandler?(patches,size)
+              // self.patchesHandler?(patches,size)
                 //self.linesHandler?(lines,[],size)
             }
         }

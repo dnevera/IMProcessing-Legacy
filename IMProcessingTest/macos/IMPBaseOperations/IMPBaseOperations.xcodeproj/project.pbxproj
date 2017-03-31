@@ -90,6 +90,9 @@
 		31E3B50A1E7554B0001998DD /* IMPLinesGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31E3B5091E7554B0001998DD /* IMPLinesGenerator.swift */; };
 		31EFD9181E897872004ADE5A /* IMPHoughSpaceDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31EFD9171E897872004ADE5A /* IMPHoughSpaceDetector.swift */; };
 		31F0F5091E76B75D003A59EA /* IMPHoughSpace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F0F5081E76B75D003A59EA /* IMPHoughSpace.swift */; };
+		31F3CC5D1E8E596D0055994F /* IMPAdaptiveThreshold.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC5C1E8E596D0055994F /* IMPAdaptiveThreshold.swift */; };
+		31F3CC5F1E8E5DE70055994F /* IMPBaseBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC5E1E8E5DE70055994F /* IMPBaseBlur.swift */; };
+		31F3CC611E8E60710055994F /* IMPBoxBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC601E8E60710055994F /* IMPBoxBlur.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -208,6 +211,10 @@
 		31EFD9171E897872004ADE5A /* IMPHoughSpaceDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHoughSpaceDetector.swift; sourceTree = "<group>"; };
 		31F0F5081E76B75D003A59EA /* IMPHoughSpace.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHoughSpace.swift; sourceTree = "<group>"; };
 		31F0F50A1E76D7EF003A59EA /* IMPHuoghTransform_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPHuoghTransform_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
+		31F3CC5C1E8E596D0055994F /* IMPAdaptiveThreshold.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPAdaptiveThreshold.swift; path = Thresholds/IMPAdaptiveThreshold.swift; sourceTree = "<group>"; };
+		31F3CC5E1E8E5DE70055994F /* IMPBaseBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPBaseBlur.swift; sourceTree = "<group>"; };
+		31F3CC601E8E60710055994F /* IMPBoxBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPBoxBlur.swift; sourceTree = "<group>"; };
+		31F3CC651E8E65E80055994F /* IMPAdaptiveThreshold_metal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IMPAdaptiveThreshold_metal.h; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.metal; };
 		634F267F841AC36C9BE98908 /* Pods-IMPBaseOperations.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.debug.xcconfig"; sourceTree = "<group>"; };
 		99F412C0F717D76239294AEA /* Pods-IMPBaseOperations.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPBaseOperations.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPBaseOperations/Pods-IMPBaseOperations.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -239,6 +246,7 @@
 		3120280E1E8956BF00C78219 /* Operations */ = {
 			isa = PBXGroup;
 			children = (
+				31F3CC5B1E8E593C0055994F /* Thresholds */,
 				3120280F1E8956BF00C78219 /* Convolutions */,
 				312028121E8956BF00C78219 /* Derivatives */,
 				312028151E8956BF00C78219 /* Edges */,
@@ -251,6 +259,8 @@
 			isa = PBXGroup;
 			children = (
 				312028101E8956BF00C78219 /* IMPConvolution3x3.swift */,
+				31F3CC5E1E8E5DE70055994F /* IMPBaseBlur.swift */,
+				31F3CC601E8E60710055994F /* IMPBoxBlur.swift */,
 				312028111E8956BF00C78219 /* IMPGaussianBlur.swift */,
 			);
 			path = Convolutions;
@@ -393,6 +403,7 @@
 		314F9F331E83B86C00DD3FA2 /* Operations */ = {
 			isa = PBXGroup;
 			children = (
+				31F3CC621E8E65AD0055994F /* Thesholds */,
 				3120282B1E89581900C78219 /* Derivatives */,
 				314F9F381E83B8DE00DD3FA2 /* Convolutions */,
 				3120282A1E8957F700C78219 /* Edges */,
@@ -661,6 +672,22 @@
 			path = Utils;
 			sourceTree = "<group>";
 		};
+		31F3CC5B1E8E593C0055994F /* Thresholds */ = {
+			isa = PBXGroup;
+			children = (
+				31F3CC5C1E8E596D0055994F /* IMPAdaptiveThreshold.swift */,
+			);
+			name = Thresholds;
+			sourceTree = "<group>";
+		};
+		31F3CC621E8E65AD0055994F /* Thesholds */ = {
+			isa = PBXGroup;
+			children = (
+				31F3CC651E8E65E80055994F /* IMPAdaptiveThreshold_metal.h */,
+			);
+			name = Thesholds;
+			sourceTree = "<group>";
+		};
 		6088118F83E226A3BCAE4C5E /* Pods */ = {
 			isa = PBXGroup;
 			children = (
@@ -809,9 +836,11 @@
 				31E3B4FC1E751E25001998DD /* IMPTextureCache.swift in Sources */,
 				3154A70E1E868F0D00B21D22 /* IMPTriangle.swift in Sources */,
 				312028251E8956BF00C78219 /* IMPSobelEdges.swift in Sources */,
+				31F3CC611E8E60710055994F /* IMPBoxBlur.swift in Sources */,
 				31E3B4D91E751E25001998DD /* IMPCIFilter.swift in Sources */,
 				31E3B4DC1E751E25001998DD /* MTLShader.swift in Sources */,
 				31E3B4E91E751E25001998DD /* IMPCameraExtentions.swift in Sources */,
+				31F3CC5D1E8E596D0055994F /* IMPAdaptiveThreshold.swift in Sources */,
 				3154A7101E8690EF00B21D22 /* IMPPolarLine.swift in Sources */,
 				312028231E8956BF00C78219 /* IMPHarrisCorner.swift in Sources */,
 				312028241E8956BF00C78219 /* IMPNonMaximumSuppression.swift in Sources */,
@@ -829,6 +858,7 @@
 				31B6FDEC1E82C1E4009C11B8 /* IMPErosion.swift in Sources */,
 				31E3B4D81E751E25001998DD /* IMPShader.swift in Sources */,
 				314F9F401E83C59700DD3FA2 /* IMPTwoPass.swift in Sources */,
+				31F3CC5F1E8E5DE70055994F /* IMPBaseBlur.swift in Sources */,
 				31E3B4D41E751E25001998DD /* IMPTransformModel.swift in Sources */,
 				31E3B4E21E751E25001998DD /* IMPSimd.swift in Sources */,
 				31E3B4F81E751E25001998DD /* IMPImage.swift in Sources */,
