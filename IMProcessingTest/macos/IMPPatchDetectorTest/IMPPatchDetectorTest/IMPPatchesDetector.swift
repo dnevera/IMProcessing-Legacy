@@ -128,10 +128,20 @@ public struct IMPPatchesGrid {
     }
     
     public struct Location {
-        var lt = IMPCorner()
-        var rt = IMPCorner()
-        var lb = IMPCorner()
-        var rb = IMPCorner()
+        var lt:IMPCorner?
+        var rt:IMPCorner?
+        var lb:IMPCorner?
+        var rb:IMPCorner?
+        
+        var center:IMPCorner {
+            get{
+                var v = IMPCorner()
+                if rb != nil {
+                    
+                }
+                return v
+            }
+        }
     }
     
     public let dimension:Dimension
@@ -141,17 +151,31 @@ public struct IMPPatchesGrid {
     public init(colors: [[uint3]]) {
         dimension = Dimension(width: colors[0].count, height: colors.count)
         self.colors = colors
-        for x in 0..<dimension.width {
-            locations.insert([], at: x)
-            for y in 0..<dimension.height {
-                locations[x].insert(nil, at: y)
+        for y in 0..<dimension.height {
+            locations.insert([], at: y)
+            for x in 0..<dimension.width {
+                locations[y].insert(nil, at: x)
             }
         }
     }
     
     public var corners = [IMPCorner]() { didSet{ match() } }
     
-    func match(minDistance:Float = 0.1) {
+    func findCheckerIndex(color:float3, minDistance:Float = 0.1) -> (Int,Int)? {
+        for i in 0..<dimension.height {
+            let row  = colors[i]
+            for j in 0..<dimension.width {
+                let c = row[j]
+                let cc = float3(Float(c.x),Float(c.y),Float(c.z))/float3(255)
+                if cc.euclidean_distance(to: color) < minDistance {
+                    return (j,i)
+                }
+            }
+        }
+        return nil
+    }
+    
+    mutating func match(minDistance:Float = 0.1) {
         for current in corners {
             
             if current.slops.w <= 0 && current.slops.z <= 0 {
@@ -166,6 +190,8 @@ public struct IMPPatchesGrid {
             
             location.lt = current
             
+            var locationIndex:(Int,Int)? = nil
+            
             for next in corners {
                 
                 if next == current { continue }
@@ -176,14 +202,37 @@ public struct IMPPatchesGrid {
                 let ed = color.euclidean_distance(to: next_color)
                 if ed <= minDistance {
                     
-                    print(" dist = \(ed) corner = \(next.point, next.slops)")
-                    
-                    if next.slops.x > 0 && next.slops.y > 0 {
-                        // rb
-                        location.rb = next
+                    if let index =  findCheckerIndex(color: color){
+                        
+                        if next.slops.x > 0 && next.slops.y > 0 {
+                            // rb
+                            location.rb = next
+                        }
+                        if next.slops.w > 0 && next.slops.w > 0 {
+                            // rt
+                            location.rt = next
+                        }
+                        if next.slops.y > 0 && next.slops.x > 0 {
+                            // lb
+                            location.lb = next
+                        }
+                        
+                        locationIndex = index
+                        
+                        break
                     }
-                    
-                    break
+                }
+            }
+            
+            if let p = locationIndex {
+                locations[p.1][p.0] = location
+            }
+        }
+        
+        for (j,l) in locations.enumerated() {
+            for (i,ll) in l.enumerated() {
+                if let rgb = ll?.lt?.color.rgb, let p = ll?.lt?.point {
+                    print("l[\(j,i)] = \(p, rgb * float3(255))")
                 }
             }
         }
@@ -251,13 +300,32 @@ public class IMPPatchesDetector: IMPDetector {
                 return c
             })
             
-            self.corners = filtered
+            let w = Float(size.width)
+            let h = Float(size.height)
+
+            let prec:Float = 8
+
+            let sorted = filtered.sorted { (c0, c1) -> Bool in
+                
+                var pi0 = c0.point * float2(w,h)
+                var pi1 = c1.point * float2(w,h)
+                
+                pi0 = floor(pi0/float2(prec)) * float2(prec)
+                pi1 = floor(pi1/float2(prec)) * float2(prec)
+                
+                let i0 = pi0.x  + pi0.y * w
+                let i1 = pi1.x  + pi1.y * w
+                
+                return i0<i1
+            }
             
-            self.patchDetectorKernel.preferedDimension =  MTLSize(width: filtered.count, height: 1, depth: 1)
+            self.corners = sorted
             
-            self.cornersCountBuffer <- filtered.count
+            self.patchDetectorKernel.preferedDimension =  MTLSize(width: self.corners.count, height: 1, depth: 1)
             
-            memcpy(self.cornersBuffer.contents(), filtered, filtered.count * MemoryLayout<IMPCorner>.size)
+            self.cornersCountBuffer <- self.corners.count
+            
+            memcpy(self.cornersBuffer.contents(), self.corners, self.corners.count * MemoryLayout<IMPCorner>.size)
             
             self.patchDetector.source = self.harrisCornerDetector.source
             self.patchDetector.process()
