@@ -28,12 +28,52 @@ class IMPCanvasView: NSView {
         }
     }
     
-//    var patches = [IMPPatch]() {
-//        didSet{
-//            setNeedsDisplay(bounds)
-//        }
-//    }
+    var patches = [IMPPatch]() {
+        didSet{
+            setNeedsDisplay(bounds)
+        }
+    }
     
+    
+    func drawPatch(patch:IMPPatchesGrid.Patch,
+                  color:NSColor,
+                  width:CGFloat = 8
+        ){
+        
+        if let lt = patch.lt, let center = patch.center {
+            
+            var path = NSBezierPath()
+            
+            var fillColor = color
+            
+            fillColor.set()
+            path.fill()
+            path.lineWidth = width
+            
+            let mag = float2(bounds.size.width.float, bounds.size.height.float)/float2(2)
+            let radius = distance(lt.point *  mag, center.point * mag)
+            let p0 = NSPoint(x: center.point.x.cgfloat * bounds.size.width,
+                             y: (1-center.point.y.cgfloat) * bounds.size.height)
+            
+            path.appendArc(withCenter: p0, radius: CGFloat(radius), startAngle: 0, endAngle: 360)
+            
+            path.stroke()
+            path.close()
+            
+            path = NSBezierPath()
+            fillColor = NSColor.black
+            
+            fillColor.set()
+            path.fill()
+            path.lineWidth = 1
+
+            path.appendArc(withCenter: p0, radius: CGFloat(radius), startAngle: 0, endAngle: 360)
+
+            path.stroke()
+            path.close()
+        }
+    }
+
     
     func drawLine(segment:IMPLineSegment,
                   color:NSColor,
@@ -135,8 +175,14 @@ class IMPCanvasView: NSView {
                           color: NSColor(red: CGFloat(c.color.r),   green: CGFloat(c.color.g), blue: CGFloat(c.color.b), alpha: 1),
                           index: i)
         }
-//        for p in patches {
-//            drawPatch(patch: p)
-//        }
+                
+        for p in patches {
+            if let c = p.center {
+                drawPatch(patch: p, color: NSColor(red: CGFloat(c.color.r),
+                                                   green: CGFloat(c.color.g),
+                                                   blue: CGFloat(c.color.b),
+                                                   alpha: CGFloat(1)))
+            }
+        }
     }
 }

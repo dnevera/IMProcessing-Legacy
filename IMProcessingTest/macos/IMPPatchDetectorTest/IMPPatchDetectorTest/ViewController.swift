@@ -29,6 +29,7 @@ class ViewController: NSViewController {
             //print("detector.conrers= = \(self.detector.corners)")
             DispatchQueue.main.async {
                 self.canvas.corners = self.detector.corners
+                self.canvas.patches = self.detector.patchGrid.patches
             }
         })
         

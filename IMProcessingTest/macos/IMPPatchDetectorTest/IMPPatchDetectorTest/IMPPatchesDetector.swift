@@ -120,33 +120,84 @@ public let PassportCC24:[[uint3]] = [
     ]
 ]
 
+public struct IMPPatch:Equatable {
+    
+    init() {}
+    
+    public static func ==(lhs: IMPPatch, rhs: IMPPatch) -> Bool {
+        if let c0 = lhs.center, let c1 = rhs.center {
+            return (abs(c0.point.x-c1.point.x) < 0.1) && (abs(c0.point.y-c1.point.y) < 0.1)
+        }
+        return false
+    }
+    
+    
+    var lt:IMPCorner? {didSet{ vertices[0] = lt } }
+    var rt:IMPCorner? {didSet{ vertices[1] = rt } }
+    var rb:IMPCorner? {didSet{ vertices[2] = rb } }
+    var lb:IMPCorner? {didSet{ vertices[3] = lb } }
+    
+    func angle(_ pt1:float2, _ pt2:float2, _ pt0:float2 ) -> Float {
+        let dx1 = pt1.x - pt0.x
+        let dy1 = pt1.y - pt0.y
+        let dx2 = pt2.x - pt0.x
+        let dy2 = pt2.y - pt0.y
+        return (dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10)
+    }
+
+    var vertices:[IMPCorner?] = [IMPCorner?](repeating:nil, count:4) {
+        didSet{
+            //if let lt = self.lt {
+                // mass center
+                var sumOfR = float2(0)
+                var count = 0
+                var col = float4(0)
+                for i in 0..<4 {
+                    let v = vertices[i]
+                    
+                    if v != nil {
+                        sumOfR += v!.point
+                        count += 1
+                        col += v!.color
+                    }
+                }
+                
+                if count == 4 {
+                    
+                    var maxCosine:Float = 0
+                    for i in 2..<5 {
+                        let cosine = fabs(angle(vertices[i%4]!.point, vertices[i-2]!.point, vertices[i-1]!.point))
+                        maxCosine = fmax(maxCosine, cosine)
+                    }
+                    
+                    
+                    
+                    if( maxCosine < 0.3 ) {
+                        center = IMPCorner()
+                        center?.point = sumOfR/float2(4)
+                        center?.color = col/(float4(4))
+                    }
+                }
+            //}
+        }
+    }
+    
+    var center:IMPCorner?
+}
+
 public struct IMPPatchesGrid {
+    
+    public typealias Patch = IMPPatch
     
     public struct Dimension {
         let width:Int
         let height:Int
     }
     
-    public struct Location {
-        var lt:IMPCorner?
-        var rt:IMPCorner?
-        var lb:IMPCorner?
-        var rb:IMPCorner?
-        
-        var center:IMPCorner {
-            get{
-                var v = IMPCorner()
-                if rb != nil {
-                    
-                }
-                return v
-            }
-        }
-    }
-    
     public let dimension:Dimension
     public let colors:[[uint3]]
-    public var locations = [[Location?]]()
+    public var locations = [[Patch?]]()
+    public var patches = [Patch]()
     
     public init(colors: [[uint3]]) {
         dimension = Dimension(width: colors[0].count, height: colors.count)
@@ -175,7 +226,10 @@ public struct IMPPatchesGrid {
         return nil
     }
     
-    mutating func match(minDistance:Float = 0.1) {
+    mutating func match(minDistance:Float = 0.05) {
+        
+        patches.removeAll()
+        
         for current in corners {
             
             if current.slops.w <= 0 && current.slops.z <= 0 {
@@ -186,11 +240,9 @@ public struct IMPPatchesGrid {
             
             let color = current.color.rgb
             
-            var location = Location()
+            var patch = Patch()
             
-            location.lt = current
-            
-            var locationIndex:(Int,Int)? = nil
+            patch.lt = current
             
             for next in corners {
                 
@@ -202,40 +254,45 @@ public struct IMPPatchesGrid {
                 let ed = color.euclidean_distance(to: next_color)
                 if ed <= minDistance {
                     
-                    if let index =  findCheckerIndex(color: color){
-                        
-                        if next.slops.x > 0 && next.slops.y > 0 {
-                            // rb
-                            location.rb = next
-                        }
-                        if next.slops.w > 0 && next.slops.w > 0 {
-                            // rt
-                            location.rt = next
-                        }
-                        if next.slops.y > 0 && next.slops.x > 0 {
-                            // lb
-                            location.lb = next
-                        }
-                        
-                        locationIndex = index
-                        
+                    if next.slops.x > 0 && next.slops.y > 0 {
+                        // rb
+                        //if patch.rb == nil {
+                            patch.rb = next
+                        //}
+                    }
+                    if next.slops.x > 0 && next.slops.z > 0 {
+                        // rt
+                        //if patch.rt == nil {
+                            patch.rt = next
+                        //}
+                    }
+                    if next.slops.y > 0 && next.slops.w > 0 {
+                        // lb
+                        //if patch.lb == nil {
+                            patch.lb = next
+                        //}
+                    }
+                    
+                    if patch.center != nil {
                         break
                     }
                 }
             }
             
-            if let p = locationIndex {
-                locations[p.1][p.0] = location
+            if patch.center != nil && !patches.contains(patch) {
+                patches.append(patch)
             }
+
         }
         
-        for (j,l) in locations.enumerated() {
-            for (i,ll) in l.enumerated() {
-                if let rgb = ll?.lt?.color.rgb, let p = ll?.lt?.point {
-                    print("l[\(j,i)] = \(p, rgb * float3(255))")
-                }
-            }
-        }
+        
+//        for (j,l) in locations.enumerated() {
+//            for (i,ll) in l.enumerated() {
+//                if let rgb = ll?.lt?.color.rgb, let p = ll?.lt?.point {
+//                    print("l[\(j,i)] = \(p, rgb * float3(255))")
+//                }
+//            }
+//        }
     }
     
 }
@@ -342,7 +399,7 @@ public class IMPPatchesDetector: IMPDetector {
     
     fileprivate lazy var pacthColorsBuffer:MTLBuffer = self.context.device.makeBuffer(
         bytes:  self.patchGrid.colors,
-        length: MemoryLayout<IMPPatchesGrid.Location>.size * self.patchGrid.dimension.width * self.patchGrid.dimension.height,
+        length: MemoryLayout<IMPPatchesGrid.Patch>.size * self.patchGrid.dimension.width * self.patchGrid.dimension.height,
         options: [])
         
     fileprivate lazy var pacthColorsCountBuffer:MTLBuffer = self.context.makeBuffer(from: self.patchGrid.dimension)
