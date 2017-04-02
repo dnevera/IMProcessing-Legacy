@@ -132,12 +132,12 @@ public struct IMPPatch:Equatable {
     }
     
     
-    var lt:IMPCorner? {didSet{ vertices[0] = lt } }
-    var rt:IMPCorner? {didSet{ vertices[1] = rt } }
-    var rb:IMPCorner? {didSet{ vertices[2] = rb } }
-    var lb:IMPCorner? {didSet{ vertices[3] = lb } }
+    public var lt:IMPCorner? {didSet{ vertices[0] = lt } }
+    public var rt:IMPCorner? {didSet{ vertices[1] = rt } }
+    public var rb:IMPCorner? {didSet{ vertices[2] = rb } }
+    public var lb:IMPCorner? {didSet{ vertices[3] = lb } }
     
-    func angle(_ pt1:float2, _ pt2:float2, _ pt0:float2 ) -> Float {
+    private func angle(_ pt1:float2, _ pt2:float2, _ pt0:float2 ) -> Float {
         let dx1 = pt1.x - pt0.x
         let dy1 = pt1.y - pt0.y
         let dx2 = pt2.x - pt0.x
@@ -145,42 +145,76 @@ public struct IMPPatch:Equatable {
         return acos((dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10)).degrees
     }
 
-    var vertices:[IMPCorner?] = [IMPCorner?](repeating:nil, count:4) {
+    public var vertices:[IMPCorner?] = [IMPCorner?](repeating:nil, count:4) {
         didSet{
-            //if let lt = self.lt {
-                // mass center
-                var sumOfR = float2(0)
-                var count = 0
-                var col = float4(0)
+            var sumOfR = float2(0)
+            var count = 0
+            var col = float4(0)
+            for i in 0..<4 {
+                let v = vertices[i]
+                
+                if v != nil {
+                    sumOfR += v!.point
+                    count += 1
+                    col += v!.color
+                }
+            }
+            
+            if count == 4 {
+                
+                var minCosine:Float = Float.greatestFiniteMagnitude //FLT_MAX
                 for i in 0..<4 {
-                    let v = vertices[i]
-                    
-                    if v != nil {
-                        sumOfR += v!.point
-                        count += 1
-                        col += v!.color
-                    }
+                    let a = fabs(angle(vertices[i]!.point, vertices[(i+2)%4]!.point, vertices[(i+1)%4]!.point))
+                    //print(" angle = [\(i%4) = \(a)]")
+                    minCosine = fmin(minCosine, a)
                 }
                 
-                if count == 4 {
-                    
-                    var minCosine:Float = Float.greatestFiniteMagnitude //FLT_MAX
-                    for i in 0..<4 {
-                        let a = fabs(angle(vertices[i]!.point, vertices[(i+2)%4]!.point, vertices[(i+1)%4]!.point))
-                        print(" angle = [\(i%4) = \(a)]")
-                        minCosine = fmin(minCosine, a)
-                    }
-                    
-                    print(" --- ")
-                    if( abs(minCosine-90) < 5 ) {
-                        center = IMPCorner()
-                        center?.point = sumOfR/float2(4)
-                        center?.color = col/(float4(4))
-                    }                    
-                    
+                if( abs(minCosine-90) < 5 ) {
+                    center = IMPCorner()
+                    center?.point = sumOfR/float2(4)
+                    center?.color = col/(float4(4))
                 }
-            //}
+            }
         }
+    }
+    
+    public mutating func tryReconstract() {
+        if lb == nil {
+            if let rt = self.rt,
+                let rb = self.rb,
+                let lt = self.lt {
+                var c = IMPCorner()
+                c.point.x = rb.point.x - abs(lt.point.x - rt.point.x)
+                c.point.y = lt.point.y + abs(rt.point.y - rb.point.y)
+                c.color = lt.color
+                lb = c
+            }
+        }
+        
+        if rt == nil {
+            if let lb = self.lb,
+                let rb = self.rb,
+                let lt = self.lt {
+                var c = IMPCorner()
+                c.point.x = lt.point.x + abs(lb.point.x - rb.point.x)
+                c.point.y = rb.point.y - abs(lt.point.y - lb.point.y)
+                c.color = lt.color
+                rt = c
+            }
+        }
+        
+        if rb == nil {
+            if let lb = self.lb,
+                let rt = self.rt,
+                let lt = self.lt {
+                var c = IMPCorner()
+                c.point.x = lb.point.x + abs(lt.point.x - rt.point.x)
+                c.point.y = rt.point.y + abs(lt.point.y - lb.point.y)
+                c.color = lt.color
+                rb = c
+            }
+        }
+
     }
     
     var center:IMPCorner?
@@ -213,29 +247,17 @@ public struct IMPPatchesGrid {
     
     public var corners = [IMPCorner]() { didSet{ match() } }
     
-    func findCheckerIndex(color:float3, minDistance:Float = 0.1) -> (Int,Int)? {
+    func findCheckerIndex(color:float3, minDistance:Float = 20) -> (Int,Int)? {
         for i in 0..<dimension.height {
             let row  = colors[i]
             for j in 0..<dimension.width {
                 let c = row[j]
                 let cc = float3(Float(c.x),Float(c.y),Float(c.z))/float3(255)
-                if cc.euclidean_distance(to: color) < minDistance {
+                let ed = cc.euclidean_distance_lab(to: color)
+                //print("find \(cc.rgb2lab()) -- \(color.rgb2lab()) ed = \(ed)")
+                if  ed < minDistance {
                     return (j,i)
                 }
-            }
-        }
-        return nil
-    }
-    
-    func findRightTop(current:IMPCorner) -> IMPCorner? {
-        for next in corners {
-            if next == current { continue }
-            if next.color.a < 0.1 {continue}
-            if next.slops.x > 0 && next.slops.z > 0 {
-                return next
-            }
-            else {
-                return nil
             }
         }
         return nil
@@ -245,7 +267,7 @@ public struct IMPPatchesGrid {
         
         patches.removeAll()
         
-        for current in corners {
+        for (ci,current) in corners.enumerated() {
             
             if current.slops.w <= 0 && current.slops.z <= 0 {
                 continue
@@ -269,10 +291,11 @@ public struct IMPPatchesGrid {
                 let ed = color.euclidean_distance_lab(to: next_color)
                 
                 let dist = distance(next.point, current.point)
-                //print("new dist[\(i)] [\(next.point)] = \(dist)) slops = \(next.slops) cc = \(current.color.rgb.rgb2lab()) nc = \(next.color.rgb.rgb2lab()) ed = \(ed))")
 
                 if ed <= minDistance {
-                    
+
+                    //print("new dist[\(i)] [\(next.point)] = \(dist)) slops = \(next.slops) cc = \(current.color.rgb.rgb2lab()) nc = \(next.color.rgb.rgb2lab()) ed = \(ed))")
+
                     if next.slops.x > 0 && next.slops.y > 0 {
                         // rb
                         if patch.rb == nil {
@@ -308,6 +331,10 @@ public struct IMPPatchesGrid {
                 }
             }
             
+            if patch.center == nil {
+                patch.tryReconstract()
+            }
+            
             if patch.center != nil && !patches.contains(patch) {
                 patches.append(patch)
             }
@@ -322,6 +349,66 @@ public struct IMPPatchesGrid {
 //                }
 //            }
 //        }
+    }
+    
+    func aproxymate()  {
+        let xSorted = patches.sorted { (p0, p1) -> Bool in
+            guard let c0=p0.center?.point, let c1=p1.center?.point else { return false }
+            return c0.x < c1.x
+        }
+        let ySorted = patches.sorted { (p0, p1) -> Bool in
+            guard let c0=p0.center?.point, let c1=p1.center?.point else { return false }
+            return c0.y < c1.y
+        }
+        
+        var prevDist:Float = Float.greatestFiniteMagnitude
+        var distSumm:Float  = 0
+        var prev = xSorted[0].center!.point
+        var count:Float = 0
+        
+        for i in 1..<xSorted.count {
+            if var current = xSorted[i].center?.point {
+                var curDist:Float = 0
+                if abs(current.x - prev.x) < 0.01 {
+                    current.x = (current.x + prev.x)/2
+                }
+                else {
+                    curDist = min(current.x - prev.x, prevDist)
+                    distSumm += curDist
+                    count += 1
+                    prevDist = curDist
+                    prev = current
+                }
+            }
+        }
+        let avrgX = distSumm/count
+        
+        prevDist = Float.greatestFiniteMagnitude
+        prev = ySorted[0].center!.point
+        distSumm = 0
+        count = 0
+        for i in 1..<ySorted.count {
+            if var current = ySorted[i].center?.point {
+                var curDist:Float = 0
+                if abs(current.y - prev.y) < 0.01 {
+                    current.y = (current.y + prev.y)/2
+                }
+                else {
+                    curDist = min(current.y - prev.y, prevDist)
+                    distSumm += curDist
+                    count += 1
+                    prevDist = curDist
+                    prev = current
+                }
+            }
+        }
+        
+        let avrgY = distSumm/count
+        let startPoint = (xSorted.first?.center,ySorted.first?.center)
+        let endPoint   = (xSorted.last?.center,ySorted.last?.center)
+        
+        print("Grid: avrgx = \(avrgX) avrgy = \(avrgY)  coords = \(startPoint, endPoint) ")
+        
     }
     
 }
@@ -457,6 +544,7 @@ public class IMPPatchesDetector: IMPDetector {
             print(" patch detector time = \(-self.t.timeIntervalSinceNow) ")
             memcpy(&self.corners, self.cornersBuffer.contents(), MemoryLayout<IMPCorner>.size * self.corners.count)
             self.patchGrid.corners = self.corners
+            self.patchGrid.aproxymate()
         }
 
         return f
