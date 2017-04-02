@@ -404,11 +404,17 @@ public struct IMPPatchesGrid {
         }
         
         let avrgY = distSumm/count
-        let startPoint = (xSorted.first?.center,ySorted.first?.center)
-        let endPoint   = (xSorted.last?.center,ySorted.last?.center)
         
-        print("Grid: avrgx = \(avrgX) avrgy = \(avrgY)  coords = \(startPoint, endPoint) ")
-        
+        if let startPointX  = xSorted.first?.center?.point.x,
+            let startPointY = ySorted.first?.center?.point.y,
+            let endPointX = xSorted.last?.center?.point.x,
+            let endPointY = ySorted.last?.center?.point.y {
+            
+            let leftTop     = float2(startPointX,startPointY)
+            let rightBottom = float2(endPointX,endPointY)
+            
+            print("Grid: avrgx = \(avrgX) avrgy = \(avrgY)  coords = \(leftTop, rightBottom) ")
+        }
     }
     
 }
