@@ -121,10 +121,24 @@ public extension IMPBlendingMode{
     static let NORMAL      = IMPBlendingMode(1)
 }
 
-public extension IMPRegion{
+public func == (lhs: IMPRegion, rhs: IMPRegion) -> Bool {
+    if abs(lhs.left - rhs.left) <= FLT_EPSILON
+        &&
+        abs(lhs.top - rhs.top) <= FLT_EPSILON
+        &&
+        abs(lhs.right - rhs.right) <= FLT_EPSILON
+        &&
+        abs(lhs.bottom - rhs.bottom) <= FLT_EPSILON
+    {
+        return true
+    }
+    return false
+}
+
+extension IMPRegion: Equatable{
     
     public static let null = IMPRegion(left: 0.5, right: 0.5, top: 0.5, bottom: 0.5)
-     
+    
     public var width:Float {return 1-(left+right) }
     public var height:Float {return 1-(top+bottom) }
     
