@@ -79,9 +79,9 @@ class IMPCanvasView: NSView {
                   color:NSColor,
                   width:CGFloat = 1.2
         ){
-        let path = NSBezierPath()
+        var path = NSBezierPath()
         
-        let fillColor = color
+        var fillColor = color
         
         fillColor.set()
         path.fill()
@@ -98,6 +98,19 @@ class IMPCanvasView: NSView {
         
         path.stroke()
         
+        path.close()
+        
+        path = NSBezierPath()
+        fillColor = NSColor.black
+        
+        fillColor.set()
+        path.fill()
+        path.lineWidth = 1
+        
+        path.move(to: p0)
+        path.line(to: p1)
+        
+        path.stroke()
         path.close()
     }
     
@@ -122,6 +135,7 @@ class IMPCanvasView: NSView {
         
         drawLine(segment: segment1, color: color, width: thickness)
         drawLine(segment: segment2, color: color, width: thickness)
+        
         if index >= 0 {
             
             let text = NSString(format: "[%i] %.2f,%.2f", index, corner.point.x, corner.point.y)

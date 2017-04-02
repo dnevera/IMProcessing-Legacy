@@ -58,7 +58,7 @@ kernel void kernel_patchScanner(
     float4 slope = corner.slops;
     uint2 gid = uint2(float2(point.x,point.y) * float2(width,height));
     
-    int regionSize = 32;
+    int regionSize = 64;
     int rs = -regionSize/2;
     int re =  regionSize/2+1;
     

@@ -142,7 +142,7 @@ public struct IMPPatch:Equatable {
         let dy1 = pt1.y - pt0.y
         let dx2 = pt2.x - pt0.x
         let dy2 = pt2.y - pt0.y
-        return (dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10)
+        return acos((dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10)).degrees
     }
 
     var vertices:[IMPCorner?] = [IMPCorner?](repeating:nil, count:4) {
@@ -164,19 +164,20 @@ public struct IMPPatch:Equatable {
                 
                 if count == 4 {
                     
-                    var maxCosine:Float = 0
-                    for i in 2..<5 {
-                        let cosine = fabs(angle(vertices[i%4]!.point, vertices[i-2]!.point, vertices[i-1]!.point))
-                        maxCosine = fmax(maxCosine, cosine)
+                    var minCosine:Float = Float.greatestFiniteMagnitude //FLT_MAX
+                    for i in 0..<4 {
+                        let a = fabs(angle(vertices[i]!.point, vertices[(i+2)%4]!.point, vertices[(i+1)%4]!.point))
+                        print(" angle = [\(i%4) = \(a)]")
+                        minCosine = fmin(minCosine, a)
                     }
                     
-                    
-                    
-                    if( maxCosine < 0.3 ) {
+                    print(" --- ")
+                    if( abs(minCosine-90) < 5 ) {
                         center = IMPCorner()
                         center?.point = sumOfR/float2(4)
                         center?.color = col/(float4(4))
-                    }
+                    }                    
+                    
                 }
             //}
         }
@@ -226,7 +227,21 @@ public struct IMPPatchesGrid {
         return nil
     }
     
-    mutating func match(minDistance:Float = 0.05) {
+    func findRightTop(current:IMPCorner) -> IMPCorner? {
+        for next in corners {
+            if next == current { continue }
+            if next.color.a < 0.1 {continue}
+            if next.slops.x > 0 && next.slops.z > 0 {
+                return next
+            }
+            else {
+                return nil
+            }
+        }
+        return nil
+    }
+    
+    mutating func match(minDistance:Float = 5) {
         
         patches.removeAll()
         
@@ -244,33 +259,47 @@ public struct IMPPatchesGrid {
             
             patch.lt = current
             
-            for next in corners {
+            for (i,next) in corners.enumerated() {
                 
-                if next == current { continue }
+                if next.slops == current.slops { continue }
 
                 if next.color.a < 0.1 {continue}
 
                 let next_color = next.color.rgb
-                let ed = color.euclidean_distance(to: next_color)
+                let ed = color.euclidean_distance_lab(to: next_color)
+                
+                let dist = distance(next.point, current.point)
+                //print("new dist[\(i)] [\(next.point)] = \(dist)) slops = \(next.slops) cc = \(current.color.rgb.rgb2lab()) nc = \(next.color.rgb.rgb2lab()) ed = \(ed))")
+
                 if ed <= minDistance {
                     
                     if next.slops.x > 0 && next.slops.y > 0 {
                         // rb
-                        //if patch.rb == nil {
+                        if patch.rb == nil {
                             patch.rb = next
-                        //}
+                        }
+                        else if distance(patch.rb!.point, current.point) > dist{
+                            patch.rb = next
+                        }
                     }
                     if next.slops.x > 0 && next.slops.z > 0 {
                         // rt
-                        //if patch.rt == nil {
+                        if patch.rt == nil {
                             patch.rt = next
-                        //}
+                        }
+                        else if distance(patch.rt!.point, current.point) > dist{
+                            patch.rt = next
+                        }
+
                     }
                     if next.slops.y > 0 && next.slops.w > 0 {
                         // lb
-                        //if patch.lb == nil {
+                        if patch.lb == nil {
                             patch.lb = next
-                        //}
+                        }
+                        else if distance(patch.lb!.point, current.point) > dist{
+                            patch.lb = next
+                        }
                     }
                     
                     if patch.center != nil {

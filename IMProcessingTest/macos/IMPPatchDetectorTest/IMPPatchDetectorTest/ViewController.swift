@@ -33,7 +33,7 @@ class ViewController: NSViewController {
             }
         })
         
-        detector.maxSize = 600
+        detector.maxSize = 1000
         
         canvas.wantsLayer = true
         canvas.layer?.backgroundColor = NSColor.clear.cgColor
