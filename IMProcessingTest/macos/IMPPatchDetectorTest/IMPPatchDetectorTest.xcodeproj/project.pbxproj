@@ -12,6 +12,8 @@
 		314A8A021E8E72150012E9F8 /* IMPFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314A8A011E8E72150012E9F8 /* IMPFileManager.swift */; };
 		314A8A041E8E724C0012E9F8 /* IMPPatchesDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314A8A031E8E724C0012E9F8 /* IMPPatchesDetector.swift */; };
 		314A8A061E8E74560012E9F8 /* IMPCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314A8A051E8E74560012E9F8 /* IMPCanvasView.swift */; };
+		316C4B5B1E9251DD00502F4F /* IMPOpening.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316C4B5A1E9251DD00502F4F /* IMPOpening.swift */; };
+		31AFE2DC1E9252A600018253 /* IMPClosing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AFE2DB1E9252A600018253 /* IMPClosing.swift */; };
 		31F3CC731E8E70A20055994F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC721E8E70A20055994F /* AppDelegate.swift */; };
 		31F3CC751E8E70A20055994F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC741E8E70A20055994F /* ViewController.swift */; };
 		31F3CC771E8E70A20055994F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 31F3CC761E8E70A20055994F /* Assets.xcassets */; };
@@ -104,6 +106,8 @@
 		314A8A011E8E72150012E9F8 /* IMPFileManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFileManager.swift; sourceTree = "<group>"; };
 		314A8A031E8E724C0012E9F8 /* IMPPatchesDetector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPatchesDetector.swift; sourceTree = "<group>"; };
 		314A8A051E8E74560012E9F8 /* IMPCanvasView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCanvasView.swift; sourceTree = "<group>"; };
+		316C4B5A1E9251DD00502F4F /* IMPOpening.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPOpening.swift; sourceTree = "<group>"; };
+		31AFE2DB1E9252A600018253 /* IMPClosing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPClosing.swift; sourceTree = "<group>"; };
 		31F3CC6F1E8E70A20055994F /* IMPPatchDetectorTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPPatchDetectorTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31F3CC721E8E70A20055994F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		31F3CC741E8E70A20055994F /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -473,6 +477,8 @@
 			children = (
 				31F3CCC91E8E70C90055994F /* IMPDilation.swift */,
 				31F3CCCA1E8E70C90055994F /* IMPErosion.swift */,
+				316C4B5A1E9251DD00502F4F /* IMPOpening.swift */,
+				31AFE2DB1E9252A600018253 /* IMPClosing.swift */,
 				31F3CCCB1E8E70C90055994F /* IMPMorphology.swift */,
 			);
 			path = Morphology;
@@ -744,6 +750,7 @@
 				31F3CD151E8E70C90055994F /* MPSProcessor.swift in Sources */,
 				31F3CD4A1E8E70C90055994F /* IMPImageProvider.swift in Sources */,
 				31F3CD1D1E8E70C90055994F /* IMPSimd.swift in Sources */,
+				316C4B5B1E9251DD00502F4F /* IMPOpening.swift in Sources */,
 				31F3CD101E8E70C90055994F /* IMPFunction.swift in Sources */,
 				31F3CD0B1E8E70C90055994F /* IMPQuad.swift in Sources */,
 				31F3CD221E8E70C90055994F /* IMPHarrisCornerDetector.swift in Sources */,
@@ -784,6 +791,7 @@
 				31F3CD181E8E70C90055994F /* IMPColor.swift in Sources */,
 				31F3CD0C1E8E70C90055994F /* IMPTransformModel.swift in Sources */,
 				31F3CD451E8E70C90055994F /* IMPNonMaximumSuppression.swift in Sources */,
+				31AFE2DC1E9252A600018253 /* IMPClosing.swift in Sources */,
 				31F3CD331E8E70C90055994F /* IMPLinesGenerator.swift in Sources */,
 				31F3CD311E8E70C90055994F /* IMPView.swift in Sources */,
 				31F3CD4D1E8E70C90055994F /* IMPTextureCache.swift in Sources */,
