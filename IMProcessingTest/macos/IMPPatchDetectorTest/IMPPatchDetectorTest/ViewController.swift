@@ -27,9 +27,32 @@ class ViewController: NSViewController {
         
         detector.addObserver(destinationUpdated: { (destination) in          
             //print("detector.conrers= = \(self.detector.corners)")
+            
+            guard let size = destination.size else { return }
+            
             DispatchQueue.main.async {
+                self.canvas.imageSize = size
+                
                 self.canvas.corners = self.detector.corners
                 self.canvas.patches = self.detector.patchGrid.patches
+                var points = [float2]()
+                for p in self.detector.patchGrid.patches {
+                    guard let c = p.center else {continue}
+                    points.append(c.point)
+                }
+//                //let hough = IMPHoughSpace(points: points, width: Int(size.width), height: Int(size.height))
+//                //hough.linesMax  = 6+4
+//                //hough.threshold = 8
+//                //let lines = hough.getLines()
+//                var segments = [IMPLineSegment]()
+//                for l in lines {
+//                    let s = IMPLineSegment(line: l, size: size)
+//                    segments.append(s)
+//                //    NSLog("line  = \(l.theta.degrees,l.rho), s = \(s)")
+//                }
+//                self.canvas.hlines = segments
+                self.canvas.hlines = self.detector.hLines
+                self.canvas.vlines = self.detector.vLines
             }
         })
         

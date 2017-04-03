@@ -10,13 +10,15 @@ import Cocoa
 
 class IMPCanvasView: NSView {
     
-    var hlines = [IMPLineSegment]() {
+    var imageSize = NSSize(width: 1, height: 1)
+    
+    var hlines = [IMPPolarLine]() {
         didSet{
             setNeedsDisplay(bounds)
         }
     }
     
-    var vlines = [IMPLineSegment]() {
+    var vlines = [IMPPolarLine]() {
         didSet{
             setNeedsDisplay(bounds)
         }
@@ -37,7 +39,8 @@ class IMPCanvasView: NSView {
     
     func drawPatch(patch:IMPPatchesGrid.Patch,
                   color:NSColor,
-                  width:CGFloat = 8
+                  width:CGFloat = 8,
+                  index:Int = -1
         ){
         
         if let lt = patch.lt, let center = patch.center {
@@ -71,6 +74,33 @@ class IMPCanvasView: NSView {
 
             path.stroke()
             path.close()
+            
+            if index >= 0 {
+                
+                let text = NSString(format: "[%i] %.2f,%.2f", index, center.point.x, center.point.y)
+                let font = NSFont(name: "Helvetica Bold", size: 11.0)
+                
+                if let actualFont = font {
+                    
+                    
+                    let p0 = NSPoint(x: center.point.x.cgfloat * bounds.size.width,
+                                     y: (1-center.point.y.cgfloat) * bounds.size.height)
+                    
+                    let textRect  = NSMakeRect(CGFloat(p0.x+4), CGFloat(p0.y-16), 100, 16)
+                    let textStyle = NSMutableParagraphStyle.default().mutableCopy() as! NSMutableParagraphStyle
+                    textStyle.alignment = .left
+                    
+                    let textColor = NSColor(red: 0,   green: 0, blue: 0, alpha: 1)
+                    
+                    let textFontAttributes = [
+                        NSFontAttributeName: actualFont,
+                        NSForegroundColorAttributeName: textColor,
+                        NSParagraphStyleAttributeName: textStyle
+                    ]
+                    
+                    text.draw(in: NSOffsetRect(textRect,  -CGFloat(radius), 0), withAttributes: textFontAttributes)
+                }
+            }
         }
     }
 
@@ -135,7 +165,6 @@ class IMPCanvasView: NSView {
         
         drawLine(segment: segment1, color: color, width: thickness)
         drawLine(segment: segment2, color: color, width: thickness)
-        
         if index >= 0 {
             
             let text = NSString(format: "[%i] %.2f,%.2f", index, corner.point.x, corner.point.y)
@@ -177,25 +206,30 @@ class IMPCanvasView: NSView {
     
     override func draw(_ dirtyRect: NSRect) {
         for s in hlines {
-            drawLine(segment: s, color:  NSColor(red: 0,   green: 0.9, blue: 0.1, alpha: 0.8))
+            let l = IMPLineSegment(line: s, size: imageSize)
+            drawLine(segment: l, color:  NSColor(red: 0,   green: 0.9, blue: 0.1, alpha: 0.8))
         }
         
         for s in vlines {
-            drawLine(segment: s, color: NSColor(red: 0,   green: 0.1, blue: 0.9, alpha: 0.8))
+            let l = IMPLineSegment(line: s, size:  imageSize)
+            drawLine(segment: l, color: NSColor(red: 0,   green: 0.1, blue: 0.9, alpha: 0.8))
         }
         
         for (i,c) in corners.enumerated() {
             drawCrosshair(corner: c,
-                          color: NSColor(red: CGFloat(c.color.r),   green: CGFloat(c.color.g), blue: CGFloat(c.color.b), alpha: 1),
-                          index: i)
+                          color: NSColor(red: CGFloat(c.color.r),   green: CGFloat(c.color.g), blue: CGFloat(c.color.b), alpha: 1)/*,
+                          index: i*/)
         }
                 
-        for p in patches {
+        for (i,p) in patches.enumerated() {
+            NSLog("patche[\(i)] = \(p.center?.point, p.center?.color)")
             if let c = p.center {
-                drawPatch(patch: p, color: NSColor(red: CGFloat(c.color.r),
-                                                   green: CGFloat(c.color.g),
-                                                   blue: CGFloat(c.color.b),
-                                                   alpha: CGFloat(1)))
+                drawPatch(patch: p,
+                          color: NSColor(red: CGFloat(c.color.r),
+                                         green: CGFloat(c.color.g),
+                                         blue: CGFloat(c.color.b),
+                                         alpha: CGFloat(1)),
+                          index: i)
             }
         }
     }

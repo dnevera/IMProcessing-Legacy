@@ -22,6 +22,7 @@ public class IMPHoughSpace {
     public let maxTheta:Float
     
     public var linesMax:Int = 25
+    public var threshold:Int = 100
 
     public init(image:UnsafeMutablePointer<UInt8>,
                 bytesPerRow:Int,
@@ -222,7 +223,6 @@ public class IMPHoughSpace {
 //        return squares
 //    }
 //    
-    public var threshold:Int = 100
 
     public func getLines() -> [IMPPolarLine]  {
         

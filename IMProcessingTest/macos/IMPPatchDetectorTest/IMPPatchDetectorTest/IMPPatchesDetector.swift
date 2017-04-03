@@ -312,26 +312,18 @@ public struct IMPPatchesGrid {
                 patch.lb = current
             }
         
-
-            print("corner ===== [\(ci)] patch = \(patch.lt?.point, patch.rt?.point, patch.lb?.point, patch.rb?.point)")
-
             for (i,next) in corners.enumerated() {
                 
                 if next.point == current.point { continue }
 
                 if next.color.a < 0.1 { continue }
 
-                //if next.slops == current.slops { continue }
-
                 let next_color = next.color.rgb
                 let ed = color.euclidean_distance_lab(to: next_color)
                 
                 let dist = distance(next.point, current.point)
 
-                if ci == 22{
-                    print("new dist[\(i)] [\(next.point)] = \(dist)) slops = \(next.slops) cc = \(current.color.rgb.rgb2lab()) nc = \(next.color.rgb.rgb2lab()) ed = \(ed))")
-                }
-
+                
                 if ed <= minDistance {
 
                     if current.slops.w > 0 && current.slops.z > 0 {
@@ -399,8 +391,36 @@ public struct IMPPatchesGrid {
 //        }
     }
     
-    func aproxymate()  {
+    mutating func aproxymate()  {
         
+//        mergesort(&patches, patches.count, MemoryLayout<Patch>.size, {
+//            if let a = $0.unsafelyUnwrapped.load(as:Patch.self).center?.point.x,
+//                let b = $1.unsafelyUnwrapped.load(as:Patch.self).center?.point.x {
+//                if a == b {
+//                    return 0
+//                }
+//                else if a < b {
+//                    return -1
+//                }
+//                return 1
+//            }
+//            return 0
+//        })
+//    
+//        mergesort(&patches, patches.count, MemoryLayout<Patch>.size, {
+//            if let a = $0.unsafelyUnwrapped.load(as:Patch.self).center?.point.y,
+//                let b = $1.unsafelyUnwrapped.load(as:Patch.self).center?.point.y {
+//                if a == b {
+//                    return 0
+//                }
+//                else if a < b {
+//                    return -1
+//                }
+//                return 1
+//            }
+//            return 0
+//        })
+//
         let xSorted = patches.sorted { (p0, p1) -> Bool in
             guard let c0=p0.center?.point, let c1=p1.center?.point else { return false }
             return c0.x < c1.x
@@ -421,6 +441,7 @@ public struct IMPPatchesGrid {
                 var curDist:Float = 0
                 if abs(current.x - prev.x) < 0.01 {
                     current.x = (current.x + prev.x)/2
+                    print("Grid: X[0]: prev = \(prev), current = \(current)")
                 }
                 else {
                     curDist = min(current.x - prev.x, prevDist)
@@ -428,9 +449,12 @@ public struct IMPPatchesGrid {
                     count += 1
                     prevDist = curDist
                     prev = current
+                    print("Grid: X[1]: prev = \(prev), current = \(current)")
                 }
             }
         }
+        
+        print(" ------- ")
         
         let avrgX = distSumm/count
         
@@ -447,6 +471,7 @@ public struct IMPPatchesGrid {
                 var curDist:Float = 0
                 if abs(current.y - prev.y) < 0.01 {
                     current.y = (current.y + prev.y)/2
+                    print("Grid: Y[0]: prev = \(prev), current = \(current)")
                 }
                 else {
                     curDist = min(current.y - prev.y, prevDist)
@@ -454,6 +479,8 @@ public struct IMPPatchesGrid {
                     count += 1
                     prevDist = curDist
                     prev = current
+                    
+                    print("Grid: Y[1]: prev = \(prev), current = \(current)")
                 }
             }
         }
@@ -482,6 +509,8 @@ public class IMPPatchesDetector: IMPDetector {
         }
     }
     public var corners = [IMPCorner]()
+    public var hLines = [IMPPolarLine]()
+    public var vLines = [IMPPolarLine]()
     public var patchGrid:IMPPatchesGrid = IMPPatchesGrid(colors:PassportCC24)
     
     var oppositThreshold:Float = 0.5
@@ -489,7 +518,6 @@ public class IMPPatchesDetector: IMPDetector {
     
     var t = Date()
 
-    private lazy var opening:IMPErosion = IMPOpening(context: self.context)
     
     public override func configure(complete: IMPFilterProtocol.CompleteHandler?) {
         
@@ -507,9 +535,18 @@ public class IMPPatchesDetector: IMPDetector {
         add(filter: opening) { (source) in
             self.sourceImage = source
             self.harrisCornerDetector.source = source
+            self.linesDetector.source = source
         }
         
         patchDetectorKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
+        
+        linesDetector.linesMax = (6+3) * 4
+        linesDetector.threshold = 24 * 4
+        
+        linesDetector.addObserver(lines: { (horisontal, vertical, size) in
+            self.hLines = horisontal
+            self.vLines = vertical
+        })
         
         harrisCornerDetector.addObserver { (corners:[IMPCorner], size:NSSize) in
             self.t = Date()
@@ -553,7 +590,7 @@ public class IMPPatchesDetector: IMPDetector {
 
             let prec:Float = 8
 
-            var sorted = filtered.sorted { (c0, c1) -> Bool in
+            let sorted = filtered.sorted { (c0, c1) -> Bool in
                 
                 var pi0 = c0.point * float2(w,h)
                 var pi1 = c1.point * float2(w,h)
@@ -566,10 +603,6 @@ public class IMPPatchesDetector: IMPDetector {
                 
                 return i0<i1
             }
-            
-//            var sorted = filtered.sorted(by: { (c0, c1) -> Bool in
-//                return c0.point.x<c1.point.x
-//            })
             
             self.corners = sorted
             
@@ -599,8 +632,11 @@ public class IMPPatchesDetector: IMPDetector {
         
     fileprivate lazy var pacthColorsCountBuffer:MTLBuffer = self.context.makeBuffer(from: self.patchGrid.dimension)
 
-    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
     
+    private lazy var linesDetector:IMPOrientedLinesDetector = IMPOrientedLinesDetector(context:  IMPContext())
+    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
+    private lazy var opening:IMPErosion = IMPOpening(context: self.context)
+
     private lazy var patchDetectorKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_patchScanner")
         f.optionsHandler = { (function,command,source,destination) in
@@ -629,3 +665,50 @@ public class IMPPatchesDetector: IMPDetector {
         return f
     }()
 }
+
+
+enum SortType {
+    case Ascending
+    case Descending
+}
+
+struct SortObject<T> {
+    let value:T
+    let startPosition:Int
+    var sortedPosition:Int?
+}
+
+func swiftStableSort<T:Comparable>(array:inout [T], sortType:SortType = .Ascending) {
+    
+    var sortObjectArray = array.enumerated().map{SortObject<T>(value:$0.element, startPosition:$0.offset, sortedPosition:nil)}
+    
+    for s in sortObjectArray {
+        var offset = 0
+        for x in array[0..<s.startPosition]  {
+            if s.value < x {
+                offset += sortType == .Ascending ? -1 : 0
+            }
+            else if s.value > x {
+                offset += sortType == .Ascending ? 0 : -1
+            }
+        }
+        
+        for x in array[s.startPosition+1..<array.endIndex]  {
+            if s.value > x  {
+                offset += sortType == .Ascending ? 1 : 0
+            }
+            else if s.value < x  {
+                offset += sortType == .Ascending ? 0 : 1
+            }
+        }
+        sortObjectArray[s.startPosition].sortedPosition = offset + s.startPosition
+    }
+    
+    for s in sortObjectArray {
+        if let sInd = s.sortedPosition {
+            array[sInd] = s.value
+        }
+    }
+    
+}
+
