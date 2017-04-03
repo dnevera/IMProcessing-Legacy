@@ -328,11 +328,11 @@ public struct IMPPatchesGrid {
                 
                 let dist = distance(next.point, current.point)
 
-                if ed <= minDistance {
+                if ci == 22{
+                    print("new dist[\(i)] [\(next.point)] = \(dist)) slops = \(next.slops) cc = \(current.color.rgb.rgb2lab()) nc = \(next.color.rgb.rgb2lab()) ed = \(ed))")
+                }
 
-                    if ci == 44 {
-                        print("new dist[\(i)] [\(next.point)] = \(dist)) slops = \(next.slops) cc = \(current.color.rgb.rgb2lab()) nc = \(next.color.rgb.rgb2lab()) ed = \(ed))")
-                    }
+                if ed <= minDistance {
 
                     if current.slops.w > 0 && current.slops.z > 0 {
                         // lt

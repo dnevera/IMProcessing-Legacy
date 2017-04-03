@@ -56,13 +56,14 @@ kernel void kernel_patchScanner(
     IMPCorner corner = corners[tid.x];
     float2 point = corner.point;
     float4 slope = corner.slops;
-    uint2 gid = uint2(float2(point.x,point.y) * float2(width,height));
     
     int regionSize = 64;
     int rs = -regionSize/2;
     int re =  regionSize/2+1;
+    float2 shift = (float2(-slope.x,-slope.y) + float2(slope.z,slope.w)) / float2(width,height);
+    uint2 gid = uint2((float2(point.x,point.y) + 4*shift) * float2(width,height));
     
-    float3 color  = getAvrgColor(rs * slope.x, re * slope.w,  rs * slope.y, re * slope.z,  gid, source2, destination);
+    float3 color  = getAvrgColor(rs * slope.x, re * slope.w,  rs * slope.y, re * slope.z,  gid , source2, destination);
     corners[tid.x].color = float4(color,1);
 }
 
