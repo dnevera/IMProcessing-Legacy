@@ -290,7 +290,6 @@ public struct IMPPatchesGrid {
                 let c = row[j]
                 let cc = float3(Float(c.x),Float(c.y),Float(c.z))/float3(255)
                 let ed = cc.euclidean_distance_lab(to: color)
-                //print("find \(cc.rgb2lab()) -- \(color.rgb2lab()) ed = \(ed)")
                 if  ed < minDistance {
                     return (j,i)
                 }
@@ -303,19 +302,13 @@ public struct IMPPatchesGrid {
         
         patches.removeAll()
         
-        for (ci,current) in corners.enumerated() {
-            
-            if current.slope.w <= 0 && current.slope.z <= 0 {
-                //continue
-            }
+        for current in corners {
             
             if current.color.a < 0.1 {continue}
             
             let color = current.color.rgb
             
             var patch = Patch()
-            
-            //patch.lt = current
             
             if current.slope.w > 0 && current.slope.z > 0 {
                 // rb
@@ -334,7 +327,7 @@ public struct IMPPatchesGrid {
                 patch.lb = current
             }
             
-            for (i,next) in corners.enumerated() {
+            for next in corners {
                 
                 if next.point == current.point { continue }
                 
@@ -402,125 +395,85 @@ public struct IMPPatchesGrid {
             }
             
         }
-        
-        
-        //        for (j,l) in locations.enumerated() {
-        //            for (i,ll) in l.enumerated() {
-        //                if let rgb = ll?.lt?.color.rgb, let p = ll?.lt?.point {
-        //                    print("l[\(j,i)] = \(p, rgb * float3(255))")
-        //                }
-        //            }
-        //        }
     }
     
-    mutating func aproxymate(withSize size:NSSize)  {
-        
-        //        mergesort(&patches, patches.count, MemoryLayout<Patch>.size, {
-        //            if let a = $0.unsafelyUnwrapped.load(as:Patch.self).center?.point.x,
-        //                let b = $1.unsafelyUnwrapped.load(as:Patch.self).center?.point.x {
-        //                if a == b {
-        //                    return 0
-        //                }
-        //                else if a < b {
-        //                    return -1
-        //                }
-        //                return 1
-        //            }
-        //            return 0
-        //        })
-        //
-        //        mergesort(&patches, patches.count, MemoryLayout<Patch>.size, {
-        //            if let a = $0.unsafelyUnwrapped.load(as:Patch.self).center?.point.y,
-        //                let b = $1.unsafelyUnwrapped.load(as:Patch.self).center?.point.y {
-        //                if a == b {
-        //                    return 0
-        //                }
-        //                else if a < b {
-        //                    return -1
-        //                }
-        //                return 1
-        //            }
-        //            return 0
-        //        })
-        //
-        let xSorted = patches.sorted { (p0, p1) -> Bool in
-            guard let c0=p0.center?.point, let c1=p1.center?.point else { return false }
-            return c0.x < c1.x
-        }
-        let ySorted = patches.sorted { (p0, p1) -> Bool in
-            guard let c0=p0.center?.point, let c1=p1.center?.point else { return false }
-            return c0.y < c1.y
-        }
-        
+    
+    func computeApproximation(_ lines:[IMPPolarLine], threshold:Float) -> (line:IMPPolarLine, rhoStep: Float, theta: Float)? {
         var prevDist:Float = Float.greatestFiniteMagnitude
         var distSumm:Float  = 0
+        var thetaSumm:Float  = 0
         
-        guard var prev = xSorted.first?.center?.point else { return }
+        guard let firstLine = lines.first else { return nil }
+        var prev = firstLine
         var count:Float = 0
         
-        for i in 1..<xSorted.count {
-            if var current = xSorted[i].center?.point {
-                var curDist:Float = 0
-                if abs(current.x - prev.x) < 0.01 {
-                    current.x = (current.x + prev.x)/2
-                    print("Grid: X[0]: prev = \(prev), current = \(current)")
-                }
-                else {
-                    curDist = min(current.x - prev.x, prevDist)
-                    distSumm += curDist
-                    count += 1
-                    prevDist = curDist
-                    prev = current
-                    print("Grid: X[1]: prev = \(prev), current = \(current)")
-                }
+        for i in 1..<lines.count {
+            
+            let current = lines[i]
+            var curDist:Float = 0
+            
+            if abs(current.rho - prev.rho) < threshold {
+                current.rho = (current.rho + prev.rho)/2
+                current.theta = (current.theta + prev.theta)/2
+                print("Grid: X[0]: prev = \(prev.rho), current = \(current.rho, current.theta)")
+            }
+            else {
+                curDist = min(current.rho - prev.rho, prevDist)
+                prevDist = curDist
+                distSumm += curDist
+                thetaSumm += current.theta
+
+                count += 1
+
+                prev = current
+                print("Grid: X[1]: prev = \(prev.rho), current = \(current.rho, current.theta) prevDist = \(prevDist) count = \(count)")
             }
         }
         
-        print(" ------- ")
+        let avrgRho   = distSumm/count
+        let avrgTheta = thetaSumm/count
         
-        let avrgX = distSumm/count
-        
-        prevDist = Float.greatestFiniteMagnitude
-        
-        guard let prevY = ySorted.first?.center?.point else { return }
-        
-        prev = prevY
-        
-        distSumm = 0
-        count = 0
-        for i in 1..<ySorted.count {
-            if var current = ySorted[i].center?.point {
-                var curDist:Float = 0
-                if abs(current.y - prev.y) < 0.01 {
-                    current.y = (current.y + prev.y)/2
-                    print("Grid: Y[0]: prev = \(prev), current = \(current)")
-                }
-                else {
-                    curDist = min(current.y - prev.y, prevDist)
-                    distSumm += curDist
-                    count += 1
-                    prevDist = curDist
-                    prev = current
-                    
-                    print("Grid: Y[1]: prev = \(prev), current = \(current)")
-                }
-            }
-        }
-        
-        let avrgY = distSumm/count
-        
-        if let startPointX  = xSorted.first?.center?.point.x,
-            let startPointY = ySorted.first?.center?.point.y,
-            let endPointX = xSorted.last?.center?.point.x,
-            let endPointY = ySorted.last?.center?.point.y {
-            
-            let leftTop     = float2(startPointX,startPointY)
-            let rightBottom = float2(endPointX,endPointY)
-            
-            print("Grid: avrgx = \(avrgX) avrgy = \(avrgY)  coords = \(leftTop, rightBottom) ")
-        }
+        return (firstLine,avrgRho,avrgTheta)
     }
     
+    func aproxymate(withSize size:NSSize, threshold:Float = 16)
+        -> (
+        horizon:  [IMPPolarLine],
+        vertical: [IMPPolarLine]
+        )?
+    {
+        
+        var horizons  = [IMPPolarLine]()
+        var verticals = [IMPPolarLine]()
+        
+        for p in patches {
+            if let h = p.horizon?.polarLine(size: size)  { horizons.append(h) }
+            if let v = p.vertical?.polarLine(size: size) { verticals.append(v) }
+        }
+        
+        let horizonSorted  = horizons.sorted  { return abs($0.rho)<abs($1.rho) }
+        let vdrticalSorted = verticals.sorted { return abs($0.rho)<abs($1.rho) }
+        
+        guard let h = computeApproximation(horizonSorted, threshold: threshold) else { return nil }
+        print(" ----- - - -- - - - - - - - - - - - - - - -")
+        guard let v = computeApproximation(vdrticalSorted, threshold: threshold) else { return nil }
+        
+        print("Grid: X: avrg rho,theta = \(h.rhoStep,h.theta.degrees)")
+        print("Grid: Y: avrg rho,theta = \(v.rhoStep,v.theta.degrees)")
+        
+//        horizons.removeAll()
+//        verticals.removeAll()
+//
+//        for i in 0..<dimension.height {
+//            horizons.append(IMPPolarLine(rho: h.line.rho + i.float * h.rhoStep, theta: h.theta))
+//        }
+//
+//        for i in 0..<dimension.width {
+//            verticals.append(IMPPolarLine(rho: v.line.rho + i.float * v.rhoStep, theta: v.theta))
+//        }
+//        
+        return (horizons,verticals)
+    }
 }
 
 public class IMPPatchesDetector: IMPDetector {
@@ -557,18 +510,24 @@ public class IMPPatchesDetector: IMPDetector {
         add(filter: opening) { (source) in
             self.sourceImage = source
             self.harrisCornerDetector.source = source
-            self.linesDetector.source = source
+            //self.linesDetector.source = source
         }
         
         patchDetectorKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
         
-        linesDetector.linesMax = (6+3) * 4
-        linesDetector.threshold = 24 * 4
-        
-        linesDetector.addObserver(lines: { (horisontal, vertical, size) in
-            self.hLines = horisontal
-            self.vLines = vertical
-        })
+//        linesDetector.linesMax = (6+3) * 4
+//        linesDetector.threshold = 24 * 4
+//        
+//        linesDetector.addObserver(lines: { (horisontal, vertical, size) in
+//            //self.hLines = horisontal
+//            //self.vLines = vertical
+//
+//            for s in vertical {
+//                let l = IMPLineSegment(line: s, size: size)
+//                NSLog("detector vline = \(l) polar = \(s.rho, s.theta.degrees)")
+//            }
+//
+//        })
         
         harrisCornerDetector.addObserver { (corners:[IMPCorner], size:NSSize) in
             self.t = Date()
@@ -675,7 +634,7 @@ public class IMPPatchesDetector: IMPDetector {
         return f
     }()
     
-    lazy var patchDetector:IMPFilter = {
+    private lazy var patchDetector:IMPFilter = {
         let f = IMPFilter(context:self.context)
         f.add(function: self.patchDetectorKernel){ (source) in
             
@@ -684,7 +643,10 @@ public class IMPPatchesDetector: IMPDetector {
             print(" patch detector time = \(-self.t.timeIntervalSinceNow) ")
             memcpy(&self.corners, self.cornersBuffer.contents(), MemoryLayout<IMPCorner>.size * self.corners.count)
             self.patchGrid.corners = self.corners
-            self.patchGrid.aproxymate(withSize: size)
+            if let r = self.patchGrid.aproxymate(withSize: size){
+                (self.hLines, self.vLines) = r
+            }
+            //(_,_) = self.patchGrid.aproxymate(withSize: size)
         }
         
         return f

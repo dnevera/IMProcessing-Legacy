@@ -78,10 +78,12 @@ public struct IMPLineSegment: Equatable {
     //
     public func polarLine(size:NSSize = NSSize(width:1,height:1)) -> IMPPolarLine {
         let line = self.scale(float2(Float(size.width),Float(size.height)))
-        let nf = line.normalForm() * float3(-1)
-        var a  = acos(nf.x)
-        let angle = a * 180 / Float.pi
-        a = (angle >= 45 && angle <= 135) ? a : Float.pi - a
+        var nf = line.normalForm()
+        var a  = acos(-nf.x)
+        if (nf.y>=0) {
+            a = Float.pi - a
+            nf.z = -nf.z
+        }
         return IMPPolarLine(rho: -nf.z, theta: a)
     }
     
@@ -101,7 +103,7 @@ public struct IMPLineSegment: Equatable {
     
     ///  Standard form of line perpendicular the line
     ///
-    ///  - parameter point:
+    ///  - parameter point: q
     ///
     ///  - returns: standard form for line defined by normal vector of the line segment
     public func normalForm(toPoint point:float2) -> float3 {
