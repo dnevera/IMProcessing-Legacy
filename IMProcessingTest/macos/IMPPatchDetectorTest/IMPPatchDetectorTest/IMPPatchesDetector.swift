@@ -398,42 +398,56 @@ public struct IMPPatchesGrid {
     }
     
     
-    func computeApproximation(_ lines:[IMPPolarLine], threshold:Float) -> (line:IMPPolarLine, rhoStep: Float, theta: Float)? {
-        var prevDist:Float = Float.greatestFiniteMagnitude
-        var distSumm:Float  = 0
-        var thetaSumm:Float  = 0
+    func filterClosing(_ lines:[IMPPolarLine], threshold:Float) -> [IMPPolarLine]? {
         
         guard let firstLine = lines.first else { return nil }
         var prev = firstLine
-        var count:Float = 0
+        var prevFirst:IMPPolarLine? = prev
+        
+        var result = [IMPPolarLine]()
         
         for i in 1..<lines.count {
             
             let current = lines[i]
-            var curDist:Float = 0
             
             if abs(current.rho - prev.rho) < threshold {
                 current.rho = (current.rho + prev.rho)/2
                 current.theta = (current.theta + prev.theta)/2
-                print("Grid: X[0]: prev = \(prev.rho), current = \(current.rho, current.theta)")
+                prevFirst = current
             }
             else {
-                curDist = min(current.rho - prev.rho, prevDist)
-                prevDist = curDist
-                distSumm += curDist
-                thetaSumm += current.theta
-
-                count += 1
+                
+                if let l = prevFirst {
+                    if !result.contains(where: { (p) -> Bool in
+                        return abs(p.rho-l.rho)<threshold
+                    }) {
+                        result.append(l)
+                    }
+                    prevFirst = nil
+                }
+                else {
+                    let c = current
+                    if !result.contains(where: { (p) -> Bool in
+                        if sign(p.rho) == sign(c.rho) {
+                            return abs(p.rho-c.rho)<threshold && abs(p.theta-c.theta)<Float.pi/90
+                        }
+                        else {
+                            return abs(p.rho+c.rho)<threshold && abs(p.theta + c.theta - Float.pi)<Float.pi/90
+                        }
+                    }) {
+                        result.append(current)
+                    }
+                }
 
                 prev = current
-                print("Grid: X[1]: prev = \(prev.rho), current = \(current.rho, current.theta) prevDist = \(prevDist) count = \(count)")
             }
         }
         
-        let avrgRho   = distSumm/count
-        let avrgTheta = thetaSumm/count
+        if let l = prevFirst {
+            result.append(l)
+        }
         
-        return (firstLine,avrgRho,avrgTheta)
+        return result
     }
     
     func aproxymate(withSize size:NSSize, threshold:Float = 16)
@@ -454,12 +468,15 @@ public struct IMPPatchesGrid {
         let horizonSorted  = horizons.sorted  { return abs($0.rho)<abs($1.rho) }
         let vdrticalSorted = verticals.sorted { return abs($0.rho)<abs($1.rho) }
         
-        guard let h = computeApproximation(horizonSorted, threshold: threshold) else { return nil }
+        guard let h = filterClosing(horizonSorted, threshold: threshold) else { return nil }
         print(" ----- - - -- - - - - - - - - - - - - - - -")
-        guard let v = computeApproximation(vdrticalSorted, threshold: threshold) else { return nil }
+        guard let v = filterClosing(vdrticalSorted, threshold: threshold) else { return nil }
+
         
-        print("Grid: X: avrg rho,theta = \(h.rhoStep,h.theta.degrees)")
-        print("Grid: Y: avrg rho,theta = \(v.rhoStep,v.theta.degrees)")
+        
+        
+        //print("Grid: X: avrg rho,theta = \(h.rhoStep,h.theta.degrees)")
+        //print("Grid: Y: avrg rho,theta = \(v.rhoStep,v.theta.degrees)")
         
 //        horizons.removeAll()
 //        verticals.removeAll()
@@ -471,8 +488,13 @@ public struct IMPPatchesGrid {
 //        for i in 0..<dimension.width {
 //            verticals.append(IMPPolarLine(rho: v.line.rho + i.float * v.rhoStep, theta: v.theta))
 //        }
-//        
-        return (horizons,verticals)
+        
+        //for i in 0..<dimension. {
+        //    for i in 0..<dimension.width {
+        //    }
+        //}
+        
+        return (h,v)
     }
 }
 
@@ -646,7 +668,6 @@ public class IMPPatchesDetector: IMPDetector {
             if let r = self.patchGrid.aproxymate(withSize: size){
                 (self.hLines, self.vLines) = r
             }
-            //(_,_) = self.patchGrid.aproxymate(withSize: size)
         }
         
         return f
