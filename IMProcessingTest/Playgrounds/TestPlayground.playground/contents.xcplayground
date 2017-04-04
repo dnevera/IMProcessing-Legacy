@@ -3,5 +3,6 @@
     <pages>
         <page name='Sorting'/>
         <page name='Polar Space'/>
+        <page name='Segment line'/>
     </pages>
 </playground>

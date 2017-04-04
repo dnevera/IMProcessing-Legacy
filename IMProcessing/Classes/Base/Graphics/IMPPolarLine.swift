@@ -15,6 +15,17 @@ public class IMPPolarLine{
 
     public required init() {}
 
+    public init(segment:IMPLineSegment, size:NSSize = NSSize(width:1,height:1)){
+        let p = segment.polarLine(size: size)
+        rho = p.rho
+        theta = p.theta
+    }
+    
+    public convenience init(p0:float2, p1:float2, size:NSSize = NSSize(width:1,height:1)){
+        self.init(segment: IMPLineSegment(p0: p0, p1: p1), size: size)
+    }
+
+    
     public required init(rho:Float, theta:Float) {
         vector.x = rho
         vector.y = theta

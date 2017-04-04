@@ -14,72 +14,40 @@ public let IMPMinimumPoint:Float = Float.ulpOfOne
 public let IMPEPSPoint:Float = (1+Float.ulpOfOne)
 
 public struct IMPLineSegment: Equatable {
-    
+
+    public let p0:float2
+    public let p1:float2
+
     public init(line: IMPPolarLine, size:NSSize) {
         let angle = line.theta
-        let rho = line.rho
+        let rho = line.rho //* sqrt(size.width*size.width+size.height*size.height).float
         
         let a = cos(angle)
         let b = sin(angle)
         
-        let x0 = a * rho
-        let y0 = b * rho
-        
-        let np = float2(x0,y0)
-        
-        let nv = IMPLineSegment(p0: float2(0), p1: np)
-        
-        //
-        // a*x + b*y = c => floa3.x/y/z
-        // x = (c - b*y)/a
-        // y = (c - a*x)/b
-        //
-        let nf = nv.normalForm(toPoint: np)
-        
-        let A = round(nf.x)
-        let B = round(nf.y)
-        let C = round(nf.z)
-        
         var x1:Float=0,y1:Float=0,x2:Float=0,y2:Float=0
         
-        if A == 0 {
-            y1 = B == 0 ? 1 : C/B/size.height.float
-            x2 = 1
+        if angle.degrees >= 45 && angle.degrees <= 135 {
+            //y = (r - x cos(t)) / sin(t)
+            x1 = 0
+            y1 = (rho - x1 * a) / b / size.height.float
             
-            x1 = B == 0 ? x2 : 0
-            y2 = y1
+            x2 = size.width.float
+            y2 = (rho - x2 * a) / b / size.height.float
+            x2 /= size.width.float
+            
         }
-        else if B == 0 {
+        else{
+            //x = (r - y sin(t)) / cos(t);
             y1 = 0
-            x2 = A == 0 ? 1 : C/A/size.width.float
-            
-            x1 = x2
-            y2 = A == 0 ? y1 : 1
+            x1 = (rho - y1 * b) / a / size.width.float
+            y2 = size.height.float
+            x2 = (rho - y2 * b) / a / size.width.float
+            y2 /= size.height.float
         }
-        else {
-            if angle.degrees >= 45 && angle.degrees <= 135 {
-                //y = (r - x cos(t)) / sin(t)
-                x1 = 0
-                y1 = (rho - x1 * a) / b / size.height.float
-                
-                x2 = size.width.float
-                y2 = (rho - x2 * a) / b / size.height.float
-                x2 /= size.width.float
-                
-            }
-            else{
-                //x = (r - y sin(t)) / cos(t);
-                y1 = 0
-                x1 = (rho - y1 * b) / a / size.width.float
-                y2 = size.height.float
-                x2 = (rho - y2 * b) / a / size.width.float
-                y2 /= size.height.float
-            }
-        }
-        
-        let delim  = float2(1)
-        self.p0 = clamp(float2(x1,y1)/delim, min: float2(0), max: float2(1))
-        self.p1 = clamp(float2(x2,y2)/delim, min: float2(0), max: float2(1))                
+
+        self.p0 = clamp(float2(x1,y1), min: float2(0), max: float2(1))
+        self.p1 = clamp(float2(x2,y2), min: float2(0), max: float2(1))
     }
     
     public init(p0:float2,p1:float2){
@@ -91,8 +59,31 @@ public struct IMPLineSegment: Equatable {
         return lhs.p0 == rhs.p0 && lhs.p1 == rhs.p1
     }
     
-    public let p0:float2
-    public let p1:float2
+    public func normalForm() -> float3 {
+        let form  = standardForm
+        let a = form.x
+        let b = form.y
+        let c = form.z
+        let factor = sign(c) * (-1 / sqrt(a*a+b*b))
+        
+        return float3(a,b,c) * float3(factor)
+    }
+    
+    public func scale(_ scale:float2) -> IMPLineSegment {
+        return IMPLineSegment(p0: self.p0 * scale, p1: self.p1 * scale)
+    }
+    
+    //
+    // top left style Hough space
+    //
+    public func polarLine(size:NSSize = NSSize(width:1,height:1)) -> IMPPolarLine {
+        let line = self.scale(float2(Float(size.width),Float(size.height)))
+        let nf = line.normalForm() * float3(-1)
+        var a  = acos(nf.x)
+        let angle = a * 180 / Float.pi
+        a = (angle >= 45 && angle <= 135) ? a : Float.pi - a
+        return IMPPolarLine(rho: -nf.z, theta: a)
+    }
     
     /// Standard form of line equation: Ax + By = C
     /// float3.x = A

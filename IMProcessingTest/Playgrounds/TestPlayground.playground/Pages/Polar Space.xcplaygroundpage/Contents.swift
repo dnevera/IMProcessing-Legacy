@@ -4,7 +4,6 @@ import Cocoa
 import Metal
 import simd
 
-
 let v = float2(12.9233)
 fract(v)
 floor(v)

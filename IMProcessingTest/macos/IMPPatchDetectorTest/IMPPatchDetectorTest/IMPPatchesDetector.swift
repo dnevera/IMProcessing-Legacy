@@ -10,6 +10,46 @@ import Foundation
 import Metal
 import simd
 
+//
+// http://xritephoto.com/ph_product_overview.aspx?ID=824&Action=Support&SupportID=5159
+//
+public let PassportCC24:[[uint3]] = [
+    [
+        uint3(115,82,68),   // dark skin
+        uint3(194,150,130), // light skin
+        uint3(98,122,157),  // blue sky
+        uint3(87,108,67),   // foliage
+        uint3(133,128,177), // blue flower
+        uint3(103,189,170)  // bluish flower
+    ],
+    
+    [
+        uint3(214,126,44), // orange
+        uint3(80,91,166),  // purplish blue
+        uint3(193,90,99),  // moderate red
+        uint3(94,60,108),  // purple
+        uint3(157,188,64), // yellow green
+        uint3(224,163,46)  // orange yellow
+    ],
+    
+    [
+        uint3(56,61,150),  // blue
+        uint3(79,148,73),  // green
+        uint3(175,54,60),  // red
+        uint3(231,199,31), // yellow
+        uint3(187,86,149), // magenta
+        uint3(8,133,161),  // cyan
+    ],
+    
+    [
+        uint3(243,243,242), // white
+        uint3(200,200,200), // neutral 8
+        uint3(160,160,160), // neutral 6,5
+        uint3(122,122,121), // neutral 5
+        uint3(85,85,85),    // neutral 3.5
+        uint3(52,52,52)     // black
+    ]
+]
 
 extension float3 {
     func euclidean_distance(to p_2: float3) -> Float {
@@ -35,94 +75,51 @@ extension IMPCorner: Equatable {
         return (abs(lhs.point.x-rhs.point.x) < 0.1) && (abs(lhs.point.y-rhs.point.y) < 0.1)
     }
     
+    public var left:float2  { return float2(-slope.x,0) }
+    public var top:float2   { return float2(0,slope.y)  }
+    public var right:float2 { return float2(slope.w,0)  }
+    public var bottom:float2{ return float2(0,-slope.z) }
     
-    var left:float2  { return float2(-slops.x,0) }
-    var top:float2   { return float2(0,slops.y)  }
-    var right:float2 { return float2(slops.w,0)  }
-    var bottom:float2{ return float2(0,-slops.z) }
     
-    
-    var direction:float2 {
+    public var direction:float2 {
         return left + top + right + bottom
     }
     
-    mutating func clampDirection(threshold:Float = 0.1) {
+    public mutating func clampDirection(threshold:Float = 0.1) {
         // x - left, y - top, z - bottom, w - right
         
         let d = direction
         
         if d.x>0 && d.y<0 && length(d)>=threshold {
-            slops.y = 0 //           __
-            slops.x = 0 // left top |
-            slops.w = 1
-            slops.z = 1
+            slope.y = 0 //           __
+            slope.x = 0 // left top |
+            slope.w = 1
+            slope.z = 1
         }
         if d.x<0 && d.y<0 && length(d)>=threshold {
-            slops.y = 0 //           __
-            slops.w = 0 // right top   |
-            slops.x = 1
-            slops.z = 1
+            slope.y = 0 //           __
+            slope.w = 0 // right top   |
+            slope.x = 1
+            slope.z = 1
         }
         if d.x<0 && d.y>0 && length(d)>=threshold {
-            slops.w = 0 //
-            slops.z = 0 // right bottom  __|
-            slops.y = 1
-            slops.x = 1
+            slope.w = 0 //
+            slope.z = 0 // right bottom  __|
+            slope.y = 1
+            slope.x = 1
         }
         if d.x>0 && d.y>0 && length(d)>=threshold {
-            slops.x = 0 //
-            slops.z = 0 // left bottom |__
-            slops.y = 1
-            slops.w = 1
+            slope.x = 0 //
+            slope.z = 0 // left bottom |__
+            slope.y = 1
+            slope.w = 1
         }
     }
 }
 
-
-//
-// http://xritephoto.com/ph_product_overview.aspx?ID=824&Action=Support&SupportID=5159
-//
-public let PassportCC24:[[uint3]] = [
-    [
-        uint3(115,82,68),   // dark skin
-        uint3(194,150,130), // light skin
-        uint3(98,122,157),  // blue sky
-        uint3(87,108,67),   // foliage
-        uint3(133,128,177), // blue flower
-        uint3(103,189,170)  // bluish flower
-    ],
-
-    [
-        uint3(214,126,44), // orange
-        uint3(80,91,166),  // purplish blue
-        uint3(193,90,99),  // moderate red
-        uint3(94,60,108),  // purple
-        uint3(157,188,64), // yellow green
-        uint3(224,163,46)  // orange yellow
-    ],
-
-    [
-        uint3(56,61,150),  // blue
-        uint3(79,148,73),  // green
-        uint3(175,54,60),  // red
-        uint3(231,199,31), // yellow
-        uint3(187,86,149), // magenta
-        uint3(8,133,161),  // cyan
-    ],
-
-    [
-        uint3(243,243,242), // white
-        uint3(200,200,200), // neutral 8
-        uint3(160,160,160), // neutral 6,5
-        uint3(122,122,121), // neutral 5
-        uint3(85,85,85),    // neutral 3.5
-        uint3(52,52,52)     // black
-    ]
-]
-
 public struct IMPPatch:Equatable {
     
-    init() {}
+    public init() {}
     
     public static func ==(lhs: IMPPatch, rhs: IMPPatch) -> Bool {
         if let c0 = lhs.center, let c1 = rhs.center {
@@ -132,51 +129,40 @@ public struct IMPPatch:Equatable {
     }
     
     
+    public var center:IMPCorner? {
+        return _center
+    }
+
+    public var horizon:IMPLineSegment? {
+        return _horizon
+    }
+
+    public var vertical:IMPLineSegment? {
+        return _vertical
+    }
+
     public var lt:IMPCorner? {didSet{ vertices[0] = lt } }
     public var rt:IMPCorner? {didSet{ vertices[1] = rt } }
     public var rb:IMPCorner? {didSet{ vertices[2] = rb } }
     public var lb:IMPCorner? {didSet{ vertices[3] = lb } }
     
-    private func angle(_ pt1:float2, _ pt2:float2, _ pt0:float2 ) -> Float {
-        let dx1 = pt1.x - pt0.x
-        let dy1 = pt1.y - pt0.y
-        let dx2 = pt2.x - pt0.x
-        let dy2 = pt2.y - pt0.y
-        return acos((dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10)).degrees
-    }
-
-    public var vertices:[IMPCorner?] = [IMPCorner?](repeating:nil, count:4) {
+    private var _horizon: IMPLineSegment?
+    private var _vertical: IMPLineSegment?
+    
+    private var _center:IMPCorner? {
         didSet{
-            var sumOfR = float2(0)
-            var count = 0
-            var col = float4(0)
-            for i in 0..<4 {
-                let v = vertices[i]
-                
-                if v != nil {
-                    sumOfR += v!.point
-                    count += 1
-                    col += v!.color
-                }
-            }
-            
-            if count == 4 {
-                
-                var minCosine:Float = Float.greatestFiniteMagnitude //FLT_MAX
-                //var aSum:Float = 0
-                for i in 0..<4 {
-                    let a = fabs(angle(vertices[i]!.point, vertices[(i+2)%4]!.point, vertices[(i+1)%4]!.point))
-                    //print(" angle = [\(i%4) = \(a)]")
-                    minCosine = fmin(minCosine, a)
-                }
-                
-                if( abs(minCosine-90) <= 10 ) {
-                    center = IMPCorner()
-                    center?.point = sumOfR/float2(4)
-                    center?.color = col/(float4(4))
-                }
+            if let lt = self.lt,
+                let rt = self.rt,
+                let lb = self.lb,
+                let rb = self.rb {
+                _horizon = IMPLineSegment(p0: centerOf(lt, lb), p1: centerOf(rt, rb))
+                _vertical = IMPLineSegment(p0: centerOf(lt, rt), p1: centerOf(lb, rb))
             }
         }
+    }
+    
+    private func centerOf(_ c0:IMPCorner, _ c1:IMPCorner) -> float2 {
+        return (c0.point+c1.point)/float2(2)
     }
     
     public mutating func tryReconstract() {
@@ -192,7 +178,7 @@ public struct IMPPatch:Equatable {
                 lt = c
             }
         }
-
+        
         if lb == nil {
             if let rt = self.rt,
                 let rb = self.rb,
@@ -228,10 +214,46 @@ public struct IMPPatch:Equatable {
                 rb = c
             }
         }
-
+        
     }
     
-    var center:IMPCorner?
+    private func angle(_ pt1:float2, _ pt2:float2, _ pt0:float2 ) -> Float {
+        let dx1 = pt1.x - pt0.x
+        let dy1 = pt1.y - pt0.y
+        let dx2 = pt2.x - pt0.x
+        let dy2 = pt2.y - pt0.y
+        return acos((dx1*dx2 + dy1*dy2)/sqrt((dx1*dx1 + dy1*dy1)*(dx2*dx2 + dy2*dy2) + 1e-10)).degrees
+    }
+    
+    private var vertices:[IMPCorner?] = [IMPCorner?](repeating:nil, count:4) {
+        didSet{
+            var sumOfR = float2(0)
+            var count = 0
+            var col = float4(0)
+            for i in 0..<4 {
+                let v = vertices[i]
+                
+                if v != nil {
+                    sumOfR += v!.point
+                    count += 1
+                    col += v!.color
+                }
+            }
+            
+            if count == 4 {
+                
+                var minCosine:Float = Float.greatestFiniteMagnitude //FLT_MAX
+                for i in 0..<4 {
+                    let a = fabs(angle(vertices[i]!.point, vertices[(i+2)%4]!.point, vertices[(i+1)%4]!.point))
+                    minCosine = fmin(minCosine, a)
+                }
+                
+                if( abs(minCosine-90) <= 10 ) {
+                    _center = IMPCorner(point: sumOfR/float2(4), slope: float4(1), color:  col/(float4(4)))
+                }
+            }
+        }
+    }
 }
 
 public struct IMPPatchesGrid {
@@ -283,7 +305,7 @@ public struct IMPPatchesGrid {
         
         for (ci,current) in corners.enumerated() {
             
-            if current.slops.w <= 0 && current.slops.z <= 0 {
+            if current.slope.w <= 0 && current.slope.z <= 0 {
                 //continue
             }
             
@@ -295,38 +317,38 @@ public struct IMPPatchesGrid {
             
             //patch.lt = current
             
-            if current.slops.w > 0 && current.slops.z > 0 {
+            if current.slope.w > 0 && current.slope.z > 0 {
                 // rb
                 patch.lt = current
             }
-            else if current.slops.x > 0 && current.slops.y > 0 {
+            else if current.slope.x > 0 && current.slope.y > 0 {
                 // rb
                 patch.rb = current
             }
-            else if current.slops.x > 0 && current.slops.z > 0 {
+            else if current.slope.x > 0 && current.slope.z > 0 {
                 // rt
                 patch.rt = current
             }
-            else if current.slops.y > 0 && current.slops.w > 0 {
+            else if current.slope.y > 0 && current.slope.w > 0 {
                 // lb
                 patch.lb = current
             }
-        
+            
             for (i,next) in corners.enumerated() {
                 
                 if next.point == current.point { continue }
-
+                
                 if next.color.a < 0.1 { continue }
-
+                
                 let next_color = next.color.rgb
                 let ed = color.euclidean_distance_lab(to: next_color)
                 
                 let dist = distance(next.point, current.point)
-
+                
                 
                 if ed <= minDistance {
-
-                    if current.slops.w > 0 && current.slops.z > 0 {
+                    
+                    if current.slope.w > 0 && current.slope.z > 0 {
                         // lt
                         if patch.lt == nil {
                             patch.lt = next
@@ -336,7 +358,7 @@ public struct IMPPatchesGrid {
                         }
                     }
                     
-                    if next.slops.x > 0 && next.slops.y > 0 {
+                    if next.slope.x > 0 && next.slope.y > 0 {
                         // rb
                         if patch.rb == nil {
                             patch.rb = next
@@ -345,7 +367,7 @@ public struct IMPPatchesGrid {
                             patch.rb = next
                         }
                     }
-                    if next.slops.x > 0 && next.slops.z > 0 {
+                    if next.slope.x > 0 && next.slope.z > 0 {
                         // rt
                         if patch.rt == nil {
                             patch.rt = next
@@ -353,9 +375,9 @@ public struct IMPPatchesGrid {
                         else if distance(patch.rt!.point, current.point) > dist{
                             patch.rt = next
                         }
-
+                        
                     }
-                    if next.slops.y > 0 && next.slops.w > 0 {
+                    if next.slope.y > 0 && next.slope.w > 0 {
                         // lb
                         if patch.lb == nil {
                             patch.lb = next
@@ -378,49 +400,49 @@ public struct IMPPatchesGrid {
             if patch.center != nil && !patches.contains(patch) {
                 patches.append(patch)
             }
-
+            
         }
         
         
-//        for (j,l) in locations.enumerated() {
-//            for (i,ll) in l.enumerated() {
-//                if let rgb = ll?.lt?.color.rgb, let p = ll?.lt?.point {
-//                    print("l[\(j,i)] = \(p, rgb * float3(255))")
-//                }
-//            }
-//        }
+        //        for (j,l) in locations.enumerated() {
+        //            for (i,ll) in l.enumerated() {
+        //                if let rgb = ll?.lt?.color.rgb, let p = ll?.lt?.point {
+        //                    print("l[\(j,i)] = \(p, rgb * float3(255))")
+        //                }
+        //            }
+        //        }
     }
     
-    mutating func aproxymate()  {
+    mutating func aproxymate(withSize size:NSSize)  {
         
-//        mergesort(&patches, patches.count, MemoryLayout<Patch>.size, {
-//            if let a = $0.unsafelyUnwrapped.load(as:Patch.self).center?.point.x,
-//                let b = $1.unsafelyUnwrapped.load(as:Patch.self).center?.point.x {
-//                if a == b {
-//                    return 0
-//                }
-//                else if a < b {
-//                    return -1
-//                }
-//                return 1
-//            }
-//            return 0
-//        })
-//    
-//        mergesort(&patches, patches.count, MemoryLayout<Patch>.size, {
-//            if let a = $0.unsafelyUnwrapped.load(as:Patch.self).center?.point.y,
-//                let b = $1.unsafelyUnwrapped.load(as:Patch.self).center?.point.y {
-//                if a == b {
-//                    return 0
-//                }
-//                else if a < b {
-//                    return -1
-//                }
-//                return 1
-//            }
-//            return 0
-//        })
-//
+        //        mergesort(&patches, patches.count, MemoryLayout<Patch>.size, {
+        //            if let a = $0.unsafelyUnwrapped.load(as:Patch.self).center?.point.x,
+        //                let b = $1.unsafelyUnwrapped.load(as:Patch.self).center?.point.x {
+        //                if a == b {
+        //                    return 0
+        //                }
+        //                else if a < b {
+        //                    return -1
+        //                }
+        //                return 1
+        //            }
+        //            return 0
+        //        })
+        //
+        //        mergesort(&patches, patches.count, MemoryLayout<Patch>.size, {
+        //            if let a = $0.unsafelyUnwrapped.load(as:Patch.self).center?.point.y,
+        //                let b = $1.unsafelyUnwrapped.load(as:Patch.self).center?.point.y {
+        //                if a == b {
+        //                    return 0
+        //                }
+        //                else if a < b {
+        //                    return -1
+        //                }
+        //                return 1
+        //            }
+        //            return 0
+        //        })
+        //
         let xSorted = patches.sorted { (p0, p1) -> Bool in
             guard let c0=p0.center?.point, let c1=p1.center?.point else { return false }
             return c0.x < c1.x
@@ -517,7 +539,7 @@ public class IMPPatchesDetector: IMPDetector {
     var nonOrientedThreshold:Float = 0.4
     
     var t = Date()
-
+    
     
     public override func configure(complete: IMPFilterProtocol.CompleteHandler?) {
         
@@ -527,10 +549,10 @@ public class IMPPatchesDetector: IMPDetector {
         radius = 1
         
         super.configure()
-//            { (source) in
-//            self.sourceImage = source
-//            self.harrisCornerDetector.source = source
-//        }                
+        //            { (source) in
+        //            self.sourceImage = source
+        //            self.harrisCornerDetector.source = source
+        //        }
         
         add(filter: opening) { (source) in
             self.sourceImage = source
@@ -550,12 +572,12 @@ public class IMPPatchesDetector: IMPDetector {
         
         harrisCornerDetector.addObserver { (corners:[IMPCorner], size:NSSize) in
             self.t = Date()
-
+            
             var filtered = corners.filter { (corner) -> Bool in
                 
                 var count = 0
                 for i in 0..<4 {
-                    if corner.slops[i] >= self.nonOrientedThreshold{
+                    if corner.slope[i] >= self.nonOrientedThreshold{
                         count += 1
                     }
                 }
@@ -564,17 +586,17 @@ public class IMPPatchesDetector: IMPDetector {
                     return false
                 }
                 
-                if corner.slops.x>=self.oppositThreshold &&
-                    corner.slops.y>=self.oppositThreshold { return true }
+                if corner.slope.x>=self.oppositThreshold &&
+                    corner.slope.y>=self.oppositThreshold { return true }
                 
-                if corner.slops.y>=self.oppositThreshold &&
-                    corner.slops.w>=self.oppositThreshold { return true }
+                if corner.slope.y>=self.oppositThreshold &&
+                    corner.slope.w>=self.oppositThreshold { return true }
                 
-                if corner.slops.w>=self.oppositThreshold &&
-                    corner.slops.z>=self.oppositThreshold { return true }
+                if corner.slope.w>=self.oppositThreshold &&
+                    corner.slope.z>=self.oppositThreshold { return true }
                 
-                if corner.slops.z>=self.oppositThreshold &&
-                    corner.slops.x>=self.oppositThreshold { return true }
+                if corner.slope.z>=self.oppositThreshold &&
+                    corner.slope.x>=self.oppositThreshold { return true }
                 
                 return false
             }
@@ -587,9 +609,9 @@ public class IMPPatchesDetector: IMPDetector {
             
             let w = Float(size.width)
             let h = Float(size.height)
-
+            
             let prec:Float = 8
-
+            
             let sorted = filtered.sorted { (c0, c1) -> Bool in
                 
                 var pi0 = c0.point * float2(w,h)
@@ -622,21 +644,21 @@ public class IMPPatchesDetector: IMPDetector {
     fileprivate lazy var cornersBuffer:MTLBuffer = self.context.device.makeBuffer(
         length: MemoryLayout<IMPCorner>.size * Int(self.harrisCornerDetector.pointsMax),
         options: .storageModeShared)
-
+    
     fileprivate lazy var cornersCountBuffer:MTLBuffer = self.context.makeBuffer(from: self.harrisCornerDetector.pointsMax)
     
     fileprivate lazy var pacthColorsBuffer:MTLBuffer = self.context.device.makeBuffer(
         bytes:  self.patchGrid.colors,
         length: MemoryLayout<IMPPatchesGrid.Patch>.size * self.patchGrid.dimension.width * self.patchGrid.dimension.height,
         options: [])
-        
+    
     fileprivate lazy var pacthColorsCountBuffer:MTLBuffer = self.context.makeBuffer(from: self.patchGrid.dimension)
-
+    
     
     private lazy var linesDetector:IMPOrientedLinesDetector = IMPOrientedLinesDetector(context:  IMPContext())
     private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
     private lazy var opening:IMPErosion = IMPOpening(context: self.context)
-
+    
     private lazy var patchDetectorKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_patchScanner")
         f.optionsHandler = { (function,command,source,destination) in
@@ -644,7 +666,7 @@ public class IMPPatchesDetector: IMPDetector {
             if let texture = self.sourceImage?.texture {
                 command.setTexture(texture, at: 2)
             }
-
+            
             command.setBuffer(self.cornersBuffer,          offset: 0, at: 0)
             command.setBuffer(self.cornersCountBuffer,     offset: 0, at: 1)
             command.setBuffer(self.pacthColorsBuffer,      offset: 0, at: 2)
@@ -652,16 +674,19 @@ public class IMPPatchesDetector: IMPDetector {
         }
         return f
     }()
-
+    
     lazy var patchDetector:IMPFilter = {
         let f = IMPFilter(context:self.context)
         f.add(function: self.patchDetectorKernel){ (source) in
+            
+            guard let size = source.size else {return}
+            
             print(" patch detector time = \(-self.t.timeIntervalSinceNow) ")
             memcpy(&self.corners, self.cornersBuffer.contents(), MemoryLayout<IMPCorner>.size * self.corners.count)
             self.patchGrid.corners = self.corners
-            self.patchGrid.aproxymate()
+            self.patchGrid.aproxymate(withSize: size)
         }
-
+        
         return f
     }()
 }

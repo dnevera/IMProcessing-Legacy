@@ -151,7 +151,7 @@ class IMPCanvasView: NSView {
                        index:Int = -1
         ){
         
-        let slops = corner.slops
+        let slops = corner.slope
         
         let w  = (width/bounds.size.width/2).float
         let h  = (width/bounds.size.height/2).float
@@ -207,11 +207,14 @@ class IMPCanvasView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         for s in hlines {
             let l = IMPLineSegment(line: s, size: imageSize)
+            NSLog("hline = \(l) polar = \(s.rho, s.theta.degrees), size = \(imageSize)")
             drawLine(segment: l, color:  NSColor(red: 0,   green: 0.9, blue: 0.1, alpha: 0.8))
         }
         
         for s in vlines {
             let l = IMPLineSegment(line: s, size:  imageSize)
+            NSLog("vline = \(l) polar = \(s.rho, s.theta.degrees)")
+
             drawLine(segment: l, color: NSColor(red: 0,   green: 0.1, blue: 0.9, alpha: 0.8))
         }
         

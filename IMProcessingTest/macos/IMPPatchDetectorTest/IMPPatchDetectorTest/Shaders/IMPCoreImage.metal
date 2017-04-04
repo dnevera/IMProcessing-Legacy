@@ -56,7 +56,7 @@ kernel void kernel_patchScanner(
     
     IMPCorner corner = corners[tid.x];
     float2 point = corner.point;
-    float4 slope = corner.slops;
+    float4 slope = corner.slope;
     
     int regionSize = 64;
     int rs = -regionSize/2;

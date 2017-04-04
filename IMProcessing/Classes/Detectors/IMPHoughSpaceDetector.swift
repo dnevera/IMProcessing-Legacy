@@ -59,9 +59,8 @@ public class IMPHoughSpaceDetector: IMPDetector {
             let f = (n+1) * (Float(numrho)+2)
             let r = idx - f - 1
             
-            let rho = (r - (Float(numrho) - 1) * 0.5) * rhoStep
-            
             let angle = minTheta + n * thetaStep
+            let rho = (r - (Float(numrho) - 1) * 0.5) * rhoStep // sqrt(size.width*size.width+size.height*size.height).float
             
             let line = IMPPolarLine(rho: rho, theta: angle)
             

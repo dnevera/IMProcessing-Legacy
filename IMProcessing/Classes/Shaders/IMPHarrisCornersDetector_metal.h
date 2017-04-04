@@ -89,15 +89,15 @@ kernel void kernel_pointsScanner(
                 
                 IMPCorner corner;
                 corner.point = float2(gid)/float2(width,height);
-                corner.slops = float4(0);
+                corner.slope = float4(0);
                 
-                corner.slops.x  = getSlops(rs, 0,  rs, re,  gid, derivative,destination).x;
-                corner.slops.y  = getSlops(rs, re, rs, 0,   gid, derivative,destination).y;
-                corner.slops.z  = getSlops(rs, re, 0,  re,  gid, derivative,destination).y;
-                corner.slops.w  = getSlops(0,  re, rs, re,  gid, derivative,destination).x;
+                corner.slope.x  = getSlops(rs, 0,  rs, re,  gid, derivative,destination).x;
+                corner.slope.y  = getSlops(rs, re, rs, 0,   gid, derivative,destination).y;
+                corner.slope.z  = getSlops(rs, re, 0,  re,  gid, derivative,destination).y;
+                corner.slope.w  = getSlops(0,  re, rs, re,  gid, derivative,destination).x;
                 
-                if (length(corner.slops)){
-                    corner.slops = normalize(corner.slops);
+                if (length(corner.slope)){
+                    corner.slope = normalize(corner.slope);
                 }
                 
                 corners[index] = corner;
