@@ -258,6 +258,11 @@ public struct IMPPatch:Equatable {
 
 public struct IMPPatchesGrid {
     
+    public struct PatchInfo {
+        var center:float2
+        var color:float3
+    }
+    
     public typealias Patch = IMPPatch
     
     public struct Dimension {
@@ -267,7 +272,7 @@ public struct IMPPatchesGrid {
     
     public let dimension:Dimension
     public let colors:[[uint3]]
-    public var locations = [[Patch?]]()
+    public var locations = [[PatchInfo?]]()
     public var patches = [Patch]()
     
     public init(colors: [[uint3]]) {
@@ -406,6 +411,8 @@ public struct IMPPatchesGrid {
         
         var result = [IMPPolarLine]()
         
+        var minDist:Float = Float.greatestFiniteMagnitude
+        
         for i in 1..<lines.count {
             
             let current = lines[i]
@@ -414,8 +421,11 @@ public struct IMPPatchesGrid {
                 current.rho = (current.rho + prev.rho)/2
                 current.theta = (current.theta + prev.theta)/2
                 prevFirst = current
+                prev = current
             }
             else {
+                
+                minDist = min(abs(current.rho - prev.rho),minDist)
                 
                 if let l = prevFirst {
                     if !result.contains(where: { (p) -> Bool in
@@ -443,20 +453,47 @@ public struct IMPPatchesGrid {
             }
         }
         
-        if let l = prevFirst {
-            result.append(l)
+        if let l = prevFirst { result.append(l) }
+
+        guard let nextPrevFirst = result.first else { return nil }
+        var nextPrev = nextPrevFirst
+        var avrg:Float = 0
+        var count:Float = 0
+        for current in result.suffix(from: 1) {
+            let dist = abs(nextPrev.rho - current.rho)
+            if abs(dist-minDist) <= threshold * 2 {
+                avrg += dist
+                count += 1
+            }
         }
+        
+        avrg /= count
+        
+        nextPrev = nextPrevFirst
+        var gaps = [IMPPolarLine]()
+        for current in result.suffix(from: 1) {
+            let dist = abs(nextPrev.rho - current.rho)
+            if abs(dist-avrg) > threshold  {
+                for i in 0..<Int(dist/avrg) {
+                    let l = IMPPolarLine(rho: nextPrev.rho + sign(nextPrev.rho) * avrg * (i.float+1), theta: nextPrev.theta)
+                    gaps.append(l)
+                }
+            }
+            nextPrev = current
+        }
+        
+        result.append(contentsOf: gaps)
+        result = result.sorted  { return abs($0.rho)<abs($1.rho) }
         
         return result
     }
     
-    func aproxymate(withSize size:NSSize, threshold:Float = 16)
+    func approximate(withSize size:NSSize, threshold:Float = 16)
         -> (
         horizon:  [IMPPolarLine],
         vertical: [IMPPolarLine]
         )?
     {
-        
         var horizons  = [IMPPolarLine]()
         var verticals = [IMPPolarLine]()
         
@@ -469,33 +506,12 @@ public struct IMPPatchesGrid {
         let vdrticalSorted = verticals.sorted { return abs($0.rho)<abs($1.rho) }
         
         guard let h = filterClosing(horizonSorted, threshold: threshold) else { return nil }
-        print(" ----- - - -- - - - - - - - - - - - - - - -")
         guard let v = filterClosing(vdrticalSorted, threshold: threshold) else { return nil }
-
-        
-        
-        
-        //print("Grid: X: avrg rho,theta = \(h.rhoStep,h.theta.degrees)")
-        //print("Grid: Y: avrg rho,theta = \(v.rhoStep,v.theta.degrees)")
-        
-//        horizons.removeAll()
-//        verticals.removeAll()
-//
-//        for i in 0..<dimension.height {
-//            horizons.append(IMPPolarLine(rho: h.line.rho + i.float * h.rhoStep, theta: h.theta))
-//        }
-//
-//        for i in 0..<dimension.width {
-//            verticals.append(IMPPolarLine(rho: v.line.rho + i.float * v.rhoStep, theta: v.theta))
-//        }
-        
-        //for i in 0..<dimension. {
-        //    for i in 0..<dimension.width {
-        //    }
-        //}
         
         return (h,v)
     }
+    
+    
 }
 
 public class IMPPatchesDetector: IMPDetector {
@@ -532,24 +548,9 @@ public class IMPPatchesDetector: IMPDetector {
         add(filter: opening) { (source) in
             self.sourceImage = source
             self.harrisCornerDetector.source = source
-            //self.linesDetector.source = source
         }
         
         patchDetectorKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
-        
-//        linesDetector.linesMax = (6+3) * 4
-//        linesDetector.threshold = 24 * 4
-//        
-//        linesDetector.addObserver(lines: { (horisontal, vertical, size) in
-//            //self.hLines = horisontal
-//            //self.vLines = vertical
-//
-//            for s in vertical {
-//                let l = IMPLineSegment(line: s, size: size)
-//                NSLog("detector vline = \(l) polar = \(s.rho, s.theta.degrees)")
-//            }
-//
-//        })
         
         harrisCornerDetector.addObserver { (corners:[IMPCorner], size:NSSize) in
             self.t = Date()
@@ -635,8 +636,6 @@ public class IMPPatchesDetector: IMPDetector {
     
     fileprivate lazy var pacthColorsCountBuffer:MTLBuffer = self.context.makeBuffer(from: self.patchGrid.dimension)
     
-    
-    private lazy var linesDetector:IMPOrientedLinesDetector = IMPOrientedLinesDetector(context:  IMPContext())
     private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
     private lazy var opening:IMPErosion = IMPOpening(context: self.context)
     
@@ -665,7 +664,7 @@ public class IMPPatchesDetector: IMPDetector {
             print(" patch detector time = \(-self.t.timeIntervalSinceNow) ")
             memcpy(&self.corners, self.cornersBuffer.contents(), MemoryLayout<IMPCorner>.size * self.corners.count)
             self.patchGrid.corners = self.corners
-            if let r = self.patchGrid.aproxymate(withSize: size){
+            if let r = self.patchGrid.approximate(withSize: size){
                 (self.hLines, self.vLines) = r
             }
         }
