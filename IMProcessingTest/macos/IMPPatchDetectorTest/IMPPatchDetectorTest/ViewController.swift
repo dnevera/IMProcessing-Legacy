@@ -15,7 +15,7 @@ class ViewController: NSViewController {
     var canvas = IMPCanvasView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
 
     let context = IMPContext()
-    lazy var detector:IMPPatchesDetector = IMPPatchesDetector(context: self.context)
+    lazy var detector:IMPCCheckerDetector = IMPCCheckerDetector(context: self.context)
 
     lazy var imageView:IMPView = IMPView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
     
@@ -40,17 +40,6 @@ class ViewController: NSViewController {
                     guard let c = p.center else {continue}
                     points.append(c.point)
                 }
-//                //let hough = IMPHoughSpace(points: points, width: Int(size.width), height: Int(size.height))
-//                //hough.linesMax  = 6+4
-//                //hough.threshold = 8
-//                //let lines = hough.getLines()
-//                var segments = [IMPLineSegment]()
-//                for l in lines {
-//                    let s = IMPLineSegment(line: l, size: size)
-//                    segments.append(s)
-//                //    NSLog("line  = \(l.theta.degrees,l.rho), s = \(s)")
-//                }
-//                self.canvas.hlines = segments
                 self.canvas.hlines = self.detector.hLines
                 self.canvas.vlines = self.detector.vLines
                 self.canvas.grid = self.detector.patchGrid
@@ -98,8 +87,6 @@ class ViewController: NSViewController {
         
         if  gesture.buttonMask == 1 {
             
-            print("1 clickHandler state = \(gesture.state.rawValue)")
-            
             switch gesture.state {
             case .began:
                 detector.enabled = false
@@ -108,22 +95,6 @@ class ViewController: NSViewController {
                 break
             }
             
-        }
-        else if gesture.buttonMask == 1<<1 {
-            
-            print("2 clickHandler state = \(gesture.state.rawValue)")
-            
-            //            switch gesture.state {
-            //            case .began:
-            //                filter.harrisCornerDetectorOverlay.enabled = false
-            //            default:
-            //                filter.harrisCornerDetectorOverlay.enabled = true
-            //
-            //                break
-            //            }
-            
-            
-            detector.dirty = true
         }
     }
 

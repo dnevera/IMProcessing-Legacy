@@ -259,41 +259,60 @@ public struct IMPPatch:Equatable {
 public struct IMPPatchesGrid {
     
     public struct PatchInfo {
-        var center:float2
-        var color:float3
+        public var center = float2(-1)
+        public var color = float3(0)
     }
     
     public typealias Patch = IMPPatch
     
     public struct Dimension {
-        let width:Int
-        let height:Int
+        public let width:Int
+        public let height:Int
     }
     
     public let dimension:Dimension
-    public let colors:[[uint3]]
-    public var locations = [[PatchInfo?]]()
-    public var patches = [Patch]()
+    public let sources:[[float3]]
+    public var targets:[[PatchInfo]] {
+        return _locations
+    }
+    public var patches:[Patch] {
+        return _patches
+    }
+    
+    public mutating func updateTargets(from buffer: MTLBuffer) {
+        //memcpy(&_locations, buffer.contents(), buffer.length)
+        let ts = buffer.contents().bindMemory(to: PatchInfo.self, capacity: buffer.length)
+        var i = 0
+        for y in 0..<dimension.height {
+            for x in 0..<dimension.width {
+                print(" ----$$$>>> \((ts + i).pointee)")
+                _locations[y][x].color = (ts + i).pointee.color
+                i += 1
+            }
+        }
+        //let ts = buffer.contents().initializeMemory(as: [PatchInfo].self, from: [[PatchInfo]].self)
+        //print(" .... \(buffer.length, MemoryLayout<PatchInfo>.size * dimension.height*dimension.width) \(ts)")
+    }
     
     public init(colors: [[uint3]] = PassportCC24) {
         dimension = Dimension(width: colors[0].count, height: colors.count)
-        self.colors = colors
+        self.sources = colors.map({ return $0.map({ return float3(Float($0.x),Float($0.y),Float($0.z))/float3(255) }) })
         for y in 0..<dimension.height {
-            locations.insert([], at: y)
+            _locations.insert([], at: y)
             for x in 0..<dimension.width {
-                locations[y].insert(nil, at: x)
+                _locations[y].insert(PatchInfo(), at: x)
             }
         }
     }
     
     public var corners = [IMPCorner]() { didSet{ match() } }
     
-    func findCheckerIndex(color:float3, minDistance:Float = 20) -> (Int,Int)? {
+    public func findCheckerIndex(color:float3, minDistance:Float = 20) -> (Int,Int)? {
         for i in 0..<dimension.height {
-            let row  = colors[i]
+            let row  = sources[i]
             for j in 0..<dimension.width {
-                let c = row[j]
-                let cc = float3(Float(c.x),Float(c.y),Float(c.z))/float3(255)
+                let cc = row[j]
+                //let cc = float3(Float(c.x),Float(c.y),Float(c.z))/float3(255)
                 let ed = cc.euclidean_distance_lab(to: color)
                 if  ed < minDistance {
                     return (j,i)
@@ -303,9 +322,54 @@ public struct IMPPatchesGrid {
         return nil
     }
     
-    mutating func match(minDistance:Float = 5) {
+    public mutating func approximate(withSize size:NSSize, minDistance:Float = 16, minTheta:Float = Float.pi/45)
+        -> (
+        horizon:  [IMPPolarLine],
+        vertical: [IMPPolarLine]
+        )?
+    {
+        var horizons  = [IMPPolarLine]()
+        var verticals = [IMPPolarLine]()
         
-        patches.removeAll()
+        for p in patches {
+            if let h = p.horizon?.polarLine(size: size)  { horizons.append(h) }
+            if let v = p.vertical?.polarLine(size: size) { verticals.append(v) }
+        }
+        
+        let horizonSorted  = horizons.sorted  { return abs($0.rho)<abs($1.rho) }
+        let vdrticalSorted = verticals.sorted { return abs($0.rho)<abs($1.rho) }
+        
+        guard let (h,hrho,htheta) = filterClosing(horizonSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
+        guard let (v,vrho,vtheta) = filterClosing(vdrticalSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
+        
+        let startVRho = v.first!.rho
+        let startHRho = h.first!.rho
+        let denom = float2(1)/float2(size.width.float,size.height.float)
+        for y in 0..<dimension.height {
+            var hl = IMPPolarLine(rho: hrho * y.float + startHRho, theta: htheta)
+            if h.count > y {
+                hl = h[y]
+            }
+            for x in 0..<dimension.width {
+                var vl = IMPPolarLine(rho: vrho * x.float + startVRho, theta: vtheta)
+                if v.count > x {
+                    vl = v[x]
+                }
+                let center = vl.intersect(with: hl)
+                let info = PatchInfo(center: center * denom, color: float3(0))
+                _locations[y][x] = info
+            }
+        }
+        
+        return (h,v)
+    }
+
+    private var _locations = [[PatchInfo]]()
+    private var _patches = [Patch]()
+
+    private mutating func match(minDistance:Float = 5) {
+        
+        _patches.removeAll()
         
         for current in corners {
             
@@ -396,14 +460,13 @@ public struct IMPPatchesGrid {
             }
             
             if patch.center != nil && !patches.contains(patch) {
-                patches.append(patch)
+                _patches.append(patch)
             }
             
         }
     }
     
-    
-    func filterClosing(_ lines:[IMPPolarLine], minDistance:Float = 16, minTheta:Float = Float.pi/45) -> (line:[IMPPolarLine], rho:Float, theta:Float)? {
+    private func filterClosing(_ lines:[IMPPolarLine], minDistance:Float = 16, minTheta:Float = Float.pi/45) -> (line:[IMPPolarLine], rho:Float, theta:Float)? {
         
         guard let firstLine = lines.first else { return nil }
         var prev = firstLine
@@ -512,51 +575,9 @@ public struct IMPPatchesGrid {
         
         return (result,avrgRho,avrgTheta)
     }
-    
-    mutating func approximate(withSize size:NSSize, minDistance:Float = 16, minTheta:Float = Float.pi/45)
-        -> (
-        horizon:  [IMPPolarLine],
-        vertical: [IMPPolarLine]
-        )?
-    {
-        var horizons  = [IMPPolarLine]()
-        var verticals = [IMPPolarLine]()
-        
-        for p in patches {
-            if let h = p.horizon?.polarLine(size: size)  { horizons.append(h) }
-            if let v = p.vertical?.polarLine(size: size) { verticals.append(v) }
-        }
-        
-        let horizonSorted  = horizons.sorted  { return abs($0.rho)<abs($1.rho) }
-        let vdrticalSorted = verticals.sorted { return abs($0.rho)<abs($1.rho) }
-        
-        guard let (h,hrho,htheta) = filterClosing(horizonSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
-        guard let (v,vrho,vtheta) = filterClosing(vdrticalSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
-        
-        let startVRho = v.first!.rho
-        let startHRho = h.first!.rho
-        let denom = float2(1)/float2(size.width.float,size.height.float)
-        for y in 0..<dimension.height {
-            var hl = IMPPolarLine(rho: hrho * y.float + startHRho, theta: htheta)
-            if h.count > y {
-                hl = h[y]
-            }
-            for x in 0..<dimension.width {
-                var vl = IMPPolarLine(rho: vrho * x.float + startVRho, theta: vtheta)
-                if v.count > x {
-                    vl = v[x]
-                }
-                let center = vl.intersect(with: hl)
-                let info = PatchInfo(center: center * denom, color: float3(0))
-                locations[y][x] = info
-            }
-        }
-        
-        return (h,v)
-    }    
 }
 
-public class IMPPatchesDetector: IMPDetector {
+public class IMPCCheckerDetector: IMPDetector {
     
     public var radius  = 4 {
         didSet{
@@ -566,7 +587,12 @@ public class IMPPatchesDetector: IMPDetector {
     public var corners = [IMPCorner]()
     public var hLines = [IMPPolarLine]()
     public var vLines = [IMPPolarLine]()
-    public var patchGrid:IMPPatchesGrid = IMPPatchesGrid(colors:PassportCC24)
+    public var patchGrid:IMPPatchesGrid = IMPPatchesGrid(colors:PassportCC24) {
+        didSet{
+            pacthInfoBuffer = self.infoBuffer()
+            patchColorsKernel.preferedDimension =  MTLSize(width: patchGrid.dimension.width, height: patchGrid.dimension.height, depth: 1)
+        }
+    }
     
     var oppositThreshold:Float = 0.5
     var nonOrientedThreshold:Float = 0.4
@@ -582,10 +608,6 @@ public class IMPPatchesDetector: IMPDetector {
         radius = 1
         
         super.configure()
-        //            { (source) in
-        //            self.sourceImage = source
-        //            self.harrisCornerDetector.source = source
-        //        }
         
         add(filter: opening) { (source) in
             self.sourceImage = source
@@ -654,29 +676,28 @@ public class IMPPatchesDetector: IMPDetector {
             
             self.patchDetectorKernel.preferedDimension =  MTLSize(width: self.corners.count, height: 1, depth: 1)
             
-            self.cornersCountBuffer <- self.corners.count
-            
             memcpy(self.cornersBuffer.contents(), self.corners, self.corners.count * MemoryLayout<IMPCorner>.size)
+            //memset(self.pacthInfoBuffer.contents(),0,self.pacthInfoBuffer.length)
             
             self.patchDetector.source = self.harrisCornerDetector.source
             self.patchDetector.process()
+            
+            self.patchColors.source = self.sourceImage
+            self.patchColors.process()
         }
     }
     
-    var sourceImage:IMPImageProvider?
+    private var sourceImage:IMPImageProvider?
     
     fileprivate lazy var cornersBuffer:MTLBuffer = self.context.device.makeBuffer(
         length: MemoryLayout<IMPCorner>.size * Int(self.harrisCornerDetector.pointsMax),
         options: .storageModeShared)
     
-    fileprivate lazy var cornersCountBuffer:MTLBuffer = self.context.makeBuffer(from: self.harrisCornerDetector.pointsMax)
+    func infoBuffer() -> MTLBuffer {
+        return context.device.makeBuffer(length: MemoryLayout<IMPPatchesGrid.PatchInfo>.size * self.patchGrid.dimension.width * self.patchGrid.dimension.height, options: .storageModeShared)
+    }
     
-    fileprivate lazy var pacthColorsBuffer:MTLBuffer = self.context.device.makeBuffer(
-        bytes:  self.patchGrid.colors,
-        length: MemoryLayout<IMPPatchesGrid.Patch>.size * self.patchGrid.dimension.width * self.patchGrid.dimension.height,
-        options: [])
-    
-    fileprivate lazy var pacthColorsCountBuffer:MTLBuffer = self.context.makeBuffer(from: self.patchGrid.dimension)
+    fileprivate lazy var pacthInfoBuffer:MTLBuffer = self.infoBuffer()
     
     private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
     private lazy var opening:IMPErosion = IMPOpening(context: self.context)
@@ -690,12 +711,23 @@ public class IMPPatchesDetector: IMPDetector {
             }
             
             command.setBuffer(self.cornersBuffer,          offset: 0, at: 0)
-            command.setBuffer(self.cornersCountBuffer,     offset: 0, at: 1)
-            command.setBuffer(self.pacthColorsBuffer,      offset: 0, at: 2)
-            command.setBuffer(self.pacthColorsCountBuffer, offset: 0, at: 3)
         }
         return f
     }()
+    
+    private lazy var patchColorsKernel:IMPFunction = {
+        let f = IMPFunction(context: self.context, kernelName: "kernel_patchColors")
+        f.optionsHandler = { (function,command,source,destination) in
+            
+            //if let texture = self.sourceImage?.texture {
+            //    command.setTexture(texture, at: 2)
+            //}
+            
+            command.setBuffer(self.pacthInfoBuffer,          offset: 0, at: 0)
+        }
+        return f
+    }()
+
     
     private lazy var patchDetector:IMPFilter = {
         let f = IMPFilter(context:self.context)
@@ -704,14 +736,34 @@ public class IMPPatchesDetector: IMPDetector {
             guard let size = source.size else {return}
             
             print(" patch detector time = \(-self.t.timeIntervalSinceNow) ")
+            
             memcpy(&self.corners, self.cornersBuffer.contents(), MemoryLayout<IMPCorner>.size * self.corners.count)
             self.patchGrid.corners = self.corners
+            
             if let r = self.patchGrid.approximate(withSize: size){
                 (self.hLines, self.vLines) = r
+            }
+            
+            memcpy(self.pacthInfoBuffer.contents(), self.patchGrid.targets, self.pacthInfoBuffer.length)
+        }
+        
+        return f
+    }()
+    
+    private lazy var patchColors:IMPFilter = {
+        let f = IMPFilter(context:self.context)
+        
+        f.add(function: self.patchColorsKernel){ (source) in
+            self.patchGrid.updateTargets(from:self.pacthInfoBuffer)
+            for t in self.patchGrid.targets {
+                for i in t {
+                    print(" ---> \(i)")
+                }
             }
         }
         
         return f
     }()
+
 }
 

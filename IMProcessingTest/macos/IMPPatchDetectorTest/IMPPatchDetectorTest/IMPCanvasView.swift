@@ -9,7 +9,7 @@
 import Cocoa
 
 class IMPCanvasView: NSView {
-    
+        
     var imageSize = NSSize(width: 1, height: 1)
     
     var hlines = [IMPPolarLine]() {
@@ -56,8 +56,6 @@ class IMPCanvasView: NSView {
         fillColor.set()
         path.fill()
         path.lineWidth = width
-        
-        //let mag = float2(bounds.size.width.float, bounds.size.height.float)/float2(2)
         
         let p0 = NSPoint(x: center.x.cgfloat * bounds.size.width,
                          y: (1-center.y.cgfloat) * bounds.size.height)
@@ -150,7 +148,8 @@ class IMPCanvasView: NSView {
     
     func drawLine(segment:IMPLineSegment,
                   color:NSColor,
-                  width:CGFloat = 1.2
+                  width:CGFloat = 2,
+                  spokeWidth: CGFloat = 0
         ){
         var path = NSBezierPath()
         
@@ -173,24 +172,27 @@ class IMPCanvasView: NSView {
         
         path.close()
         
-        path = NSBezierPath()
-        fillColor = NSColor.black
-        
-        fillColor.set()
-        path.fill()
-        path.lineWidth = 1
-        
-        path.move(to: p0)
-        path.line(to: p1)
-        
-        path.stroke()
-        path.close()
+        if spokeWidth > 0 {
+            path = NSBezierPath()
+            fillColor = NSColor.black
+            
+            fillColor.set()
+            path.fill()
+            path.lineWidth = spokeWidth
+            
+            path.move(to: p0)
+            path.line(to: p1)
+            
+            path.stroke()
+            path.close()
+        }
     }
     
     func drawCrosshair(corner:IMPCorner,
                        color:NSColor = NSColor(red: 0,   green: 1, blue: 0.2, alpha: 1),
                        width:CGFloat = 50,
                        thickness:CGFloat = 12,
+                       spokeWidth:CGFloat = 1,
                        index:Int = -1
         ){
         
@@ -206,8 +208,8 @@ class IMPCanvasView: NSView {
         let segment1 = IMPLineSegment(p0: p0, p1: p1)
         let segment2 = IMPLineSegment(p0: p10, p1: p11)
         
-        drawLine(segment: segment1, color: color, width: thickness)
-        drawLine(segment: segment2, color: color, width: thickness)
+        drawLine(segment: segment1, color: color, width: thickness, spokeWidth: spokeWidth)
+        drawLine(segment: segment2, color: color, width: thickness, spokeWidth: spokeWidth)
         if index >= 0 {
             
             let text = NSString(format: "[%i] %.2f,%.2f", index, corner.point.x, corner.point.y)
@@ -236,16 +238,6 @@ class IMPCanvasView: NSView {
         }
     }
     
-//    func drawPatch(patch:IMPPatch,
-//                   color:NSColor = NSColor(red: 1, green: 1, blue: 0.2, alpha: 0.6),
-//                   thickness:CGFloat = 4
-//        ){
-//        
-//        drawLine(segment: IMPLineSegment(p0:patch.lt.point,p1:patch.rt.point), color: color, width: thickness)
-//        drawLine(segment: IMPLineSegment(p0:patch.rt.point,p1:patch.rb.point), color: color, width: thickness)
-//        drawLine(segment: IMPLineSegment(p0:patch.rb.point,p1:patch.lb.point), color: color, width: thickness)
-//        drawLine(segment: IMPLineSegment(p0:patch.lb.point,p1:patch.lt.point), color: color, width: thickness)
-//    }
     
     override func draw(_ dirtyRect: NSRect) {
         for s in hlines {
@@ -278,13 +270,14 @@ class IMPCanvasView: NSView {
         for y in 0..<grid.dimension.height {
             for x in 0..<grid.dimension.width {
                 
-                if let c = grid.locations[y][x] {
+                //if 
+                let c = grid.targets[y][x] //{
                     drawCircle(center: c.center, radius: 20, color: NSColor(red: CGFloat(c.color.r),
                                                                             green: CGFloat(c.color.g),
                                                                             blue: CGFloat(c.color.b),
                                                                             alpha: CGFloat(1))
                     )
-                }
+                //}
                 
             }
         }
