@@ -403,7 +403,7 @@ public struct IMPPatchesGrid {
     }
     
     
-    func filterClosing(_ lines:[IMPPolarLine], threshold:Float) -> (line:[IMPPolarLine], rho:Float, theta:Float)? {
+    func filterClosing(_ lines:[IMPPolarLine], minDistance:Float = 16, minTheta:Float = Float.pi/45) -> (line:[IMPPolarLine], rho:Float, theta:Float)? {
         
         guard let firstLine = lines.first else { return nil }
         var prev = firstLine
@@ -413,11 +413,20 @@ public struct IMPPatchesGrid {
         
         var minDist:Float = Float.greatestFiniteMagnitude
         
+        func compareLines(_ p:IMPPolarLine, _ l:IMPPolarLine) -> Bool {
+            if sign(p.rho) == sign(l.rho) {
+                return abs(p.rho-l.rho)<minDistance && abs(p.theta-l.theta)<minTheta
+            }
+            else {
+                return abs(p.rho+l.rho)<minDistance && abs(p.theta + l.theta - Float.pi)<minTheta
+            }
+        }
+        
         for i in 1..<lines.count {
             
             let current = lines[i]
 
-            if abs(current.rho - prev.rho) < threshold {
+            if abs(current.rho - prev.rho) < minDistance {
                 current.rho = (current.rho + prev.rho)/2
                 current.theta = (current.theta + prev.theta)/2
                 prevFirst = current
@@ -429,22 +438,17 @@ public struct IMPPatchesGrid {
                 
                 if let l = prevFirst {
                     if !result.contains(where: { (p) -> Bool in
-                        return abs(p.rho-l.rho)<threshold
+                        return compareLines(p, l)
                     }) {
                         result.append(l)
                     }
                     prevFirst = nil
                 }
                 else {
-                    let c = current
+                    let l = current
                     if !result.contains(where: { (p) -> Bool in
+                        return compareLines(p, l)
                         
-                        if sign(p.rho) == sign(c.rho) {
-                            return abs(p.rho-c.rho)<threshold && abs(p.theta-c.theta)<Float.pi/45
-                        }
-                        else {
-                            return abs(p.rho+c.rho)<threshold && abs(p.theta + c.theta - Float.pi)<Float.pi/45
-                        }
                     }) {
                         result.append(current)
                     }
@@ -457,12 +461,12 @@ public struct IMPPatchesGrid {
         func getDist(from current:IMPPolarLine, to nextPrev:IMPPolarLine, with minDist:Float) -> Float {
             var dist:Float = minDist
             if sign(nextPrev.rho) == sign(current.rho) {
-                if abs(nextPrev.theta-current.theta)<Float.pi/45 {
+                if abs(nextPrev.theta-current.theta)<minTheta {
                     dist = abs(nextPrev.rho - current.rho)
                 }
             }
             else {
-                if abs(nextPrev.theta + current.theta - Float.pi)<Float.pi/45 {
+                if abs(nextPrev.theta + current.theta - Float.pi)<minTheta {
                     dist = abs(nextPrev.rho + current.rho)
                 }
             }
@@ -479,7 +483,7 @@ public struct IMPPatchesGrid {
         var count:Float = 0
         for current in result.suffix(from: 1) {
             let dist:Float = getDist(from: current, to: nextPrev, with: minDist)
-            if abs(dist-minDist) <= threshold * 2 {
+            if abs(dist-minDist) <= minDistance * 2 {
                 avrgRho += dist
                 avrgTheta += current.theta
                 count += 1
@@ -494,7 +498,7 @@ public struct IMPPatchesGrid {
         var gaps = [IMPPolarLine]()
         for current in result.suffix(from: 1) {
             let dist:Float = getDist(from: current, to: nextPrev, with: avrgRho)
-            if abs(dist-avrgRho) > threshold * 2 {
+            if abs(dist-avrgRho) > minDistance * 2 {
                 for i in 0..<Int(dist/avrgRho) {
                     let l = IMPPolarLine(rho: nextPrev.rho + sign(nextPrev.rho) * avrgRho * (i.float+1), theta: avrgTheta)
                     gaps.append(l)
@@ -509,7 +513,7 @@ public struct IMPPatchesGrid {
         return (result,avrgRho,avrgTheta)
     }
     
-    mutating func approximate(withSize size:NSSize, threshold:Float = 16)
+    mutating func approximate(withSize size:NSSize, minDistance:Float = 16, minTheta:Float = Float.pi/45)
         -> (
         horizon:  [IMPPolarLine],
         vertical: [IMPPolarLine]
@@ -526,9 +530,8 @@ public struct IMPPatchesGrid {
         let horizonSorted  = horizons.sorted  { return abs($0.rho)<abs($1.rho) }
         let vdrticalSorted = verticals.sorted { return abs($0.rho)<abs($1.rho) }
         
-        guard let (h,hrho,htheta) = filterClosing(horizonSorted, threshold: threshold) else { return nil }
-        //print(" -- -- - - - - - - - - - - - - - - - - - ")
-        guard let (v,vrho,vtheta) = filterClosing(vdrticalSorted, threshold: threshold) else { return nil }
+        guard let (h,hrho,htheta) = filterClosing(horizonSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
+        guard let (v,vrho,vtheta) = filterClosing(vdrticalSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
         
         let startVRho = v.first!.rho
         let startHRho = h.first!.rho
@@ -543,20 +546,14 @@ public struct IMPPatchesGrid {
                 if v.count > x {
                     vl = v[x]
                 }
-                let center = vl.intersect(with: hl) * denom
-                print(" intersection point = \(center)")
-                let info = PatchInfo(center: center, color: float3(0))
+                let center = vl.intersect(with: hl)
+                let info = PatchInfo(center: center * denom, color: float3(0))
                 locations[y][x] = info
             }
         }
         
         return (h,v)
-    }
-    
-    //func alignGrid(h:[IMPPolarLine],v:[IMPPolarLine])  {
-    //
-    //}
-    
+    }    
 }
 
 public class IMPPatchesDetector: IMPDetector {
