@@ -33,9 +33,7 @@
 
 #include "IMPPosterize_metal.h"
 #include "IMPMedian_metal.h"
-#include "IMPEdgelsDetector_metal.h"
 #include "IMPSobelEdges_metal.h"
-#include "IMPSegmentsDetector_metal.h"
 #include "IMPHarrisCornersDetector_metal.h"
 #include "IMPHarrisCorners_metal.h"
 #include "IMPConvolution_metal.h"
