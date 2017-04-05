@@ -375,10 +375,10 @@
 		31F3CCA51E8E70C90055994F /* Detectors */ = {
 			isa = PBXGroup;
 			children = (
+				31F3CCAB1E8E70C90055994F /* IMPHoughSpace.swift */,
 				31F3CCA71E8E70C90055994F /* IMPDetector.swift */,
 				31F3CCA91E8E70C90055994F /* IMPHarrisCornerDetector.swift */,
 				31F3CCAA1E8E70C90055994F /* IMPHoughLinesDetector.swift */,
-				31F3CCAB1E8E70C90055994F /* IMPHoughSpace.swift */,
 				31F3CCAC1E8E70C90055994F /* IMPHoughSpaceDetector.swift */,
 				31F3CCAD1E8E70C90055994F /* IMPOrientedLinesDetector.swift */,
 			);

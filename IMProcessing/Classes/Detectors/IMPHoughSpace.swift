@@ -178,52 +178,6 @@ public class IMPHoughSpace {
         return (rho,theta,space[index].bins)
     }
     
-//    public func getSquares(squaresMax:Int = 50, threshold:Int = 50, minDistance:Float = 20, distanceThreshold:Float=10, thetaTreshold:Float = Float.pi/180 * 5) -> [IMPQuad] {
-//        let space = getLocalMaximums(threshold: threshold)
-//        
-//        // stage 4. store the first min(total,linesMax) lines to the output buffer
-//        let sMax = min(squaresMax, space.count)
-//        
-//        var squares = [IMPQuad]()
-//        
-//        let t1 = Date()
-//        
-//        for i1 in 0..<sMax {
-//            
-//            let (rho1,theta1,cap1) = getPoint(from: space, at: i1)
-//            
-//            for i2 in 0..<sMax {
-//                
-//                if i1 == i2 { continue }
-//                
-//                let (rho2,theta2,cap2) = getPoint(from: space, at: i2)
-//                
-//                if abs(rho1-rho2) < minDistance { continue }
-//                
-//                if abs(rho1+rho2) < distanceThreshold {
-//                    if abs(theta1-theta2) < thetaTreshold ||
-//                        abs(theta1-(theta2-Float.pi)) < thetaTreshold ||
-//                        abs((theta1-Float.pi)-theta2) < thetaTreshold {
-//                        
-//                        print("  ->>> parallel[\(i1,i2)][\(cap1,cap2)] == rho1,rho2 = \(rho1+rho2) \(rho1,rho2) theta1,theta2 = \(theta1 * 180/Float.pi,theta2 * 180/Float.pi)")
-//                    }
-//                }
-//                
-//                if abs(abs(theta1-theta2) - Float.pi/2) < thetaTreshold {
-//                        //print("  -<<< ortho[\(i1,i2)][\(cap1,cap2)]    == rho1,rho2 = \(rho1+rho2) \(rho1,rho2) theta1,theta2 = \(theta1 * 180/M_PI.float,theta2 * 180/M_PI.float)")
-//                }
-//            }
-//            
-//            print("\n -- - - - - -- \n")
-//        }
-//        
-//        
-//        print(" squares time = \(-t1.timeIntervalSinceNow)")
-//        
-//        return squares
-//    }
-//    
-
     public func getLines() -> [IMPPolarLine]  {
         
         let _sorted_accum:[uint2] = getLocalMaximums(threshold: threshold)
@@ -258,70 +212,5 @@ public class IMPHoughSpace {
         
         return lines
     }
-    
 
-//    public func getLines__(linesMax:Int = 50, threshold:Int = 50) -> [IMPLineSegment]  {
-//        
-//        let space = getLocalMaximums(threshold: threshold)
-//        
-//        // stage 4. store the first min(total,linesMax) lines to the output buffer
-//        let linesMax = min(linesMax, space.count)
-//        
-//        var lines = [IMPLineSegment]()
-//
-//        for i in 0..<linesMax {
-//
-//            let (rho,theta,_) = getPoint(from: space, at: i)
-//            
-//            let a = cos(theta)
-//            let b = sin(theta)
-//            
-//            let x0 = a * rho
-//            let y0 = b * rho
-//            
-//            let np = float2(x0,y0)
-//            
-//            let nv = IMPLineSegment(p0: float2(0), p1: np)
-//            
-//            let nf = nv.normalForm(toPoint: np)
-//            
-//            let A = round(nf.x)
-//            let B = round(nf.y)
-//            let C = round(nf.z)
-//            
-//            var x1:Float=0,y1:Float=0,x2:Float=0,y2:Float=0
-//            
-//            if A == 0 {
-//                y1 = B == 0 ? 1 : C/B/imageHeight.float
-//                x2 = 1
-//                
-//                x1 = B == 0 ? x2 : 0
-//                y2 = y1
-//            }
-//            else if B == 0 {
-//                y1 = 0
-//                x2 = A == 0 ? 1 : C/A/imageWidth.float
-//                
-//                x1 = x2
-//                y2 = A == 0 ? y1 : 1
-//            }
-//            else {
-//                
-//                x1 = 0
-//                y1 = C/B / imageHeight.float
-//                x2 = 1
-//                y2 = (C - A*imageWidth.float)/B / imageHeight.float
-//            }
-//            
-//            let delim  = float2(1)// float2(imageWidth.float,imageHeight.float)
-//            let point1 = clamp(float2(x1,y1)/delim, min: float2(0), max: float2(1))
-//            let point2 = clamp(float2(x2,y2)/delim, min: float2(0), max: float2(1))
-//            
-//            let segment = IMPLineSegment(p0: point1, p1: point2)
-//            
-//            lines.append(segment)
-//        }
-//
-//        return lines
-//    }
 }
