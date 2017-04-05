@@ -10,234 +10,15 @@ import Cocoa
 import SnapKit
 import Accelerate
 
-
-extension IMPCorner: Equatable {
-    
-    public static func ==(lhs: IMPCorner, rhs: IMPCorner) -> Bool {
-        return (abs(lhs.point.x-rhs.point.x) < 0.1) && (abs(lhs.point.y-rhs.point.y) < 0.1)
-    }
-
-    
-    var left:float2  { return float2(-slops.x,0) }
-    var top:float2   { return float2(0,slops.y)  }
-    var right:float2 { return float2(slops.w,0)  }
-    var bottom:float2{ return float2(0,-slops.z) }
-    
-    enum Direction:Int {
-        case leftTop
-        case rightTop
-        case leftBottom
-        case rightBottom
-        case none
-    }
-    
-    func normal(p0:float2,p1:float2) -> float2 {
-        let s = IMPLineSegment(p0: p0, p1: p1)
-        return s.normalIntersection(point: float2(0))
-    }
-    
-    var ltSlope:float2 {get{ return normal(p0: left,  p1: top) }}
-    var rtSlope:float2 {get{ return normal(p0: top,   p1: right) }}
-    var rbSlope:float2 {get{ return normal(p0: right, p1: bottom) }}
-    var lbSlope:float2 {get{ return normal(p0: left,  p1: bottom) }}
-    
-    var direction:float2 {
-        //return ltSlope+rtSlope+rbSlope+lbSlope
-        return left + top + right + bottom
-    }
-
-    var normalDirection:float2 {
-        return ltSlope+rtSlope+rbSlope+lbSlope
-    }
-
-    func thresholdDirection(threshold:Float = 0.1) -> Direction {
-        // x - left, y - top, z - bottom, w - right
-
-        let d = direction
-    
-        if d.x>0 && d.y<0 && length(d)>=threshold {
-            return .leftTop
-        }
-        if d.x<0 && d.y<0 && length(d)>=threshold {
-            return .rightTop
-        }
-        if d.x<0 && d.y>0 && length(d)>=threshold {
-            return .rightBottom
-        }
-        if d.x>0 && d.y>0 && length(d)>=threshold {
-            return .leftBottom
-        }
-        
-        return .none
-    }
-    
-    func match(corner:IMPCorner, threshold:Float = 0.3) -> Direction {
-        
-        if thresholdDirection(threshold: threshold) == .leftTop {
-            let d = corner.thresholdDirection(threshold: threshold)
-            if d == .rightTop {
-                return d
-            }
-            if d == .leftBottom {
-                return d
-            }
-            if d == .rightBottom {
-                return d
-            }
-        }
-        
-        return .none
-    }
-}
-
-public class IMPPatch {
-    
-    let theta:Float
-    
-    public init(lt: IMPCorner, theta:Float = 0) {
-        self.theta = theta
-        defer{
-            self.lt = lt
-        }
-    }
-    
-    func find(at place:IMPCorner.Direction, withIn corners: [IMPCorner], threshold:Float = 0.2) -> IMPCorner? {
-        
-        var dist:Float = 10000
-        
-        var next:IMPCorner?
-        
-        for c in corners{
-            
-            if c.thresholdDirection(threshold: threshold) == .leftTop { continue }
-
-            let d = c.thresholdDirection(threshold: threshold)
-            
-            if d == place {
-                let newDist = distance(lt.point, c.point)
-                if dist > newDist {
-                    next = c
-                    dist = newDist
-                }
-            }
-        }
-        
-        return next
-    }
-    
-    var lt = IMPCorner() {didSet{ mask |= 0b1000  }}
-    var rt = IMPCorner() {didSet{ mask |= 0b0100  }}
-    var lb = IMPCorner() {didSet{ mask |= 0b0010  }}
-    var rb = IMPCorner() {didSet{ mask |= 0b0001  }}
-
-    var hasLt:Bool {
-        return (mask & 0b1000) > 0
-    }
-
-    var hasRt:Bool {
-        return (mask & 0b0100) > 0
-    }
-
-    var hasLb:Bool {
-        return (mask & 0b0010) > 0
-    }
-
-    var hasRb:Bool {
-        return (mask & 0b0001) > 0
-    }
-
-    var isCompleted:Bool { return (((mask % 0b1111) == 0) && mask>0) }
-    var mask:UInt8 = 0b0000
-    
-    private func normalIntersection(_ x0:Float, _ y0:Float, _ x1:Float, _ y1:Float) -> float2 {
-        let segment = IMPLineSegment(p0: float2(x0,y0), p1: float2(x1,y1))
-        return segment.normalIntersection(point: lt.point)
-    }
-    
-    private func thetaDiff(corner: IMPCorner, _ x0:Float, _ y0:Float, _ x1:Float, _ y1:Float) -> float2 {
-        let n = normalIntersection(x0,y0,x1,y1)
-        let a1 = n.y - corner.point.y
-        let b1 = lt.point.x - n.x
-        let a2 = n.x - corner.point.x
-        let b2 = lt.point.y - n.y
-        return float2(abs(atan(a1/b1)),abs(atan(a2/b2)))
-    }
-    
-    func addCorner(corner:IMPCorner, threshold:Float = 0.2, thetaThreshold:Float = Float.pi/90) -> Bool {
-        
-        if isCompleted { return false }
-        
-        var ret = false
-        
-        switch corner.thresholdDirection(threshold: threshold) {
-        case .leftTop:
-            
-            if (mask & 0b1000) == 0 { lt = corner; return true }
-            
-        case .rightTop:
-            
-            if abs(corner.point.y - lt.point.y)<=threshold{
-                if (mask & 0b0100) == 0 {
-                    rt = corner;
-                    ret = true
-                }
-                else {
-                    let newDist = distance(lt.point, corner.point)
-                    if newDist < distance(lt.point, rt.point){
-                        rt = corner;
-                        ret = true
-                    }
-                }
-            }
-            
-        case .leftBottom:
-            if abs(corner.point.x - lt.point.x)<=threshold {
-                if (mask & 0b0010) == 0 {
-                    lb = corner;
-                    ret = true
-                }
-                else {
-                    let newDist = distance(lt.point, corner.point)
-                    if newDist < distance(lt.point, lb.point){
-                        lb = corner;
-                        ret = true
-                    }
-                }
-            }
-        case .rightBottom:
-            if abs(corner.point.x - rt.point.x)<=threshold {
-                if (mask & 0b0001) == 0 {
-                    rb = corner;
-                    ret = true
-                }
-                else {
-                    let newDist = distance(lt.point, corner.point)
-                    if newDist < distance(lt.point, rb.point){
-                        rb = corner;
-                        ret = true
-                    }
-                }
-            }
-        default:
-            ret = false
-        }
-        
-        
-        return ret
-    }
-}
-
 public class TestFilter: IMPFilter {
     
     public var linesHandler:((_ h:[IMPPolarLine],_ v:[IMPPolarLine], _ size:NSSize?)->Void)?
     public var cornersHandler:((_ points:[IMPCorner], _ size:NSSize?)->Void)?
-    public var patchesHandler:((_ points:[IMPPatch], _ size:NSSize?)->Void)?
     
     public override var source: IMPImageProvider? {
         didSet{
             self.linesHandler?([],[],source?.size)
             self.cornersHandler?([],source?.size)
-            self.patchesHandler?([],source?.size)
         }
     }
     
@@ -284,7 +65,6 @@ public class TestFilter: IMPFilter {
 
     public var medianDim:Float = 0 {
         didSet{
-            cornerLinesDetector.threshold =  Int(medianDim)
             median.dimensions = Int(medianDim)
             dirty = true
         }
@@ -330,13 +110,13 @@ public class TestFilter: IMPFilter {
         var t2 = Date()
 
         
-//          add(filter: adaptiveThreshold)
+//        add(filter: adaptiveThreshold)
 //        add(filter: segments)
         
 //        add(filter: median)
 //
 //        add(function: kernelEV)
-//        add(filter: blurFilter)
+        add(filter: blurFilter)
 //        add(filter: boxBlurFilter)
 //        add(filter: ciContrast)
 
@@ -407,7 +187,7 @@ public class TestFilter: IMPFilter {
                     
                     var count = 0
                     for i in 0..<4 {
-                        if corner.slops[i] >= nonOrientedThreshold{
+                        if corner.slope[i] >= nonOrientedThreshold{
                             count += 1
                         }
                     }
@@ -416,94 +196,35 @@ public class TestFilter: IMPFilter {
                         return false
                     }
                     
-                    if corner.slops.x>=oppositThreshold && corner.slops.y>=oppositThreshold {
+                    if corner.slope.x>=oppositThreshold && corner.slope.y>=oppositThreshold {
                         return true
                     }
-                    if corner.slops.y>=oppositThreshold && corner.slops.w>=oppositThreshold {
-                        return true
-                    }
-
-                    if corner.slops.w>=oppositThreshold && corner.slops.z>=oppositThreshold {
+                    if corner.slope.y>=oppositThreshold && corner.slope.w>=oppositThreshold {
                         return true
                     }
 
-                    if corner.slops.z>=oppositThreshold && corner.slops.x>=oppositThreshold {
+                    if corner.slope.w>=oppositThreshold && corner.slope.z>=oppositThreshold {
+                        return true
+                    }
+
+                    if corner.slope.z>=oppositThreshold && corner.slope.x>=oppositThreshold {
                         return true
                     }
 
                     return false
                 }
-
-                let w = Float(size.width)
-                let h = Float(size.height)
                 
-                let prec:Float = 8
-                
-                let sorted = filtered.sorted { (c0, c1) -> Bool in
-                    
-                    var pi0 = c0.point * float2(w,h)
-                    var pi1 = c1.point * float2(w,h)
-                    
-                    pi0 = floor(pi0/float2(prec)) * float2(prec)
-                    pi1 = floor(pi1/float2(prec)) * float2(prec)
-                    
-                    let i0 = pi0.x  + pi0.y * w
-                    let i1 = pi1.x  + pi1.y * w
-                    
-                    return i0<i1
-                    //return  pi0.x < pi1.x || pi0.y < pi1.y ? true : i0<i1
-                    
-//                    var r0 = length(pi0)
-//                    let a0 = pi0.y/pi0.x
-//
-//                    var r1 = length(pi1)
-//                    let a1 = pi1.y/pi1.x
-//                    
-//                    let numrho = distance(float2(0), float2(w,h))
-//                    
-//                    let index0 = a0 * numrho + r0
-//                    let index1 = a1 * numrho + r1
-//
-//                    //return distance(float2(0), pi0)<distance(float2(0), pi1)
-//                    return index0<index1
-                }
-                
-                var pp = [float2]()
-                for c in filtered{
-                    pp.append(c.point)
-                }
-                
-                let hough = IMPHoughSpace(points: pp, width: Int(w), height: Int(h))
-                let lines = hough.getLines()
-                
-                let patches = self.matchPatches(corners: sorted, size:size)
-                
-                self.cornersHandler?(sorted,size)
-              // self.patchesHandler?(patches,size)
-                //self.linesHandler?(lines,[],size)
+                self.cornersHandler?(filtered,size)
             }
         }
 
         lineDetector.addObserver(lines: { (horisontal, vertical, size) in
             self.context.runOperation(.async) {
                 print(" oriented lines[n:\(horisontal.count, vertical.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-
-                //let quads = self.squaresDetector(horizontalLines: horsontal, verticalLines: horsontal, size: size)
-                
-                //let h = self.filterByDensity(lines: horisontal, theta: M_PI_2.float, size: Int(size.width), count: 16)
-                //let v = self.filterByDensity(lines: vertical, theta: 0, size: Int(size.height), count: 16)
-                
                 self.linesHandler?(horisontal, vertical, size)
             }
         })
         
-        cornerLinesDetector.addObserver(lines: { (horisontal, vertical, size) in
-            self.context.runOperation(.async) {
-                print(" corner lines[n:\(horisontal.count, vertical.count)] detector time = \(-t2.timeIntervalSinceNow) ")
-                self.linesHandler?(horisontal, vertical, size)
-            }
-        })
-
         
         houghLineDetector.addObserver(lines: { (lines, size) in
             self.context.runOperation(.async) {
@@ -515,14 +236,10 @@ public class TestFilter: IMPFilter {
     
     }
     
-    lazy var segments:IMPSegmentsDetector = IMPSegmentsDetector(context: self.context)
     
     lazy var gDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
-    //lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)
     lazy var sobelEdges:IMPSobelEdgesGradient = IMPSobelEdgesGradient(context: self.context)
-    //lazy var sobelEdges:IMPSobelEdgesRasterized = IMPSobelEdgesRasterized(context: self.context)
     
-    lazy var edgels:IMPEdgelsDetector = IMPEdgelsDetector(context: self.context)
     
     lazy var posterize:IMPPosterize = IMPPosterize(context: self.context)
     
@@ -534,7 +251,6 @@ public class TestFilter: IMPFilter {
     lazy var cannyEdgeDetector:IMPCannyEdges = IMPCannyEdges(context: self.context)
     
     lazy var lineDetector:IMPOrientedLinesDetector = IMPOrientedLinesDetector(context:  IMPContext())
-    lazy var cornerLinesDetector:IMPCornerLinesDetector = IMPCornerLinesDetector(context:  IMPContext())
 
     lazy var houghLineDetector:IMPHoughLinesDetector = IMPHoughLinesDetector(context:  IMPContext())
     lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
@@ -545,122 +261,7 @@ public class TestFilter: IMPFilter {
     lazy var ciBlurFilter:CIFilter = CIFilter(name:"CIGaussianBlur")!
     lazy var ciContrast:CIFilter = CIFilter(name:"CIColorControls")!
     
-    func matchPatches(corners:[IMPCorner], size:NSSize) -> [IMPPatch] {
-        var patches = [IMPPatch]()
 
-        for (i,current) in corners.enumerated() {
-            
-            if current.thresholdDirection() != .leftTop { continue }
-            
-            let patch = IMPPatch(lt: current)
-            
-            if let next = patch.find(at: .rightTop, withIn: corners) {
-                patch.rt = next
-            }
-
-            if let next = patch.find(at: .leftBottom, withIn: corners) {
-                patch.lb = next
-            }
-
-            if let next = patch.find(at: .rightBottom, withIn: corners) {
-                patch.rb = next
-            }
-
-//            for next in corners {
-//                
-//                if next == current { continue }
-//                if next.thresholdDirection() == .leftTop { continue }
-//                
-//                if patch.addCorner(corner: next) {
-//                    if patch.isCompleted { break }
-//                }
-//            }
-            if patch.isCompleted {
-                patches.append(patch)
-            }
-        }
-        
-        return patches
-    }
-    
-    
-    func matchPatches_(corners:[IMPCorner], size:NSSize) -> [IMPPatch] {
-        
-//        let w = Float(size.width)
-//        let h = Float(size.height)
-//        
-//        let prec:Float = 16
-//        
-        var sorted = corners
-        
-//        var sorted = corners.sorted { (c0, c1) -> Bool in
-//            
-//            var pi0 = c0.point * float2(w,h)
-//            var pi1 = c1.point * float2(w,h)
-//            
-//            pi0 = floor(pi0/float2(prec)) * float2(prec)
-//            pi1 = floor(pi1/float2(prec)) * float2(prec)
-//            
-//            let i0 = pi0.x  + pi0.y * w
-//            let i1 = pi1.x  + pi1.y * w
-//            
-//            return i0<i1
-//        }
-        
-        var patches = [IMPPatch]()
-    
-        while sorted.count > 0 {
-            
-            let current = sorted.remove(at: 0)
-            
-//            if current.thresholdDirection() != .leftTop {
-//                sorted.insert(current, at: 0)
-//                continue
-//            }
-            
-            let currentDirection = current.thresholdDirection()
-
-            if currentDirection != .leftTop {
-                continue
-            }
-            
-            let patch = IMPPatch(lt:current)
-            //if !patch.addCorner(corner: current, place: currentDirection) {
-            //    continue
-            //}
-            
-            for next in sorted {
-                
-                let place = current.match(corner: next)
-                
-                if place == .none {
-                    continue
-                }
-                
-                if patch.addCorner(corner: next) {
-                    if patch.isCompleted {
-                        patches.append(patch)
-                        
-                        sorted.removeObject(object: patch.lt)
-                        sorted.removeObject(object: patch.rt)
-                        sorted.removeObject(object: patch.lb)
-                        sorted.removeObject(object: patch.rb)
-                        
-                        break
-                    }
-                }
-                
-            }
-        }
-        
-//        for (i,p) in patches.enumerated() {
-//            print("patch[\(i)] = \(p.lt.point, p.rt.point, p.lb.point, p.rb.point)")
-//        }
-        
-        return patches
-    }
-    
-    
     func filterByDensity(lines:[IMPPolarLine], theta:Float, size:Int, count:Int = 8) -> [IMPPolarLine] {
         
         let horizontalLines = lines.sorted { return  $0.rho<$1.rho }
@@ -687,20 +288,12 @@ public class TestFilter: IMPFilter {
                 let median = d.count/2
                 vDSP_normalize(d, 1, nil, 0, &mean, &sigma, vDSP_Length(d.count))
                 print(" d[\(k)] = \(d) mean = \(mean) sigma = \(sigma)")
-                //result.append(IMPPolarLine(rho: mean -  sign(mean) * sigma, theta: theta))
-                //result.append(IMPPolarLine(rho: mean + sign(mean) * sigma, theta: theta))
                 result.append(IMPPolarLine(rho: d[median], theta: theta))
-                //result.append(IMPPolarLine(rho: mean, theta: theta))
             }
         }
         
         return result
-    }
-    
-    func squaresDetector(horizontalLines:[IMPPolarLine],verticalLines:[IMPPolarLine], size:NSSize) -> [IMPQuad] {
-        var quads = [IMPQuad]()
-        return quads
-    }
+    }        
 }
 
 class CanvasView: NSView {
@@ -722,13 +315,6 @@ class CanvasView: NSView {
             setNeedsDisplay(bounds)
         }
     }
-    
-    var patches = [IMPPatch]() {
-        didSet{
-            setNeedsDisplay(bounds)
-        }
-    }
-    
     
     func drawLine(segment:IMPLineSegment,
                   color:NSColor,
@@ -763,14 +349,14 @@ class CanvasView: NSView {
                   index:Int = -1
         ){
         
-        let slops = corner.slops
+        let slope = corner.slope
         
         let w  = (width/bounds.size.width/2).float
         let h  = (width/bounds.size.height/2).float
-        let p0 = float2(corner.point.x-w * slops.x, corner.point.y)
-        let p1 = float2(corner.point.x+w * slops.w, corner.point.y)
-        let p10 = float2(corner.point.x, corner.point.y-h * slops.y)
-        let p11 = float2(corner.point.x, corner.point.y+h * slops.z)
+        let p0 = float2(corner.point.x-w * slope.x, corner.point.y)
+        let p1 = float2(corner.point.x+w * slope.w, corner.point.y)
+        let p10 = float2(corner.point.x, corner.point.y-h * slope.y)
+        let p11 = float2(corner.point.x, corner.point.y+h * slope.z)
         
         let segment1 = IMPLineSegment(p0: p0, p1: p1)
         let segment2 = IMPLineSegment(p0: p10, p1: p11)
@@ -780,7 +366,6 @@ class CanvasView: NSView {
         if index >= 0 {
             
             let text = NSString(format: "[%i] %.2f,%.2f", index, corner.point.x, corner.point.y)
-            //let text = "\(index): \(corner.point.x),\(corner.point.y)" as NSString
             let font = NSFont(name: "Helvetica Bold", size: 11.0)
 
             if let actualFont = font {
@@ -806,17 +391,6 @@ class CanvasView: NSView {
         }
     }
     
-    func drawPatch(patch:IMPPatch,
-                   color:NSColor = NSColor(red: 1, green: 1, blue: 0.2, alpha: 0.6),
-                   thickness:CGFloat = 4
-        ){
-        
-        drawLine(segment: IMPLineSegment(p0:patch.lt.point,p1:patch.rt.point), color: color, width: thickness)
-        drawLine(segment: IMPLineSegment(p0:patch.rt.point,p1:patch.rb.point), color: color, width: thickness)
-        drawLine(segment: IMPLineSegment(p0:patch.rb.point,p1:patch.lb.point), color: color, width: thickness)
-        drawLine(segment: IMPLineSegment(p0:patch.lb.point,p1:patch.lt.point), color: color, width: thickness)
-    }
-    
     override func draw(_ dirtyRect: NSRect) {
         for s in hlines {
             drawLine(segment: s, color:  NSColor(red: 0,   green: 0.9, blue: 0.1, alpha: 0.8))
@@ -828,9 +402,6 @@ class CanvasView: NSView {
         
         for (i,c) in corners.enumerated() {
             drawCrosshair(corner: c, index: i)
-        }
-        for p in patches {
-            drawPatch(patch: p)
         }
     }
 }
@@ -862,12 +433,6 @@ class ViewController: NSViewController {
             }
         }
         
-        f.patchesHandler = { (patches,size) in
-            DispatchQueue.main.async {
-                self.canvas.patches = patches
-            }
-        }
-
         return f
     }()
     

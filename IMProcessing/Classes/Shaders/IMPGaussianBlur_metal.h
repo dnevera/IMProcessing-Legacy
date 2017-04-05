@@ -24,18 +24,16 @@ using namespace metal;
 namespace IMProcessing
 {
     
-    kernel void kernel_gaussianSampledBlur(
-                                           texture2d<float, access::sample> source       [[ texture(0) ]],
-                                           texture2d<float, access::write>  destination  [[ texture(1) ]],
-                                           texture1d<float, access::read>   weights      [[ texture(2) ]],
-                                           texture1d<float, access::read>   offsets      [[ texture(3) ]],
-                                           const device   float2           &texelSize    [[ buffer(0)  ]],
-                                           uint2 gid [[thread_position_in_grid]]
-                                           ) {
+    inline float3 gaussianSampledBlur(texture2d<float, access::sample> source,
+                                      //texture2d<float, access::write>  destination,
+                                      texture1d<float, access::read>   weights,
+                                      texture1d<float, access::read>   offsets,
+                                      float2 texCoord,
+                                      float2 texelSize
+                                      )
+    {
         constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
 
-        float2 texCoord = float2(gid)/float2(source.get_width(),source.get_height());
-        
         float3 color  = source.sample(s, texCoord).rgb * weights.read(uint(0)).x;
         
         for( uint i = 1; i < weights.get_width(); i++ ){
@@ -47,10 +45,37 @@ namespace IMProcessing
             
         }
         
+        return color;
+    }
+    
+    kernel void kernel_gaussianSampledBlur(
+                                           texture2d<float, access::sample> source       [[ texture(0) ]],
+                                           texture2d<float, access::write>  destination  [[ texture(1) ]],
+                                           texture1d<float, access::read>   weights      [[ texture(2) ]],
+                                           texture1d<float, access::read>   offsets      [[ texture(3) ]],
+                                           const device   float2           &texelSize    [[ buffer(0)  ]],
+                                           uint2 gid [[thread_position_in_grid]]
+                                           ) {
+
+        float2 texCoord = float2(gid)/float2(source.get_width(),source.get_height());
+        float3 color = gaussianSampledBlur(source,weights,offsets,texCoord,texelSize);
         destination.write(float4(color,1), gid);
     }
     
-
+    
+    fragment float4 fragment_gaussianSampledBlur(
+                                                 IMPVertexOut in [[stage_in]],
+                                                 texture2d<float, access::sample> source     [[ texture(0) ]],
+                                                 texture1d<float, access::read>   weights    [[ texture(1) ]],
+                                                 texture1d<float, access::read>   offsets    [[ texture(2) ]],
+                                                 const device   float2           &texelSize  [[ buffer(0)  ]]
+                                                 ) {
+        float2 texCoord = in.texcoord.xy;
+        float3 color =  gaussianSampledBlur(source,weights,offsets,texCoord,texelSize);
+        return float4(color,1);
+    }
+    
+    
     kernel void kernel_blendSource(texture2d<float, access::sample> source      [[texture(0)]],
                                    texture2d<float, access::write>  destination [[texture(1)]],
                                    texture2d<float, access::sample> background  [[texture(2)]],
@@ -67,33 +92,7 @@ namespace IMProcessing
         
         destination.write(inColor, gid);
     }
-    
-    
-    fragment float4 fragment_gaussianSampledBlur(
-                                                 IMPVertexOut in [[stage_in]],
-                                                 texture2d<float, access::sample> texture    [[ texture(0) ]],
-                                                 texture1d<float, access::read>   weights    [[ texture(1) ]],
-                                                 texture1d<float, access::read>   offsets    [[ texture(2) ]],
-                                                 const device   float2           &texelSize  [[ buffer(0)  ]]
-                                                 ) {
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
-        
-        float2 texCoord = in.texcoord.xy;
 
-        float3 color  = texture.sample(s, texCoord).rgb * weights.read(uint(0)).x;
-        
-        for( uint i = 1; i < weights.get_width(); i++ ){
-            
-            float2 texCoordOffset =  texelSize * offsets.read(i).x;
-            
-            color += texture.sample(s, (texCoord + texCoordOffset)).rgb * weights.read(i).x;
-            color += texture.sample(s, (texCoord - texCoordOffset)).rgb * weights.read(i).x;
-            
-        }
-        
-        return float4(color,1);
-    }
-    
     fragment float4 fragment_blendSource(
                                          IMPVertexOut in [[stage_in]],
                                          texture2d<float, access::sample> texture [[ texture(0) ]],

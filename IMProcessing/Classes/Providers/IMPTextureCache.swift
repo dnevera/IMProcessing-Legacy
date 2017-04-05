@@ -77,12 +77,9 @@ public class IMPTextureCache: IMPContextProvider {
     }
     
     func flush() {
-        print(" flush texture cache ... ")
-        for var (k,q) in cache {
+        for var (_,q) in cache {
             var t = q.dequeue()
-            print(" flush texture cache ... [\(k,t?.size)]")
             while (t != nil) {
-               //t?.setPurgeableState(.empty)
                 t = q.dequeue()
             }
         }
