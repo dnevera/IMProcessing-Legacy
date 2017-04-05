@@ -33,7 +33,7 @@ class ViewController: NSViewController {
             DispatchQueue.main.async {
                 self.canvas.imageSize = size
                 
-                self.canvas.corners = self.detector.corners
+                //self.canvas.corners = self.detector.corners
                 self.canvas.patches = self.detector.patchGrid.patches
                 var points = [float2]()
                 for p in self.detector.patchGrid.patches {
@@ -53,6 +53,7 @@ class ViewController: NSViewController {
 //                self.canvas.hlines = segments
                 self.canvas.hlines = self.detector.hLines
                 self.canvas.vlines = self.detector.vLines
+                self.canvas.grid = self.detector.patchGrid
             }
         })
         

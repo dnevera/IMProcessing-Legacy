@@ -275,7 +275,7 @@ public struct IMPPatchesGrid {
     public var locations = [[PatchInfo?]]()
     public var patches = [Patch]()
     
-    public init(colors: [[uint3]]) {
+    public init(colors: [[uint3]] = PassportCC24) {
         dimension = Dimension(width: colors[0].count, height: colors.count)
         self.colors = colors
         for y in 0..<dimension.height {
@@ -493,7 +493,7 @@ public struct IMPPatchesGrid {
         nextPrev = nextPrevFirst
         var gaps = [IMPPolarLine]()
         for current in result.suffix(from: 1) {
-            let dist:Float = getDist(from: current, to: nextPrev, with: avrgRho) 
+            let dist:Float = getDist(from: current, to: nextPrev, with: avrgRho)
             if abs(dist-avrgRho) > threshold * 2 {
                 for i in 0..<Int(dist/avrgRho) {
                     let l = IMPPolarLine(rho: nextPrev.rho + sign(nextPrev.rho) * avrgRho * (i.float+1), theta: avrgTheta)
@@ -509,7 +509,7 @@ public struct IMPPatchesGrid {
         return (result,avrgRho,avrgTheta)
     }
     
-    func approximate(withSize size:NSSize, threshold:Float = 16)
+    mutating func approximate(withSize size:NSSize, threshold:Float = 16)
         -> (
         horizon:  [IMPPolarLine],
         vertical: [IMPPolarLine]
@@ -527,11 +527,12 @@ public struct IMPPatchesGrid {
         let vdrticalSorted = verticals.sorted { return abs($0.rho)<abs($1.rho) }
         
         guard let (h,hrho,htheta) = filterClosing(horizonSorted, threshold: threshold) else { return nil }
-        print(" -- -- - - - - - - - - - - - - - - - - - ")
+        //print(" -- -- - - - - - - - - - - - - - - - - - ")
         guard let (v,vrho,vtheta) = filterClosing(vdrticalSorted, threshold: threshold) else { return nil }
         
         let startVRho = v.first!.rho
         let startHRho = h.first!.rho
+        let denom = float2(1)/float2(size.width.float,size.height.float)
         for y in 0..<dimension.height {
             var hl = IMPPolarLine(rho: hrho * y.float + startHRho, theta: htheta)
             if h.count > y {
@@ -542,9 +543,10 @@ public struct IMPPatchesGrid {
                 if v.count > x {
                     vl = v[x]
                 }
-                let point = vl.intersect(with: hl)
-                print(" intersection point = \(point)")
-                //locations[y].insert(nil, at: x)
+                let center = vl.intersect(with: hl) * denom
+                print(" intersection point = \(center)")
+                let info = PatchInfo(center: center, color: float3(0))
+                locations[y][x] = info
             }
         }
         
@@ -714,51 +716,5 @@ public class IMPPatchesDetector: IMPDetector {
         
         return f
     }()
-}
-
-
-enum SortType {
-    case Ascending
-    case Descending
-}
-
-struct SortObject<T> {
-    let value:T
-    let startPosition:Int
-    var sortedPosition:Int?
-}
-
-func swiftStableSort<T:Comparable>(array:inout [T], sortType:SortType = .Ascending) {
-    
-    var sortObjectArray = array.enumerated().map{SortObject<T>(value:$0.element, startPosition:$0.offset, sortedPosition:nil)}
-    
-    for s in sortObjectArray {
-        var offset = 0
-        for x in array[0..<s.startPosition]  {
-            if s.value < x {
-                offset += sortType == .Ascending ? -1 : 0
-            }
-            else if s.value > x {
-                offset += sortType == .Ascending ? 0 : -1
-            }
-        }
-        
-        for x in array[s.startPosition+1..<array.endIndex]  {
-            if s.value > x  {
-                offset += sortType == .Ascending ? 1 : 0
-            }
-            else if s.value < x  {
-                offset += sortType == .Ascending ? 0 : 1
-            }
-        }
-        sortObjectArray[s.startPosition].sortedPosition = offset + s.startPosition
-    }
-    
-    for s in sortObjectArray {
-        if let sInd = s.sortedPosition {
-            array[sInd] = s.value
-        }
-    }
-    
 }
 

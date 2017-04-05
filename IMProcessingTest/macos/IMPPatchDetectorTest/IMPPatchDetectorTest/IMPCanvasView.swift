@@ -36,6 +36,49 @@ class IMPCanvasView: NSView {
         }
     }
     
+    var grid = IMPPatchesGrid() {
+        didSet{
+            setNeedsDisplay(bounds)
+        }
+    }
+    
+    func drawCircle(center:float2,
+                    radius:CGFloat,
+                    color:NSColor,
+                    width:CGFloat = 8,
+                    index:Int = -1
+        ){
+        
+        var path = NSBezierPath()
+        
+        var fillColor = color
+        
+        fillColor.set()
+        path.fill()
+        path.lineWidth = width
+        
+        //let mag = float2(bounds.size.width.float, bounds.size.height.float)/float2(2)
+        
+        let p0 = NSPoint(x: center.x.cgfloat * bounds.size.width,
+                         y: (1-center.y.cgfloat) * bounds.size.height)
+        
+        path.appendArc(withCenter: p0, radius: radius, startAngle: 0, endAngle: 360)
+        
+        path.stroke()
+        path.close()
+        
+        path = NSBezierPath()
+        fillColor = NSColor.black
+        
+        fillColor.set()
+        path.fill()
+        path.lineWidth = 1
+        
+        path.appendArc(withCenter: p0, radius: radius, startAngle: 0, endAngle: 360)
+        
+        path.stroke()
+        path.close()
+    }
     
     func drawPatch(patch:IMPPatchesGrid.Patch,
                   color:NSColor,
@@ -207,14 +250,11 @@ class IMPCanvasView: NSView {
     override func draw(_ dirtyRect: NSRect) {
         for s in hlines {
             let l = IMPLineSegment(line: s, size: imageSize)
-            //NSLog("hline = \(l) polar = \(s.rho, s.theta.degrees), size = \(imageSize)")
             drawLine(segment: l, color:  NSColor(red: 0,   green: 0.9, blue: 0.1, alpha: 0.8))
         }
         
         for s in vlines {
             let l = IMPLineSegment(line: s, size:  imageSize)
-            //NSLog("vline = \(l) polar = \(s.rho, s.theta.degrees)")
-
             drawLine(segment: l, color: NSColor(red: 0,   green: 0.1, blue: 0.9, alpha: 0.8))
         }
         
@@ -225,14 +265,27 @@ class IMPCanvasView: NSView {
         }
                 
         for (i,p) in patches.enumerated() {
-            //NSLog("patche[\(i)] = \(p.center?.point, p.center?.color)")
             if let c = p.center {
                 drawPatch(patch: p,
                           color: NSColor(red: CGFloat(c.color.r),
                                          green: CGFloat(c.color.g),
                                          blue: CGFloat(c.color.b),
-                                         alpha: CGFloat(1)),
-                          index: i)
+                                         alpha: CGFloat(1))/*,
+                          index: i*/)
+            }
+        }
+
+        for y in 0..<grid.dimension.height {
+            for x in 0..<grid.dimension.width {
+                
+                if let c = grid.locations[y][x] {
+                    drawCircle(center: c.center, radius: 20, color: NSColor(red: CGFloat(c.color.r),
+                                                                            green: CGFloat(c.color.g),
+                                                                            blue: CGFloat(c.color.b),
+                                                                            alpha: CGFloat(1))
+                    )
+                }
+                
             }
         }
     }
