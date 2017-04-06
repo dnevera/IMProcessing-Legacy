@@ -11,10 +11,10 @@ import Metal
 
 public class IMPDrawPointsShader: IMPShader {
     
-    public var points = [float2]() {
+    public var points = [IMPCorner]() {
         didSet{
             if points.count > 1 {
-                _pointsBuffer = context.device.makeBuffer(bytes: points, length: points.count * MemoryLayout<float2>.size, options: [])
+                _pointsBuffer = context.device.makeBuffer(bytes: points, length: points.count * MemoryLayout<IMPCorner>.size, options: [])
             }
         }
     }
@@ -27,7 +27,7 @@ public class IMPDrawPointsShader: IMPShader {
         return _pointsBuffer
     }
     
-    private lazy var _pointsBuffer: MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
+    private lazy var _pointsBuffer: MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPCorner>.size, options: [])
 }
 
 class IMPDrawPointsCoreMTLShader: IMPCoreImageMTLShader {
@@ -72,7 +72,7 @@ public class IMPCrosshairsGenerator: IMPFilter {
     
     var adjustmentBuffer:MTLBuffer!
     
-    public var points:[float2] {
+    public var points:[IMPCorner] {
         set{
             pointsShader.points = newValue
             dirty = true

@@ -66,12 +66,12 @@ class ViewController: UIViewController {
 //        }
 
 //        f.add(filter:self.harris)
-        
+        f.add(filter:self.crossHairs)
         return f
     }()
     
     lazy var detector:IMPCCheckerDetector = {
-        let f = IMPCCheckerDetector(context: self.context)
+        let f = IMPCCheckerDetector(context: IMPContext())
         f.maxSize = 400
         return f
     }()
@@ -80,22 +80,50 @@ class ViewController: UIViewController {
     lazy var canny:IMPCannyEdges = IMPCannyEdges(context: self.context)
     lazy var harris:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext())
     
+    lazy var crossHairs:IMPCrosshairsGenerator = IMPCrosshairsGenerator(context: self.context)
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         view.backgroundColor = NSColor.black
         self.view.insertSubview(containerView, at: 0)
         
+        detector.maxSize = 800
         harris.maxSize = 400
         
-        (liveViewFilter => harris)
+        //liveViewFilter => detector
         
-        harris.addObserver(corners: { (corners, size) in            
-            DispatchQueue.main.async {
-                self.canvas.imageSize = size
-                //self.canvas.corners = corners
-            }
+        liveViewFilter.addObserver(newSource: { (source) in
+            self.detector.context.runOperation(.async, { 
+                self.detector.source = source
+            })
         })
+
+        detector.addObserver(destinationUpdated: { (destination) in
+            self.crossHairs.context.runOperation(.async, {
+                self.crossHairs.points = self.detector.corners
+                //print("\(self.detector.corners)")
+                DispatchQueue.main.async {
+                    guard let size = destination.size else { return }
+                    self.canvas.imageSize = size
+                    self.canvas.vlines = self.detector.vLines
+                    self.canvas.hlines = self.detector.hLines
+                    //self.canvas.grid = self.detector.patchGrid
+                }
+            })
+        })
+        
+//        detector --> { (destination) in
+//            self.crossHairs.context.runOperation(.async, {
+//                self.crossHairs.points = self.detector.corners
+//            })
+//        }
+        
+        //harris.addObserver(corners: { (corners, size) in
+        //    self.crossHairs.context.runOperation(.async, {
+        //        self.crossHairs.points = corners
+        //    })
+        //})
         
         
         canvas.frame = liveView.bounds

@@ -31,13 +31,13 @@ namespace IMProcessing
     
     
     vertex IMPCrosshairVertexOut vertex_crosshair(
-                                                  const device packed_float2* vertex_array [[ buffer(0) ]],
+                                                  const device IMPCorner     *vertex_array [[ buffer(0) ]],
                                                   const device float         &width        [[ buffer(1) ]],
                                                   unsigned int vid [[ vertex_id ]])
     {
         
         
-        float2 position = vertex_array[vid];
+        float2 position = vertex_array[vid].point;
         
         IMPCrosshairVertexOut out;
         out.position = float4(position.xy * float2(2.0,-2.0) - float2(1,-1), 0.0, 1.0);
