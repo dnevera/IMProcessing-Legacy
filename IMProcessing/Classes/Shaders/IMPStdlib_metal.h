@@ -38,6 +38,7 @@
 #include "IMPHarrisCorners_metal.h"
 #include "IMPConvolution_metal.h"
 #include "IMPAdaptiveThreshold_metal.h"
+#include "IMPCChekerDetector_metal.h"
 
 //#include "IMPHistogram_metal.h"
 //#include "IMPHistogramLayer_metal.h"

@@ -271,7 +271,7 @@ class IMPCanvasView: NSView {
             for x in 0..<grid.dimension.width {
                 
                 //if 
-                let c = grid.targets[y][x] //{
+                let c = grid.target[x,y] //{
                     drawCircle(center: c.center, radius: 20, color: NSColor(red: CGFloat(c.color.r),
                                                                             green: CGFloat(c.color.g),
                                                                             blue: CGFloat(c.color.b),
