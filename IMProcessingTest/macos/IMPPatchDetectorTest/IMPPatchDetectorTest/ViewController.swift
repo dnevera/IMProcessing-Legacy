@@ -10,11 +10,20 @@ import Cocoa
 import CoreGraphics
 import SnapKit
 
+
 class ViewController: NSViewController {
 
     var canvas = IMPCanvasView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
 
     let context = IMPContext()
+    lazy var filter:IMPFilter = {
+        let f = IMPFilter(context: self.context)
+        
+        (f => self.detector).process()
+        
+        return f
+    }()
+    
     lazy var detector:IMPCCheckerDetector = IMPCCheckerDetector(context: self.context)
 
     lazy var imageView:IMPView = IMPView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
@@ -23,28 +32,16 @@ class ViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-
         
-        detector.addObserver(destinationUpdated: { (destination) in          
-            //print("detector.conrers= = \(self.detector.corners)")
-            
+        detector --> { (destination) in
             guard let size = destination.size else { return }
-            
             DispatchQueue.main.async {
                 self.canvas.imageSize = size
-                
-                //self.canvas.corners = self.detector.corners
-                self.canvas.patches = self.detector.patchGrid.patches
-                var points = [float2]()
-                for p in self.detector.patchGrid.patches {
-                    guard let c = p.center else {continue}
-                    points.append(c.point)
-                }
                 self.canvas.hlines = self.detector.hLines
                 self.canvas.vlines = self.detector.vLines
                 self.canvas.grid = self.detector.patchGrid
             }
-        })
+        }
         
         detector.maxSize = 800
         
@@ -54,7 +51,7 @@ class ViewController: NSViewController {
 
         imageView.exactResolutionEnabled = false
         imageView.clearColor = MTLClearColor(red: 0.1, green: 0.2, blue: 0.3, alpha: 1)
-        imageView.filter = detector
+        imageView.filter = filter
         
         view.addSubview(imageView)
         imageView.addSubview(canvas)
@@ -69,7 +66,7 @@ class ViewController: NSViewController {
         IMPFileManager.sharedInstance.add { (file, type) in
             self.currentImage = IMPImage(context: self.context, path: file, maxSize: 2000)
             NSLog("open file \(file)")
-            self.detector.source = self.currentImage
+            self.filter.source = self.currentImage
         }
         
         let tap1 = NSPressGestureRecognizer(target: self, action: #selector(clickHandler(gesture:)))
