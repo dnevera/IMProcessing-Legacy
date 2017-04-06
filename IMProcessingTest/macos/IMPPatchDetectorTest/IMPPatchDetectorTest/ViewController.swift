@@ -15,25 +15,13 @@ class ViewController: NSViewController {
 
     var canvas = IMPCanvasView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
 
+    lazy var test:IMPFilter = IMPFilter(context:self.context)
+    
     let context = IMPContext()
     lazy var filter:IMPFilter = {
         let f = IMPFilter(context: self.context)
         
-        (f => self.detector).process()
-        
-        return f
-    }()
-    
-    lazy var detector:IMPCCheckerDetector = IMPCCheckerDetector(context: self.context)
-
-    lazy var imageView:IMPView = IMPView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
-    
-    var currentImage:IMPImageProvider? = nil
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        detector --> { (destination) in
+        f => self.test --> self.detector --> { (destination) in
             guard let size = destination.size else { return }
             DispatchQueue.main.async {
                 self.canvas.imageSize = size
@@ -43,7 +31,22 @@ class ViewController: NSViewController {
             }
         }
         
-        detector.maxSize = 800
+        return f
+    }()
+    
+    lazy var detector:IMPCCheckerDetector = {
+        let f = IMPCCheckerDetector(context: self.context)
+        f.maxSize = 800
+        return f
+    }()
+
+    lazy var imageView:IMPView = IMPView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
+    
+    var currentImage:IMPImageProvider? = nil
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
         
         canvas.wantsLayer = true
         canvas.layer?.backgroundColor = NSColor.clear.cgColor
@@ -86,9 +89,9 @@ class ViewController: NSViewController {
             
             switch gesture.state {
             case .began:
-                detector.enabled = false
+                filter.enabled = false
             default:
-                detector.enabled = true
+                filter.enabled = true
                 break
             }
             

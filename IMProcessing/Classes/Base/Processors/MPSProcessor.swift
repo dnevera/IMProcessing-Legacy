@@ -14,7 +14,7 @@ import CoreImage
     public protocol IMPMPSUnaryKernelProvider{
         var  name: String {get}
         func mps(device:MTLDevice) -> MPSUnaryImageKernel?
-        var context:IMPContext? {get}
+        var  context:IMPContext? {get}
     }
     
     class IMPMPSUnaryKernel: IMPMPSUnaryKernelProvider{
@@ -58,7 +58,9 @@ import CoreImage
             else {
                 let index = registeredFilter.count
                 filter.kernelIndex = index
-                filter.context = mps.context
+                if let c = mps.context {
+                    filter.context = c
+                }
                 registeredFilter.append(filter)
                 return filter
             }
@@ -87,21 +89,36 @@ import CoreImage
             return nil
         }
         
-        override func textureProcessor(_ commandBuffer: MTLCommandBuffer,
-                                       _ threadgroups: MTLSize,
-                                       _ threadsPerThreadgroup: MTLSize,
-                                       _ source: IMPImageProvider,
-                                       _ destination: IMPImageProvider) {
-            if let sourceTexture      = source.texture,
-                let kernel = mps,
-                let destinationTexture = destination.texture{
-                
+
+        override public func textureProcessor(_ commandBuffer: MTLCommandBuffer,
+                                              _ threadgroups: MTLSize,
+                                              _ threadsPerThreadgroup: MTLSize,
+                                              _ sourceTexture: MTLTexture,
+                                              _ destinationTexture: MTLTexture) {
+            
+            if let kernel = mps {
                 IMPCoreImageMPSUnaryKernel.imageProcessor(kernel: kernel,
                                                           commandBuffer: commandBuffer,
                                                           input: sourceTexture,
                                                           output: destinationTexture)
             }
         }
+        
+//        public override func textureProcessor(_ commandBuffer: MTLCommandBuffer,
+//                                       _ threadgroups: MTLSize,
+//                                       _ threadsPerThreadgroup: MTLSize,
+//                                       _ source: IMPImageProvider,
+//                                       _ destination: IMPImageProvider) {
+//            if let sourceTexture      = source.texture,
+//                let kernel = mps,
+//                let destinationTexture = destination.texture{
+//                
+//                IMPCoreImageMPSUnaryKernel.imageProcessor(kernel: kernel,
+//                                                          commandBuffer: commandBuffer,
+//                                                          input: sourceTexture,
+//                                                          output: destinationTexture)
+//            }
+//        }
         
         class func imageProcessor (
             kernel:IMPMPSUnaryKernelProvider,

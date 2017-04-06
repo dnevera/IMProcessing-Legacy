@@ -102,7 +102,7 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
     var kernelIndex:Int? = 0
  
-    public func textureProcessor(
+    open func textureProcessor(
         _ commandBuffer:MTLCommandBuffer,
         _ threadgroups:MTLSize,
         _ threadsPerThreadgroup:MTLSize,

@@ -140,11 +140,11 @@
                         weakSelf?.devicePositionDidChangeTo(position: position)
                     }
                     
-                    var device_angle = M_PI / 2.0 - atan2(yy, xx)
+                    var device_angle = Double.pi / 2.0 - atan2(yy, xx)
                     var orientation = UIDeviceOrientation.unknown
                     
-                    if device_angle > M_PI {
-                        device_angle -= 2 * M_PI
+                    if device_angle > Double.pi {
+                        device_angle -= 2 * Double.pi
                     }
                     
                     if ((zz < -0.60) || (zz > 0.60)) {
@@ -155,13 +155,13 @@
                             orientation = .unknown
                         }
                     } else {
-                        if ( (device_angle > -M_PI_4) && (device_angle < M_PI_4) ){
+                        if ( (device_angle > -Double.pi/4) && (device_angle < Double.pi/4) ){
                             orientation = .portrait
                         }
-                        else if ((device_angle < -M_PI_4) && (device_angle > -3 * M_PI_4)){
+                        else if ((device_angle < -Double.pi/4) && (device_angle > -3 * Double.pi/4)){
                             orientation = .landscapeLeft
                         }
-                        else if ((device_angle > M_PI_4) && (device_angle < 3 * M_PI_4)){
+                        else if ((device_angle > Double.pi/4) && (device_angle < 3 * Double.pi/4)){
                             orientation = .landscapeRight
                         }
                         else{
@@ -176,7 +176,7 @@
                     }
                 }
                 else if error != nil {
-                    NSLog(" *** Acceleraometer error: \(error)")
+                    NSLog(" *** Acceleraometer error: \(String(describing: error))")
                 }
             }
             

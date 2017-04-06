@@ -74,7 +74,7 @@ public class IMPLinesGenerator: IMPFilter {
         pointsShader.points = [float2]()
         guard let size = source?.size else { return }
         
-        let thick = float2(1/size.width.float,1/size.height.float)
+        //let thick = float2(1/size.width.float,1/size.height.float)
         
         for p in _lines {
             pointsShader.points.append(p.p0)

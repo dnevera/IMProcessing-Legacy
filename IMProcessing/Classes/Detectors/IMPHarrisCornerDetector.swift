@@ -157,44 +157,10 @@ public class IMPHarrisCornerDetector: IMPDetector{
         
         for o in cornersObserverList {
             o(points,size)
-        }
-        
-        
-//        guard !isReading else { return }
-//        
-//        isReading = true
-//        
-//        guard let size = destination.size else { return }
-//        
-//        let width       = Int(size.width)
-//        let height      = Int(size.height)
-//        
-//        if let (buffer,bytesPerRow,imageSize) = destination.read() {
-//            let rawPixels = buffer.contents().bindMemory(to: UInt8.self, capacity: imageSize)
-//
-//            var corners = [float2]()
-//        
-//            for x in stride(from: 0, to: width, by: 1){
-//                for y in stride(from: 0, to: height, by: 1){
-//                    
-//                    let colorByte = rawPixels[y * bytesPerRow + x * 4]
-//                    
-//                    if (colorByte > 0) {
-//                        let xCoordinate = Float(x) / Float(width)
-//                        let yCoordinate = Float(y) / Float(height)
-//                        corners.append(float2(xCoordinate, yCoordinate))
-//                    }
-//                }
-//            }
-//            
-//            for o in cornersObserverList {
-//                o(corners,size)
-//            }
-//            isReading = false
-//        }
+        }                
     }
     
-    func addObserver(corners observer: @escaping PointsListObserver) {
+    public func addObserver(corners observer: @escaping PointsListObserver) {
         cornersObserverList.append(observer)
     }
     

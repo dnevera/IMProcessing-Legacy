@@ -22,6 +22,7 @@ infix operator --> : AdditionPrecedence
 @discardableResult public func =><T:IMPFilter>(sourceFilter:T, destinationFilter:T) -> T {
     sourceFilter.addObserver(newSource: { (source) in
         destinationFilter.source = source
+        destinationFilter.process()
     })
     return destinationFilter
 }
@@ -48,8 +49,8 @@ infix operator --> : AdditionPrecedence
 /// - Returns: next filter
 //
 @discardableResult public func --><T:IMPFilter>(sourceFilter:T, nextFilter:T) -> T {
-    sourceFilter --> { (destination) in
+    (sourceFilter --> { (destination) in
         nextFilter.source = destination
-    }
+    }).process()
     return nextFilter
 }

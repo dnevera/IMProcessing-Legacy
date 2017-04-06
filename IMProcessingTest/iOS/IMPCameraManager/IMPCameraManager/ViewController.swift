@@ -7,7 +7,7 @@
 //
 
 import UIKit
-//import IMProcessing
+import IMProcessing
 import SnapKit
 import MetalPerformanceShaders
 
@@ -44,13 +44,12 @@ public class TestFilter: IMPFilter {
 
     lazy var mpsBlurFilter:BlurFilter = BlurFilter(context:self.context)
 
-    lazy var impBlurFilter:IMPGaussianBlurFilter = IMPGaussianBlurFilter(context: self.context)
+    lazy var impBlurFilter:IMPGaussianBlur = IMPGaussianBlur(context: self.context)
     
     public var blurRadius:Float = 0 {
         didSet{
-            //impBlurFilter.radius = blurRadius
+            impBlurFilter.radius = blurRadius
             //mpsBlurFilter.radius = blurRadius
-            harrisCornerDetector.blurRadius = blurRadius
         }
     }
     
@@ -77,62 +76,21 @@ public class TestFilter: IMPFilter {
         return f
     }()
     
-    override public func configure() {
+    public override func configure(complete: IMPFilter.CompleteHandler?) {
         extendName(suffix: "Test filter")
         super.configure()
         
         
-        add(function: kernelEV)
-        { (source) in
-            self.context.runOperation(.async, {
-                self.harrisCornerDetector.source = source
-                self.harrisCornerDetector.process()
-            })
-        }
-        
-        //add(filter: canny)
+        //add(function: kernelEV) { (source) in }
         
         //add(filter: exposureFilter)
-        //add(filter: impBlurFilter)
+        add(filter: impBlurFilter)
         //add(mps: mpsBlurFilter)
         //add(filter: xyderivative)
         //add(filter: nonMaximumSup)
-
-        //add(filter: harrisCornerDetector)
-
-        //add(filter: crosshairGenerator)
-        
-        harrisCornerDetector.addObserver { (corners:[float2], size:NSSize) in
-            //self.crosshairGenerator.points = corners
-            self.houghTransform(points: corners, size: size)
-        }
-
     }
 
-    private lazy var canny:IMPCannyEdgeDetector = IMPCannyEdgeDetector(context: self.context)
-    
-    private lazy var crosshairGenerator:IMPCrosshairGenerator = IMPCrosshairGenerator(context: self.context)
-    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context: IMPContext(lazy: true))
     private lazy var exposureFilter:CIFilter = CIFilter(name:"CIExposureAdjust")!
-    
-    func houghTransform(points:[float2], size: NSSize, precision:Float = 0.1){
-        let houghSize = Int(round(sqrtf(size.width.float*size.width.float + size.height.float*size.height.float)))
-        var lines = [Int:float2]()
-        for point in points {
-            for f in stride(from: 0, through: 180, by: 1){
-                for r in stride(from: 0, through: houghSize, by: 1){
-                    let theta = Float(f) * M_PI.float / 180.0
-                    let solve = abs(( (point.y)*sin(theta) + (point.x)*cos(theta)) - Float(r))
-                    print(" solve = \(solve)")
-                    if solve < precision {
-                        lines[r] = point
-                    }
-                }
-            }
-        }
-        
-        print("Line result = \(lines)")
-    }
 }
 
 
@@ -307,54 +265,24 @@ class ViewController: UIViewController {
     
     func pressHandler(gesture:UIPanGestureRecognizer) {
         if gesture.state == .began {
-            //cameraManager.previewEnabled = true
             liveViewFilter.enabled = false
-            //liveView.isHidden = true
         }
         else if gesture.state == .ended {
-            //cameraManager.previewEnabled = false
             liveViewFilter.enabled = true
-            //liveView.isHidden = false
         }
     }
     
-//    var scaleZoomFactor:CGFloat = 1
-//
-//    func zoomHandler(gesture:UIPinchGestureRecognizer) {
-//        let currentScale = cameraManager.zoomFactor.cgfloat
-//
-//        if gesture.state == .began {
-//            gesture.scale = currentScale
-//        }
-//        else if gesture.state == .changed {
-//            scaleZoomFactor = gesture.scale
-//        }
-//        
-//        scaleZoomFactor = fmin(scaleZoomFactor, fmin(cameraManager.maximumZoomFactor.cgfloat,10) )
-//        scaleZoomFactor = fmax(scaleZoomFactor, 1 )
-//        
-//        cameraManager.setZoom(factor: scaleZoomFactor.float, animate: false) { (camera, factor) in
-//            print("zoom factor = \(factor, self.scaleZoomFactor, currentScale, gesture.scale) max = \(self.cameraManager.maximumZoomFactor.cgfloat)")
-//        }
-//    }
-//    
-    
     func capturePhoto(sender:UIButton)  {
         print("capture")
-//        cameraManager.capturePhoto{ (camera, finished, file, metadata, error) in
-//            if error == nil {
-//                print("\(error)")
-//            }
-//        }
     }
     
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
-//        cameraManager.pause()
+        cameraManager.pause()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-//        cameraManager.resume()
+        cameraManager.resume()
     }
 }

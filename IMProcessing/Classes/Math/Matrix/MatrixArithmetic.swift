@@ -38,7 +38,7 @@ extension UInt64 : NumericArithmeticType { }
 extension UInt   : NumericArithmeticType { }
 extension Float32 : FloatingPointArithmeticType { }
 extension Float64 : FloatingPointArithmeticType { }
-extension Float80 : FloatingPointArithmeticType { }
+//extension Float80 : FloatingPointArithmeticType { }
 
 //public prefix func -<T: SignedNumericArithmeticType>(value: IMPMatrix<T>) -> IMPMatrix<T> {
 //    return value.map(-)
