@@ -12,6 +12,8 @@
 		313DDA5F1E966C45000D2C1F /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 313DDA5D1E966C45000D2C1F /* Main.storyboard */; };
 		313DDA611E966C45000D2C1F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 313DDA601E966C45000D2C1F /* Assets.xcassets */; };
 		313DDA641E966C45000D2C1F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 313DDA621E966C45000D2C1F /* LaunchScreen.storyboard */; };
+		31DC2C081E966D8600FE3F7C /* IMPCamera_main.metal in Sources */ = {isa = PBXBuildFile; fileRef = 31DC2C071E966D8600FE3F7C /* IMPCamera_main.metal */; };
+		31DC2C0A1E966EA800FE3F7C /* IMPCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31DC2C091E966EA800FE3F7C /* IMPCanvas.swift */; };
 		A8A8CB2E61A5B331375FF1EF /* Pods_IMPCChekerTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 93B45347C1CD66C894CF1FAF /* Pods_IMPCChekerTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -23,6 +25,8 @@
 		313DDA601E966C45000D2C1F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		313DDA631E966C45000D2C1F /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		313DDA651E966C45000D2C1F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		31DC2C071E966D8600FE3F7C /* IMPCamera_main.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = IMPCamera_main.metal; sourceTree = "<group>"; };
+		31DC2C091E966EA800FE3F7C /* IMPCanvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCanvas.swift; sourceTree = "<group>"; };
 		9234443A69859575935EB10D /* Pods-IMPCChekerTest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCChekerTest.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCChekerTest/Pods-IMPCChekerTest.release.xcconfig"; sourceTree = "<group>"; };
 		93B45347C1CD66C894CF1FAF /* Pods_IMPCChekerTest.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPCChekerTest.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E9EBE4D0DF8AD187CCE49864 /* Pods-IMPCChekerTest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCChekerTest.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCChekerTest/Pods-IMPCChekerTest.debug.xcconfig"; sourceTree = "<group>"; };
@@ -61,14 +65,24 @@
 		313DDA581E966C45000D2C1F /* IMPCChekerTest */ = {
 			isa = PBXGroup;
 			children = (
+				31DC2C061E966D8600FE3F7C /* Shaders */,
 				313DDA591E966C45000D2C1F /* AppDelegate.swift */,
 				313DDA5B1E966C45000D2C1F /* ViewController.swift */,
+				31DC2C091E966EA800FE3F7C /* IMPCanvas.swift */,
 				313DDA5D1E966C45000D2C1F /* Main.storyboard */,
 				313DDA601E966C45000D2C1F /* Assets.xcassets */,
 				313DDA621E966C45000D2C1F /* LaunchScreen.storyboard */,
 				313DDA651E966C45000D2C1F /* Info.plist */,
 			);
 			path = IMPCChekerTest;
+			sourceTree = "<group>";
+		};
+		31DC2C061E966D8600FE3F7C /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				31DC2C071E966D8600FE3F7C /* IMPCamera_main.metal */,
+			);
+			path = Shaders;
 			sourceTree = "<group>";
 		};
 		8EC34DA77A9B35108E81CD45 /* Pods */ = {
@@ -212,7 +226,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31DC2C0A1E966EA800FE3F7C /* IMPCanvas.swift in Sources */,
 				313DDA5C1E966C45000D2C1F /* ViewController.swift in Sources */,
+				31DC2C081E966D8600FE3F7C /* IMPCamera_main.metal in Sources */,
 				313DDA5A1E966C45000D2C1F /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -342,7 +358,7 @@
 				DEVELOPMENT_TEAM = TCA85S5T49;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = IMPCChekerTest/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCChekerTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -358,7 +374,7 @@
 				DEVELOPMENT_TEAM = TCA85S5T49;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = IMPCChekerTest/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.1;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCChekerTest;
 				PRODUCT_NAME = "$(TARGET_NAME)";

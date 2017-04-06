@@ -77,18 +77,14 @@ public class IMPHarrisCornerDetector: IMPDetector{
         
         pointsScannerKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
         pointsScannerKernel.preferedDimension =  MTLSize(width: self.regionSize, height: self.regionSize, depth: 1)
-
-        addObserver(newSource: { (source) in
-            
-        })
-        
+    
         add(filter: xyDerivative) { (source) in
             self.derivativeTexture = source.texture
         }
+        
         add(filter: blurFilter)
         add(filter: harrisCorner)
         add(filter: nonMaximumSuppression)
-        
         add(function: pointsScannerKernel) { (result) in
             self.readCorners(result)
             complete?(result)
@@ -134,9 +130,6 @@ public class IMPHarrisCornerDetector: IMPDetector{
         
         return f
     }()
-
-    
-    private var isReading = false
     
     fileprivate func getPoints(_ countBuff:MTLBuffer, _ maximumsBuff:MTLBuffer) -> [IMPCorner] {
         
@@ -144,20 +137,18 @@ public class IMPHarrisCornerDetector: IMPDetector{
                                                         capacity: MemoryLayout<uint>.size).pointee)
         
         var maximums = [IMPCorner](repeating:IMPCorner(), count:  count)
-        
         memcpy(&maximums, maximumsBuff.contents(), MemoryLayout<IMPCorner>.size * count)
-        
-        return maximums //.sorted { return $0.point.x<$1.point.x /*&& $0.point.y<$1.point.y*/ }
+        return maximums
     }
 
     fileprivate func readCorners(_ destination: IMPImageProvider) {
+        
         guard let size = destination.size else { return }
-        
         let points = getPoints(pointsCountBuffer,pointsBuffer)
-        
         for o in cornersObserverList {
             o(points,size)
-        }                
+        }
+        
     }
     
     public func addObserver(corners observer: @escaping PointsListObserver) {

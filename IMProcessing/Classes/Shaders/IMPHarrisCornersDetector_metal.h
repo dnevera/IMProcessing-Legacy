@@ -46,17 +46,17 @@ kernel void kernel_pointsScanner(
                                  texture2d<float, access::write>  destination      [[texture(1)]],
                                  texture2d<float, access::sample>  derivative      [[texture(2)]],
                                  
-                                 device            IMPCorner      *corners   [[ buffer(0) ]],
-                                 volatile device   atomic_uint    *count     [[ buffer(1) ]],
-                                 constant          uint           &pointsMax [[ buffer(2) ]],
+                                 device   IMPCorner      *corners   [[ buffer(0) ]],
+                                 device   atomic_uint    *count     [[ buffer(1) ]],
+                                 constant uint           &pointsMax [[ buffer(2) ]],
                                  
                                  uint2 groupId   [[threadgroup_position_in_grid]],
                                  uint2 gridSize  [[threadgroups_per_grid]],
                                  uint2 pid [[thread_position_in_grid]]
                                  )
 {
-    uint width  = destination.get_width();
-    uint height = destination.get_height();
+    uint width  = derivative.get_width();
+    uint height = derivative.get_height();
     
     uint gw = (width+gridSize.x-1)/gridSize.x;
     uint gh = (height+gridSize.y-1)/gridSize.y;
@@ -72,21 +72,23 @@ kernel void kernel_pointsScanner(
         if (ry > height) break;
         
         for (uint x=0; x<gw; x+=1){
-            
+
             uint rx = x + groupId.x * gw;
             if (rx > width) break;
             
             uint2 gid(rx,ry);
-            
+
             float3 color = suppression.read(gid).rgb;
-            
+
+            //destination.write(derivative.read(gid),gid);
+
             if (color.g > 0) {
-                
+
                 uint index = atomic_fetch_add_explicit(count, 1, memory_order_relaxed);
                 if (index > pointsMax) {
                     return;
                 }
-                
+
                 IMPCorner corner;
                 corner.point = float2(gid)/float2(width,height);
                 corner.slope = float4(0);
@@ -99,7 +101,7 @@ kernel void kernel_pointsScanner(
                 if (length(corner.slope)){
                     corner.slope = normalize(corner.slope);
                 }
-                
+
                 corners[index] = corner;
             }
         }

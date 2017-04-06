@@ -284,17 +284,19 @@ namespace IMProcessing
                               texture2d<float, access::sample> texture,
                               texture2d<float, access::write>  destination,
                               const uint2 gid,
-                              float y,
-                              float radius
+                              int y,
+                              int radius
                               ) {
             
             //float x = radius/float(texture.get_width());
 
             //float2 texCoord = float2(gid)/float2(texture.get_width(),texture.get_height());
             
-            left   = IMProcessing::sampledColor(texture, destination, gid + uint2(-radius,y)).rgb; //texture.sample(cornerSampler, texCoord + float2(-x,y)).rgb;
-            center = IMProcessing::sampledColor(texture, destination, gid + uint2(      0,y)).rgb; //texture.sample(cornerSampler, texCoord + float2( 0,y)).rgb;
-            right  = IMProcessing::sampledColor(texture, destination, gid + uint2( radius,y)).rgb;//texture.sample(cornerSampler, texCoord + float2( x,y)).rgb;
+            int2 g = int2(gid);
+            
+            left   = IMProcessing::sampledColor(texture, destination, uint2(g + int2(-radius,y))).rgb; //texture.sample(cornerSampler, texCoord + float2(-x,y)).rgb;
+            center = IMProcessing::sampledColor(texture, destination, uint2(g + int2(      0,y))).rgb; //texture.sample(cornerSampler, texCoord + float2( 0,y)).rgb;
+            right  = IMProcessing::sampledColor(texture, destination, uint2(g + int2( radius,y))).rgb; //texture.sample(cornerSampler, texCoord + float2( x,y)).rgb;
 
             leftIntensity   = left.r;
             rightIntensity  = right.r;
@@ -331,7 +333,7 @@ namespace IMProcessing
         
         METAL_FUNC Kernel3x3Colors(texture2d<float, access::sample> texture,
                                    texture2d<float, access::write>  destination,
-                                   const uint2 gid, float radius){
+                                   const uint2 gid, int radius){
             //float y = radius/float(texture.get_height());
             top    = LineColors(texture,destination,gid,-radius,radius);
             mid    = LineColors(texture,destination,gid, 0,     radius);

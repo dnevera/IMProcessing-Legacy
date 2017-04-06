@@ -177,7 +177,7 @@ open class IMPContext {
         
         runOperation(sync) {
             #if DEBUG
-                this.commandQueue?.insertDebugCaptureBoundary()
+                //this.commandQueue?.insertDebugCaptureBoundary()
             #endif
 
             if let commandBuffer = this.commandBuffer {
@@ -197,7 +197,7 @@ open class IMPContext {
             }
             
             #if DEBUG
-                this.commandQueue?.insertDebugCaptureBoundary()
+               // this.commandQueue?.insertDebugCaptureBoundary()
             #endif
 
         }

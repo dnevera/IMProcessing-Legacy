@@ -116,20 +116,19 @@ public class TestFilter: IMPFilter {
 //        add(filter: median)
 //
 //        add(function: kernelEV)
-        add(filter: blurFilter)
+//        add(filter: blurFilter)
 //        add(filter: boxBlurFilter)
 //        add(filter: ciContrast)
 
 //        add(filter: posterize)
         
-        add(filter: erosion)
-        add(filter: dilation)
+//        add(filter: erosion)
+//        add(filter: dilation)
 
 //        add(filter: cornerLinesDetector)
         
-//        add(filter: edgels)
-//        add(filter:gDerivativeEdges)
-//        add(filter:sobelEdges)
+//        add(filter: gDerivativeEdges)
+        add(filter: sobelEdges)
 //        add(filter: cannyEdgeDetector)
         
 //        add(filter: lineDetector)
@@ -142,39 +141,39 @@ public class TestFilter: IMPFilter {
 //        })
 //        add(filter: cornersDetector)
         
-        let resampler = IMPResampler(context:context)
-        resampler.maxSize = 800
-        
-        lineDetector.threshold = 100
-        
-        addObserver(destinationUpdated: { (source) in
-        
-            resampler.source = source
-            let dest = resampler.destination
-            
-            self.harrisCornerDetector.context.runOperation(.async) {
-                t1 = Date()
-                self.harrisCornerDetector.source = dest
-            }
-            
-//            self.houghLineDetector.context.runOperation(.async) {
-//                t2 = Date()
-//                self.houghLineDetector.source = dest
+//        let resampler = IMPResampler(context:context)
+//        resampler.maxSize = 800
+//        
+//        lineDetector.threshold = 100
+//        
+//        addObserver(destinationUpdated: { (source) in
+//        
+//            resampler.source = source
+//            let dest = resampler.destination
+//            
+//            self.harrisCornerDetector.context.runOperation(.async) {
+//                t1 = Date()
+//                self.harrisCornerDetector.source = dest
 //            }
-            
-            self.lineDetector.context.runOperation(.async) {
-                t2 = Date()
-                self.lineDetector.source = dest
-            }
-      
-            
-//            self.cornerLinesDetector.context.runOperation(.async) {
+//            
+////            self.houghLineDetector.context.runOperation(.async) {
+////                t2 = Date()
+////                self.houghLineDetector.source = dest
+////            }
+//            
+//            self.lineDetector.context.runOperation(.async) {
 //                t2 = Date()
-//                self.cornerLinesDetector.source = dest
+//                self.lineDetector.source = dest
 //            }
-
-        })
-
+//      
+//            
+////            self.cornerLinesDetector.context.runOperation(.async) {
+////                t2 = Date()
+////                self.cornerLinesDetector.source = dest
+////            }
+//
+//        })
+//
         
         harrisCornerDetector.addObserver { (corners:[IMPCorner], size:NSSize) in
             self.context.runOperation(.async) {
@@ -238,7 +237,8 @@ public class TestFilter: IMPFilter {
     
     
     lazy var gDerivativeEdges:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
-    lazy var sobelEdges:IMPSobelEdgesGradient = IMPSobelEdgesGradient(context: self.context)
+    lazy var sobelGradientEdges:IMPSobelEdgesGradient = IMPSobelEdgesGradient(context: self.context)
+    lazy var sobelEdges:IMPSobelEdges = IMPSobelEdges(context: self.context)
     
     
     lazy var posterize:IMPPosterize = IMPPosterize(context: self.context)

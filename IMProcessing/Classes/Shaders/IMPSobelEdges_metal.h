@@ -36,6 +36,7 @@ kernel void kernel_directionalSobelEdge(
                                         uint2 gid [[thread_position_in_grid]]
                                         )
 {
+    
     IMProcessing::Kernel3x3Colors corner(source,destination,gid,1);
     
     float2 g(corner.convolveLuma(Gx),corner.convolveLuma(Gy));
