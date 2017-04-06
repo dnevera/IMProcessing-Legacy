@@ -1,7 +1,7 @@
 use_frameworks!
 inhibit_all_warnings!
 
-target 'IMPCChekerTest' do
+target 'IMPCCheckerDetectorTest' do
     pod 'SnapKit'
     pod 'ObjectMapper'
     pod 'IMProcessing', :path => '../../../', :configurations => ['Debug']

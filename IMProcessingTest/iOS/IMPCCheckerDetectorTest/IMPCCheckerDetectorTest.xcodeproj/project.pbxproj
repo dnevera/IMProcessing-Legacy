@@ -1,0 +1,409 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		3179E78A1E96A12D002F7561 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3179E7891E96A12D002F7561 /* AppDelegate.swift */; };
+		3179E78C1E96A12D002F7561 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3179E78B1E96A12D002F7561 /* ViewController.swift */; };
+		3179E78F1E96A12D002F7561 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3179E78D1E96A12D002F7561 /* Main.storyboard */; };
+		3179E7911E96A12D002F7561 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3179E7901E96A12D002F7561 /* Assets.xcassets */; };
+		3179E7941E96A12D002F7561 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3179E7921E96A12D002F7561 /* LaunchScreen.storyboard */; };
+		3179E79D1E96A18B002F7561 /* IMPCamera_main.metal in Sources */ = {isa = PBXBuildFile; fileRef = 3179E79C1E96A18B002F7561 /* IMPCamera_main.metal */; };
+		3179E79F1E96A1DD002F7561 /* IMPCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3179E79E1E96A1DD002F7561 /* IMPCanvas.swift */; };
+		D0E054D3CAA05F48BAF78361 /* Pods_IMPCCheckerDetectorTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 520B0CAF8C994FF16CA15B0F /* Pods_IMPCCheckerDetectorTest.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		147BF956D04B68C0B30849DA /* Pods-IMPCCheckerDetectorTest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCCheckerDetectorTest.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCCheckerDetectorTest/Pods-IMPCCheckerDetectorTest.release.xcconfig"; sourceTree = "<group>"; };
+		3179E7861E96A12D002F7561 /* IMPCCheckerDetectorTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPCCheckerDetectorTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3179E7891E96A12D002F7561 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		3179E78B1E96A12D002F7561 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		3179E78E1E96A12D002F7561 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		3179E7901E96A12D002F7561 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		3179E7931E96A12D002F7561 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		3179E7951E96A12D002F7561 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		3179E79C1E96A18B002F7561 /* IMPCamera_main.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = IMPCamera_main.metal; sourceTree = "<group>"; };
+		3179E79E1E96A1DD002F7561 /* IMPCanvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCanvas.swift; sourceTree = "<group>"; };
+		520B0CAF8C994FF16CA15B0F /* Pods_IMPCCheckerDetectorTest.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPCCheckerDetectorTest.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		5E2081E620A3AD2F78869575 /* Pods-IMPCCheckerDetectorTest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCCheckerDetectorTest.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCCheckerDetectorTest/Pods-IMPCCheckerDetectorTest.debug.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		3179E7831E96A12D002F7561 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D0E054D3CAA05F48BAF78361 /* Pods_IMPCCheckerDetectorTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		3179E77D1E96A12D002F7561 = {
+			isa = PBXGroup;
+			children = (
+				3179E7881E96A12D002F7561 /* IMPCCheckerDetectorTest */,
+				3179E7871E96A12D002F7561 /* Products */,
+				F5BF7DDDCCB37D823AB6714F /* Pods */,
+				B3A7D7602140931BF28B33BE /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		3179E7871E96A12D002F7561 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				3179E7861E96A12D002F7561 /* IMPCCheckerDetectorTest.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		3179E7881E96A12D002F7561 /* IMPCCheckerDetectorTest */ = {
+			isa = PBXGroup;
+			children = (
+				3179E79B1E96A18B002F7561 /* Shaders */,
+				3179E7891E96A12D002F7561 /* AppDelegate.swift */,
+				3179E78B1E96A12D002F7561 /* ViewController.swift */,
+				3179E79E1E96A1DD002F7561 /* IMPCanvas.swift */,
+				3179E78D1E96A12D002F7561 /* Main.storyboard */,
+				3179E7901E96A12D002F7561 /* Assets.xcassets */,
+				3179E7921E96A12D002F7561 /* LaunchScreen.storyboard */,
+				3179E7951E96A12D002F7561 /* Info.plist */,
+			);
+			path = IMPCCheckerDetectorTest;
+			sourceTree = "<group>";
+		};
+		3179E79B1E96A18B002F7561 /* Shaders */ = {
+			isa = PBXGroup;
+			children = (
+				3179E79C1E96A18B002F7561 /* IMPCamera_main.metal */,
+			);
+			path = Shaders;
+			sourceTree = "<group>";
+		};
+		B3A7D7602140931BF28B33BE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				520B0CAF8C994FF16CA15B0F /* Pods_IMPCCheckerDetectorTest.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		F5BF7DDDCCB37D823AB6714F /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				5E2081E620A3AD2F78869575 /* Pods-IMPCCheckerDetectorTest.debug.xcconfig */,
+				147BF956D04B68C0B30849DA /* Pods-IMPCCheckerDetectorTest.release.xcconfig */,
+			);
+			name = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		3179E7851E96A12D002F7561 /* IMPCCheckerDetectorTest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3179E7981E96A12D002F7561 /* Build configuration list for PBXNativeTarget "IMPCCheckerDetectorTest" */;
+			buildPhases = (
+				349AEFF3656FE3D57B60D6A3 /* [CP] Check Pods Manifest.lock */,
+				3179E7821E96A12D002F7561 /* Sources */,
+				3179E7831E96A12D002F7561 /* Frameworks */,
+				3179E7841E96A12D002F7561 /* Resources */,
+				C466091BF1A6E501FBF1BD35 /* [CP] Embed Pods Frameworks */,
+				ACBA3346AE15DD4D2AC82B2C /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = IMPCCheckerDetectorTest;
+			productName = IMPCCheckerDetectorTest;
+			productReference = 3179E7861E96A12D002F7561 /* IMPCCheckerDetectorTest.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		3179E77E1E96A12D002F7561 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastSwiftUpdateCheck = 0830;
+				LastUpgradeCheck = 0830;
+				ORGANIZATIONNAME = Dehancer;
+				TargetAttributes = {
+					3179E7851E96A12D002F7561 = {
+						CreatedOnToolsVersion = 8.3;
+						DevelopmentTeam = TCA85S5T49;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 3179E7811E96A12D002F7561 /* Build configuration list for PBXProject "IMPCCheckerDetectorTest" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 3179E77D1E96A12D002F7561;
+			productRefGroup = 3179E7871E96A12D002F7561 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				3179E7851E96A12D002F7561 /* IMPCCheckerDetectorTest */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		3179E7841E96A12D002F7561 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3179E7941E96A12D002F7561 /* LaunchScreen.storyboard in Resources */,
+				3179E7911E96A12D002F7561 /* Assets.xcassets in Resources */,
+				3179E78F1E96A12D002F7561 /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		349AEFF3656FE3D57B60D6A3 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_ROOT}/../Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n";
+			showEnvVarsInLog = 0;
+		};
+		ACBA3346AE15DD4D2AC82B2C /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-IMPCCheckerDetectorTest/Pods-IMPCCheckerDetectorTest-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C466091BF1A6E501FBF1BD35 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-IMPCCheckerDetectorTest/Pods-IMPCCheckerDetectorTest-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		3179E7821E96A12D002F7561 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3179E79F1E96A1DD002F7561 /* IMPCanvas.swift in Sources */,
+				3179E78C1E96A12D002F7561 /* ViewController.swift in Sources */,
+				3179E79D1E96A18B002F7561 /* IMPCamera_main.metal in Sources */,
+				3179E78A1E96A12D002F7561 /* AppDelegate.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		3179E78D1E96A12D002F7561 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3179E78E1E96A12D002F7561 /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		3179E7921E96A12D002F7561 /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3179E7931E96A12D002F7561 /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		3179E7961E96A12D002F7561 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_BITCODE = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		3179E7971E96A12D002F7561 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_BITCODE = NO;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		3179E7991E96A12D002F7561 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 5E2081E620A3AD2F78869575 /* Pods-IMPCCheckerDetectorTest.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = TCA85S5T49;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = IMPCCheckerDetectorTest/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCCheckerDetectorTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Debug;
+		};
+		3179E79A1E96A12D002F7561 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 147BF956D04B68C0B30849DA /* Pods-IMPCCheckerDetectorTest.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = TCA85S5T49;
+				ENABLE_BITCODE = NO;
+				INFOPLIST_FILE = IMPCCheckerDetectorTest/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
+				PRODUCT_BUNDLE_IDENTIFIER = Dehancer.IMPCCheckerDetectorTest;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 3.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3179E7811E96A12D002F7561 /* Build configuration list for PBXProject "IMPCCheckerDetectorTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3179E7961E96A12D002F7561 /* Debug */,
+				3179E7971E96A12D002F7561 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		3179E7981E96A12D002F7561 /* Build configuration list for PBXNativeTarget "IMPCCheckerDetectorTest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3179E7991E96A12D002F7561 /* Debug */,
+				3179E79A1E96A12D002F7561 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 3179E77E1E96A12D002F7561 /* Project object */;
+}

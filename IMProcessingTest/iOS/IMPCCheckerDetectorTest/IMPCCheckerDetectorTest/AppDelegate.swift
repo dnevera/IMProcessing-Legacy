@@ -1,6 +1,6 @@
 //
 //  AppDelegate.swift
-//  IMPCChekerTest
+//  IMPCCheckerDetectorTest
 //
 //  Created by Denis Svinarchuk on 06/04/2017.
 //  Copyright © 2017 Dehancer. All rights reserved.
