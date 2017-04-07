@@ -7,7 +7,8 @@
 //
 
 import UIKit
-import IMProcessing
+import simd
+//import IMProcessing
 
 class IMPCanvasView: UIView {
     

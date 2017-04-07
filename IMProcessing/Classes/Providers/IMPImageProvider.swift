@@ -275,7 +275,7 @@ public extension IMPImageProvider {
         
         if let ref = textureRef,
             let texture = CVMetalTextureGetTexture(ref) {
-            self.texture =  texture.makeTextureView(pixelFormat: IMProcessing.colors.pixelFormat)
+            self.texture = texture // texture.makeTextureView(pixelFormat: IMProcessing.colors.pixelFormat)
         }
         else {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
@@ -529,15 +529,15 @@ public extension IMPImageProvider {
             if storageMode == .shared {
                 #if os(iOS)
                     descriptor.storageMode = .shared
-                    descriptor.usage = [.shaderRead, .shaderWrite]
+                    descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
                 #elseif os(OSX)
                     descriptor.storageMode = .managed
-                    descriptor.usage = [.shaderRead, .shaderWrite]
+                    descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
                 #endif
             }
             else {
                 descriptor.storageMode = .private
-                descriptor.usage = [.shaderRead]
+                descriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
             }
 
             return self.context.device.makeTexture(descriptor: descriptor)

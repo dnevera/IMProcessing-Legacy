@@ -12,7 +12,7 @@ infix operator => : AdditionPrecedence
 infix operator --> : AdditionPrecedence
 
 
-/// Redirect source image frame to another filter
+/// Async redirect source image frame to another filter
 ///
 /// - Parameters:
 ///   - sourceFilter: source image frame updatable filter
@@ -21,16 +21,13 @@ infix operator --> : AdditionPrecedence
 ///
 @discardableResult public func =><T:IMPFilter>(sourceFilter:T, destinationFilter:T) -> T {
     sourceFilter.addObserver(newSource: { (source) in
-        destinationFilter.context.runOperation(.async, { 
-            destinationFilter.source = source
-            destinationFilter.process()
-        })
+        destinationFilter.source = source
     })
     return destinationFilter
 }
 
 
-/// Redirect result image frames to enclosure process block
+/// Async redirect result image frames to enclosure process block
 ///
 /// - Parameters:
 ///   - filter: processed filter
@@ -38,12 +35,22 @@ infix operator --> : AdditionPrecedence
 /// - Returns: filter
 ///
 @discardableResult public func --><T:IMPFilter>(filter:T, action:  @escaping ((_ image:IMPImageProvider) -> Void)) -> T {
-    filter.addObserver(destinationUpdated: action)
+    filter.addObserver(newSource:{ (source) in
+        filter.context.runOperation(.async, {
+            filter.process()
+        })
+    })
+
+    filter.addObserver(destinationUpdated: {(destination) in
+        filter.context.runOperation(.async) {
+            action(destination)
+        }
+    })
+    
     return filter
 }
 
-
-/// Redirect result image frames to next processing filter
+/// Async redirect result image frames to next processing filter
 ///
 /// - Parameters:
 ///   - sourceFilter: source filter which processed image frames
@@ -51,9 +58,12 @@ infix operator --> : AdditionPrecedence
 /// - Returns: next filter
 //
 @discardableResult public func --><T:IMPFilter>(sourceFilter:T, nextFilter:T) -> T {
-//    (sourceFilter --> { (destination) in
-//        nextFilter.source = destination
-//    }).process()
+    
+    sourceFilter.addObserver(newSource:{ (source) in
+        sourceFilter.context.runOperation(.async, {
+            sourceFilter.process()
+        })
+    })
     
     sourceFilter.addObserver(destinationUpdated: { (destination) in
         nextFilter.context.runOperation(.async, {

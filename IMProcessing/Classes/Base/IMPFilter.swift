@@ -19,7 +19,7 @@ import CoreImage
 public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider {
     typealias CompleteHandler = ((_ image:IMPImageProvider)->Void)
 
-    var  name:             String?           {get    }
+    var  name:             String            {get    }
     var  source:           IMPImageProvider? {get set}
     var  destination:      IMPImageProvider  {get    }
     var  observersEnabled: Bool              {get set}
@@ -34,6 +34,8 @@ public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider
 }
 
 open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
+    
+    public static let filterType = IMPFilter.self
     
     // MARK: - Type aliases
     
@@ -54,7 +56,11 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         return  context.supportsGPUv2
     }
     
-    public var name: String? = nil
+    public var name: String {
+        return _name!
+    }
+    
+    public var _name: String?
     
     public var context: IMPContext
     
@@ -75,7 +81,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public required init(context:IMPContext, name: String? = nil) {
         self.context = context
-        self.name = name
+        //self.name = name
         defer {
             configure()
         }
@@ -104,11 +110,11 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     }
     
     public func extendName(suffix:String) {
-        name = {
-            if name == nil {
+        _name = {
+            if _name == nil {
                 return self.context.uid + ":" + suffix
             }
-            return self.name! + ":" + suffix
+            return self._name! + ":" + suffix
         }()
     }
     
@@ -324,10 +330,10 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     
     public static func == (lhs: IMPFilter, rhs: IMPFilter) -> Bool {
-        if let ln = lhs.name, let rn = rhs.name {
-            return ln == rn
-        }
-        return lhs === rhs
+        //if let ln = lhs.name, let rn = rhs.name {
+        //    return ln == rn
+        //}
+        return lhs.name == rhs.name
     }
     
     //
@@ -693,12 +699,12 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                 }
             }
             else if let filter = f.filter {
-                if let fname = filter.name {
-                    if fname == name {
+                //if let fname = filter.name {
+                    if filter.name == name {
                         coreImageFilterList.remove(at: index)
                         break
                     }
-                }
+                //}
             }
             index += 1
         }
@@ -742,7 +748,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     // MARK: - internal
     //
     internal func executeNewSourceObservers(source:IMPImageProvider?){
-        if let s = source{
+        if let s = source {
             for o in newSourceObservers {
                 o(s)
             }

@@ -6,7 +6,12 @@
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
-import Foundation
+
+#if os(iOS)
+    import UIKit
+#else
+    import Cocoa
+#endif
 import Metal
 
 public class IMPHoughSpaceDetector: IMPDetector {

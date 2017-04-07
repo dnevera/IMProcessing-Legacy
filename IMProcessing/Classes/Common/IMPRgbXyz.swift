@@ -7,7 +7,7 @@
 //
 
 import Foundation
-
+import simd
 
 public extension float3{
     

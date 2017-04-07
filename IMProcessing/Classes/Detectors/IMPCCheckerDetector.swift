@@ -29,11 +29,14 @@ public class IMPCCheckerDetector: IMPDetector {
         }
     }
     
-    var oppositThreshold:Float = 0.5
-    var nonOrientedThreshold:Float = 0.4
+    public var oppositThreshold:Float = 0.5
+    public var nonOrientedThreshold:Float = 0.4
     
-    
+    private var complete: IMPFilter.CompleteHandler?
+        
     public override func configure(complete: IMPFilterProtocol.CompleteHandler?) {
+        
+        self.complete = complete
         
         extendName(suffix: "PatchesDetector")
         
@@ -45,6 +48,7 @@ public class IMPCCheckerDetector: IMPDetector {
         add(filter: opening) { (source) in
             self.sourceImage = source
             self.harrisCornerDetector.source = source
+            self.harrisCornerDetector.process()
         }
         
         patchDetectorKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
@@ -107,15 +111,22 @@ public class IMPCCheckerDetector: IMPDetector {
             
             self.corners = sorted
             
-            self.patchDetectorKernel.preferedDimension =  MTLSize(width: self.corners.count, height: 1, depth: 1)
-            
-            memcpy(self.cornersBuffer.contents(), self.corners, self.corners.count * MemoryLayout<IMPCorner>.size)
-            
-            self.patchDetector.source = self.harrisCornerDetector.source
-            self.patchDetector.process()
-            
-            self.patchColors.source = self.sourceImage
-            self.patchColors.process()
+            if self.corners.count > 8 {
+                self.patchDetectorKernel.preferedDimension =  MTLSize(width: self.corners.count, height: 1, depth: 1)
+                
+                memcpy(self.cornersBuffer.contents(), self.corners, self.corners.count * MemoryLayout<IMPCorner>.size)
+                
+                self.patchDetector.source = self.harrisCornerDetector.source
+                self.patchDetector.process()
+                
+                self.patchColors.source = self.sourceImage
+                self.patchColors.process()
+            }
+            else {
+                self.vLines = []
+                self.hLines = []
+                self.patchGrid.target.reset()
+            }
         }
     }
     
@@ -187,6 +198,9 @@ public class IMPCCheckerDetector: IMPDetector {
         
         f.add(function: self.patchColorsKernel){ (source) in
             self.patchGrid.target.update(colors:self.colorsBuffer)
+            if let s = self.sourceImage {
+                self.complete?(s)
+            }
         }
         
         return f

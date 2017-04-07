@@ -15,21 +15,26 @@ class ViewController: NSViewController {
 
     var canvas = IMPCanvasView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
 
-    lazy var test:IMPFilter = IMPFilter(context:self.context)
+    lazy var test:IMPFilter = {
+        let  f = IMPFilter(context:self.context)
+        f.extendName(suffix: "ViewController test filter")
+        return f
+    } ()
     
     let context = IMPContext()
     lazy var filter:IMPFilter = {
         let f = IMPFilter(context: self.context)
-        
-        f => self.test --> self.detector --> { (destination) in
+        f.extendName(suffix: "ViewController filter")
+        (f => self.test --> self.detector --> { (destination) in
             guard let size = destination.size else { return }
             DispatchQueue.main.async {
                 self.canvas.imageSize = size
-                self.canvas.hlines = self.detector.hLines
-                self.canvas.vlines = self.detector.vLines
+                //self.canvas.corners = self.detector.corners
+                //self.canvas.hlines = self.detector.hLines
+                //self.canvas.vlines = self.detector.vLines
                 self.canvas.grid = self.detector.patchGrid
             }
-        }
+        }).process()
         
         return f
     }()

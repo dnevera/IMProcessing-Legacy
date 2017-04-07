@@ -10,14 +10,16 @@ import Foundation
 
 open class IMPDetector: IMPResampler {
     
-    public var passImmediatelyProcessing:Bool = true
+    public var passImmediatelyProcessing:Bool = false
     
-    open override var source: IMPImageProvider? {
-        didSet{
-            if passImmediatelyProcessing {
+    open override func configure(complete: IMPFilterProtocol.CompleteHandler? = nil) {
+        extendName(suffix: "Detector")
+        super.configure(complete: complete)
+        addObserver(newSource: { (source)in
+            if self.passImmediatelyProcessing {
                 self.process()
             }
-        }
+        })
     }
     
     open lazy var regionSize:Int = {

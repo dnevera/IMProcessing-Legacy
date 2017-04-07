@@ -28,7 +28,7 @@ open class IMPResampler: IMPFilter{
     }
     
     private func updateResampler(){
-        resampler.flush()
+        //resampler.flush()
         if let size = source?.size,
             let maxSize = self.maxSize {
             let scale = fmax(fmin(fmin(maxSize/size.width, maxSize/size.height),1),0.01)
@@ -36,20 +36,25 @@ open class IMPResampler: IMPFilter{
         }
     }
     
-    public override var source: IMPImageProvider? {
-        didSet{
-            updateResampler()
-        }
-    }
+//    public override var source: IMPImageProvider? {
+//        didSet{
+//            updateResampler()
+//            super.source = source
+//        }
+//    }
     
-    var complete:CompleteHandler? = nil
+    //var complete:CompleteHandler? = nil
     
     open override func configure(complete:CompleteHandler?=nil) {
-        self.complete = complete
+        //self.complete = complete
         extendName(suffix: "Resampler")
         super.configure() { (source) in
             complete?(source)
-        }        
+        }
+        
+        addObserver(newSource: { (source) in
+            self.updateResampler()
+        })
     }
     
     private lazy var resampleShader:IMPShader = IMPShader(context: self.context)

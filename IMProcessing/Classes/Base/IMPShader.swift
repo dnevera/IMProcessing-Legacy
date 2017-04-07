@@ -41,9 +41,11 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         }
     }
     
-    public var pixelFormat = IMProcessing.colors.pixelFormat{
+    public var pixelFormat = IMProcessing.colors.pixelFormat {
         didSet{
-            pipeline = makePipeline()
+            if oldValue != pixelFormat {
+                pipeline = makePipeline()
+            }
         }
     }
     
@@ -66,9 +68,16 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
     
     public func commandEncoder(from buffer: MTLCommandBuffer, width destination: MTLTexture?) -> MTLRenderCommandEncoder {
         
-        renderPassDescriptor.colorAttachments[0].texture =
-            (pixelFormat != destination?.pixelFormat ?
-            destination?.makeTextureView(pixelFormat: pixelFormat) : destination)        
+        //let t = (pixelFormat != destination?.pixelFormat ?
+        //    destination?.makeTextureView(pixelFormat: pixelFormat) : destination)
+        
+        if let pf = destination?.pixelFormat {
+            if pixelFormat != pf {
+                pixelFormat = pf
+            }
+        }
+        
+        renderPassDescriptor.colorAttachments[0].texture = destination
         
         let encoder = buffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         encoder.setCullMode(.front)

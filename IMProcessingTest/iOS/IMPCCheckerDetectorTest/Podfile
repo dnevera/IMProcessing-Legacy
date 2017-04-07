@@ -4,7 +4,7 @@ inhibit_all_warnings!
 target 'IMPCCheckerDetectorTest' do
     pod 'SnapKit'
     pod 'ObjectMapper'
-    pod 'IMProcessing', :path => '../../../', :configurations => ['Debug']
+    #pod 'IMProcessing', :path => '../../../', :configurations => ['Debug']
 end
 
 

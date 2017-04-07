@@ -44,6 +44,12 @@ public struct IMPPatchesGrid {
             
         }
         
+        
+        public mutating func reset() {
+            _centers = [float2](repeating:float2(-1), count:count)
+            _colors = [float3](repeating:float3(0), count:count)
+        }
+        
         public subscript(_ x:Int,_ y:Int) -> (center:float2,color:float3) {
             get {
                 let center = _centers[x + y * width]

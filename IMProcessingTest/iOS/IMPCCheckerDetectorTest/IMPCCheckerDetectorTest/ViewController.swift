@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import IMProcessing
+//import IMProcessing
 
 class BaseNavigationController: UINavigationController {
     
@@ -91,40 +91,21 @@ class ViewController: UIViewController {
         detector.maxSize = 800
         harris.maxSize = 400
         
-        //liveViewFilter => detector
-        
-        liveViewFilter.addObserver(newSource: { (source) in
-            self.detector.context.runOperation(.async, { 
-                self.detector.source = source
-            })
-        })
-
-        detector.addObserver(destinationUpdated: { (destination) in
-            self.crossHairs.context.runOperation(.async, {
+        liveViewFilter => detector --> { (destination) in
+            DispatchQueue.main.async {
+                guard let size = destination.size else { return }
+                self.canvas.imageSize = size
                 self.crossHairs.points = self.detector.corners
-                //print("\(self.detector.corners)")
-                DispatchQueue.main.async {
-                    guard let size = destination.size else { return }
-                    self.canvas.imageSize = size
-                    self.canvas.vlines = self.detector.vLines
-                    self.canvas.hlines = self.detector.hLines
-                    //self.canvas.grid = self.detector.patchGrid
-                }
-            })
-        })
-        
-//        detector --> { (destination) in
-//            self.crossHairs.context.runOperation(.async, {
-//                self.crossHairs.points = self.detector.corners
-//            })
+                
+                //self.canvas.vlines = self.detector.vLines
+                //self.canvas.hlines = self.detector.hLines
+                //self.canvas.grid = self.detector.patchGrid
+            }
+        }
+
+//        (liveViewFilter => harris as! IMPHarrisCornerDetector) --> { (corners:[IMPCorner], size:NSSize) in
+//            self.crossHairs.points = corners
 //        }
-        
-        //harris.addObserver(corners: { (corners, size) in
-        //    self.crossHairs.context.runOperation(.async, {
-        //        self.crossHairs.points = corners
-        //    })
-        //})
-        
         
         canvas.frame = liveView.bounds
         canvas.backgroundColor = NSColor.clear

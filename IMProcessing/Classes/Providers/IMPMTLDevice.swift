@@ -18,7 +18,7 @@ public extension MTLDevice {
         weightsDescription.width       = buffer.count
         weightsDescription.height      = 1
         weightsDescription.depth       = 1
-        weightsDescription.usage = [.shaderRead]
+        weightsDescription.usage = [.shaderRead,.pixelFormatView,.renderTarget]
 
         let texture = self.makeTexture(descriptor: weightsDescription)
         texture.update(buffer)
@@ -33,7 +33,7 @@ public extension MTLDevice {
         weightsDescription.width       = buffer.count
         weightsDescription.height      = 1
         weightsDescription.depth       = 1
-        weightsDescription.usage = [.shaderRead]
+        weightsDescription.usage = [.shaderRead,.pixelFormatView,.renderTarget]
         let texture = self.makeTexture(descriptor: weightsDescription)
         texture.update(buffer)
         return texture
@@ -42,7 +42,7 @@ public extension MTLDevice {
     public func texture2D(buffer:[[UInt8]]) -> MTLTexture {
         let width = buffer[0].count
         let weightsDescription = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: width, height: buffer.count, mipmapped: false)
-        weightsDescription.usage = [.shaderRead,.shaderWrite]
+        weightsDescription.usage = [.shaderRead,.shaderWrite,.pixelFormatView,.renderTarget]
         let texture = self.makeTexture(descriptor: weightsDescription)
         texture.update(buffer)
         return texture
@@ -67,7 +67,7 @@ public extension MTLDevice {
         
         textureDescriptor.arrayLength = buffers.count
         textureDescriptor.mipmapLevelCount = 1
-        textureDescriptor.usage = [.shaderRead]
+        textureDescriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
 
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
@@ -95,7 +95,7 @@ public extension MTLDevice {
         
         textureDescriptor.arrayLength = buffers.count
         textureDescriptor.mipmapLevelCount = 1
-        textureDescriptor.usage = [.shaderRead]
+        textureDescriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
         texture.update(buffers)
@@ -113,15 +113,15 @@ public extension MTLDevice {
         if mode == .shared {
             #if os(iOS)
                 d.storageMode = .shared
-                d.usage = [.shaderRead, .shaderWrite]
+                d.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
             #elseif os(OSX)
                 d.storageMode = .managed
-                d.usage = [.shaderRead, .shaderWrite]
+                d.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
             #endif
         }
         else {
             d.storageMode = .private
-            d.usage = [.shaderRead,.shaderWrite]
+            d.usage = [.shaderRead,.shaderWrite,.pixelFormatView]
         }
         return makeTexture(descriptor:d)
     }
@@ -136,15 +136,15 @@ public extension MTLDevice {
         if mode == .shared {
             #if os(iOS)
                 d.storageMode = .shared
-                d.usage = [.shaderRead, .shaderWrite]
+                d.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
             #elseif os(OSX)
                 d.storageMode = .managed
-                d.usage = [.shaderRead, .shaderWrite]
+                d.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
             #endif
         }
         else {
             d.storageMode = .private
-            d.usage = [.shaderRead,.shaderWrite]
+            d.usage = [.shaderRead,.shaderWrite,.pixelFormatView,.renderTarget]
         }
         return makeTexture(descriptor:d)
     }
@@ -159,15 +159,15 @@ public extension MTLDevice {
         if mode == .shared {
             #if os(iOS)
                 d.storageMode = .shared
-                d.usage = [.shaderRead, .shaderWrite]
+                d.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
             #elseif os(OSX)
                 d.storageMode = .managed
-                d.usage = [.shaderRead, .shaderWrite]
+                d.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
             #endif
         }
         else {
             d.storageMode = .private
-            d.usage = [.shaderRead,.shaderWrite]
+            d.usage = [.shaderRead,.shaderWrite,.pixelFormatView,.renderTarget]
         }
 
         return makeTexture(descriptor:d)

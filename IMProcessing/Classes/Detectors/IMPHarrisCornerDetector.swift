@@ -24,6 +24,26 @@ import Accelerate
  Sources:  https://github.com/BradLarson/GPUImage2
  
  */
+
+
+@discardableResult public func --><T:IMPHarrisCornerDetector>(filter:T, action: @escaping ((_ corners: [IMPCorner], _ imageSize:NSSize) -> Void) ) -> T {
+    filter.addObserver(newSource:{ (source) in
+        filter.context.runOperation(.async, {
+            filter.process()
+        })
+    })
+    
+    
+    filter.addObserver(corners: { (corners, size) in
+        filter.context.runOperation(.async) {
+            action(corners,size)
+        }
+    })
+    
+    return filter
+}
+
+
 public class IMPHarrisCornerDetector: IMPDetector{
     
     public typealias PointsListObserver = ((_ corners: [IMPCorner], _ imageSize:NSSize) -> Void)

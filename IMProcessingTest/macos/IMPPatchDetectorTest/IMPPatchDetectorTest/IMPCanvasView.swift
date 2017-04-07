@@ -169,8 +169,10 @@ class IMPCanvasView: NSView {
         path.line(to: p1)
         
         path.stroke()
+        //path.close()
         
-        path.close()
+        NSLog(" line = \(p0,p1)")
+
         
         if spokeWidth > 0 {
             path = NSBezierPath()
@@ -184,7 +186,7 @@ class IMPCanvasView: NSView {
             path.line(to: p1)
             
             path.stroke()
-            path.close()
+            //path.close()
         }
     }
     
