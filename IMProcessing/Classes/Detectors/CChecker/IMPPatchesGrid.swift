@@ -136,7 +136,7 @@ public struct IMPPatchesGrid {
         let startHRho = h.first!.rho
         let denom = float2(1)/float2(size.width.float,size.height.float)
         
-
+        
         if h.count == 6 && v.count == 4 {
             // swap
             swap(&h, &v)
@@ -144,8 +144,8 @@ public struct IMPPatchesGrid {
             swap(&htheta, &vtheta)
         }
         
-        guard h.count == 4 else { return nil }
-        guard v.count == 6 else { return nil }
+        guard h.count >= 4 && h.count < 24 else { return nil }
+        guard v.count >= 6 && v.count < 24 else { return nil }
         
         for y in 0..<dimension.height {
             var hl = IMPPolarLine(rho: hrho * y.float + startHRho, theta: htheta)

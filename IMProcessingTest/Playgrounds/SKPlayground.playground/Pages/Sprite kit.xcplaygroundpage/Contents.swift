@@ -2,15 +2,13 @@
 
 import SpriteKit
 import Cocoa
-//import PlaygroundSupport
-import XCPlayground
+import PlaygroundSupport
 
 //Create the SpriteKit View
 let view:SKView = SKView(frame: CGRect(x:0, y:0, width:400, height:400))
 
 //Add it to the TimeLine
-XCPShowView(identifier: "Live View", view: view)
-//PlaygroundPage.currentPage.liveView = view
+PlaygroundPage.current.liveView = view
 
 let scene:SKScene = SKScene(size: CGSize(width:1024, height:768))
 scene.scaleMode = SKSceneScaleMode.aspectFit

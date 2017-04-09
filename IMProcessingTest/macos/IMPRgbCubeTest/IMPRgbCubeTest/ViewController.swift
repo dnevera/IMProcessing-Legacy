@@ -9,12 +9,13 @@
 import Cocoa
 import CoreGraphics
 import SnapKit
+import IMProcessing
+
 
 
 class ViewController: NSViewController {
-
-    lazy var canvas:IMPCanvasView = IMPCanvasView(frame:self.view.bounds)
-    lazy var gridView:IMPPatchesGridView = IMPPatchesGridView(frame: self.view.bounds)
+    
+    lazy var rgbCubeView:IMPRgbCubeView = IMPRgbCubeView(frame: self.view.bounds)
     
     
     lazy var test:IMPFilter = {
@@ -28,17 +29,17 @@ class ViewController: NSViewController {
         let f = IMPFilter(context: self.context)
         f.extendName(suffix: "ViewController filter")
         
-        f => self.test --> self.detector --> { (destination) in
-            guard let size = destination.size else { return }
-            DispatchQueue.main.async {
-                self.canvas.imageSize = size
-                //self.canvas.corners = self.detector.corners
-                //self.canvas.hlines = self.detector.hLines
-                //self.canvas.vlines = self.detector.vLines
-                //self.canvas.grid = self.detector.patchGrid
-                self.gridView.grid = self.detector.patchGrid
-            }
-        }
+//        f => self.test --> self.detector --> { (destination) in
+//            guard let size = destination.size else { return }
+//            DispatchQueue.main.async {
+//                self.canvas.imageSize = size
+//                //self.canvas.corners = self.detector.corners
+//                //self.canvas.hlines = self.detector.hLines
+//                //self.canvas.vlines = self.detector.vLines
+//                //self.canvas.grid = self.detector.patchGrid
+//                self.gridView.grid = self.detector.patchGrid
+//            }
+//        }
         
         return f
     }()
@@ -56,33 +57,19 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        
-        //gridView.wantsLayer = true
-        //gridView.frame = view.bounds
-        //gridView.layer?.backgroundColor = NSColor.clear.cgColor
-        //gridView.autoresizingMask = [.viewWidthSizable, .viewHeightSizable]
-        
-        canvas.wantsLayer = true
-        canvas.frame = view.bounds
-        canvas.layer?.backgroundColor = NSColor.clear.cgColor
-        canvas.autoresizingMask = [.viewWidthSizable, .viewHeightSizable]
-        
-        
         imageView.exactResolutionEnabled = false
         imageView.clearColor = MTLClearColor(red: 0.1, green: 0.2, blue: 0.3, alpha: 1)
         imageView.filter = filter
         
         view.addSubview(imageView)
-        //view.addSubview(gridView)
         
-        //imageView.addSubview(canvas)
-        imageView.addSubview(gridView)
+        imageView.addSubview(rgbCubeView)
 
-        gridView.snp.makeConstraints { (make) in
-            make.left.equalTo(gridView.superview!).offset(0)
-            make.right.equalTo(gridView.superview!).offset(0)
-            make.top.equalTo(gridView.superview!).offset(0)
-            make.bottom.equalTo(gridView.superview!).offset(0)
+        rgbCubeView.snp.makeConstraints { (make) in
+            make.left.equalTo(rgbCubeView.superview!).offset(0)
+            make.right.equalTo(rgbCubeView.superview!).offset(0)
+            make.top.equalTo(rgbCubeView.superview!).offset(0)
+            make.bottom.equalTo(rgbCubeView.superview!).offset(0)
         }
         
         imageView.snp.makeConstraints { (make) in
@@ -127,7 +114,7 @@ class ViewController: NSViewController {
 
     override var representedObject: Any? {
         didSet {
-        // Update the view, if already loaded.
+            // Update the view, if already loaded.
         }
     }
 
