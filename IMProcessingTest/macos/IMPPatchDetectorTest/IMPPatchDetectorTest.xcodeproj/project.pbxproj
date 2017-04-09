@@ -17,6 +17,7 @@
 		314A8A021E8E72150012E9F8 /* IMPFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314A8A011E8E72150012E9F8 /* IMPFileManager.swift */; };
 		314A8A061E8E74560012E9F8 /* IMPCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314A8A051E8E74560012E9F8 /* IMPCanvasView.swift */; };
 		316C4B5B1E9251DD00502F4F /* IMPOpening.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316C4B5A1E9251DD00502F4F /* IMPOpening.swift */; };
+		319347C01E990B3C00CBCDFB /* IMPPatchGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319347BF1E990B3C00CBCDFB /* IMPPatchGridView.swift */; };
 		31AFE2DC1E9252A600018253 /* IMPClosing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AFE2DB1E9252A600018253 /* IMPClosing.swift */; };
 		31F3CC731E8E70A20055994F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC721E8E70A20055994F /* AppDelegate.swift */; };
 		31F3CC751E8E70A20055994F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC741E8E70A20055994F /* ViewController.swift */; };
@@ -113,6 +114,7 @@
 		314A8A011E8E72150012E9F8 /* IMPFileManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFileManager.swift; sourceTree = "<group>"; };
 		314A8A051E8E74560012E9F8 /* IMPCanvasView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCanvasView.swift; sourceTree = "<group>"; };
 		316C4B5A1E9251DD00502F4F /* IMPOpening.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPOpening.swift; sourceTree = "<group>"; };
+		319347BF1E990B3C00CBCDFB /* IMPPatchGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPatchGridView.swift; sourceTree = "<group>"; };
 		31AFE2DB1E9252A600018253 /* IMPClosing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPClosing.swift; sourceTree = "<group>"; };
 		31F3CC6F1E8E70A20055994F /* IMPPatchDetectorTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPPatchDetectorTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31F3CC721E8E70A20055994F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -285,6 +287,7 @@
 				31F3CC741E8E70A20055994F /* ViewController.swift */,
 				314A8A011E8E72150012E9F8 /* IMPFileManager.swift */,
 				314A8A051E8E74560012E9F8 /* IMPCanvasView.swift */,
+				319347BF1E990B3C00CBCDFB /* IMPPatchGridView.swift */,
 				31F3CC761E8E70A20055994F /* Assets.xcassets */,
 				31F3CC781E8E70A20055994F /* Main.storyboard */,
 				31F3CC7B1E8E70A20055994F /* Info.plist */,
@@ -774,6 +777,7 @@
 				31F3CD281E8E70C90055994F /* IMPCameraExposure.swift in Sources */,
 				31F3CD201E8E70C90055994F /* IMPDetector.swift in Sources */,
 				31F3CD141E8E70C90055994F /* IMPCIFilter.swift in Sources */,
+				319347C01E990B3C00CBCDFB /* IMPPatchGridView.swift in Sources */,
 				31F3CD231E8E70C90055994F /* IMPHoughLinesDetector.swift in Sources */,
 				31F3CD1C1E8E70C90055994F /* IMProcessing.swift in Sources */,
 				31F3CD171E8E70C90055994F /* MTLShader.swift in Sources */,

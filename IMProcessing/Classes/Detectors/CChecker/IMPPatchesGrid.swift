@@ -62,6 +62,18 @@ public struct IMPPatchesGrid {
             }
         }
         
+        public subscript(_ i:Int) -> (center:float2,color:float3) {
+            get {
+                let center = _centers[i]
+                let color = _colors[i]
+                return (center,color)
+            }
+            set{
+                _centers[i] = newValue.center
+                _colors[i] = newValue.color
+            }
+        }
+        
         private var _centers:[float2]
         private var _colors:[float3]
         
@@ -117,25 +129,40 @@ public struct IMPPatchesGrid {
         let horizonSorted  = horizons.sorted  { return abs($0.rho)<abs($1.rho) }
         let vdrticalSorted = verticals.sorted { return abs($0.rho)<abs($1.rho) }
         
-        guard let (h,hrho,htheta) = filterClosing(horizonSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
-        guard let (v,vrho,vtheta) = filterClosing(vdrticalSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
+        guard var (h,hrho,htheta) = filterClosing(horizonSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
+        guard var (v,vrho,vtheta) = filterClosing(vdrticalSorted, minDistance: minDistance, minTheta: minTheta) else { return nil }
         
         let startVRho = v.first!.rho
         let startHRho = h.first!.rho
         let denom = float2(1)/float2(size.width.float,size.height.float)
         
+
+        if h.count == 6 && v.count == 4 {
+            // swap
+            swap(&h, &v)
+            swap(&hrho, &vrho)
+            swap(&htheta, &vtheta)
+        }
+        
+        guard h.count == 4 else { return nil }
+        guard v.count == 6 else { return nil }
+        
         for y in 0..<dimension.height {
             var hl = IMPPolarLine(rho: hrho * y.float + startHRho, theta: htheta)
+            
             if h.count > y {
                 hl = h[y]
             }
+            else { break }
+            
             for x in 0..<dimension.width {
                 var vl = IMPPolarLine(rho: vrho * x.float + startVRho, theta: vtheta)
                 if v.count > x {
                     vl = v[x]
+                    let center = vl.intersect(with: hl)
+                    target[x,y] = (center:center * denom, color:float3(0))
                 }
-                let center = vl.intersect(with: hl)
-                target[x,y] = (center:center * denom, color:float3(0))
+                else { break }
             }
         }
         
@@ -333,6 +360,8 @@ public struct IMPPatchesGrid {
         
         avrgRho /= count
         avrgTheta /= count
+        
+        guard avrgRho > 0 else { return nil }
         
         nextPrev = nextPrevFirst
         var gaps = [IMPPolarLine]()

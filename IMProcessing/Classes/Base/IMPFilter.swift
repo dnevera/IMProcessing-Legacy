@@ -865,8 +865,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         return (index,true)
     }
     
-    private lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context, name: self.name ?? "-" + "Common resampler kernel")
-    private lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: self.name ?? "-" + "Common resampler shader")
+    private lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context, name: self.name + "Common resampler kernel")
+    private lazy var resampleShader:IMPShader = IMPShader(context: self.context, name: self.name + "Common resampler shader")
     
     private lazy var resampler:IMPCIFilter = {
         let v = self.prefersRendering ?

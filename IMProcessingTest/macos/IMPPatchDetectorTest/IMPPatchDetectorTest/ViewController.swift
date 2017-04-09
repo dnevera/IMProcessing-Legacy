@@ -13,8 +13,10 @@ import SnapKit
 
 class ViewController: NSViewController {
 
-    var canvas = IMPCanvasView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
-
+    lazy var canvas:IMPCanvasView = IMPCanvasView(frame:self.view.bounds)
+    lazy var gridView:IMPPatchesGridView = IMPPatchesGridView(frame: self.view.bounds)
+    
+    
     lazy var test:IMPFilter = {
         let  f = IMPFilter(context:self.context)
         f.extendName(suffix: "ViewController test filter")
@@ -25,7 +27,9 @@ class ViewController: NSViewController {
     lazy var filter:IMPFilter = {
         let f = IMPFilter(context: self.context)
         f.extendName(suffix: "ViewController filter")
-        (f => self.test --> self.detector --> { (destination) in
+        //(
+        
+        f => self.test --> self.detector --> { (destination) in
             guard let size = destination.size else { return }
             DispatchQueue.main.async {
                 self.canvas.imageSize = size
@@ -33,8 +37,9 @@ class ViewController: NSViewController {
                 //self.canvas.hlines = self.detector.hLines
                 //self.canvas.vlines = self.detector.vLines
                 self.canvas.grid = self.detector.patchGrid
+                self.gridView.grid = self.detector.patchGrid
             }
-        }).process()
+        }//).process()
         
         return f
     }()
@@ -53,17 +58,34 @@ class ViewController: NSViewController {
         super.viewDidLoad()
         
         
+        gridView.wantsLayer = true
+        gridView.frame = view.bounds
+        gridView.layer?.backgroundColor = NSColor.clear.cgColor
+        //gridView.autoresizingMask = [.viewWidthSizable, .viewHeightSizable]
+        
         canvas.wantsLayer = true
+        canvas.frame = view.bounds
         canvas.layer?.backgroundColor = NSColor.clear.cgColor
         canvas.autoresizingMask = [.viewWidthSizable, .viewHeightSizable]
-
+        
+        
         imageView.exactResolutionEnabled = false
         imageView.clearColor = MTLClearColor(red: 0.1, green: 0.2, blue: 0.3, alpha: 1)
         imageView.filter = filter
         
         view.addSubview(imageView)
-        imageView.addSubview(canvas)
+        //view.addSubview(gridView)
+        
+        //imageView.addSubview(canvas)
+        imageView.addSubview(gridView)
 
+        gridView.snp.makeConstraints { (make) in
+            make.left.equalTo(gridView.superview!).offset(0)
+            make.right.equalTo(gridView.superview!).offset(0)
+            make.top.equalTo(gridView.superview!).offset(0)
+            make.bottom.equalTo(gridView.superview!).offset(0)
+        }
+        
         imageView.snp.makeConstraints { (make) in
             make.left.equalTo(imageView.superview!).offset(0)
             make.right.equalTo(imageView.superview!).offset(0)

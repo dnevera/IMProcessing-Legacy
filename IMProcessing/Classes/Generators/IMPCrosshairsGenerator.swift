@@ -37,23 +37,25 @@ class IMPDrawPointsCoreMTLShader: IMPCoreImageMTLShader {
                                           _ sourceTexture: MTLTexture,
                                           _ destinationTexture: MTLTexture) {
         
-        if let shader   = self.shader as? IMPDrawPointsShader {
-            let points = shader.points
-            
-            let renderEncoder = shader.commandEncoder(from: commandBuffer, width: destinationTexture)
-            
-            renderEncoder.setVertexBuffer(shader.pointsBuffer, offset: 0, at: 0)
-            renderEncoder.setFragmentTexture(sourceTexture, at:0)
-            
-            if let handler = shader.optionsHandler {
-                handler(shader, renderEncoder, sourceTexture, destinationTexture)
+        if let shader   = self.shader as? IMPDrawPointsShader {            
+            shader.context.runOperation {
+                let points = shader.points
+                
+                let renderEncoder = shader.commandEncoder(from: commandBuffer, width: destinationTexture)
+                
+                renderEncoder.setVertexBuffer(shader.pointsBuffer, offset: 0, at: 0)
+                renderEncoder.setFragmentTexture(sourceTexture, at:0)
+                
+                if let handler = shader.optionsHandler {
+                    handler(shader, renderEncoder, sourceTexture, destinationTexture)
+                }
+                
+                renderEncoder.drawPrimitives(type: .point,
+                                             vertexStart: 0,
+                                             vertexCount: points.count,
+                                             instanceCount: 4)
+                renderEncoder.endEncoding()
             }
-            
-            renderEncoder.drawPrimitives(type: .point,
-                                         vertexStart: 0,
-                                         vertexCount: points.count,
-                                         instanceCount: 4)
-            renderEncoder.endEncoding()
         }
     }
 }

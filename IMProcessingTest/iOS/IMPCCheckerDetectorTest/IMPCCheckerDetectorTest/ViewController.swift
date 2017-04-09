@@ -7,7 +7,7 @@
 //
 
 import UIKit
-//import IMProcessing
+import SnapKit
 
 class BaseNavigationController: UINavigationController {
     
@@ -22,7 +22,7 @@ class BaseNavigationController: UINavigationController {
 
 class ViewController: UIViewController {
 
-    var canvas = IMPCanvasView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
+    var gridView = IMPPatchesGridView(frame:CGRect(x: 0, y: 0, width: 100, height: 100))
 
     let context = IMPContext(lazy: true)
     
@@ -50,22 +50,6 @@ class ViewController: UIViewController {
     lazy var liveViewFilter:IMPFilter = {
         let f = IMPFilter(context: self.context)
         
-//        f => self.detector --> { (destination) in
-//            guard let size = destination.size else { return }
-//            for y in 0..<self.detector.patchGrid.dimension.height {
-//                for x in 0..<self.detector.patchGrid.dimension.width {
-//                    print(" i [\(x,y)] = \(self.detector.patchGrid.target[x,y])")
-//                }
-//            }
-//            //DispatchQueue.main.async {
-//            //    self.canvas.imageSize = size
-//            //    self.canvas.hlines = self.detector.hLines
-//            //    self.canvas.vlines = self.detector.vLines
-//            //    self.canvas.grid = self.detector.patchGrid
-//            //}
-//        }
-
-//        f.add(filter:self.harris)
         f.add(filter:self.crossHairs)
         return f
     }()
@@ -94,23 +78,12 @@ class ViewController: UIViewController {
         liveViewFilter => detector --> { (destination) in
             DispatchQueue.main.async {
                 guard let size = destination.size else { return }
-                self.canvas.imageSize = size
                 self.crossHairs.points = self.detector.corners
-                
-                //self.canvas.vlines = self.detector.vLines
-                //self.canvas.hlines = self.detector.hLines
-                //self.canvas.grid = self.detector.patchGrid
+                self.gridView.grid = self.detector.patchGrid
             }
         }
-
-//        (liveViewFilter => harris as! IMPHarrisCornerDetector) --> { (corners:[IMPCorner], size:NSSize) in
-//            self.crossHairs.points = corners
-//        }
         
-        canvas.frame = liveView.bounds
-        canvas.backgroundColor = NSColor.clear
-        canvas.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-
+        
         liveView.filter = liveViewFilter
         
         containerView.addSubview(liveView)
@@ -119,8 +92,14 @@ class ViewController: UIViewController {
             NSLog("live view is ready ...")
         }
         
-        liveView.addSubview(canvas)
+        liveView.addSubview(gridView)
         
+        gridView.snp.makeConstraints { (make) in
+            make.left.equalTo(gridView.superview!).offset(0)
+            make.right.equalTo(gridView.superview!).offset(0)
+            make.top.equalTo(gridView.superview!).offset(0)
+            make.bottom.equalTo(gridView.superview!).offset(0)
+        }
         
         cameraManager.add(streamObserver: { [unowned self] (camera, buffer) in
             if var image = self.liveView.filter?.source{

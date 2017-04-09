@@ -8,7 +8,6 @@
 
 import UIKit
 import simd
-//import IMProcessing
 
 class IMPCanvasView: UIView {
     

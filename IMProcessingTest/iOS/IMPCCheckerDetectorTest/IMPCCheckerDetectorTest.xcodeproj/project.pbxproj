@@ -96,6 +96,7 @@
 		3179E7941E96A12D002F7561 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3179E7921E96A12D002F7561 /* LaunchScreen.storyboard */; };
 		3179E79D1E96A18B002F7561 /* IMPCamera_main.metal in Sources */ = {isa = PBXBuildFile; fileRef = 3179E79C1E96A18B002F7561 /* IMPCamera_main.metal */; };
 		3179E79F1E96A1DD002F7561 /* IMPCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3179E79E1E96A1DD002F7561 /* IMPCanvas.swift */; };
+		319347C21E9975A600CBCDFB /* IMPPatchesGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319347C11E9975A600CBCDFB /* IMPPatchesGridView.swift */; };
 		D0E054D3CAA05F48BAF78361 /* Pods_IMPCCheckerDetectorTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 520B0CAF8C994FF16CA15B0F /* Pods_IMPCCheckerDetectorTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -223,6 +224,7 @@
 		3179E7951E96A12D002F7561 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		3179E79C1E96A18B002F7561 /* IMPCamera_main.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = IMPCamera_main.metal; sourceTree = "<group>"; };
 		3179E79E1E96A1DD002F7561 /* IMPCanvas.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCanvas.swift; sourceTree = "<group>"; };
+		319347C11E9975A600CBCDFB /* IMPPatchesGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPatchesGridView.swift; sourceTree = "<group>"; };
 		520B0CAF8C994FF16CA15B0F /* Pods_IMPCCheckerDetectorTest.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPCCheckerDetectorTest.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5E2081E620A3AD2F78869575 /* Pods-IMPCCheckerDetectorTest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPCCheckerDetectorTest.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPCCheckerDetectorTest/Pods-IMPCCheckerDetectorTest.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -602,6 +604,7 @@
 				3179E7891E96A12D002F7561 /* AppDelegate.swift */,
 				3179E78B1E96A12D002F7561 /* ViewController.swift */,
 				3179E79E1E96A1DD002F7561 /* IMPCanvas.swift */,
+				319347C11E9975A600CBCDFB /* IMPPatchesGridView.swift */,
 				3179E78D1E96A12D002F7561 /* Main.storyboard */,
 				3179E7901E96A12D002F7561 /* Assets.xcassets */,
 				3179E7921E96A12D002F7561 /* LaunchScreen.storyboard */,
@@ -807,6 +810,7 @@
 				316A7A831E97A6C600DFD31A /* IMPQuad.swift in Sources */,
 				316A7ABA1E97A6C600DFD31A /* IMPBaseBlur.swift in Sources */,
 				316A7AA21E97A6C600DFD31A /* IMPHoughSpaceDetector.swift in Sources */,
+				319347C21E9975A600CBCDFB /* IMPPatchesGridView.swift in Sources */,
 				3179E78C1E96A12D002F7561 /* ViewController.swift in Sources */,
 				316A7AC41E97A6C600DFD31A /* IMPSobelEdges.swift in Sources */,
 				3179E79D1E96A18B002F7561 /* IMPCamera_main.metal in Sources */,
