@@ -70,7 +70,7 @@ class ViewController: NSViewController {
             make.left.equalTo(imageView.superview!).offset(0)
             make.right.equalTo(imageView.superview!.snp.centerX).offset(100)
             make.top.equalTo(imageView.superview!).offset(0)
-            make.bottom.equalTo(imageView.superview!).offset(-80)
+            make.bottom.equalTo(imageView.superview!).offset(0)
         }
 
         gridView.snp.makeConstraints { (make) in

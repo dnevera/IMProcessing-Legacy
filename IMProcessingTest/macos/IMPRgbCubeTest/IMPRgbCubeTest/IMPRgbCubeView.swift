@@ -11,8 +11,91 @@ import SceneKit
 import SnapKit
 import IMProcessing
 
+//
+// sources: http://stackoverflow.com/questions/35002232/draw-scenekit-object-between-two-points
+//
+class   IMPCylinderLine: SCNNode
+{
+    init(
+        parent: SCNNode,      //Needed to add destination point of your line
+        v1: SCNVector3,       //source
+        v2: SCNVector3,       //destination
+        color: NSColor,
+        radius: CGFloat = 0.001,
+        radSegmentCount: Int = 48
+        )
+    {
+        super.init()
+        
+        //Calcul the height of our line
+        let  height = v1.distance(v2)
+        
+        //set position to v1 coordonate
+        position = v1
+        
+        //Create the second node to draw direction vector
+        let nodeV2 = SCNNode()
+        
+        //define his position
+        nodeV2.position = v2
+        //add it to parent
+        parent.addChildNode(nodeV2)
+        
+        //Align Z axis
+        let zAlign = SCNNode()
+        zAlign.eulerAngles.x = CGFloat.pi/2
+        
+        //create our cylinder
+        let cyl = SCNCylinder(radius: radius, height: CGFloat(height))
+        cyl.radialSegmentCount = radSegmentCount
+        cyl.firstMaterial?.diffuse.contents = color
+        
+        //Create node with cylinder
+        let nodeCyl = SCNNode(geometry: cyl )
+        nodeCyl.position.y = CGFloat(-1 * height / Float(2))
+        zAlign.addChildNode(nodeCyl)
+        
+        //Add it to child
+        addChildNode(zAlign)
+        
+        //set contrainte direction to our vector
+        constraints = [SCNLookAtConstraint(target: nodeV2)]
+    }
+    
+    override init() {
+        super.init()
+    }
+    required init?(coder aDecoder: NSCoder) {
+        super.init(coder: aDecoder)
+    }
+}
+
+private extension SCNVector3{
+    func distance( _ receiver:SCNVector3) -> Float{
+        let xd = receiver.x - self.x
+        let yd = receiver.y - self.y
+        let zd = receiver.z - self.z
+        let distance = Float(sqrt(xd * xd + yd * yd + zd * zd))
+        
+        if (distance < 0){
+            return (distance * -1)
+        } else {
+            return (distance)
+        }
+    }
+}
+
 public class IMPRgbCubePoint {
 
+    public var radius:CGFloat {
+        set {
+            sphereGeometry.radius = newValue
+        }
+        get {
+            return  sphereGeometry.radius
+        }
+    }
+    
     public var color:NSColor {
         set{
             let c = newValue.rgb
@@ -31,8 +114,9 @@ public class IMPRgbCubePoint {
         }
     }
     
-    public init(color:NSColor = NSColor.gray) {
+    public init(color:NSColor = NSColor.gray, radius:CGFloat = 0.02) {
         self.color = color
+        self.radius = radius
     }
     
     public func add(to scene: SCNScene, color:NSColor? = nil)  -> SCNNode {
@@ -49,7 +133,8 @@ public class IMPRgbCubePoint {
     
     private lazy var _node:SCNNode = {
         let n = SCNNode(geometry: self.sphereGeometry)
-        let shape = SCNPhysicsShape(geometry: self.sphereGeometry, options: nil)
+        let shape = SCNPhysicsShape(geometry: self.sphereGeometry,
+                                    options: nil /*[SCNPhysicsShape.Option.type:SCNPhysicsShape.ShapeType.boundingBox]*/)
         let body = SCNPhysicsBody(type: .kinematic, shape: shape)
         n.physicsBody = body
         return n
@@ -92,11 +177,42 @@ public class IMPRgbCubePoint {
                 n.removeFromParentNode()
             }
             
+            for n in sourceNodes {
+                n.removeFromParentNode()
+            }
+            
+            for n in lineNodes {
+                n.removeFromParentNode()
+            }
+            
+            lineNodes = [SCNNode]()
+            sourceNodes = [SCNNode]()
             targetNodes = [SCNNode]()
             for i in 0..<grid.target.count {
                 let p = grid.target[i]
                 let n = IMPRgbCubePoint(color: NSColor(rgb: p.color))
                 targetNodes.append(n.add(to: cubeNode))
+            }
+            
+            var index = 0
+            for y in 0..<grid.dimension.height {
+                for x in 0..<grid.dimension.width {
+                    let p = grid.source[y][x]
+                    let color = NSColor(rgba: float4(p.r,p.g,p.b,1))
+                    let n = IMPRgbCubePoint(color: color, radius: 0.01 )
+                    let node = n.add(to: cubeNode)
+                    sourceNodes.append(node)
+                    let tnode = targetNodes[index]
+                    
+                    let line = IMPCylinderLine(parent: cubeNode,
+                                            v1: node.position,
+                                            v2: tnode.position,
+                                            color: color)
+                    
+                    cubeNode.addChildNode(line)
+                    lineNodes.append(line)
+                    index += 1
+                }
             }
             
             for c in cornerColors {
@@ -106,6 +222,9 @@ public class IMPRgbCubePoint {
         }
     }
 
+    
+    var lineNodes = [SCNNode]()
+    var sourceNodes = [SCNNode]()
     var targetNodes = [SCNNode]()
     
     var padding:CGFloat = 10
@@ -276,7 +395,16 @@ public class IMPRgbCubePoint {
     }
     
     public override func scrollWheel(with event: NSEvent) {
-        fov = fov - event.deltaY
+        let f = fov - event.deltaY
+        if f < 10 {
+            fov = 10
+        }
+        else if f > 45 {
+            fov = 45
+        }
+        else {
+            fov = f
+        }
     }
     
     let cubeGeometry:SCNBox = {
