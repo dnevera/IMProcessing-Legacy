@@ -16,7 +16,8 @@ import IMProcessing
 class ViewController: NSViewController {
     
     lazy var rgbCubeView:IMPRgbCubeView = IMPRgbCubeView(frame: self.view.bounds)
-    
+    lazy var gridView:IMPPatchesGridView = IMPPatchesGridView(frame: self.view.bounds)
+
     
     lazy var test:IMPFilter = {
         let  f = IMPFilter(context:self.context)
@@ -29,17 +30,13 @@ class ViewController: NSViewController {
         let f = IMPFilter(context: self.context)
         f.extendName(suffix: "ViewController filter")
         
-//        f => self.test --> self.detector --> { (destination) in
-//            guard let size = destination.size else { return }
-//            DispatchQueue.main.async {
-//                self.canvas.imageSize = size
-//                //self.canvas.corners = self.detector.corners
-//                //self.canvas.hlines = self.detector.hLines
-//                //self.canvas.vlines = self.detector.vLines
-//                //self.canvas.grid = self.detector.patchGrid
-//                self.gridView.grid = self.detector.patchGrid
-//            }
-//        }
+        f => self.detector --> { (destination) in
+            guard let size = destination.size else { return }
+            DispatchQueue.main.async {
+                self.rgbCubeView.grid = self.detector.patchGrid
+                self.gridView.grid = self.detector.patchGrid
+            }
+        }
         
         return f
     }()
@@ -57,28 +54,39 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        view.wantsLayer = true
+        view.layer?.backgroundColor = NSColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1).cgColor
+        
         imageView.exactResolutionEnabled = false
         imageView.clearColor = MTLClearColor(red: 0.1, green: 0.2, blue: 0.3, alpha: 1)
         imageView.filter = filter
         
-        view.addSubview(imageView)
+        imageView.addSubview(gridView)
         
-        imageView.addSubview(rgbCubeView)
-
-        rgbCubeView.snp.makeConstraints { (make) in
-            make.left.equalTo(rgbCubeView.superview!).offset(0)
-            make.right.equalTo(rgbCubeView.superview!).offset(0)
-            make.top.equalTo(rgbCubeView.superview!).offset(0)
-            make.bottom.equalTo(rgbCubeView.superview!).offset(0)
-        }
+        view.addSubview(imageView)
+        view.addSubview(rgbCubeView)
         
         imageView.snp.makeConstraints { (make) in
             make.left.equalTo(imageView.superview!).offset(0)
-            make.right.equalTo(imageView.superview!).offset(0)
+            make.right.equalTo(imageView.superview!.snp.centerX).offset(100)
             make.top.equalTo(imageView.superview!).offset(0)
             make.bottom.equalTo(imageView.superview!).offset(-80)
         }
-        
+
+        gridView.snp.makeConstraints { (make) in
+            make.left.equalTo(gridView.superview!).offset(0)
+            make.right.equalTo(gridView.superview!).offset(0)
+            make.top.equalTo(gridView.superview!).offset(0)
+            make.bottom.equalTo(gridView.superview!).offset(0)
+        }
+
+        rgbCubeView.snp.makeConstraints { (make) in
+            make.left.equalTo(imageView.snp.right).offset(0)
+            make.right.equalTo(rgbCubeView.superview!).offset(0)
+            make.top.equalTo(rgbCubeView.superview!).offset(0)
+            make.bottom.equalTo(imageView.snp.bottom).offset(0)
+        }
+
         IMPFileManager.sharedInstance.add { (file, type) in
             self.currentImage = IMPImage(context: self.context, path: file, maxSize: 2000)
             NSLog("open file \(file)")
