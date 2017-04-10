@@ -217,8 +217,7 @@ public class IMPRgbCubePoint {
     }
     
     func __init__(frame: CGRect){
-        
-        
+                
         sceneView.frame = originalFrame
 
         addSubview(sceneView)
@@ -228,20 +227,9 @@ public class IMPRgbCubePoint {
         scene.rootNode.addChildNode(centerLightNode)
         scene.rootNode.addChildNode(cubeNode)
         
-        //scene.rootNode.addChildNode(centerSphere)
-        //scene.rootNode.addChildNode(planeNode)
-        
-        let press = NSPressGestureRecognizer(target: self, action: #selector(scenePressed(recognizer:)))
-        press.minimumPressDuration = 0.01
-        press.buttonMask = 1
-        sceneView.addGestureRecognizer(press)
-        
-
         let pan = NSPanGestureRecognizer(target: self, action: #selector(panGesture(recognizer:)))
         pan.buttonMask = 1
         sceneView.addGestureRecognizer(pan)
-
-        
     }
 
     var lastWidthRatio: CGFloat = 0
@@ -325,35 +313,4 @@ public class IMPRgbCubePoint {
 
         return n
     }()
-    
-    lazy var planeGeometry:SCNPlane = {
-        let p = SCNPlane(width: self.bounds.width, height: self.bounds.height)
-        let greenMaterial = SCNMaterial()
-        greenMaterial.diffuse.contents = NSColor.gray
-        p.materials = [greenMaterial]
-        return p
-    }()
-    
-    lazy var planeNode:SCNNode = {
-        let p = SCNNode(geometry: self.planeGeometry)
-        p.eulerAngles = SCNVector3(x: CGFloat(GLKMathDegreesToRadians(-90)), y: 0, z: 0)
-        p.position = SCNVector3(x: 0, y: 0, z: 0)
-        return p
-    }()
-    
-    
-    
-    
-    func scenePressed(recognizer: NSPressGestureRecognizer) {
-        let location = recognizer.location(in: self)
-        let hitResults = sceneView.hitTest(location, options: nil)
-        //NSLog("--> \(location, hitResults)")
-        if hitResults.count > 0 {
-            let result = hitResults[0]
-            //let node = result.node
-            //node.removeFromParentNode()
-            //NSLog("--> \(location, hitResults.count)")
-        }
-    }
-
 }
