@@ -21,6 +21,7 @@ class   IMPCylinderLine: SCNNode
         v1: SCNVector3,       //source
         v2: SCNVector3,       //destination
         color: NSColor,
+        endColor: NSColor? = nil,
         radius: CGFloat = 0.001,
         radSegmentCount: Int = 48
         )
@@ -48,7 +49,21 @@ class   IMPCylinderLine: SCNNode
         //create our cylinder
         let cyl = SCNCylinder(radius: radius, height: CGFloat(height))
         cyl.radialSegmentCount = radSegmentCount
-        cyl.firstMaterial?.diffuse.contents = color
+        
+        if let e = endColor {
+            let grad = NSGradient(starting: color, ending: e)
+            let rect = NSRect(x:0,y:0,width: 100, height: 10)
+            let image = NSImage(size: rect.size)
+            let path = NSBezierPath(rect: rect)
+            image.lockFocus()
+            grad?.draw(in: path, angle: 270)
+            image.unlockFocus()
+            
+            cyl.firstMaterial?.diffuse.contents = image
+        }
+        else {
+            cyl.firstMaterial?.diffuse.contents = color
+        }
         
         //Create node with cylinder
         let nodeCyl = SCNNode(geometry: cyl )
@@ -198,6 +213,7 @@ public class IMPRgbCubePoint {
             for y in 0..<grid.dimension.height {
                 for x in 0..<grid.dimension.width {
                     let p = grid.source[y][x]
+                    let t = grid.target[index]
                     let color = NSColor(rgba: float4(p.r,p.g,p.b,1))
                     let n = IMPRgbCubePoint(color: color, radius: 0.01 )
                     let node = n.add(to: cubeNode)
@@ -207,7 +223,8 @@ public class IMPRgbCubePoint {
                     let line = IMPCylinderLine(parent: cubeNode,
                                             v1: node.position,
                                             v2: tnode.position,
-                                            color: color)
+                                            color: color,
+                                            endColor: NSColor(rgb: t.color))
                     
                     cubeNode.addChildNode(line)
                     lineNodes.append(line)
@@ -219,6 +236,16 @@ public class IMPRgbCubePoint {
                 let n = IMPRgbCubePoint(color: c)
                 targetNodes.append(n.add(to: cubeNode))
             }
+            
+            let t1 = IMPRgbCubePoint(color: NSColor(rgb:float3(0)))
+            let t2 = IMPRgbCubePoint(color: NSColor(rgb:float3(1,0,0)))
+            let line = IMPCylinderLine(parent: cubeNode,
+                                       v1: t1.position,
+                                       v2: t2.position,
+                                       color: NSColor(rgb:float3(0)),
+                                       endColor: NSColor(rgb:float3(1,0,0)))
+            cubeNode.addChildNode(line)
+            lineNodes.append(line)
         }
     }
 
