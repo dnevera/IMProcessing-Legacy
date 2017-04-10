@@ -109,7 +109,7 @@ public class IMPRgbCubePoint {
     var targetNodes = [SCNNode]()
     
     var padding:CGFloat = 10
-    var viewPortAspect:CGFloat = 4/3
+    var viewPortAspect:CGFloat = 1
 
     var fov:CGFloat = 35 {
         didSet{
@@ -217,7 +217,7 @@ public class IMPRgbCubePoint {
     }
     
     func __init__(frame: CGRect){
-                
+        
         sceneView.frame = originalFrame
 
         addSubview(sceneView)
@@ -282,7 +282,7 @@ public class IMPRgbCubePoint {
     let cubeGeometry:SCNBox = {
         let g = SCNBox(width: 1.0, height: 1.0, length: 1.0, chamferRadius: 0.0)
         let m = SCNMaterial()
-        m.diffuse.contents = NSColor(red: 1, green: 1, blue: 1, alpha: 0.1)
+        m.diffuse.contents = NSColor(red: 1, green: 1, blue: 1, alpha: 0.05)
         g.materials = [m]
 
         return g
