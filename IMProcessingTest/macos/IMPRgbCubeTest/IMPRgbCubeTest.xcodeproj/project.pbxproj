@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		31225E4B1E9CDBBC00BBBEDE /* IMPCylinderLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E4A1E9CDBBC00BBBEDE /* IMPCylinderLine.swift */; };
+		31225E4D1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E4C1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift */; };
 		3155002B1E9BDC8E003DE6CF /* IMPPatchGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */; };
 		31ECD6FD1E9A628D00B19BA9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */; };
 		31ECD6FF1E9A628D00B19BA9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD6FE1E9A628D00B19BA9 /* ViewController.swift */; };
@@ -19,6 +21,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		31225E4A1E9CDBBC00BBBEDE /* IMPCylinderLine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCylinderLine.swift; sourceTree = "<group>"; };
+		31225E4C1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPRgbCubePoint.swift; sourceTree = "<group>"; };
 		3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPatchGridView.swift; sourceTree = "<group>"; };
 		31ECD6F91E9A628D00B19BA9 /* IMPRgbCubeTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPRgbCubeTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -63,6 +67,16 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		31225E491E9CDB9300BBBEDE /* Rgb Cube */ = {
+			isa = PBXGroup;
+			children = (
+				31225E4A1E9CDBBC00BBBEDE /* IMPCylinderLine.swift */,
+				31225E4C1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift */,
+				31ECD7101E9A63F000B19BA9 /* IMPRgbCubeView.swift */,
+			);
+			name = "Rgb Cube";
+			sourceTree = "<group>";
+		};
 		315500231E9B7D72003DE6CF /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -94,7 +108,7 @@
 				315500231E9B7D72003DE6CF /* Resources */,
 				31ECD70B1E9A633B00B19BA9 /* Shaders */,
 				31ECD70D1E9A633B00B19BA9 /* IMPFileManager.swift */,
-				31ECD7101E9A63F000B19BA9 /* IMPRgbCubeView.swift */,
+				31225E491E9CDB9300BBBEDE /* Rgb Cube */,
 				3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */,
 				31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */,
 				31ECD6FE1E9A628D00B19BA9 /* ViewController.swift */,
@@ -237,6 +251,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				31ECD7111E9A63F000B19BA9 /* IMPRgbCubeView.swift in Sources */,
+				31225E4B1E9CDBBC00BBBEDE /* IMPCylinderLine.swift in Sources */,
+				31225E4D1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift in Sources */,
 				31ECD70F1E9A633B00B19BA9 /* IMPFileManager.swift in Sources */,
 				31ECD6FF1E9A628D00B19BA9 /* ViewController.swift in Sources */,
 				31ECD70E1E9A633B00B19BA9 /* IMPCoreImage.metal in Sources */,
