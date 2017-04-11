@@ -15,10 +15,27 @@ import IMProcessing
 
 class ViewController: NSViewController {
     
-    lazy var rgbCubeView:IMPRgbCubeView = IMPRgbCubeView(frame: self.view.bounds)
     lazy var gridView:IMPPatchesGridView = IMPPatchesGridView(frame: self.view.bounds)
 
+    lazy var rgbCubeView:IMPRgbCubeView = IMPRgbCubeView(frame: self.view.bounds)
+    lazy var lchCilinderView:IMPLchCilinderView = IMPLchCilinderView(frame: self.view.bounds)
+
+    lazy var tabView:NSTabView = NSTabView(frame: self.view.bounds)
     
+    lazy var cubeTabItem:NSTabViewItem = {
+        var i = NSTabViewItem(identifier: "RGB Cube")
+        i.label = "RGB Cube"
+        i.view = self.rgbCubeView
+        return i
+    }()
+    
+    lazy var lchTabItem:NSTabViewItem = {
+        var i = NSTabViewItem(identifier: "LCH Cube")
+        i.label = "LCH Cube"
+        i.view = self.lchCilinderView
+        return i
+    }()
+
     lazy var test:IMPFilter = {
         let  f = IMPFilter(context:self.context)
         f.extendName(suffix: "ViewController test filter")
@@ -34,6 +51,11 @@ class ViewController: NSViewController {
             guard let size = destination.size else { return }
             DispatchQueue.main.async {
                 self.rgbCubeView.grid = self.detector.patchGrid
+            }
+            DispatchQueue.main.async {
+                self.lchCilinderView.grid = self.detector.patchGrid
+            }
+            DispatchQueue.main.async {
                 self.gridView.grid = self.detector.patchGrid
             }
         }
@@ -64,7 +86,8 @@ class ViewController: NSViewController {
         imageView.addSubview(gridView)
         
         view.addSubview(imageView)
-        view.addSubview(rgbCubeView)
+        //view.addSubview(rgbCubeView)
+        view.addSubview(tabView)
         
         imageView.snp.makeConstraints { (make) in
             make.left.equalTo(imageView.superview!).offset(0)
@@ -80,12 +103,22 @@ class ViewController: NSViewController {
             make.bottom.equalTo(gridView.superview!).offset(0)
         }
 
-        rgbCubeView.snp.makeConstraints { (make) in
+        tabView.snp.makeConstraints { (make) in
             make.left.equalTo(imageView.snp.right).offset(0)
-            make.right.equalTo(rgbCubeView.superview!).offset(0)
-            make.top.equalTo(rgbCubeView.superview!).offset(0)
+            make.right.equalTo(tabView.superview!).offset(0)
+            make.top.equalTo(tabView.superview!).offset(0)
             make.bottom.equalTo(imageView.snp.bottom).offset(0)
         }
+
+        tabView.addTabViewItem(lchTabItem)
+        tabView.addTabViewItem(cubeTabItem)
+        
+//        rgbCubeView.snp.makeConstraints { (make) in
+//            make.left.equalTo(imageView.snp.right).offset(0)
+//            make.right.equalTo(rgbCubeView.superview!).offset(0)
+//            make.top.equalTo(rgbCubeView.superview!).offset(0)
+//            make.bottom.equalTo(imageView.snp.bottom).offset(0)
+//        }
 
         IMPFileManager.sharedInstance.add { (file, type) in
             self.currentImage = IMPImage(context: self.context, path: file, maxSize: 2000)

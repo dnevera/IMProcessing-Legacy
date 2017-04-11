@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		31225E4B1E9CDBBC00BBBEDE /* IMPCylinderLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E4A1E9CDBBC00BBBEDE /* IMPCylinderLine.swift */; };
 		31225E4D1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E4C1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift */; };
+		31225E501E9CF28400BBBEDE /* IMPLchCilinderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E4F1E9CF28400BBBEDE /* IMPLchCilinderView.swift */; };
+		31225E521E9CF95E00BBBEDE /* IMPScnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E511E9CF95E00BBBEDE /* IMPScnView.swift */; };
 		3155002B1E9BDC8E003DE6CF /* IMPPatchGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */; };
 		31ECD6FD1E9A628D00B19BA9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */; };
 		31ECD6FF1E9A628D00B19BA9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD6FE1E9A628D00B19BA9 /* ViewController.swift */; };
@@ -23,6 +25,8 @@
 /* Begin PBXFileReference section */
 		31225E4A1E9CDBBC00BBBEDE /* IMPCylinderLine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCylinderLine.swift; sourceTree = "<group>"; };
 		31225E4C1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPRgbCubePoint.swift; sourceTree = "<group>"; };
+		31225E4F1E9CF28400BBBEDE /* IMPLchCilinderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPLchCilinderView.swift; sourceTree = "<group>"; };
+		31225E511E9CF95E00BBBEDE /* IMPScnView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPScnView.swift; sourceTree = "<group>"; };
 		3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPatchGridView.swift; sourceTree = "<group>"; };
 		31ECD6F91E9A628D00B19BA9 /* IMPRgbCubeTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPRgbCubeTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -77,6 +81,14 @@
 			name = "Rgb Cube";
 			sourceTree = "<group>";
 		};
+		31225E4E1E9CF25B00BBBEDE /* Lch cilinder */ = {
+			isa = PBXGroup;
+			children = (
+				31225E4F1E9CF28400BBBEDE /* IMPLchCilinderView.swift */,
+			);
+			name = "Lch cilinder";
+			sourceTree = "<group>";
+		};
 		315500231E9B7D72003DE6CF /* Resources */ = {
 			isa = PBXGroup;
 			children = (
@@ -108,6 +120,8 @@
 				315500231E9B7D72003DE6CF /* Resources */,
 				31ECD70B1E9A633B00B19BA9 /* Shaders */,
 				31ECD70D1E9A633B00B19BA9 /* IMPFileManager.swift */,
+				31225E511E9CF95E00BBBEDE /* IMPScnView.swift */,
+				31225E4E1E9CF25B00BBBEDE /* Lch cilinder */,
 				31225E491E9CDB9300BBBEDE /* Rgb Cube */,
 				3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */,
 				31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */,
@@ -257,6 +271,8 @@
 				31ECD6FF1E9A628D00B19BA9 /* ViewController.swift in Sources */,
 				31ECD70E1E9A633B00B19BA9 /* IMPCoreImage.metal in Sources */,
 				3155002B1E9BDC8E003DE6CF /* IMPPatchGridView.swift in Sources */,
+				31225E501E9CF28400BBBEDE /* IMPLchCilinderView.swift in Sources */,
+				31225E521E9CF95E00BBBEDE /* IMPScnView.swift in Sources */,
 				31ECD6FD1E9A628D00B19BA9 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
