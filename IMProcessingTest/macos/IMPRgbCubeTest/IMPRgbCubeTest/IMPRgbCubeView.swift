@@ -137,20 +137,7 @@ public class IMPRgbCubeView: IMPScnView {
     public override func constraintNode() -> SCNNode {
         return cubeNode
     }
-    
-    func cameraPanHandler(recognizer: NSPanGestureRecognizer) {
-        let translation = recognizer.translation(in: recognizer.view!)
-        let widthRatio = translation.x / recognizer.view!.frame.size.width + lastWidthRatio
-        let heightRatio = translation.y / recognizer.view!.frame.size.height + lastHeightRatio
-        cameraNode.eulerAngles.y =  CGFloat.pi * widthRatio
-        cameraNode.eulerAngles.x = -CGFloat.pi * heightRatio
         
-        if (recognizer.state == .ended) {
-            lastWidthRatio = widthRatio.truncatingRemainder(dividingBy: 1)
-            lastHeightRatio = heightRatio.truncatingRemainder(dividingBy: 1)
-        }
-    }
-    
      let cubeGeometry:SCNBox = {
         let g = SCNBox(width: 1.0, height: 1.0, length: 1.0, chamferRadius: 0.0)
         let m = SCNMaterial()

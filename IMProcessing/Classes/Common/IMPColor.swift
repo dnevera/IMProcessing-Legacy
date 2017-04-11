@@ -122,13 +122,13 @@ public extension float3 {
 
 public extension float3{
     
-    public var hue:Float       { set{ x = hue } get{ return x } }
-    public var saturation:Float{ set{ y = saturation } get{ return y } }
-    public var value:Float     { set{ z = value } get{ return z } }
+    public var hue:Float       { set{ x = newValue } get{ return x } }
+    public var saturation:Float{ set{ y = newValue } get{ return y } }
+    public var value:Float     { set{ z = newValue } get{ return z } }
     
-    public var r:Float{ set{ x = r } get{ return x } }
-    public var g:Float{ set{ y = g } get{ return y } }
-    public var b:Float{ set{ z = b } get{ return z } }
+    public var r:Float{ set{ x = newValue } get{ return x } }
+    public var g:Float{ set{ y = newValue } get{ return y } }
+    public var b:Float{ set{ z = newValue } get{ return z } }
     
     public var bg:float2 { get{ return float2(b,g) } }
     public var gb:float2 { get{ return float2(g,b) } }
@@ -165,10 +165,10 @@ public extension float3{
 
 public extension float4{
     
-    public var r:Float{ set{ x = r } get{ return x } }
-    public var g:Float{ set{ y = g } get{ return y } }
-    public var b:Float{ set{ z = b } get{ return z } }
-    public var a:Float{ set{ w = a } get{ return w } }
+    public var r:Float{ set{ x = newValue } get{ return x } }
+    public var g:Float{ set{ y = newValue } get{ return y } }
+    public var b:Float{ set{ z = newValue } get{ return z } }
+    public var a:Float{ set{ w = newValue } get{ return w } }
     
     public var rgb:float3 {
         set{

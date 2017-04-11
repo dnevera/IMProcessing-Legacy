@@ -18,7 +18,7 @@ class ViewController: NSViewController {
     lazy var gridView:IMPPatchesGridView = IMPPatchesGridView(frame: self.view.bounds)
 
     lazy var rgbCubeView:IMPRgbCubeView = IMPRgbCubeView(frame: self.view.bounds)
-    lazy var lchCilinderView:IMPLchCilinderView = IMPLchCilinderView(frame: self.view.bounds)
+    lazy var lchCylinderView:IMPHsvCylinderView = IMPHsvCylinderView(frame: self.view.bounds)
 
     lazy var tabView:NSTabView = NSTabView(frame: self.view.bounds)
     
@@ -32,7 +32,7 @@ class ViewController: NSViewController {
     lazy var lchTabItem:NSTabViewItem = {
         var i = NSTabViewItem(identifier: "LCH Cube")
         i.label = "LCH Cube"
-        i.view = self.lchCilinderView
+        i.view = self.lchCylinderView
         return i
     }()
 
@@ -53,7 +53,7 @@ class ViewController: NSViewController {
                 self.rgbCubeView.grid = self.detector.patchGrid
             }
             DispatchQueue.main.async {
-                self.lchCilinderView.grid = self.detector.patchGrid
+                self.lchCylinderView.grid = self.detector.patchGrid
             }
             DispatchQueue.main.async {
                 self.gridView.grid = self.detector.patchGrid

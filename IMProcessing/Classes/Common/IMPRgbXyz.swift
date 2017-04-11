@@ -16,22 +16,22 @@ public extension float3{
         let var_Y = y / 100.0       //Y from 0 to 100.000
         let var_Z = z / 100.0       //Z from 0 to 108.883
         
-        var rgb = float3()
+        var ccc = float3(1)
         
-        rgb.r = var_X *  3.2406 + var_Y * -1.5372 + var_Z * -0.4986
-        rgb.g = var_X * -0.9689 + var_Y *  1.8758 + var_Z *  0.0415
-        rgb.b = var_X *  0.0557 + var_Y * -0.2040 + var_Z *  1.0570
+        ccc.r = var_X *  3.2406 + var_Y * -1.5372 + var_Z * -0.4986
+        ccc.g = var_X * -0.9689 + var_Y *  1.8758 + var_Z *  0.0415
+        ccc.b = var_X *  0.0557 + var_Y * -0.2040 + var_Z *  1.0570
         
-        if ( rgb.r > 0.0031308 ) {rgb.r = 1.055 * pow( rgb.r, ( 1.0 / 2.4 ) ) - 0.055}
-        else                     {rgb.r = 12.92 * rgb.r}
+        if ( ccc.r > 0.0031308 ) {ccc.r = 1.055 * pow( ccc.r, ( 1.0 / 2.4 ) ) - 0.055}
+        else                     {ccc.r = 12.92 * ccc.r}
         
-        if ( rgb.g > 0.0031308 ) {rgb.g = 1.055 * pow( rgb.g, ( 1.0 / 2.4 ) ) - 0.055}
-        else                     {rgb.g = 12.92 * rgb.g}
+        if ( ccc.g > 0.0031308 ) {ccc.g = 1.055 * pow( ccc.g, ( 1.0 / 2.4 ) ) - 0.055}
+        else                     {ccc.g = 12.92 * ccc.g}
         
-        if ( rgb.b > 0.0031308 ) {rgb.b = 1.055 * pow( rgb.b, ( 1.0 / 2.4 ) ) - 0.055}
-        else                     {rgb.b = 12.92 * rgb.b}
+        if ( ccc.b > 0.0031308 ) {ccc.b = 1.055 * pow( ccc.b, ( 1.0 / 2.4 ) ) - 0.055}
+        else                     {ccc.b = 12.92 * ccc.b}
         
-        return rgb
+        return ccc
     }
     
     public func rgb2xyz() -> float3 {

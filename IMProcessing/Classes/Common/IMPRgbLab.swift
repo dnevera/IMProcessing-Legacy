@@ -67,4 +67,21 @@ public extension float3{
         
         return float3(( 116.0 * var_Y ) - 16.0, 500.0 * ( var_X - var_Y ), 200.0 * ( var_Y - var_Z ))
     }
+    
+    public func lab2lch() -> float3 {
+        // let l = x
+        // let a = y
+        // let b = z, lch = xyz
+        let c = sqrt(y * y + z * z)
+        let h = atan2(z, y) / Float.pi * 180
+        return float3(x, c, h)
+    }
+    
+    public func lch2lab() -> float3 {
+        // let l = x
+        // let c = y
+        // let h = z
+        let h = z * Float.pi / 180
+        return float3(x, cos(h) * y, sin(h) * y)
+    }
 }

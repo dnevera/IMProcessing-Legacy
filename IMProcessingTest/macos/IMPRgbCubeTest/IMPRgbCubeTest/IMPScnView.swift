@@ -124,7 +124,7 @@ public class IMPScnView: NSView {
         return f
     }()
     
-    let scene = SCNScene()
+    public let scene = SCNScene()
     
     open func configure(frame: CGRect){
         sceneView.frame = originalFrame
@@ -187,6 +187,19 @@ public class IMPScnView: NSView {
             let pivot = SCNMatrix4Mult(changePivot, currentPivot)
             constraintNode().pivot = pivot
             constraintNode().transform = SCNMatrix4Identity
+        }
+    }
+    
+    func cameraPanHandler(recognizer: NSPanGestureRecognizer) {
+        let translation = recognizer.translation(in: recognizer.view!)
+        let widthRatio = translation.x / recognizer.view!.frame.size.width + lastWidthRatio
+        let heightRatio = translation.y / recognizer.view!.frame.size.height + lastHeightRatio
+        cameraNode.eulerAngles.y =  CGFloat.pi * widthRatio
+        cameraNode.eulerAngles.x = -CGFloat.pi * heightRatio
+        
+        if (recognizer.state == .ended) {
+            lastWidthRatio = widthRatio.truncatingRemainder(dividingBy: 1)
+            lastHeightRatio = heightRatio.truncatingRemainder(dividingBy: 1)
         }
     }
 }
