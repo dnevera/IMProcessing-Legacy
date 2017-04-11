@@ -257,7 +257,7 @@ class IMPHsvCylinderView: IMPScnView {
     let cylinderGeometry:SCNCylinder = {
         let g =  SCNCylinder(radius: 0.5, height: 1)
         let m = SCNMaterial()
-        m.diffuse.contents = NSColor(red: 1, green: 1, blue: 1, alpha: 0.05)
+        m.diffuse.contents = NSColor(red: 0.5, green: 0.5, blue: 0.5, alpha: 0.2)
         g.materials = [m]
         
         return g

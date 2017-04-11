@@ -30,8 +30,8 @@ class ViewController: NSViewController {
     }()
     
     lazy var lchTabItem:NSTabViewItem = {
-        var i = NSTabViewItem(identifier: "LCH Cube")
-        i.label = "LCH Cube"
+        var i = NSTabViewItem(identifier: "HSV Cylinder")
+        i.label = "HSV Cylinder"
         i.view = self.lchCylinderView
         return i
     }()
