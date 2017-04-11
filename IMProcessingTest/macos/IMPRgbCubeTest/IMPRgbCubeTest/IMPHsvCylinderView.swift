@@ -176,10 +176,10 @@ class IMPHsvCylinderView: IMPScnView {
         let black = NSColor(red: 0, green: 0, blue: 0, alpha: 1)
         let white = NSColor(red: 1, green: 1, blue: 1, alpha: 1)
         
-        let n0 = IMPHsvPoint(color: black, type: .cube)
+        let n0 = IMPHsvPoint(color: black, radius:0.005, type: .cube)
         _ = n0.add(to: cylinderNode)
         
-        let n1 = IMPHsvPoint(color: white, type: .cube)
+        let n1 = IMPHsvPoint(color: white, radius:0.005, type: .cube)
         _ = n1.add(to: cylinderNode)
         
         let line = IMPCylinderLine(parent: cylinderNode,
@@ -189,9 +189,13 @@ class IMPHsvCylinderView: IMPScnView {
                                    endColor: white)
         cylinderNode.addChildNode(line)
 
-        drawCircle(circle: topCircle)
-        drawCircle(circle: midCircle)
-        drawCircle(circle: botCircle)
+        //drawCircle(circle: topCircle)
+        //drawCircle(circle: midCircle)
+        //drawCircle(circle: botCircle)
+        
+        cylinderNode.addChildNode(torNode(level: 1,  position: 0.5))
+        cylinderNode.addChildNode(torNode(level: 0.5, position: 0))
+        cylinderNode.addChildNode(torNode(level: 0.001, position: -0.5))
     }
     
     
@@ -270,4 +274,47 @@ class IMPHsvCylinderView: IMPScnView {
     }()
 
     
+    let hsvCircle = [
+        float3(1,0,0),
+        float3(1,1,0),
+        float3(0,1,0),
+        
+        float3(0,1,1),
+        float3(0,0,1),
+        float3(1,0,1),
+        float3(1,0,0)
+        ]
+
+    func gradients(colors:[float3], level:CGFloat = 1) -> NSGradient {
+        var cs = [NSColor]()
+        for c in colors {
+            cs.append(NSColor(rgb: c * float3(level.float)))
+        }
+        return NSGradient(colors: cs)!
+    }
+    
+    func torNode(level:CGFloat, position:CGFloat, radius:CGFloat = 0.002) -> SCNNode {
+        let c = SCNNode(geometry: self.torGeometry(level:level, radius:radius))
+        c.position = SCNVector3(x: 0, y: position, z: 0)
+        c.eulerAngles =  SCNVector3(x: 0, y: CGFloat.pi, z: 0)
+        return c
+    }
+    
+    func torGeometry(level:CGFloat, radius:CGFloat) -> SCNTorus {
+        let t = SCNTorus(ringRadius: 0.5, pipeRadius: radius)
+        let m = SCNMaterial()
+        
+        let grad =  self.gradients(colors: self.hsvCircle, level: level)
+        let rect = NSRect(x:0,y:0,width: 100, height: 10)
+        let image = NSImage(size: rect.size)
+        let path = NSBezierPath(rect: rect)
+        image.lockFocus()
+        grad.draw(in: path, angle: 0)
+        image.unlockFocus()
+        
+        
+        m.diffuse.contents = image
+        t.materials = [m]
+        return t
+    }
 }
