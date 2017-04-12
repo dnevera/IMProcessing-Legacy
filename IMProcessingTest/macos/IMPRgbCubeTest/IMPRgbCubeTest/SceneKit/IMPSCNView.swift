@@ -6,10 +6,15 @@
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
-import Cocoa
+#if os(iOS)
+    import UIKit
+#else
+    import Cocoa
+#endif
+
 import SceneKit
 
-public class IMPScnView: NSView {
+public class IMPSCNView: NSView {
     
     public var padding:CGFloat = 10
     public var viewPortAspect:CGFloat = 1
@@ -132,8 +137,6 @@ public class IMPScnView: NSView {
         sceneView.scene = scene
         scene.rootNode.addChildNode(cameraNode)
         scene.rootNode.addChildNode(originLightNode)
-        //scene.rootNode.addChildNode(lightNode)
-        //scene.rootNode.addChildNode(centerLightNode)
         
         let pan = NSPanGestureRecognizer(target: self, action: #selector(panGesture(recognizer:)))
         pan.buttonMask = 1

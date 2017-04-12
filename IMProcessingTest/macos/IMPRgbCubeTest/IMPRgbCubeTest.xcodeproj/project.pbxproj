@@ -7,10 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		31225E4B1E9CDBBC00BBBEDE /* IMPCylinderLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E4A1E9CDBBC00BBBEDE /* IMPCylinderLine.swift */; };
-		31225E4D1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E4C1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift */; };
-		31225E501E9CF28400BBBEDE /* IMPHsvCylinderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E4F1E9CF28400BBBEDE /* IMPHsvCylinderView.swift */; };
-		31225E521E9CF95E00BBBEDE /* IMPScnView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31225E511E9CF95E00BBBEDE /* IMPScnView.swift */; };
+		312732B01E9E27BB00294B04 /* IMPSCNColorPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312732AD1E9E27BB00294B04 /* IMPSCNColorPoint.swift */; };
+		312732B11E9E27BB00294B04 /* IMPSCNHsvPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312732AE1E9E27BB00294B04 /* IMPSCNHsvPoint.swift */; };
+		312732B21E9E27BB00294B04 /* IMPSCNView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312732AF1E9E27BB00294B04 /* IMPSCNView.swift */; };
+		312732B41E9E297E00294B04 /* IMPSCNRgbPoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312732B31E9E297E00294B04 /* IMPSCNRgbPoint.swift */; };
+		312732B61E9E29E000294B04 /* IMPSCNLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312732B51E9E29E000294B04 /* IMPSCNLine.swift */; };
+		312732B81E9E3C0B00294B04 /* IMPSCNPatchesCubeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312732B71E9E3C0B00294B04 /* IMPSCNPatchesCubeView.swift */; };
+		312732BA1E9E3D8500294B04 /* IMPSCNPatchesCylinderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 312732B91E9E3D8500294B04 /* IMPSCNPatchesCylinderView.swift */; };
 		3155002B1E9BDC8E003DE6CF /* IMPPatchGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */; };
 		31ECD6FD1E9A628D00B19BA9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */; };
 		31ECD6FF1E9A628D00B19BA9 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD6FE1E9A628D00B19BA9 /* ViewController.swift */; };
@@ -18,15 +21,17 @@
 		31ECD7041E9A628D00B19BA9 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 31ECD7021E9A628D00B19BA9 /* Main.storyboard */; };
 		31ECD70E1E9A633B00B19BA9 /* IMPCoreImage.metal in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD70C1E9A633B00B19BA9 /* IMPCoreImage.metal */; };
 		31ECD70F1E9A633B00B19BA9 /* IMPFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD70D1E9A633B00B19BA9 /* IMPFileManager.swift */; };
-		31ECD7111E9A63F000B19BA9 /* IMPRgbCubeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31ECD7101E9A63F000B19BA9 /* IMPRgbCubeView.swift */; };
 		3DEC13FE22AF064FFFF74BF9 /* Pods_IMPRgbCubeTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3E8E489A3B57E9B883176EE4 /* Pods_IMPRgbCubeTest.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		31225E4A1E9CDBBC00BBBEDE /* IMPCylinderLine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCylinderLine.swift; sourceTree = "<group>"; };
-		31225E4C1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPRgbCubePoint.swift; sourceTree = "<group>"; };
-		31225E4F1E9CF28400BBBEDE /* IMPHsvCylinderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHsvCylinderView.swift; sourceTree = "<group>"; };
-		31225E511E9CF95E00BBBEDE /* IMPScnView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPScnView.swift; sourceTree = "<group>"; };
+		312732AD1E9E27BB00294B04 /* IMPSCNColorPoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPSCNColorPoint.swift; path = SceneKit/IMPSCNColorPoint.swift; sourceTree = "<group>"; };
+		312732AE1E9E27BB00294B04 /* IMPSCNHsvPoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPSCNHsvPoint.swift; path = SceneKit/IMPSCNHsvPoint.swift; sourceTree = "<group>"; };
+		312732AF1E9E27BB00294B04 /* IMPSCNView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPSCNView.swift; path = SceneKit/IMPSCNView.swift; sourceTree = "<group>"; };
+		312732B31E9E297E00294B04 /* IMPSCNRgbPoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPSCNRgbPoint.swift; path = SceneKit/IMPSCNRgbPoint.swift; sourceTree = "<group>"; };
+		312732B51E9E29E000294B04 /* IMPSCNLine.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IMPSCNLine.swift; path = SceneKit/IMPSCNLine.swift; sourceTree = "<group>"; };
+		312732B71E9E3C0B00294B04 /* IMPSCNPatchesCubeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPSCNPatchesCubeView.swift; sourceTree = "<group>"; };
+		312732B91E9E3D8500294B04 /* IMPSCNPatchesCylinderView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPSCNPatchesCylinderView.swift; sourceTree = "<group>"; };
 		3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPatchGridView.swift; sourceTree = "<group>"; };
 		31ECD6F91E9A628D00B19BA9 /* IMPRgbCubeTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPRgbCubeTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -36,7 +41,6 @@
 		31ECD7051E9A628D00B19BA9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		31ECD70C1E9A633B00B19BA9 /* IMPCoreImage.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = IMPCoreImage.metal; sourceTree = "<group>"; };
 		31ECD70D1E9A633B00B19BA9 /* IMPFileManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFileManager.swift; sourceTree = "<group>"; };
-		31ECD7101E9A63F000B19BA9 /* IMPRgbCubeView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPRgbCubeView.swift; sourceTree = "<group>"; };
 		3C77C5FB8610FA15668AED14 /* Pods-IMPRgbCubeTest.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPRgbCubeTest.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPRgbCubeTest/Pods-IMPRgbCubeTest.debug.xcconfig"; sourceTree = "<group>"; };
 		3E8E489A3B57E9B883176EE4 /* Pods_IMPRgbCubeTest.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPRgbCubeTest.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		5DC8CA2CFB25B54BE6E0DE5A /* Pods-IMPRgbCubeTest.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPRgbCubeTest.release.xcconfig"; path = "Pods/Target Support Files/Pods-IMPRgbCubeTest/Pods-IMPRgbCubeTest.release.xcconfig"; sourceTree = "<group>"; };
@@ -71,22 +75,18 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		31225E491E9CDB9300BBBEDE /* Rgb Cube */ = {
+		312732AA1E9E26A600294B04 /* Scene Kit */ = {
 			isa = PBXGroup;
 			children = (
-				31225E4A1E9CDBBC00BBBEDE /* IMPCylinderLine.swift */,
-				31225E4C1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift */,
-				31ECD7101E9A63F000B19BA9 /* IMPRgbCubeView.swift */,
+				312732AF1E9E27BB00294B04 /* IMPSCNView.swift */,
+				312732B51E9E29E000294B04 /* IMPSCNLine.swift */,
+				312732AD1E9E27BB00294B04 /* IMPSCNColorPoint.swift */,
+				312732AE1E9E27BB00294B04 /* IMPSCNHsvPoint.swift */,
+				312732B31E9E297E00294B04 /* IMPSCNRgbPoint.swift */,
+				312732B71E9E3C0B00294B04 /* IMPSCNPatchesCubeView.swift */,
+				312732B91E9E3D8500294B04 /* IMPSCNPatchesCylinderView.swift */,
 			);
-			name = "Rgb Cube";
-			sourceTree = "<group>";
-		};
-		31225E4E1E9CF25B00BBBEDE /* HSV cilinder */ = {
-			isa = PBXGroup;
-			children = (
-				31225E4F1E9CF28400BBBEDE /* IMPHsvCylinderView.swift */,
-			);
-			name = "HSV cilinder";
+			name = "Scene Kit";
 			sourceTree = "<group>";
 		};
 		315500231E9B7D72003DE6CF /* Resources */ = {
@@ -120,9 +120,7 @@
 				315500231E9B7D72003DE6CF /* Resources */,
 				31ECD70B1E9A633B00B19BA9 /* Shaders */,
 				31ECD70D1E9A633B00B19BA9 /* IMPFileManager.swift */,
-				31225E511E9CF95E00BBBEDE /* IMPScnView.swift */,
-				31225E4E1E9CF25B00BBBEDE /* HSV cilinder */,
-				31225E491E9CDB9300BBBEDE /* Rgb Cube */,
+				312732AA1E9E26A600294B04 /* Scene Kit */,
 				3155002A1E9BDC8E003DE6CF /* IMPPatchGridView.swift */,
 				31ECD6FC1E9A628D00B19BA9 /* AppDelegate.swift */,
 				31ECD6FE1E9A628D00B19BA9 /* ViewController.swift */,
@@ -264,16 +262,18 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				31ECD7111E9A63F000B19BA9 /* IMPRgbCubeView.swift in Sources */,
-				31225E4B1E9CDBBC00BBBEDE /* IMPCylinderLine.swift in Sources */,
-				31225E4D1E9CDC1400BBBEDE /* IMPRgbCubePoint.swift in Sources */,
+				312732BA1E9E3D8500294B04 /* IMPSCNPatchesCylinderView.swift in Sources */,
+				312732B11E9E27BB00294B04 /* IMPSCNHsvPoint.swift in Sources */,
+				312732B81E9E3C0B00294B04 /* IMPSCNPatchesCubeView.swift in Sources */,
+				312732B21E9E27BB00294B04 /* IMPSCNView.swift in Sources */,
+				312732B61E9E29E000294B04 /* IMPSCNLine.swift in Sources */,
 				31ECD70F1E9A633B00B19BA9 /* IMPFileManager.swift in Sources */,
 				31ECD6FF1E9A628D00B19BA9 /* ViewController.swift in Sources */,
 				31ECD70E1E9A633B00B19BA9 /* IMPCoreImage.metal in Sources */,
 				3155002B1E9BDC8E003DE6CF /* IMPPatchGridView.swift in Sources */,
-				31225E501E9CF28400BBBEDE /* IMPHsvCylinderView.swift in Sources */,
-				31225E521E9CF95E00BBBEDE /* IMPScnView.swift in Sources */,
+				312732B01E9E27BB00294B04 /* IMPSCNColorPoint.swift in Sources */,
 				31ECD6FD1E9A628D00B19BA9 /* AppDelegate.swift in Sources */,
+				312732B41E9E297E00294B04 /* IMPSCNRgbPoint.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

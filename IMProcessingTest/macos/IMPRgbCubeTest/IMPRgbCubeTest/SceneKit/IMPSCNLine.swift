@@ -1,12 +1,17 @@
 //
-//  IMPCylinderLine.swift
+//  IMPSCNLine.swift
 //  IMPRgbCubeTest
 //
-//  Created by Denis Svinarchuk on 11/04/2017.
+//  Created by Denis Svinarchuk on 12/04/2017.
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
-import Foundation
+#if os(iOS)
+    import UIKit
+#else
+    import Cocoa
+#endif
+
 import SceneKit
 
 private extension SCNVector3{
@@ -27,8 +32,7 @@ private extension SCNVector3{
 //
 // sources: http://stackoverflow.com/questions/35002232/draw-scenekit-object-between-two-points
 //
-public class   IMPCylinderLine: SCNNode
-{
+public class   IMPSCNLine: SCNNode {
     public init(
         parent: SCNNode,      //Needed to add destination point of your line
         v1: SCNVector3,       //source
@@ -52,6 +56,7 @@ public class   IMPCylinderLine: SCNNode
         
         //define his position
         nodeV2.position = v2
+        
         //add it to parent
         parent.addChildNode(nodeV2)
         

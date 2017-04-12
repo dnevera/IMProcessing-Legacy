@@ -17,8 +17,8 @@ class ViewController: NSViewController {
     
     lazy var gridView:IMPPatchesGridView = IMPPatchesGridView(frame: self.view.bounds)
 
-    lazy var rgbCubeView:IMPRgbCubeView = IMPRgbCubeView(frame: self.view.bounds)
-    lazy var lchCylinderView:IMPHsvCylinderView = IMPHsvCylinderView(frame: self.view.bounds)
+    lazy var rgbCubeView:IMPSCNPatchesCubeView = IMPSCNPatchesCubeView(frame: self.view.bounds)
+    lazy var lchCylinderView:IMPSCNPatchesCylinderView = IMPSCNPatchesCylinderView(frame: self.view.bounds)
 
     lazy var tabView:NSTabView = NSTabView(frame: self.view.bounds)
     
