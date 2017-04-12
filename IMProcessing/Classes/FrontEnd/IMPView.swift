@@ -15,12 +15,55 @@
 
 import MetalKit
 
+#if os(iOS)
+    
+    import UIKit
+    public typealias IMPViewBase = UIView
+    
+#else
+    
+    import AppKit
+    public typealias IMPViewBase = NSView
+    public typealias IMPDragOperationHandler = ((_ files:[String]) -> Bool)
+    
+    public extension IMPViewBase {
+        public var backgroundColor:NSColor? {
+            set{
+                wantsLayer = true
+                layer?.backgroundColor = newValue?.cgColor
+            }
+            get{
+                if let c = layer?.backgroundColor {
+                    return NSColor(cgColor: c)
+                }
+                return nil
+            }
+        }
+    }
+    
+    
+#endif
+
+
 public class IMPView: MTKView {
     
+    public static var scaleFactor:Float{
+        get {
+            #if os(iOS)
+                return  Float(UIScreen.mainScreen().scale)
+            #else
+                let screen = NSScreen.main()
+                let scaleFactor = screen?.backingScaleFactor ?? 1.0
+                return Float(scaleFactor)
+            #endif
+        }
+    }
+
     
     #if os(iOS)
         public var renderingEnabled = false
     #else
+        public typealias MouseEventHandler = ((_ event:NSEvent, _ location:NSPoint, _ view:NSView)->Void)
         public let renderingEnabled = true
     #endif
     
@@ -354,6 +397,100 @@ public class IMPView: MTKView {
         -1.0,   1.0,  0.0,  0.0,
         1.0,   1.0,  1.0,  0.0,
         ]
+    
+    #if os(OSX)
+
+    public override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+        
+        let sourceDragMask = sender.draggingSourceOperationMask()
+        let pboard = sender.draggingPasteboard()
+        
+        if pboard.availableType(from: [NSFilenamesPboardType]) == NSFilenamesPboardType {
+            if sourceDragMask.rawValue & NSDragOperation.generic.rawValue != 0 {
+                return NSDragOperation.generic
+            }
+        }
+        
+        return []
+    }
+    
+    public var dragOperation:IMPDragOperationHandler?
+    
+    public override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        if let files  = sender.draggingPasteboard().propertyList(forType: NSFilenamesPboardType) {
+            if let o = dragOperation {
+                return o(files as! [String])
+            }
+        }
+        return false
+    }
+    
+    lazy var trackingArea:NSTrackingArea? = nil
+    
+    override public func updateTrackingAreas() {
+        if mouseEventEnabled {
+            super.updateTrackingAreas()
+            if let t = trackingArea{
+                removeTrackingArea(t)
+            }
+            trackingArea = NSTrackingArea(rect: frame,
+                                          options: [.activeInKeyWindow,.mouseMoved,.mouseEnteredAndExited],
+                                          owner: self, userInfo: nil)
+            addTrackingArea(trackingArea!)
+        }
+    }
+    
+    override public func mouseEntered(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+    }
+    
+    override public func mouseExited(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+    }
+    
+    override public func mouseMoved(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+    }
+    
+    override public func mouseDown(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+    }
+    
+    override public func mouseUp(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+    }
+    
+    override public func mouseDragged(with event: NSEvent) {
+        lounchMouseObservers(event: event)
+    }
+    
+    var mouseEventHandlers = [MouseEventHandler]()
+    
+    var mouseEventEnabled = false
+    public func addMouseEventObserver(observer:@escaping MouseEventHandler){
+        mouseEventHandlers.append(observer)
+        mouseEventEnabled = true
+    }
+    
+    public func removeMouseEventObservers(){
+        mouseEventEnabled = false
+        if let t = trackingArea{
+            removeTrackingArea(t)
+        }
+        mouseEventHandlers.removeAll()
+    }
+    
+    func lounchMouseObservers(event:NSEvent){
+        let location = event.locationInWindow
+        let point  = self.convert(location,from:nil)
+        for o in mouseEventHandlers {
+            o(event, point, self)
+        }
+    }
+    
+
+    
+    #endif
 }
 
 
