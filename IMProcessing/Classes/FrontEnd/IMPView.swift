@@ -27,7 +27,7 @@ import MetalKit
     public typealias IMPDragOperationHandler = ((_ files:[String]) -> Bool)
     
     public extension IMPViewBase {
-        public var backgroundColor:NSColor? {
+        open var backgroundColor:NSColor? {
             set{
                 wantsLayer = true
                 layer?.backgroundColor = newValue?.cgColor
