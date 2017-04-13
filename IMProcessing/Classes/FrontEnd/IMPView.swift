@@ -25,8 +25,8 @@ import MetalKit
     import AppKit
     public typealias IMPViewBase = NSView
     public typealias IMPDragOperationHandler = ((_ files:[String]) -> Bool)
-    
-    public extension IMPViewBase {
+      
+    public extension NSView {
         open var backgroundColor:NSColor? {
             set{
                 wantsLayer = true
