@@ -31,6 +31,7 @@ public class TestFilter: IMPFilter {
             blurFilter.radius = blurRadius
             boxBlurFilter.radius = blurRadius
 //            cannyEdgeDetector.blurRadius = blurRadius
+//            ciBlurFilter.setValue(blurRadius, forKey: "inputRadius")
             dirty = true
         }
     }
@@ -116,7 +117,8 @@ public class TestFilter: IMPFilter {
 //        add(filter: median)
 //
 //        add(function: kernelEV)
-//        add(filter: blurFilter)
+        add(filter: blurFilter)
+//        add(filter:ciBlurFilter)
 //        add(filter: boxBlurFilter)
 //        add(filter: ciContrast)
 
@@ -128,7 +130,7 @@ public class TestFilter: IMPFilter {
 //        add(filter: cornerLinesDetector)
         
 //        add(filter: gDerivativeEdges)
-        add(filter: sobelEdges)
+//        add(filter: sobelEdges)
 //        add(filter: cannyEdgeDetector)
         
 //        add(filter: lineDetector)

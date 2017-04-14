@@ -60,7 +60,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         return _name!
     }
     
-    public var _name: String?
+    public lazy var _name: String? = self.context.uid
     
     public var context: IMPContext
     

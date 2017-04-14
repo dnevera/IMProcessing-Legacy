@@ -19,6 +19,8 @@
 		316C4B5B1E9251DD00502F4F /* IMPOpening.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316C4B5A1E9251DD00502F4F /* IMPOpening.swift */; };
 		319347C01E990B3C00CBCDFB /* IMPPatchGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319347BF1E990B3C00CBCDFB /* IMPPatchGridView.swift */; };
 		31AFE2DC1E9252A600018253 /* IMPClosing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AFE2DB1E9252A600018253 /* IMPClosing.swift */; };
+		31B0172A1EA0E1A90031D35C /* IMPMatrix3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B017291EA0E1A90031D35C /* IMPMatrix3D.swift */; };
+		31B0172C1EA0E22C0031D35C /* CatmullRom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B0172B1EA0E22C0031D35C /* CatmullRom.swift */; };
 		31F3CC731E8E70A20055994F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC721E8E70A20055994F /* AppDelegate.swift */; };
 		31F3CC751E8E70A20055994F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31F3CC741E8E70A20055994F /* ViewController.swift */; };
 		31F3CC771E8E70A20055994F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 31F3CC761E8E70A20055994F /* Assets.xcassets */; };
@@ -116,6 +118,8 @@
 		316C4B5A1E9251DD00502F4F /* IMPOpening.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPOpening.swift; sourceTree = "<group>"; };
 		319347BF1E990B3C00CBCDFB /* IMPPatchGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPatchGridView.swift; sourceTree = "<group>"; };
 		31AFE2DB1E9252A600018253 /* IMPClosing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPClosing.swift; sourceTree = "<group>"; };
+		31B017291EA0E1A90031D35C /* IMPMatrix3D.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMatrix3D.swift; sourceTree = "<group>"; };
+		31B0172B1EA0E22C0031D35C /* CatmullRom.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CatmullRom.swift; path = Splines/CatmullRom.swift; sourceTree = "<group>"; };
 		31F3CC6F1E8E70A20055994F /* IMPPatchDetectorTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = IMPPatchDetectorTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		31F3CC721E8E70A20055994F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		31F3CC741E8E70A20055994F /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -258,6 +262,14 @@
 				313DDA411E9643E4000D2C1F /* IMPPatchesGrid.swift */,
 			);
 			name = CChecker;
+			sourceTree = "<group>";
+		};
+		31B0172D1EA0E2300031D35C /* Splines */ = {
+			isa = PBXGroup;
+			children = (
+				31B0172B1EA0E22C0031D35C /* CatmullRom.swift */,
+			);
+			name = Splines;
 			sourceTree = "<group>";
 		};
 		31F3CC661E8E70A20055994F = {
@@ -470,6 +482,8 @@
 			children = (
 				31F3CCC21E8E70C90055994F /* IMPDistribution.swift */,
 				31F3CCC31E8E70C90055994F /* IMPMatrix.swift */,
+				31B017291EA0E1A90031D35C /* IMPMatrix3D.swift */,
+				31B0172D1EA0E2300031D35C /* Splines */,
 				31F3CCC41E8E70C90055994F /* Matrix */,
 			);
 			path = Math;
@@ -792,6 +806,7 @@
 				31F3CD471E8E70C90055994F /* IMPMedian.swift in Sources */,
 				31F3CD3A1E8E70C90055994F /* IMPErosion.swift in Sources */,
 				31F3CD351E8E70C90055994F /* IMPMatrix.swift in Sources */,
+				31B0172C1EA0E22C0031D35C /* CatmullRom.swift in Sources */,
 				31F3CC731E8E70A20055994F /* AppDelegate.swift in Sources */,
 				31F3CD501E8E70C90055994F /* IMPVideoCache.swift in Sources */,
 				31F3CD341E8E70C90055994F /* IMPDistribution.swift in Sources */,
@@ -827,6 +842,7 @@
 				31F3CD4C1E8E70C90055994F /* IMPMTLTexture.swift in Sources */,
 				31F3CD0F1E8E70C90055994F /* IMPFilter.swift in Sources */,
 				31F3CD191E8E70C90055994F /* IMPContext.swift in Sources */,
+				31B0172A1EA0E1A90031D35C /* IMPMatrix3D.swift in Sources */,
 				31F3CD0D1E8E70C90055994F /* IMPTriangle.swift in Sources */,
 				31F3CD2F1E8E70C90055994F /* IMPPosterize.swift in Sources */,
 				31F3CD241E8E70C90055994F /* IMPHoughSpace.swift in Sources */,
