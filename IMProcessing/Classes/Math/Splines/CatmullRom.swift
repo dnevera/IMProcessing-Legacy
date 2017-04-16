@@ -149,7 +149,9 @@ public extension Collection where Iterator.Element == [Float] {
             for yi in 0 ..< controlPoints.rows.count {
                 let y = controlPoints.rows[yi].y
                 let z = controlPoints.rows[yi].z[i]
-                points.append(float2(y,z))
+                if z.isFinite {
+                    points.append(float2(y,z))
+                }
             }
             
             let spline = yPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
@@ -168,7 +170,9 @@ public extension Collection where Iterator.Element == [Float] {
             for xi in 0 ..< controlPoints.columns.count {
                 let x = controlPoints.columns[xi]
                 let y = z.rows[xi].z[i]
-                points.append(float2(x,y))
+                if y.isFinite {
+                    points.append(float2(x,y))
+                }
             }
             let spline = xPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
             curve.append(contentsOf: spline)

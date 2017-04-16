@@ -14,5 +14,19 @@ var max:Float = 0
 
 vDSP_maxv(addr+1, 2, &max, vDSP_Length(c.count))
 
+var nan = Float.nan
+var zero:Float = 0
+
+nan.isFinite
+nan.isInfinite
+nan.isZero
+nan.isNormal
+nan.isNaN
+
+zero.isZero
+zero.isNormal
+zero.isFinite
+
+
 print(max)
 
