@@ -93,3 +93,103 @@ public extension Float {
         return Float.gaussianKernel(sigma: self, size: size)
     }
 }
+
+// MARK: - Gaussian value in certain point of x
+public extension Float{
+    
+    ///  Get gaussian Y point from distripbution of X in certain point
+    ///
+    ///  - parameter fi:    ƒ
+    ///  - parameter mu:    µ
+    ///  - parameter sigma: ß
+    ///
+    ///  - returns: Y value
+    public func gaussianPoint(fi:Float, mu:Float, sigma:Float) -> Float {
+        return fi * exp( -(pow(( self - mu ),2)) / (2*pow(sigma, 2)) )
+    }
+    
+    ///  Get double pointed gaussian Y point from distripbution of two X points
+    ///
+    ///  - parameter fi:    float2(ƒ1,ƒ2)
+    ///  - parameter mu:    float2(µ1,µ2)
+    ///  - parameter sigma: float2(ß1,ß2)
+    ///
+    ///  - returns: y value
+    public func gaussianPoint(fi:float2, mu:float2, sigma:float2) -> Float {
+        
+        let c1 = self <= mu.x ? 1.float : 0.float
+        let c2 = self >= mu.y ? 1.float : 0.float
+        
+        let y1 = self.gaussianPoint(fi: fi.x, mu: mu.x, sigma: sigma.x) * c1 + (1.0-c1)
+        let y2 = self.gaussianPoint(fi: fi.y, mu: mu.y, sigma: sigma.y) * c2 + (1.0-c2)
+        
+        return y1 * y2
+    }
+    
+    ///  Get normalized gaussian Y point from distripbution of two X points
+    ///
+    ///  - parameter fi:    ƒ
+    ///  - parameter mu:    µ
+    ///  - parameter sigma: ß
+    ///
+    ///  - returns: y value
+    public func gaussianPoint(mu:Float, sigma:Float) -> Float {
+        return self.gaussianPoint(fi: 1/(sigma*sqrt(2*Float.pi)), mu: mu, sigma: sigma)
+    }
+    
+    ///  Get double normalized gaussian Y point from distripbution of two X points
+    ///
+    ///  - parameter fi:    float2(ƒ1,ƒ2)
+    ///  - parameter mu:    float2(µ1,µ2)
+    ///  - parameter sigma: float2(ß1,ß2)
+    ///
+    ///  - returns: Y value
+    public func gaussianPoint(mu:float2, sigma:float2) -> Float {
+        return self.gaussianPoint(fi:float2(1), mu: mu, sigma: sigma)
+    }
+    
+    ///  Create linear range X points within range
+    ///
+    ///  - parameter r: range
+    ///
+    ///  - returns: X list
+    static func range(_ r:Range<Int>) -> [Float]{
+        return range(start: Float(r.lowerBound), step: 1, end: Float(r.upperBound))
+    }
+    
+    
+    ///  Create linear range X points within range scaled to particular value
+    ///
+    ///  - parameter r: range
+    ///
+    ///  - returns: X list
+    static func range(_ r:Range<Int>, scale:Float) -> [Float]{
+        var r = range(start: Float(r.lowerBound), step: 1, end: Float(r.upperBound))
+        var denom:Float = 0
+        vDSP_maxv(r, 1, &denom, vDSP_Length(r.count))
+        denom /= scale
+        vDSP_vsdiv(r, 1, &denom, &r, 1, vDSP_Length(r.count))
+        return r
+    }
+    
+    
+    ///  Create linear range X points within range of start/end with certain step
+    ///
+    ///  - parameter start: start value
+    ///  - parameter step:  step, must be less then end-start
+    ///  - parameter end:   end, must be great the start
+    ///
+    ///  - returns: X list
+    static func range(start:Float, step:Float, end:Float) -> [Float] {
+        let size       = Int((end-start)/step)
+        
+        var h:[Float]  = [Float](repeating: 0, count: size)
+        var zero:Float = start
+        var v:Float    = step
+        
+        vDSP_vramp(&zero, &v, &h, 1, vDSP_Length(size))
+        
+        return h
+        
+    }
+}
