@@ -171,7 +171,7 @@ class IMPCanvasView: NSView {
         path.stroke()
         //path.close()
         
-        NSLog(" line = \(p0,p1)")
+       // NSLog(" line = \(p0,p1)")
 
         
         if spokeWidth > 0 {

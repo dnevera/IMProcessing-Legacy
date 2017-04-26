@@ -32,7 +32,7 @@ class ViewController: NSViewController {
             guard let size = destination.size else { return }
             DispatchQueue.main.async {
                 self.canvas.imageSize = size
-                //self.canvas.corners = self.detector.corners
+                self.canvas.corners = self.detector.corners
                 //self.canvas.hlines = self.detector.hLines
                 //self.canvas.vlines = self.detector.vLines
                 //self.canvas.grid = self.detector.patchGrid
@@ -75,7 +75,7 @@ class ViewController: NSViewController {
         view.addSubview(imageView)
         //view.addSubview(gridView)
         
-        //imageView.addSubview(canvas)
+        imageView.addSubview(canvas)
         imageView.addSubview(gridView)
 
         gridView.snp.makeConstraints { (make) in
@@ -83,6 +83,13 @@ class ViewController: NSViewController {
             make.right.equalTo(gridView.superview!).offset(0)
             make.top.equalTo(gridView.superview!).offset(0)
             make.bottom.equalTo(gridView.superview!).offset(0)
+        }
+        
+        canvas.snp.makeConstraints { (make) in
+            make.left.equalTo(canvas.superview!).offset(0)
+            make.right.equalTo(canvas.superview!).offset(0)
+            make.top.equalTo(gridView.superview!).offset(0)
+            make.bottom.equalTo(canvas.superview!).offset(0)
         }
         
         imageView.snp.makeConstraints { (make) in

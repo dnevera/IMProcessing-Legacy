@@ -6,5 +6,7 @@
         <page name='Segment line'/>
         <page name='Accelerate'/>
         <page name='Images'/>
+        <page name='3D B-Spline'/>
+        <page name='3D Catmul-rom'/>
     </pages>
 </playground>

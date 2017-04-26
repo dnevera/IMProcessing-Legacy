@@ -144,6 +144,7 @@ public struct IMPPatchesGrid {
             swap(&htheta, &vtheta)
         }
         
+        
         guard h.count >= 4 && h.count < 24 else { return nil }
         guard v.count >= 6 && v.count < 24 else { return nil }
         

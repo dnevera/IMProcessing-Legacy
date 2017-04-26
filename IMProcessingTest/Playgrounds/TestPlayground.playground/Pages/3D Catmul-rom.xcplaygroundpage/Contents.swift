@@ -1,13 +1,10 @@
-//
-//  CatmullRom.swift
-//  IMPPatchDetectorTest
-//
-//  Created by denis svinarchuk on 14.04.17.
-//  Copyright © 2017 Dehancer. All rights reserved.
-//
+//: [Previous](@previous)
+
+//: [Next](@next)
 
 import Foundation
 import Accelerate
+import simd
 
 // MARK: - Catmull-Rom piecewise splines
 public extension Collection where Iterator.Element == Float {
@@ -82,7 +79,7 @@ public extension Collection where Iterator.Element == Float {
         var k1:Int = 0
         var k2:Int = n-1
         while k2-k1 > 1 {
-            let k = floor(Float(k2+k1)/2.0).int
+            let k = Int(floor(Float(k2+k1)/2.0))
             let xkpoint = points[k]
             if xkpoint.x > Xi {
                 k2 = k
@@ -124,10 +121,10 @@ public extension Collection where Iterator.Element == Float {
     }
 }
 
-// MARK: - 3D Catmull-Rom piecewise splines
+
 public extension Collection where Iterator.Element == [Float] {
     
-    public func catmullRomSpline(controls controlPoints:IMPMatrix3D, scale:Float=0)  -> [Float]{
+    public func catmullRomSpline(controls controlPoints:[float3], scale:Float=0)  -> [Float]{
         
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
@@ -137,55 +134,12 @@ public extension Collection where Iterator.Element == [Float] {
         let xPoints = self[0 as! Self.Index]
         let yPoints = self[count - 1 as! Self.Index]
         
-        
-        //
-        // y-z
-        //
-        var ysplines = [Float]()
-        for i in 0 ..< controlPoints.columns.count {
-            
-            var points = [float2]()
-            
-            for yi in 0 ..< controlPoints.rows.count {
-                let y = controlPoints.rows[yi].y
-                let z = controlPoints.rows[yi].z[i]
-                if z.isFinite {
-                    points.append(float2(y,z))
-                }
-            }
-            
-            let spline = yPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
-            ysplines.append(contentsOf: spline)
-        }
-        
-        let z = IMPMatrix3D(xy: [yPoints,controlPoints.columns], zMatrix: ysplines)
-        
-        //
-        // x-y-z
-        //
-        for i in 0 ..< yPoints.count {
-            
-            var points = [float2]()
-            
-            for xi in 0 ..< controlPoints.columns.count {
-                let x = controlPoints.columns[xi]
-                let y = z.rows[xi].z[i]
-                if y.isFinite {
-                    points.append(float2(x,y))
-                }
-            }
-            let spline = xPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
-            curve.append(contentsOf: spline)
-        }
-        
-        if scale>0 {
-            var max:Float = 0
-            vDSP_maxv(curve, 1, &max, vDSP_Length(curve.count))
-            max = scale/max
-            vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
-        }
-        
         return curve
     }
 }
 
+//let range = [[0,10,20,30,40,50,60,70,80,90,100],[0,10,20,30,40,50,60,70,80,90,100]]
+////let range = [0,10,20,30,40,50,60,70,80,90,100]
+//var controls = [float3(0,0,0), float3(50,50,256),  float3(20,1,1),   float3(100,0,256)]
+//
+//let curve = range.catmullRomSpline(controls:controls)
