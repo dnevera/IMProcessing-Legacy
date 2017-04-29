@@ -7,139 +7,87 @@ import Accelerate
 import simd
 
 // MARK: - Catmull-Rom piecewise splines
-public extension Collection where Iterator.Element == Float {
+class CatmulRomWeights {
     
-    ///  Create 1D piecewise Catmull-Rom spline curve from linear collection of x-Float points with certain control points
-    ///
-    ///  - parameter controls: list of (x,y) control points
-    ///
-    ///  - returns: interpolated list of (y) points
-    public func catmullRomSpline(controls points:[float2], scale:Float=0) -> [Float]{
-        var curve = [Float]()
-        for x in self {
-            curve.append(catmullRomSplinePoint(x: x, points: points).y)
-        }
-        if scale>0 {
-            var max:Float = 0
-            vDSP_maxv(curve, 1, &max, vDSP_Length(curve.count))
-            max = scale/max
-            vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
-        }
-        return curve
+    static let cmrM = float4x4(rows: [
+        float4(-1, 3,-3, 1),
+        float4( 2,-5, 4,-1),
+        float4(-1, 0, 1, 0),
+        float4( 0, 2, 0, 0),
+        ])
+    
+    var controlStep:Float {
+        return 1/Float(controls.count)
     }
     
-    ///  Create 2D piecewise Catmull-Rom spline curve from linear collection of x-Float points with certain control points
-    ///
-    ///  - parameter controls: list of (x,y) control points
-    ///
-    ///  - returns: interpolated list of (x,y) points
-    public func catmullRomSpline(controls points:[float2], scale:Float=0) -> [float2]{
-        var curve = [float2]()
-        for x in self {
-            curve.append(catmullRomSplinePoint(x: x, points: points))
-        }
-        if scale>0 {
-            var max:Float = 0
-            let pointer = OpaquePointer(curve)
-            let address = UnsafeMutablePointer<Float>(pointer)
-            vDSP_maxv(address + 1, 2, &max, vDSP_Length(curve.count))
-            max = scale/max
-            vDSP_vsmul(address, 1, &max, address, 1, vDSP_Length(curve.count*2))
-        }
-        return curve
+    var controls:[float3]
+    
+    init(controls:[float3]){
+        self.controls = controls
     }
     
-    fileprivate func catmullRomSplinePoint(x:Float,points:[float2]) -> float2 {
-        let Xi = x
-        
-        let k  = find(points, Xi: Xi)
-        let P1 = points[k.0]
-        let P2 = points[k.1]
-        
-        let (a,b,h) = catmullRomSplineCoeff(k: k, points: points)
-        
-        let t = (Xi - P1.x) / h
-        let t2 = t*t
-        let t3 = t2*t
-        
-        let h00 =  2*t3 - 3*t2 + 1
-        let h10 =    t3 - 2*t2 + t
-        let h01 = -2*t3 + 3*t2
-        let h11 =    t3 - t2
-        
-        return float2(
-            Xi,
-            h00 * P1.y + h10 * h * a + h01 * P2.y + h11 * h * b
-        )
+    static func interpolate1D(at t:Float, controls:float4) -> Float {
+        let n = 0.5 * float4(powf(t, 3), powf(t, 2), t, 1) * CatmulRomWeights.cmrM
+        return dot(n,controls)
     }
     
-    fileprivate func find(_ points:[float2], Xi:Float)->(Int,Int){
-        let n = points.count
-        
-        var k1:Int = 0
-        var k2:Int = n-1
-        while k2-k1 > 1 {
-            let k = Int(floor(Float(k2+k1)/2.0))
-            let xkpoint = points[k]
-            if xkpoint.x > Xi {
-                k2 = k
-            }
-            else {
-                k1 = k
-            }
-        }
-        return (k1,k2)
+    func bounds(at t:Float) -> Int {
+        return bounds(at: Int(t/controlStep))
     }
     
-    fileprivate func catmullRomSplineCoeff(k:(Int,Int), points:[float2]) -> (a:Float,b:Float,h:Float) {
+    func bounds(at t:Int) -> Int {
+        return t <= 0 ? 0 :  t >= (controls.count-1) ? controls.count - 1 : t
+    }
+    
+    func tanget(_ xi:Int, _ t:Float) -> Float {
+        return (t-controlStep * Float(xi))/controlStep
+    }
+
+    func points(at t:Float, index:Int) -> (Float,float4) {
+        let xi = bounds(at: t)
         
-        let P1 = points[k.0]
-        let P2 = points[k.1]
+        let xi0 = bounds(at: xi-1)
+        let xi1 = bounds(at: xi)
+        let xi2 = bounds(at: xi+1)
+        let xi3 = bounds(at: xi+2)
         
-        let h = P2.x - P1.x
-        var a:Float = 0
-        var b:Float = 0
+        let lt = tanget(xi, t)
         
-        if k.0 == 0 {
-            let P3 = points[k.1+1]
-            a = (P2.y - P1.y) / h
-            b = (P3.y - P1.y) / (P3.x - P1.x)
-        }
-        else if k.1 == points.count-1 {
-            let P0 = points[k.0-1]
-            a = (P2.y - P1.y) / (P2.x - P0.x)
-            b = (P2.y - P1.y) / h
-        }
-        else{
-            let P0 = points[k.0-1]
-            let P3 = points[k.1+1]
-            a = (P2.y - P0.y) / (P2.x - P0.x)
-            b = (P3.y - P1.y) / (P3.x - P1.x)
-        }
+        let sorted = controls //.sorted { return $0[index]<$1[index] }
         
-        return (a,b,h)
+        return (lt,float4(
+            sorted[xi0][index],
+            sorted[xi1][index],
+            sorted[xi2][index],
+            sorted[xi3][index]
+        ))
+    }
+    
+    func splinePoint(at t:float3) -> float3 {
+        
+        let (xt,xp) = points(at: t.x, index: 0)
+        let x = CatmulRomWeights.interpolate1D(at: xt, controls:xp)
+
+        let (yt,yp) = points(at: t.y, index: 1)
+        let y = CatmulRomWeights.interpolate1D(at: yt, controls:yp)
+
+        let (zt,zp) = points(at: t.z, index: 2)
+        let z = CatmulRomWeights.interpolate1D(at: zt, controls:zp)
+        
+        
+        return float3(x,y,z)
     }
 }
 
+let range = [[0,10,20,30,40,50,60,70,80,90,100],[0,10,20,30,40,50,60,70,80,90,100]]
+var controls = [float3(50,0,0),  float3(20,1,1), float3(30,50,256),  float3(70,0,256), float3(10,22,256), float3(11,24,256)]
 
-public extension Collection where Iterator.Element == [Float] {
-    
-    public func catmullRomSpline(controls controlPoints:[float3], scale:Float=0)  -> [Float]{
-        
-        if self.count != 2 {
-            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
-        }
-        
-        var curve   = [Float]()
-        let xPoints = self[0 as! Self.Index]
-        let yPoints = self[count - 1 as! Self.Index]
-        
-        return curve
-    }
+var m = CatmulRomWeights.interpolate1D(at: 0.2, controls: float4(0,1,2,4))
+
+var cms = CatmulRomWeights(controls: controls)
+var s = cms.splinePoint(at: float3(0.5,0.1,0.5))
+
+for x in stride(from: 0, to: Float(1), by: Float(0.01)) {
+    let s = cms.splinePoint(at: float3(x,x,0)).z
 }
 
-//let range = [[0,10,20,30,40,50,60,70,80,90,100],[0,10,20,30,40,50,60,70,80,90,100]]
-////let range = [0,10,20,30,40,50,60,70,80,90,100]
-//var controls = [float3(0,0,0), float3(50,50,256),  float3(20,1,1),   float3(100,0,256)]
-//
-//let curve = range.catmullRomSpline(controls:controls)
