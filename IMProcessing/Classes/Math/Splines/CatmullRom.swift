@@ -124,10 +124,129 @@ public extension Collection where Iterator.Element == Float {
     }
 }
 
-// MARK: - 3D Catmull-Rom piecewise splines
+//// MARK: - 3D Catmull-Rom piecewise splines
+//public extension Collection where Iterator.Element == [Float] {
+//    
+//    public func catmullRomSpline(controls controlPoints:IMPMatrix3D, scale:Float=0)  -> [Float]{
+//        
+//        if self.count != 2 {
+//            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
+//        }
+//        
+//        var curve   = [Float]()
+//        let xPoints = self[0 as! Self.Index]
+//        let yPoints = self[count - 1 as! Self.Index]
+//        
+//        
+//        //
+//        // y-z
+//        //
+//        var ysplines = [Float]()
+//        for i in 0 ..< controlPoints.columns.count {
+//            
+//            var points = [float2]()
+//            
+//            for yi in 0 ..< controlPoints.rows.count {
+//                let y = controlPoints.rows[yi].y
+//                let z = controlPoints.rows[yi].z[i]
+//                if z.isFinite {
+//                    points.append(float2(y,z))
+//                }
+//            }
+//            
+//            let spline = yPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
+//            ysplines.append(contentsOf: spline)
+//        }
+//        
+//        let z = IMPMatrix3D(xy: [yPoints,controlPoints.columns], zMatrix: ysplines)
+//        
+//        //
+//        // x-y-z
+//        //
+//        for i in 0 ..< yPoints.count {
+//            
+//            var points = [float2]()
+//            
+//            for xi in 0 ..< controlPoints.columns.count {
+//                let x = controlPoints.columns[xi]
+//                let y = z.rows[xi].z[i]
+//                if y.isFinite {
+//                    points.append(float2(x,y))
+//                }
+//            }
+//            let spline = xPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
+//            curve.append(contentsOf: spline)
+//        }
+//        
+//        if scale>0 {
+//            var max:Float = 0
+//            vDSP_maxv(curve, 1, &max, vDSP_Length(curve.count))
+//            max = scale/max
+//            vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
+//        }
+//        
+//        return curve
+//    }
+//}
+
+extension Collection where Iterator.Element == [Float] {
+    
+    public func catmullRomSpline(controls controlPoints:[float3], scale:Float=0)  -> [Float]{
+        
+        if self.count != 2 {
+            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
+        }
+        
+        var curve   = [Float]()
+        let xPoints = self[0 as! Self.Index]
+        let yPoints = self[count - 1 as! Self.Index]
+        
+        //
+        // y-z
+        //
+        var scontrols = controlPoints.sorted { $0.y<$1.y }
+        
+        var points = [float2]()
+        
+        for yi in 0 ..< scontrols.count {
+            let y = scontrols[yi].y
+            let z = scontrols[yi].z
+            points.append(float2(y,z))
+        }
+        
+        let ysplines = yPoints.catmullRomSpline(controls: points, scale: scale) as [Float]
+        
+        //
+        // x-y-z
+        //
+        
+        scontrols = controlPoints.sorted { $0.x<$1.x }
+        
+        points = [float2]()
+        
+        for xi in 0..<scontrols.count {
+            
+            let x = scontrols[xi].x
+            let z = scontrols[xi].z
+            
+            points.append(float2(x,z))
+        }
+        
+        let xsplines = xPoints.catmullRomSpline(controls: points, scale: scale) as [Float]
+        
+        for y in ysplines {
+            for x in xsplines{
+                curve.append(x*y)
+            }
+        }
+        return curve
+    }
+}
+
+// MARK: - 3D Catmull-Rom piecewise surface spline
 public extension Collection where Iterator.Element == [Float] {
     
-    public func catmullRomSpline(controls controlPoints:IMPMatrix3D, scale:Float=0)  -> [Float]{
+    public func catmullRomSpline(surface controlPoints:IMPSurfaceMatrix, scale:Float=0)  -> [Float]{
         
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
@@ -147,18 +266,16 @@ public extension Collection where Iterator.Element == [Float] {
             var points = [float2]()
             
             for yi in 0 ..< controlPoints.rows.count {
-                let y = controlPoints.rows[yi].y
-                let z = controlPoints.rows[yi].z[i]
-                if z.isFinite {
-                    points.append(float2(y,z))
-                }
+                let y = controlPoints.rows[yi]
+                let z = controlPoints.row(yi)[i]
+                points.append(float2(y,z))
             }
             
             let spline = yPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
             ysplines.append(contentsOf: spline)
         }
         
-        let z = IMPMatrix3D(xy: [yPoints,controlPoints.columns], zMatrix: ysplines)
+        let z = IMPSurfaceMatrix(xy: [yPoints,controlPoints.columns], weights: ysplines)
         
         //
         // x-y-z
@@ -169,10 +286,8 @@ public extension Collection where Iterator.Element == [Float] {
             
             for xi in 0 ..< controlPoints.columns.count {
                 let x = controlPoints.columns[xi]
-                let y = z.rows[xi].z[i]
-                if y.isFinite {
-                    points.append(float2(x,y))
-                }
+                let y = z.row(xi)[i]
+                points.append(float2(x,y))
             }
             let spline = xPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
             curve.append(contentsOf: spline)
@@ -188,4 +303,6 @@ public extension Collection where Iterator.Element == [Float] {
         return curve
     }
 }
+
+
 
