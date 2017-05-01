@@ -75,11 +75,19 @@ public class IMPView: MTKView {
             self.needProcessing = true
             
             filter?.addObserver(newSource: { (source) in
-                self.updateDrawbleSize()
+                
+                DispatchQueue.global().asyncAfter(wallDeadline: .now() + 1/30, execute: {
+                    DispatchQueue.main.async {
+                        self.updateDrawbleSize()
+                    }
+                })
+                
             })
             
             filter?.addObserver(dirty: { (filter, source, destintion) in
-                self.needProcessing = true
+                if !self.needProcessing{
+                    self.needProcessing = true
+                }
             })
         }
     }
@@ -97,7 +105,9 @@ public class IMPView: MTKView {
                 let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
             }
-            needProcessing = true
+            if !needProcessing{
+                needProcessing = true
+            }
         }
     }
     
@@ -142,7 +152,10 @@ public class IMPView: MTKView {
     var needProcessing = true {
         didSet{
             if needProcessing {
-                processingOperationQueue.cancelAllOperations()
+                operation.cancelAllOperations()
+                if isPaused{
+                    processing(size: drawableSize)
+                }
             }
         }
     }
@@ -151,53 +164,31 @@ public class IMPView: MTKView {
     
     lazy var frameImage:IMPImageProvider = IMPImage(context: self.context)
     
-    class ProcessingOperation: Operation {
-        
-        let size:NSSize
-        let view:IMPView
-        
-        init(view: IMPView, size: NSSize) {
-            self.view = view
-            self.size = size
-        }
-        
-        override func main() {
-            
-            unowned let view = self.view
-            
-            guard let filter = view.filter else { return }
-            
-            view.context.runOperation(.async) {
-                
-                filter.destinationSize = self.size
-                view.frameImage = filter.destination
-                
-                if view.frameImage.texture != nil {
-                    
-                    //NSLog("   !!!!!  new frame = \(view.frameImage.texture)")
-                    
-                    //filter.apply(view.frameImage, with: self.size)
-                    
-                    view.needProcessing = false
-                    view.setNeedsDisplay()
-                }
-            }
-        }
-    }
-    
-    var processingOperation:ProcessingOperation? = nil
-    
-    lazy var processingOperationQueue:OperationQueue = {
-        var o = OperationQueue()
+    lazy var operation:OperationQueue = {
+        let o = OperationQueue()
         o.maxConcurrentOperationCount = 1
+        o.name = "com.improcessing.IMPView"
         return o
     }()
     
-    func processing(size: NSSize)  {
-        self.processingOperationQueue.cancelAllOperations()
-        self.processingOperationQueue.addOperation(ProcessingOperation(view: self, size: size))
-    }
     
+    func processing(size: NSSize)  {
+        operation.cancelAllOperations()
+        operation.addOperation {
+            
+            guard let filter = self.filter else { return }
+            
+            filter.destinationSize = size
+            self.frameImage = filter.destination
+            
+            if self.frameImage.texture != nil {
+                //NSLog("   !!!!!  new frame = \(self.frameImage.texture?.size)")
+                self.needProcessing = false
+                self.setNeedsDisplay()
+            }
+        }
+    }
+
     lazy var viewPort:MTLViewport = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
     
     public override var drawableSize: CGSize {
@@ -491,6 +482,9 @@ public class IMPView: MTKView {
 
     
     #endif
+    
+    fileprivate var lastUpdatesTimes = 8
+    fileprivate var lastUpdatesTimesCounter = 0
 }
 
 
@@ -500,8 +494,16 @@ extension IMPView: MTKViewDelegate {
     
     public func draw(in view: MTKView) {
         
-        guard needUpdateDisplay else { return }
-        needUpdateDisplay = false
+        if !needUpdateDisplay {
+            return
+        }
+        
+        if lastUpdatesTimesCounter > lastUpdatesTimes {
+            lastUpdatesTimesCounter = 0
+            needUpdateDisplay = false
+        }
+        
+        lastUpdatesTimesCounter += 1
         
         context.runOperation(.async) { [unowned self] in
             self.refresh(rect: view.bounds)

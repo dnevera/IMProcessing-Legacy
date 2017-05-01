@@ -69,6 +69,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     public var source: IMPImageProvider? = nil {
         didSet{
             //oldValue?.texture?.setPurgeableState(.volatile)
+            _destination.texture?.setPurgeableState(.empty)
+            _destination.texture = nil
             executeNewSourceObservers(source: source)
         }
     }
@@ -161,8 +163,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         if fmax(size.width, size.height) <= IMPContext.maximumTextureSize.cgfloat {
             
             if enabled == false {
-                result.texture = source.texture
                 dirty = false
+                result.texture = source.texture
                 return result
             }
             
@@ -182,9 +184,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
 //            })
 
             result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: nil)
-            self.executeDestinationObservers(destination: result)
             self.dirty = false
-
+            
+            self.executeDestinationObservers(destination: result)
             return result
         }
         

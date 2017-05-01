@@ -17,9 +17,9 @@
 		314A8A021E8E72150012E9F8 /* IMPFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314A8A011E8E72150012E9F8 /* IMPFileManager.swift */; };
 		314A8A061E8E74560012E9F8 /* IMPCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 314A8A051E8E74560012E9F8 /* IMPCanvasView.swift */; };
 		316C4B5B1E9251DD00502F4F /* IMPOpening.swift in Sources */ = {isa = PBXBuildFile; fileRef = 316C4B5A1E9251DD00502F4F /* IMPOpening.swift */; };
+		3191A97E1EB74F9300A029E7 /* IMPSurfaceMatrix.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3191A97D1EB74F9300A029E7 /* IMPSurfaceMatrix.swift */; };
 		319347C01E990B3C00CBCDFB /* IMPPatchGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 319347BF1E990B3C00CBCDFB /* IMPPatchGridView.swift */; };
 		31AFE2DC1E9252A600018253 /* IMPClosing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AFE2DB1E9252A600018253 /* IMPClosing.swift */; };
-		31B0172A1EA0E1A90031D35C /* IMPMatrix3D.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B017291EA0E1A90031D35C /* IMPMatrix3D.swift */; };
 		31B0172C1EA0E22C0031D35C /* CatmullRom.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31B0172B1EA0E22C0031D35C /* CatmullRom.swift */; };
 		31DEA5E41EB0DD4F00B73172 /* Bezier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31DEA5E21EB0DD4F00B73172 /* Bezier.swift */; };
 		31DEA5E51EB0DD4F00B73172 /* CubicSpline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31DEA5E31EB0DD4F00B73172 /* CubicSpline.swift */; };
@@ -116,9 +116,9 @@
 		314A8A011E8E72150012E9F8 /* IMPFileManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPFileManager.swift; sourceTree = "<group>"; };
 		314A8A051E8E74560012E9F8 /* IMPCanvasView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPCanvasView.swift; sourceTree = "<group>"; };
 		316C4B5A1E9251DD00502F4F /* IMPOpening.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPOpening.swift; sourceTree = "<group>"; };
+		3191A97D1EB74F9300A029E7 /* IMPSurfaceMatrix.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPSurfaceMatrix.swift; sourceTree = "<group>"; };
 		319347BF1E990B3C00CBCDFB /* IMPPatchGridView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPPatchGridView.swift; sourceTree = "<group>"; };
 		31AFE2DB1E9252A600018253 /* IMPClosing.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPClosing.swift; sourceTree = "<group>"; };
-		31B017291EA0E1A90031D35C /* IMPMatrix3D.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPMatrix3D.swift; sourceTree = "<group>"; };
 		31B0172B1EA0E22C0031D35C /* CatmullRom.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CatmullRom.swift; path = Splines/CatmullRom.swift; sourceTree = "<group>"; };
 		31DEA5E21EB0DD4F00B73172 /* Bezier.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = Bezier.swift; path = Splines/Bezier.swift; sourceTree = "<group>"; };
 		31DEA5E31EB0DD4F00B73172 /* CubicSpline.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = CubicSpline.swift; path = Splines/CubicSpline.swift; sourceTree = "<group>"; };
@@ -484,7 +484,7 @@
 			children = (
 				31F3CCC21E8E70C90055994F /* IMPDistribution.swift */,
 				31F3CCC31E8E70C90055994F /* IMPMatrix.swift */,
-				31B017291EA0E1A90031D35C /* IMPMatrix3D.swift */,
+				3191A97D1EB74F9300A029E7 /* IMPSurfaceMatrix.swift */,
 				31B0172D1EA0E2300031D35C /* Splines */,
 			);
 			path = Math;
@@ -792,6 +792,7 @@
 				31DEA5E41EB0DD4F00B73172 /* Bezier.swift in Sources */,
 				313DDA461E9644F4000D2C1F /* IMPPatch.swift in Sources */,
 				31F3CD2D1E8E70C90055994F /* IMPAVSession.swift in Sources */,
+				3191A97E1EB74F9300A029E7 /* IMPSurfaceMatrix.swift in Sources */,
 				314A8A021E8E72150012E9F8 /* IMPFileManager.swift in Sources */,
 				31F3CC751E8E70A20055994F /* ViewController.swift in Sources */,
 				31F3CD471E8E70C90055994F /* IMPMedian.swift in Sources */,
@@ -832,7 +833,6 @@
 				31F3CD4C1E8E70C90055994F /* IMPMTLTexture.swift in Sources */,
 				31F3CD0F1E8E70C90055994F /* IMPFilter.swift in Sources */,
 				31F3CD191E8E70C90055994F /* IMPContext.swift in Sources */,
-				31B0172A1EA0E1A90031D35C /* IMPMatrix3D.swift in Sources */,
 				31F3CD0D1E8E70C90055994F /* IMPTriangle.swift in Sources */,
 				31F3CD2F1E8E70C90055994F /* IMPPosterize.swift in Sources */,
 				31F3CD241E8E70C90055994F /* IMPHoughSpace.swift in Sources */,

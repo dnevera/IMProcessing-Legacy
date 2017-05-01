@@ -164,6 +164,7 @@ extension IMPCIFilter {
         guard let format =  source?.texture?.pixelFormat else { return IMPImage(context: context) }
         
         destination.texture = destination.texture?.reuse(size: size) ?? context.make2DTexture(size: size, pixelFormat: format)
+        //destination.texture = context.make2DTexture(size: size, pixelFormat: format)
         
         if let texture = destination.texture {
             process(to: texture, command: command)
@@ -177,7 +178,6 @@ extension IMPCIFilter {
         guard let sourceTexture = source?.texture else { return }
         
         let size =  destinationTexture.cgsize
-
         
         var threadgroups:MTLSize
         

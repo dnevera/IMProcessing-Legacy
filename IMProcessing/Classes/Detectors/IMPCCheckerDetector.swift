@@ -11,7 +11,7 @@ import Metal
 
 public class IMPCCheckerDetector: IMPDetector {
     
-    public var radius  = 4 {
+    public var radius  = 1 {
         didSet{
             opening.dimensions = (radius,radius)
         }
@@ -41,7 +41,7 @@ public class IMPCCheckerDetector: IMPDetector {
         extendName(suffix: "PatchesDetector")
         
         harrisCornerDetector.pointsMax = 2048
-        radius = 1
+        radius = 2
         
         super.configure()
         

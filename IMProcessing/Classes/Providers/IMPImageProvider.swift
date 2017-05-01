@@ -522,9 +522,6 @@ public extension IMPImageProvider {
                 pixelFormat: IMProcessing.colors.pixelFormat,
                 width: width, height: height, mipmapped: false)
             
-            if texture != nil {
-                //texture?.setPurgeableState(.volatile)
-            }
             
             if storageMode == .shared {
                 #if os(iOS)
@@ -539,10 +536,18 @@ public extension IMPImageProvider {
                 descriptor.storageMode = .private
                 descriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
             }
+            
+            if texture != nil {
+                texture?.setPurgeableState(.volatile)
+            }
 
             return self.context.device.makeTexture(descriptor: descriptor)
         }
         
+        if texture != nil {
+            texture?.setPurgeableState(.keepCurrent)
+        }
+
         return texture
     }
     

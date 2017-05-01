@@ -11,6 +11,28 @@ import CoreGraphics
 import SnapKit
 
 
+extension NSImage {
+    @discardableResult
+    func saveAsPNG(url: URL) -> Bool {
+        guard let tiffData = self.tiffRepresentation else {
+            print("failed to get tiffRepresentation. url: \(url)")
+            return false
+        }
+        let imageRep = NSBitmapImageRep(data: tiffData)
+        guard let imageData = imageRep?.representation(using: .PNG, properties: [:]) else {
+            print("failed to get PNG representation. url: \(url)")
+            return false
+        }
+        do {
+            try imageData.write(to: url)
+            return true
+        } catch {
+            print("failed to write to disk. url: \(url)")
+            return false
+        }
+    }
+}
+
 class ViewController: NSViewController {
 
     lazy var canvas:IMPCanvasView = IMPCanvasView(frame:self.view.bounds)
@@ -20,6 +42,9 @@ class ViewController: NSViewController {
     lazy var test:IMPFilter = {
         let  f = IMPFilter(context:self.context)
         f.extendName(suffix: "ViewController test filter")
+        f.addObserver(newSource: { (source) in
+            NSLog("Test filter source... updated")
+        })
         return f
     } ()
     
@@ -28,7 +53,9 @@ class ViewController: NSViewController {
         let f = IMPFilter(context: self.context)
         f.extendName(suffix: "ViewController filter")
         
-        f => self.test --> self.detector --> { (destination) in
+        f => self.test
+        
+        f => self.detector --> { (destination) in
             guard let size = destination.size else { return }
             DispatchQueue.main.async {
                 self.canvas.imageSize = size
@@ -46,6 +73,9 @@ class ViewController: NSViewController {
     lazy var detector:IMPCCheckerDetector = {
         let f = IMPCCheckerDetector(context: self.context)
         f.maxSize = 800
+        f.addObserver(newSource: { (source) in
+            NSLog("Detector filter source... updated")
+        })
         return f
     }()
 
@@ -56,6 +86,8 @@ class ViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        
+        //imageView.isPaused = true
         
         //gridView.wantsLayer = true
         //gridView.frame = view.bounds
@@ -102,6 +134,7 @@ class ViewController: NSViewController {
         IMPFileManager.sharedInstance.add { (file, type) in
             self.currentImage = IMPImage(context: self.context, path: file, maxSize: 2000)
             NSLog("open file \(file)")
+            //self.filter.flush()
             self.filter.source = self.currentImage
         }
         
