@@ -8,9 +8,20 @@ var str = "Hello, playground"
 
 //: [Next](@next)
 
+
 var f:[Float] = [0,0,0,10,0,0,0,0,0]
 var b:[Float] = [0,1,2,3,4,5,6,7,8]
 var o = [Float](repeating:0, count:8)
+
+var s = stride(from: Float(0), through: 1, by: Float(1)/Float(f.count-1))
+
+var i = 0
+for x in s {
+    print("x[\(i)]  = \(x)")
+    i += 1
+}
+
+
 vDSP_vlint(f, b, 1, &o, 1, vDSP_Length(f.count), vDSP_Length(b.count))
 print(o)
 

@@ -6,8 +6,17 @@
 //  Copyright © 2017 Dehancer. All rights reserved.
 //
 
+//
+//  IMPSurfaceMatrix.swift
+//  SurfaceMatrixTest
+//
+//  Created by Denis Svinarchuk on 02/05/2017.
+//  Copyright © 2017 Dehancer. All rights reserved.
+//
+
 import Foundation
 import Surge
+import simd
 
 public struct IMPSurfaceMatrix{
     
@@ -37,7 +46,20 @@ public struct IMPSurfaceMatrix{
         }
     }
     
-    public init(controls:[float3], xMin:Float = 0, xMax:Float=255, yMin:Float = 0, yMax:Float=255){
+    public var interpolator:((_ controls:[Float])->IMPInterpolator)? = nil
+    
+    private func interpolate(controls:[Float]) -> IMPInterpolator {
+        return IMPLinearInterpolator(controls: controls)
+    }
+    
+    public init(controls:[float3],
+                xMin:Float = 0,
+                xMax:Float=255,
+                yMin:Float = 0,
+                yMax:Float=255,
+                interpolator:((_ controls:[Float])->IMPInterpolator)?=nil){
+        
+        self.interpolator = interpolator
         
         let xSorted =  controls.sorted{ return $0.x<$1.x }
         let ySorted =  controls.sorted{ return $0.y<$1.y }
@@ -135,9 +157,8 @@ public struct IMPSurfaceMatrix{
     
     
     func approx(vector:[Float], resetZero:Bool ) -> [Float] {
-        var result = [Float]()
-        result.append(contentsOf: vector)
-        var indices = [Int]()
+        var result = [Float](vector)
+        var controls = [Float]()
         
         if result.first!.isNaN {
             result[0] = 0
@@ -148,29 +169,17 @@ public struct IMPSurfaceMatrix{
         }
         
         for i in 0..<result.count{
-            if result[i].isFinite {
-                indices.append(i)
+            let r = result[i]
+            if r.isFinite {
+                controls.append(r)
             }
         }
         
-        for i in 0..<indices.count-1 {
-            let k = indices[i]
-            let n = indices[i+1]
-            let v0 = result[k]
-            let v1 = result[n]
-            let count = n+1
-            for j in k..<count{
-                let t = Float(j-k)/Float(n-k)
-                result[j] = v0.lerp(final: v1, t: t)
-            }
-        }
+        guard let interp = interpolator==nil ? interpolate(controls: controls) : interpolator?(controls) else { return [] }
         
-        if resetZero {
-            for i in 0..<result.count{
-                if result[i]==0{
-                    result[i] = Float.nan
-                }
-            }
+        for i in 0..<result.count {
+            let t = Float(i)/Float(result.count)
+            result[i] = interp[t]
         }
         
         return result
@@ -178,75 +187,3 @@ public struct IMPSurfaceMatrix{
     
 }
 
-//public struct IMPMatrix3D{
-//    
-//    public var columns:[Float]
-//    public var rows:   [(y:Float,z:[Float])]
-//    
-//    public func column(index:Int) -> [Float] {
-//        var c = [Float]()
-//        for i in rows {
-//            c.append(i.z[index])
-//        }
-//        return c
-//    }
-//    
-//    public func row(index:Int) -> [Float] {
-//        return rows[index].z
-//    }
-//    
-//    public init(columns:[Float], rows:[(y:Float,z:[Float])]){
-//        self.columns = columns
-//        self.rows = rows
-//    }
-//    
-//    public init(xy points:[[Float]], zMatrix:[Float]){
-//        if points.count != 2 {
-//            fatalError("IMPMatrix3D xy must have 2 dimension Float array with X-points and Y-points lists...")
-//        }
-//        columns = points[0]
-//        rows = [(y:Float,z:[Float])]()
-//        var yi = 0
-//        for y in points[1] {
-//            var row = (y,z:[Float]())
-//            for _ in 0 ..< columns.count {
-//                row.z.append(zMatrix[yi])
-//                yi += 1
-//            }
-//            rows.append(row)
-//        }
-//    }
-//    
-//    public var description:String{
-//        get{
-//            var s = "["
-//            var i=0
-//            for yi in 0 ..< rows.count {
-//                let row = rows[yi]
-//                var ci = 0
-//                for obj in row.z {
-//                    if i>0 {
-//                        s += ""
-//                    }
-//                    i += 1
-//                    s += String(format: "%2.4f", obj)
-//                    if i<rows.count*columns.count {
-//                        if ci<self.columns.count-1 {
-//                            s += ","
-//                        }
-//                        else{
-//                            s += ";"
-//                        }
-//                    }
-//                    ci += 1
-//                }
-//                if (yi<rows.count-1){
-//                    s += "\n"
-//                }
-//            }
-//            s += "]"
-//            return s
-//        }
-//    }
-//}
-//

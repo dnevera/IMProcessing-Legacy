@@ -1,0 +1,230 @@
+//
+//  TPSpline.swift
+//  Pods
+//
+//  Created by Denis Svinarchuk on 02/05/2017.
+//
+//
+
+import Foundation
+import simd
+import Accelerate
+import Surge
+typealias LAInt = __CLPK_integer // = Int32
+
+//
+// Sources : https://www.ludd.ltu.se/~torger/dcamprof.html
+//
+
+// MARK: - 3D surface spline: Thin Plate
+public extension Collection where Iterator.Element == [Float] {
+    
+    public func tpSpline(controls controlPoints:[float3], scale:Float=0)  -> [Float]{
+        
+        if self.count != 2 {
+            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
+        }
+        
+        let tps = TPSpline(controls: controlPoints)
+        var curve   = [Float]()
+        let xPoints = self[0 as! Self.Index]
+        let yPoints = self[count - 1 as! Self.Index]
+        
+        for y in yPoints {
+            for x in xPoints {
+                curve.append(tps[float2(x,y)])
+            }
+        }
+        
+        if scale>0 {
+            var max:Float = 0
+            vDSP_maxv(curve, 1, &max, vDSP_Length(curve.count))
+            max = scale/max
+            vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
+        }
+
+        return curve
+    }
+}
+
+public protocol IMP3DInterpolator{
+    
+    var controls:[float3] {get}
+    var interval:Float {get}
+    
+    init(controls points:[float3])
+    func value(at t:float2) -> Float
+}
+
+
+public extension IMP3DInterpolator {
+    
+    public subscript(_ t: float2) -> Float {
+        return value(at: t)
+    }
+    
+    public func bounds(at t:Float) -> Int {
+        return bounds(at: Int(t/interval))
+    }
+    
+    public func bounds(at t:Int) -> Int {
+        return t <= 0 ? 0 :  t >= (controls.count-1) ? controls.count - 1 : t
+    }
+}
+
+public class TPSpline:IMP3DInterpolator{
+    
+    public var regularization:Float = 0
+    public var controls: [float3]
+    
+    public required init(controls points: [float3]) {
+        controls = points
+        alpha = prepareK()
+        prepareP()
+        prepareO()
+        prepareV()
+        solve()
+    }
+    
+    public var interval: Float {
+        return 1/Float(controls.count)
+    }
+    
+    public func value(at t: float2) -> Float {
+        let p = controls.count
+        var h = W[p+0, 0] + W[p+1, 0]*t.x + V[p+2, 0]*t.y
+        var pt_i = float3()
+        let pt_cur = float3(t.x,t.y,0)
+        for i in 0..<p {
+            pt_i = controls[i]
+            pt_i[2] = 0
+            h += W[i,0] * tps_base_func(difflen(pt_i, pt_cur))
+        }
+        
+        return h
+    }
+    
+    var alpha:Float = 0
+    
+    func difflen(_ i:float3, _ j:float3) -> Float {
+        return distance(i, j)
+    }
+    
+    func prepareK() -> Float {
+        let p = controls.count
+        
+        // Fill K (p x p, upper left of L) and calculate
+        // mean edge length from control points
+        //
+        // K is symmetrical so we really have to
+        // calculate only about half of the coefficients.
+        var a:Float = 0
+        
+        for i in 0..<p {
+            for j in i+1..<p {
+                var pt_i = controls[i]
+                var pt_j = controls[j]
+                pt_i[2] = 0
+                pt_j[2] = 0
+                let elen = difflen(pt_i, pt_j)
+                let u = tps_base_func(elen)
+                L[i,j] = u
+                L[j,i] = u
+                K[i,j] = u
+                K[j,i] = u
+                
+                a += elen * 2 // same for upper & lower tri
+            }
+        }
+        a /= Float(p*p)
+        
+        return a
+    }
+    
+    func prepareP()  {
+        let p = controls.count
+        
+        // Fill the rest of L
+        for i in 0..<p {
+            // diagonal: reqularization parameters (lambda * a^2)
+            let r = regularization * (alpha*alpha)
+            L[i,i] = r
+            K[i,i] = r
+            
+            // P (p x 3, upper right)
+            
+            L[i, p+0] = 1
+            L[i, p+1] = controls[i][0]
+            L[i, p+2] = controls[i][1]
+            
+            // P transposed (3 x p, bottom left)
+            L[p+0, i] = 1
+            L[p+1, i] = controls[i][0]
+            L[p+2, i] = controls[i][1]
+        }
+    }
+    
+    func prepareO() {
+        let p = controls.count
+        
+        // O (3 x 3, lower right)
+        for i in p..<p+3 {
+            for j in p..<p+3 {
+                L[i,j] = 0
+            }
+        }
+    }
+    
+    func prepareV() {
+        let p = controls.count
+        // Fill the right hand vector V
+        for i in 0..<p {
+            V[i,0] = controls[i][2]
+        }
+    }
+    
+    func solve() {
+        let invL = inv(L)
+        W = invL * V
+//        
+//  TODO: compare performance
+//
+//        let p = controls.count
+//        var A = [Float]()
+//        
+//        for i in 0..<L[column:0].count {
+//            for j in 0..<L[row:0].count {
+//                A.append(L[i,j])
+//            }
+//        }
+//        
+//        var B = [Float]()
+//        for i in 0..<V[column:0].count {
+//            B.append(V[i,0])
+//        }
+//        
+//        let equations = 3
+//        
+//        var numberOfEquations = LAInt(p+3)
+//        var columnsInA        = LAInt(p+3)
+//        var elementsInB       = LAInt(p+3)
+//        var bSolutionCount    = LAInt(1)
+//        
+//        var outputOk: LAInt = 0
+//        var pivot = [LAInt](repeating: 0, count: equations)
+//        
+//        sgesv_( &numberOfEquations, &bSolutionCount, &A, &columnsInA, &pivot, &B, &elementsInB, &outputOk)
+    }
+    
+    lazy var L:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:self.controls.count+3, repeatedValue:0)
+    lazy var V:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:1, repeatedValue:0)
+    lazy var W:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:1, repeatedValue:0)
+    lazy var K:Matrix<Float> = Matrix<Float>(rows:self.controls.count, columns:self.controls.count, repeatedValue:0)
+    
+    
+    func tps_base_func(_ r:Float) -> Float
+    {
+        if ( r == 0.0 ) { return 0.0 }
+        else {return r*r * log(r) }
+    }
+}
