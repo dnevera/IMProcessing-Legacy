@@ -221,6 +221,7 @@ public extension Collection where Iterator.Element == Float {
 }
 
 
+// MARK: - 3D Catmull-Rom piecewise surface spline
 public extension Collection where Iterator.Element == [Float] {
     
     public func cubicSpline(surface controlPoints:IMPSurfaceMatrix, scale:Float=0)  -> [Float]{
@@ -248,7 +249,7 @@ public extension Collection where Iterator.Element == [Float] {
                 points.append(float2(y,z))
             }
             
-            let spline = yPoints.catmullRomSpline(controls: points, scale: 0) as [Float]
+            let spline = yPoints.cubicSpline(controls: points, scale: 0) as [Float]
             ysplines.append(contentsOf: spline)
         }
         
@@ -280,4 +281,6 @@ public extension Collection where Iterator.Element == [Float] {
         return curve
     }
 }
+
+
 
