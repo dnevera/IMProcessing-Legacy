@@ -8,6 +8,7 @@
 
 import Foundation
 import simd
+import IMProcessing
 
 
 //
@@ -21,15 +22,16 @@ public extension float3{
     //
 
     public func xyz2luv() ->float3 {
-        let x = self[0], y = self[1], z = self[2]
-        // u' v' and L*
-        var up = 4*x / (x + 15*y + 3*z)
-        var vp = 9*y / (x + 15*y + 3*z)
-        let L = 116*lab_ft_forward(y) - 16
-        if (!up.isFinite) { up = 0 }
-        if (!vp.isFinite) { vp = 0 }
-        
-        return float3(L*0.01, up, vp)
+//        let x = self[0], y = self[1], z = self[2]
+//        // u' v' and L*
+//        var up = 4*x / (x + 15*y + 3*z)
+//        var vp = 9*y / (x + 15*y + 3*z)
+//        let L = 116*lab_ft_forward(y) - 16
+//        if (!up.isFinite) { up = 0 }
+//        if (!vp.isFinite) { vp = 0 }
+//        
+//        return float3(L*0.01, up, vp)
+        return  IMPBridg.xyz_2_luv(self)
     }
 
     public func xyz2rgb() -> float3 {

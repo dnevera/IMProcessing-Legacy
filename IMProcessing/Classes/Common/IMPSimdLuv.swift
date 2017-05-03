@@ -8,6 +8,7 @@
 
 import Foundation
 import simd
+import IMProcessing
 
 //
 // luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
@@ -24,15 +25,16 @@ public extension float3{
     
     public func luv2xyz() -> float3
     {
-        let L = self[0]*100.0, up = self[1], vp = self[2]
-        var y = (L + 16)/116
-        y = lab_ft_inverse(y)
-        var x = y*9*up / (4*vp)
-        var z = y * (12 - 3*up - 20*vp) / (4*vp)
-        if (!x.isFinite) {x = 0}
-        if (!z.isFinite) {z = 0}
-        
-        return float3(x, y, z)
+//        let L = self[0]*100.0, up = self[1], vp = self[2]
+//        var y = (L + 16)/116
+//        y = lab_ft_inverse(y)
+//        var x = y*9*up / (4*vp)
+//        var z = y * (12 - 3*up - 20*vp) / (4*vp)
+//        if (!x.isFinite) {x = 0}
+//        if (!z.isFinite) {z = 0}
+//        
+//        return float3(x, y, z)
+        return IMPBridg.luv_2_xyz(self) 
     }
     
     public func luv2rgb() -> float3 {

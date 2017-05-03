@@ -41,6 +41,14 @@ extern "C" {
 
 #endif
     
+    typedef enum:int {
+        rgbSpace = 0,
+        labSpace = 1,
+        xyzSpace = 2,
+        luvSpace = 3,
+        hsvSpace = 4
+    } IMPColorSpaceEnum;
+
     typedef struct {
         float2 position;
         float2 slope;
@@ -128,6 +136,7 @@ extern "C" {
         IMPFilmGrainColor   amount;
         IMPBlending         blending;
     } IMPFilmGrainAdjustment;
+    
     
 #ifdef __cplusplus
 }
