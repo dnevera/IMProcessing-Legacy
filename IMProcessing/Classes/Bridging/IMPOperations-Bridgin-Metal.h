@@ -11,5 +11,4 @@
 
 #include "IMPConstants-Bridging-Metal.h"
 
-
 #endif /* IMPOperations_Bridgin_Metal_h */

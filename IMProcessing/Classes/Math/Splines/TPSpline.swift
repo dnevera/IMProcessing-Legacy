@@ -16,16 +16,16 @@ typealias LAInt = __CLPK_integer // = Int32
 // Sources : https://www.ludd.ltu.se/~torger/dcamprof.html
 //
 
-// MARK: - 3D surface spline: Thin Plate
+// MARK: - 3D Thin Plate surface spline
 public extension Collection where Iterator.Element == [Float] {
     
-    public func tpSpline(controls controlPoints:[float3], scale:Float=0)  -> [Float]{
+    public func tpSpline(controls controlPoints:[float3], scale:Float=0, regularization:Float = 0)  -> [Float]{
         
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
         }
         
-        let tps = TPSpline(controls: controlPoints)
+        let tps = TPSpline(controls: controlPoints, regularization: regularization)
         var curve   = [Float]()
         let xPoints = self[0 as! Self.Index]
         let yPoints = self[count - 1 as! Self.Index]
@@ -73,13 +73,27 @@ public extension IMP3DInterpolator {
 }
 
 public class TPSpline:IMP3DInterpolator{
+  
+    public var alpha:Float {
+        return _alpha
+    }
     
     public var regularization:Float = 0
     public var controls: [float3]
     
+    public init(controls points: [float3], regularization lambda:Float) {
+        controls = points
+        regularization = lambda
+        prepare()
+    }
+    
     public required init(controls points: [float3]) {
         controls = points
-        alpha = prepareK()
+        prepare()
+    }
+    
+    private func prepare() {
+        _alpha = prepareK()
         prepareP()
         prepareO()
         prepareV()
@@ -98,19 +112,19 @@ public class TPSpline:IMP3DInterpolator{
         for i in 0..<p {
             pt_i = controls[i]
             pt_i[2] = 0
-            h += W[i,0] * tps_base_func(difflen(pt_i, pt_cur))
+            h += W[i,0] * TPSpline.baseFunction(difflen(pt_i, pt_cur))
         }
         
         return h
     }
     
-    var alpha:Float = 0
+    private var _alpha:Float = 0
     
-    func difflen(_ i:float3, _ j:float3) -> Float {
+    private func difflen(_ i:float3, _ j:float3) -> Float {
         return distance(i, j)
     }
     
-    func prepareK() -> Float {
+    private func prepareK() -> Float {
         let p = controls.count
         
         // Fill K (p x p, upper left of L) and calculate
@@ -127,7 +141,7 @@ public class TPSpline:IMP3DInterpolator{
                 pt_i[2] = 0
                 pt_j[2] = 0
                 let elen = difflen(pt_i, pt_j)
-                let u = tps_base_func(elen)
+                let u = TPSpline.baseFunction(elen)
                 L[i,j] = u
                 L[j,i] = u
                 K[i,j] = u
@@ -141,7 +155,7 @@ public class TPSpline:IMP3DInterpolator{
         return a
     }
     
-    func prepareP()  {
+    private func prepareP()  {
         let p = controls.count
         
         // Fill the rest of L
@@ -164,7 +178,7 @@ public class TPSpline:IMP3DInterpolator{
         }
     }
     
-    func prepareO() {
+    private func prepareO() {
         let p = controls.count
         
         // O (3 x 3, lower right)
@@ -175,7 +189,7 @@ public class TPSpline:IMP3DInterpolator{
         }
     }
     
-    func prepareV() {
+    private func prepareV() {
         let p = controls.count
         // Fill the right hand vector V
         for i in 0..<p {
@@ -183,7 +197,7 @@ public class TPSpline:IMP3DInterpolator{
         }
     }
     
-    func solve() {
+    private func solve() {
         let invL = inv(L)
         W = invL * V
 //        
@@ -221,10 +235,26 @@ public class TPSpline:IMP3DInterpolator{
     lazy var W:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:1, repeatedValue:0)
     lazy var K:Matrix<Float> = Matrix<Float>(rows:self.controls.count, columns:self.controls.count, repeatedValue:0)
     
-    
-    func tps_base_func(_ r:Float) -> Float
+    public static func baseFunction(_ r:Float) -> Float
     {
         if ( r == 0.0 ) { return 0.0 }
         else {return r*r * log(r) }
+    }
+    
+    public var bendingEnergy: Float {
+        
+        let p = controls.count
+        var w = Matrix<Float>(rows:p,columns:1,repeatedValue:0)
+        
+        for i in 0..<p {
+            w[i,0] = W[i,0]
+        }
+        var w_trans = transpose(w)
+
+        let prod = w_trans * K
+
+        let be = prod * w
+        
+        return be[0,0]
     }
 }

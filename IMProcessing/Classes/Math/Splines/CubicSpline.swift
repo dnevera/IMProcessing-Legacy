@@ -221,7 +221,7 @@ public extension Collection where Iterator.Element == Float {
 }
 
 
-// MARK: - 3D Catmull-Rom piecewise surface spline
+// MARK: - 3D Cubic piecewise surface spline
 public extension Collection where Iterator.Element == [Float] {
     
     public func cubicSpline(surface controlPoints:IMPSurfaceMatrix, scale:Float=0)  -> [Float]{

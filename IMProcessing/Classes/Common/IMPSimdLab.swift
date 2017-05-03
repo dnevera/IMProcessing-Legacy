@@ -7,15 +7,38 @@
 //
 
 import Foundation
+import simd
+
+//
+// luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
+//
+
+public func lab_ft_forward(_ t:Float) -> Float
+{
+    if (t >= 8.85645167903563082e-3) {
+        return pow(t, 1.0/3.0)
+    } else {
+        return t * (841.0/108.0) + 4.0/29.0
+    }
+}
+
+public func lab_ft_inverse(_ t:Float) -> Float
+{
+    if (t >= 0.206896551724137931) {
+        return t*t*t
+    } else {
+        return 108.0 / 841.0 * (t - 4.0/29.0)
+    }
+}
+
+
+//
+// LAB -> RGB, XYZ, LCH, LUV, HSV
+//
 
 public extension float3{
     
-    public func rgb2lab() -> float3 {
-        let xyz = rgb2xyz()
-        return  xyz.xyz2lab()
-    }
-    
-    public func lab2rgb() -> float3 {
+      public func lab2rgb() -> float3 {
         let xyz = lab2xyz()
         return  xyz.xyz2rgb()
     }
@@ -44,44 +67,26 @@ public extension float3{
         
         return xyz
     }
-        
-    public func xyz2lab() -> float3 {
-        
-        let xyz = self
-        
-        var var_X = xyz.x / kIMP_Cielab_X   //   Observer= 2°, Illuminant= D65
-        var var_Y = xyz.y / kIMP_Cielab_Y
-        var var_Z = xyz.z / kIMP_Cielab_Z
-        
-        let t1:Float = 1.0/3.0
-        let t2:Float = 16.0/116.0
-        
-        if ( var_X > 0.008856 ) {var_X = pow (var_X, t1)}
-        else                    {var_X = ( 7.787 * var_X ) + t2}
-        
-        if ( var_Y > 0.008856 ) {var_Y = pow(var_Y, t1)}
-        else                    {var_Y = ( 7.787 * var_Y ) + t2}
-        
-        if ( var_Z > 0.008856 ) {var_Z = pow(var_Z, t1)}
-        else                    {var_Z = ( 7.787 * var_Z ) + t2}
-        
-        return float3(( 116.0 * var_Y ) - 16.0, 500.0 * ( var_X - var_Y ), 200.0 * ( var_Y - var_Z ))
-    }
-    
+            
     public func lab2lch() -> float3 {
         // let l = x
         // let a = y
         // let b = z, lch = xyz
+
+        var h = atan2(z, y)
+        if h > 0  { h = ( h / Float.pi ) * 180 }
+        else      { h = 360 - ( abs( h ) / Float.pi ) * 180}
+
         let c = sqrt(y * y + z * z)
-        let h = atan2(z, y) / Float.pi * 180
+
         return float3(x, c, h)
     }
     
-    public func lch2lab() -> float3 {
-        // let l = x
-        // let c = y
-        // let h = z
-        let h = z * Float.pi / 180
-        return float3(x, cos(h) * y, sin(h) * y)
+    public func lab2luv() -> float3 {
+        return lab2xyz().xyz2luv()
+    }
+
+    public func lab2hsv() -> float3 {
+        return lab2rgb().rgb2hsv()
     }
 }

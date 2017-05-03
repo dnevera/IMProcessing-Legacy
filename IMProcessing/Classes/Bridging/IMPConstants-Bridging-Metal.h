@@ -61,6 +61,8 @@ static constant float3 kIMP_Y_YUV_factor = {0.2125, 0.7154, 0.0721};
 
 #define  kIMP_Color_Ramps  6
 
+static constant float4 kIMP_HSV_K0      = {0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0};
+static constant float4 kIMP_HSV_K1      = {0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0};
 static constant float4 kIMP_Reds        = {315.0, 345.0, 15.0,   45.0};
 static constant float4 kIMP_Yellows     = { 15.0,  45.0, 75.0,  105.0};
 static constant float4 kIMP_Greens      = { 75.0, 105.0, 135.0, 165.0};
