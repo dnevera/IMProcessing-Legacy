@@ -24,7 +24,7 @@ namespace IMProcessing
     //
     // luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
     //
-    static inline double lab_ft_forward(double t)
+    static inline float lab_ft_forward(float t)
     {
         if (t >= 8.85645167903563082e-3) {
             return pow(t, 1.0/3.0);
@@ -33,7 +33,7 @@ namespace IMProcessing
         }
     }
     
-    static inline double lab_ft_inverse(double t)
+    static inline float lab_ft_inverse(float t)
     {
         if (t >= 0.206896551724137931) {
             return t*t*t;
@@ -44,32 +44,32 @@ namespace IMProcessing
 
     inline float3 xyz_2_lut(float3 xyz)
     {
-        double x = xyz[0], y = xyz[1], z = xyz[2];
+        float x = xyz[0], y = xyz[1], z = xyz[2];
         // u' v' and L*
-        double up = 4*x / (x + 15*y + 3*z);
-        double vp = 9*y / (x + 15*y + 3*z);
-        double L = 116*lab_ft_forward(y) - 16;
+        float up = 4*x / (x + 15*y + 3*z);
+        float vp = 9*y / (x + 15*y + 3*z);
+        float L = 116*lab_ft_forward(y) - 16;
         if (!isfinite(up)) up = 0;
         if (!isfinite(vp)) vp = 0;
         
-        return (float3){{ L*0.01, up, vp }};
+        return float3( L*0.01, up, vp );
     }
     
-    inline lut_2_xyz(float3 lutspace)
+    inline float3 lut_2_xyz(float3 lutspace)
     {
-        double L = lutspace[0]*100.0, up = lutspace[1], vp = lutspace[2];
-        double y = (L + 16)/116;
+        float L = lutspace[0]*100.0, up = lutspace[1], vp = lutspace[2];
+        float y = (L + 16)/116;
         y = lab_ft_inverse(y);
-        double x = y*9*up / (4*vp);
-        double z = y * (12 - 3*up - 20*vp) / (4*vp);
+        float x = y*9*up / (4*vp);
+        float z = y * (12 - 3*up - 20*vp) / (4*vp);
         if (!isfinite(x)) x = 0;
         if (!isfinite(z)) z = 0;
         
-        return (float3){{ x, y, z }};
+        return float3( x, y, z );
     }
     
 
-    inline  float rgb_2_L(float3 color)
+    inline float rgb_2_L(float3 color)
     {
         float fmin = min_component(color); //Min. value of RGB
         float fmax = max_component(color); //Max. value of RGB
