@@ -14,12 +14,18 @@ import simd
 extension String {
     
     func isFloat(_ range:float2) -> Bool {
-        if let floatValue = Float(self) {
+    
+        Swift.print("range = \(range)")
+        
+        if let floatValue = Float(self){
             if floatValue.isFinite {
                 if floatValue >= range.x && floatValue <= range.y {
                     return true
                 }
             }
+        }
+        else if self == "-" {
+            return true
         }
         return false
     }
@@ -187,12 +193,14 @@ class ViewController: NSViewController {
     ]
     
     func updateFormaters(sources:[NSTextField], space:IMPColorSpace) {
-        let formatter = FloatFormatter()
-        formatter.formatterBehavior = .behavior10_4
-        formatter.numberStyle = .decimal
-        formatter.decimalSeparator = "."
         
         for (i,f) in sources.enumerated() {
+            let formatter = FloatFormatter()
+            
+            formatter.formatterBehavior = .behavior10_4
+            formatter.numberStyle = .decimal
+            formatter.decimalSeparator = "."
+            
             formatter.range = space.channelRanges[i]
             f.formatter = formatter
         }

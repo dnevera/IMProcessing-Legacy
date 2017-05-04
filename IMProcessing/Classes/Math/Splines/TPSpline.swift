@@ -74,6 +74,10 @@ public extension IMP3DInterpolator {
 
 public class TPSpline:IMP3DInterpolator{
   
+    public var weights:Matrix<Float> {
+        return V
+    }
+
     public var alpha:Float {
         return _alpha
     }
@@ -106,13 +110,13 @@ public class TPSpline:IMP3DInterpolator{
     
     public func value(at t: float2) -> Float {
         let p = controls.count
-        var h = W[p+0, 0] + W[p+1, 0]*t.x + V[p+2, 0]*t.y
+        var h = V[p+0, 0] + V[p+1, 0]*t.x + V[p+2, 0]*t.y
         var pt_i = float3()
         let pt_cur = float3(t.x,t.y,0)
         for i in 0..<p {
             pt_i = controls[i]
             pt_i[2] = 0
-            h += W[i,0] * TPSpline.baseFunction(difflen(pt_i, pt_cur))
+            h += V[i,0] * TPSpline.baseFunction(difflen(pt_i, pt_cur))
         }
         
         return h
@@ -197,42 +201,16 @@ public class TPSpline:IMP3DInterpolator{
         }
     }
     
-    private func solve() {
-        let invL = inv(L)
-        W = invL * V
-//        
-//  TODO: compare performance
-//
-//        let p = controls.count
-//        var A = [Float]()
-//        
-//        for i in 0..<L[column:0].count {
-//            for j in 0..<L[row:0].count {
-//                A.append(L[i,j])
-//            }
-//        }
-//        
-//        var B = [Float]()
-//        for i in 0..<V[column:0].count {
-//            B.append(V[i,0])
-//        }
-//        
-//        let equations = 3
-//        
-//        var numberOfEquations = LAInt(p+3)
-//        var columnsInA        = LAInt(p+3)
-//        var elementsInB       = LAInt(p+3)
-//        var bSolutionCount    = LAInt(1)
-//        
-//        var outputOk: LAInt = 0
-//        var pivot = [LAInt](repeating: 0, count: equations)
-//        
-//        sgesv_( &numberOfEquations, &bSolutionCount, &A, &columnsInA, &pivot, &B, &elementsInB, &outputOk)
+    private func solve()  {
+        do {
+            _ = try Surge.solve(a: L, b: &V)
+        } catch let error {
+            NSLog("IMPTSpline error: \(error)")
+        }
     }
     
     lazy var L:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:self.controls.count+3, repeatedValue:0)
     lazy var V:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:1, repeatedValue:0)
-    lazy var W:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:1, repeatedValue:0)
     lazy var K:Matrix<Float> = Matrix<Float>(rows:self.controls.count, columns:self.controls.count, repeatedValue:0)
     
     public static func baseFunction(_ r:Float) -> Float
@@ -247,7 +225,7 @@ public class TPSpline:IMP3DInterpolator{
         var w = Matrix<Float>(rows:p,columns:1,repeatedValue:0)
         
         for i in 0..<p {
-            w[i,0] = W[i,0]
+            w[i,0] = V[i,0]
         }
         var w_trans = transpose(w)
 

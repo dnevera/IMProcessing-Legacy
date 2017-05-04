@@ -3,7 +3,8 @@ use_frameworks!
 inhibit_all_warnings!
 
 target 'IMPColorSpacesTest' do
-    pod 'Surge', :git => 'https://github.com/dnevera/Surge'
+    #pod 'Surge', :git => 'https://github.com/dnevera/Surge'
+    pod 'Surge', :path => '../../../../Surge'
     pod 'IMProcessing', :path => '../../../'
 end
 

@@ -24,50 +24,6 @@ namespace IMProcessing
     //
     // luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
     //
-//    static inline float lab_ft_forward(float t)
-//    {
-//        if (t >= 8.85645167903563082e-3) {
-//            return pow(t, 1.0/3.0);
-//        } else {
-//            return t * (841.0/108.0) + 4.0/29.0;
-//        }
-//    }
-//    
-//    static inline float lab_ft_inverse(float t)
-//    {
-//        if (t >= 0.206896551724137931) {
-//            return t*t*t;
-//        } else {
-//            return 108.0 / 841.0 * (t - 4.0/29.0);
-//        }
-//    }
-//
-//    inline float3 xyz_2_luv(float3 xyz)
-//    {
-//        float x = xyz[0], y = xyz[1], z = xyz[2];
-//        // u' v' and L*
-//        float up = 4*x / (x + 15*y + 3*z);
-//        float vp = 9*y / (x + 15*y + 3*z);
-//        float L = 116*lab_ft_forward(y) - 16;
-//        if (!isfinite(up)) up = 0;
-//        if (!isfinite(vp)) vp = 0;
-//        
-//        return float3( L*0.01, up, vp );
-//    }
-//    
-//    inline float3 luv_2_xyz(float3 lutspace)
-//    {
-//        float L = lutspace[0]*100.0, up = lutspace[1], vp = lutspace[2];
-//        float y = (L + 16)/116;
-//        y = lab_ft_inverse(y);
-//        float x = y*9*up / (4*vp);
-//        float z = y * (12 - 3*up - 20*vp) / (4*vp);
-//        if (!isfinite(x)) x = 0;
-//        if (!isfinite(z)) z = 0;
-//        
-//        return float3( x, y, z );
-//    }
-//    
 
     inline float rgb_2_L(float3 color)
     {
@@ -76,24 +32,15 @@ namespace IMProcessing
         
         return (fmax + fmin) * 0.5; // Luminance
     }
-    
-    inline float3 rgb_2_HSV(float3 c)
-    {
-        constexpr float4 K = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
-        float4 p = mix(float4(c.bg, K.wz), float4(c.gb, K.xy), step(c.b, c.g));
-        float4 q = mix(float4(p.xyw, c.r), float4(c.r, p.yzx), step(p.x, c.r));
-        
-        float d = q.x - min(q.w, q.y);
-        constexpr float e = 1.0e-10;
-        return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
+
+    inline float3 rgb_2_HSV(float3 c) {
+        return IMPrgb_2_HSV(c);
     }
-    
-    inline float3 HSV_2_rgb(float3 c)
-    {
-        constexpr float4 K = float4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-        float3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-        return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+
+    inline float3 HSV_2_rgb(float3 c) {
+        return IMPHSV_2_rgb(c);
     }
+
     
     inline float3 rgb_2_HSL(float3 color)
     {
@@ -179,27 +126,7 @@ namespace IMProcessing
     //
     inline float3 rgb_2_XYZ(float3 rgb)
     {
-        float r = rgb.r;
-        float g = rgb.g;
-        float b = rgb.b;
-        
-        
-        if ( r > 0.04045 ) r = pow((( r + 0.055) / 1.055 ), 2.4);
-        else               r = r / 12.92;
-        
-        if ( g > 0.04045 ) g = pow((( g + 0.055) / 1.055 ), 2.4);
-        else               g = g / 12.92;;
-        
-        if ( b > 0.04045 ) b = pow((( b + 0.055) / 1.055 ), 2.4);
-        else               b = b / 12.92;
-        
-        float3 xyz;
-        
-        xyz.x = r * 41.24 + g * 35.76 + b * 18.05;
-        xyz.y = r * 21.26 + g * 71.52 + b * 7.22;
-        xyz.z = r * 1.93  + g * 11.92 + b * 95.05;
-        
-        return xyz;
+        return IMPrgb_2_XYZ(rgb);
     }
     
     inline float3 Lab_2_XYZ(float3 lab){
@@ -227,27 +154,7 @@ namespace IMProcessing
     }
     
     inline float3 XYZ_2_rgb (float3 xyz){
-        
-        float var_X = xyz.x / 100.0;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
-        float var_Y = xyz.y / 100.0;       //Y from 0 to 100.000
-        float var_Z = xyz.z / 100.0;       //Z from 0 to 108.883
-        
-        float3 rgb;
-        
-        rgb.r = var_X *  3.2406 + var_Y * -1.5372 + var_Z * -0.4986;
-        rgb.g = var_X * -0.9689 + var_Y *  1.8758 + var_Z *  0.0415;
-        rgb.b = var_X *  0.0557 + var_Y * -0.2040 + var_Z *  1.0570;
-        
-        if ( rgb.r > 0.0031308 ) rgb.r = 1.055 * pow( rgb.r, ( 1.0 / 2.4 ) ) - 0.055;
-        else                     rgb.r = 12.92 * rgb.r;
-        
-        if ( rgb.g > 0.0031308 ) rgb.g = 1.055 * pow( rgb.g, ( 1.0 / 2.4 ) ) - 0.055;
-        else                     rgb.g = 12.92 * rgb.g;
-        
-        if ( rgb.b > 0.0031308 ) rgb.b = 1.055 * pow( rgb.b, ( 1.0 / 2.4 ) ) - 0.055;
-        else                     rgb.b = 12.92 * rgb.b;
-        
-        return rgb;
+        return IMPXYZ_2_rgb(xyz);
     }
     
     inline float3 XYZ_2_Lab(float3 xyz)

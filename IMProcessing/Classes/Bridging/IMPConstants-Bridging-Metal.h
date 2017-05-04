@@ -13,6 +13,12 @@
 
 # include <metal_stdlib>
 using namespace metal;
+
+#define vector_step metal::step
+#define vector_mix  metal::mix
+#define vector_fract metal::fract
+#define vector_clamp metal::clamp
+
 #else
 
 # include <stdlib.h>
