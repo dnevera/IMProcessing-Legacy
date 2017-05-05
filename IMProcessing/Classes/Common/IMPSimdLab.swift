@@ -37,8 +37,8 @@ public func lab_ft_inverse(_ t:Float) -> Float
 //
 
 public extension float3{
-    
-      public func lab2rgb() -> float3 {
+        
+    public func lab2rgb() -> float3 {
         let xyz = lab2xyz()
         return  xyz.xyz2rgb()
     }
@@ -51,14 +51,7 @@ public extension float3{
         // let l = x
         // let a = y
         // let b = z, lch = xyz
-
-        var h = atan2(z, y)
-        if h > 0  { h = ( h / Float.pi ) * 180 }
-        else      { h = 360 - ( abs( h ) / Float.pi ) * 180}
-
-        let c = sqrt(y * y + z * z)
-
-        return float3(x, c, h)
+        return IMPBridge.lab_2_lch(self)
     }
     
     public func lab2luv() -> float3 {
@@ -67,5 +60,13 @@ public extension float3{
 
     public func lab2hsv() -> float3 {
         return lab2rgb().rgb2hsv()
+    }
+    
+    public func lab2hsl() -> float3 {
+        return lab2rgb().rgb2hsl()
+    }
+    
+    public func lab2ycbcrHD() -> float3 {
+        return lab2rgb().rgb2ycbcrHD()
     }
 }

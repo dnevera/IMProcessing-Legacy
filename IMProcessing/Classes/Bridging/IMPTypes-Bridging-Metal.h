@@ -42,12 +42,15 @@ extern "C" {
 #endif
     
     typedef enum:int {
-        rgbSpace = 0,
-        labSpace = 1,
-        xyzSpace = 2,
-        luvSpace = 3,
-        hsvSpace = 4
-    } IMPColorSpaceEnum;
+        IMPRgbSpace = 0,
+        IMPLabSpace = 1,
+        IMPLchSpace = 2,
+        IMPXyzSpace = 3,
+        IMPLuvSpace = 4,
+        IMPHsvSpace = 5,
+        IMPHslSpace = 6,
+        IMPYcbcrHDSpace = 7 // Full-range type
+    } IMPColorSpaceIndex;
 
     typedef struct {
         float2 position;

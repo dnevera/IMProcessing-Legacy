@@ -41,4 +41,29 @@
     return IMPXYZ_2_Lab(xyz);
 }
 
++ (float3) lab_2_lch:(float3)lab {
+    return IMPLab_2_Lch(lab);
+}
+
++ (float3) lch_2_lab:(float3)lch {
+    return IMPLch_2_Lab(lch);
+}
+
++ (float3) rgb_2_hsl:(float3)rgb {
+    return IMPrgb_2_HSL(rgb);
+}
+
++ (float3) hsl_2_rgb:(float3)hsl{
+    return IMPHSL_2_rgb(hsl);
+}
+
++ (float3) rgb_2_ycbcrHD:(float3)rgb{
+    return IMPrgb_2_YCbCrHD(rgb);
+}
+
++ (float3) ycbcrHD_2_rgb:(float3)ycbcr{
+    return IMPYCbCrHD_2_rgb(ycbcr);
+}
+
+
 @end

@@ -24,6 +24,8 @@ using namespace metal;
 # include <stdlib.h>
 # include <simd/simd.h>
 
+# define M_PI_F M_PI
+
 # define constant const
 # define float4 vector_float4
 # define float3 vector_float3

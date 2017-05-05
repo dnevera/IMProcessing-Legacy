@@ -44,5 +44,11 @@ public extension float3{
         return luv2xyz().xyz2hsv()
     }
 
+    public func luv2hsl() -> float3 {
+        return luv2xyz().xyz2hsl()
+    }
+    public func luv2ycbcrHD() -> float3 {
+        return luv2rgb().rgb2ycbcrHD()
+    }
     
 }

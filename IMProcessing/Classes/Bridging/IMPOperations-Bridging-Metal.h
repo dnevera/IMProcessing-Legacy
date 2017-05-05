@@ -11,6 +11,10 @@
 
 #include "IMPConstants-Bridging-Metal.h"
 
+//
+// sources: http://www.easyrgb.com/index.php?X=MATH&H=02#text2
+//
+
 
 //
 // luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
@@ -88,6 +92,94 @@ static inline float3 IMPHSV_2_rgb(float3 c)
     return c.z * vector_mix(K.xxx, vector_clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+//
+// HSL
+//
+static inline float3 IMPrgb_2_HSL(float3 color)
+{
+    float3 hsl; // init to 0 to avoid warnings ? (and reverse if + remove first part)
+    
+#ifdef __METAL_VERSION__
+    float _fmin = min(min(color.x, color.y), color.z);    //Min. value of RGB
+    float _fmax = max(max(color.x, color.y), color.z);    //Max. value of RGB
+#else
+    float _fmin = fmin(fmin(color.x, color.y), color.z);    //Min. value of RGB
+    float _fmax = fmax(fmax(color.x, color.y), color.z);    //Max. value of RGB
+#endif
+    float delta = _fmax - _fmin;             //Delta RGB value
+    
+    hsl.z = vector_clamp((_fmax + _fmin) * 0.5, 0.0, 1.0); // Luminance
+    
+    if (delta == 0.0)   //This is a gray, no chroma...
+    {
+        hsl.x = 0.0;	// Hue
+        hsl.y = 0.0;	// Saturation
+    }
+    else                //Chromatic data...
+    {
+        if (hsl.z < 0.5)
+        hsl.y = delta / (_fmax + _fmin); // Saturation
+        else
+        hsl.y = delta / (2.0 - _fmax - _fmin); // Saturation
+        
+        float deltaR = (((_fmax - color.x) / 6.0) + (delta * 0.5)) / delta;
+        float deltaG = (((_fmax - color.y) / 6.0) + (delta * 0.5)) / delta;
+        float deltaB = (((_fmax - color.z) / 6.0) + (delta * 0.5)) / delta;
+        
+        if (color.x == _fmax )     hsl.x = deltaB - deltaG; // Hue
+        else if (color.y == _fmax) hsl.x = 1.0/3.0 + deltaR - deltaB; // Hue
+        else if (color.z == _fmax) hsl.x = 2.0/3.0 + deltaG - deltaR; // Hue
+        
+        if (hsl.x < 0.0)       hsl.x += 1.0; // Hue
+        else if (hsl.x > 1.0)  hsl.x -= 1.0; // Hue
+    }
+    
+    return hsl;
+}
+
+static inline float hue_2_rgb(float f1, float f2, float hue)
+{
+    if (hue < 0.0)      hue += 1.0;
+    else if (hue > 1.0) hue -= 1.0;
+    
+    float res;
+    
+    if ((6.0 * hue) < 1.0)      res = f1 + (f2 - f1) * 6.0 * hue;
+    else if ((2.0 * hue) < 1.0) res = f2;
+    else if ((3.0 * hue) < 2.0) res = f1 + (f2 - f1) * ((2.0 / 3.0) - hue) * 6.0;
+    else                        res = f1;
+    
+    res = vector_clamp((float3){res,res,res}, (float3){0.0,0.0,0.0}, (float3){1.0,1.0,1.0}).x;
+    
+    return res;
+}
+
+static inline float3 IMPHSL_2_rgb(float3 hsl)
+{
+    float3 rgb;
+    
+    if (hsl.y == 0.0) {
+        rgb = vector_clamp((float3){hsl.z,hsl.z,hsl.z}, (float3){0.0,0.0,0.0}, (float3){1.0,1.0,1.0}); // Luminance
+    }
+    else
+    {
+        float f2;
+        
+        if (hsl.z < 0.5) f2 = hsl.z * (1.0 + hsl.y);
+        else             f2 = (hsl.z + hsl.y) - (hsl.y * hsl.z);
+        
+        float f1 = 2.0 * hsl.z - f2;
+        
+        constexpr float tk = 1.0/3.0;
+        
+        rgb.x = hue_2_rgb(f1, f2, hsl.x + tk);
+        rgb.y = hue_2_rgb(f1, f2, hsl.x);
+        rgb.z = hue_2_rgb(f1, f2, hsl.x - tk);
+    }
+    
+    return rgb;
+}
+
 
 //
 // XYZ
@@ -145,7 +237,6 @@ static inline float3 IMPXYZ_2_rgb (float3 xyz){
 //
 // LAB
 //
-
 static inline float3 IMPLab_2_XYZ(float3 lab){
     
     float3 xyz;
@@ -189,6 +280,85 @@ static inline float3 IMPXYZ_2_Lab(float3 xyz)
     else                    var_Z = ( 7.787 * var_Z ) + t2;
     
     return (float3){( 116.0 * var_Y ) - 16.0, 500.0 * ( var_X - var_Y ), 200.0 * ( var_Y - var_Z )};
+}
+
+//
+// Lch
+//
+static inline float3 IMPLab_2_Lch(float3 xyz) {
+    // let l = x
+    // let a = y
+    // let b = z, lch = xyz
+    
+    float h = atan2(xyz.z, xyz.y);
+    if (h > 0)  { h = ( h / M_PI_F ) * 180; }
+#ifdef __METAL_VERSION__
+    else        { h = 360 - (  abs( h ) / M_PI_F ) * 180; }
+#else
+    else        { h = 360 - ( fabs( h ) / M_PI_F ) * 180; }
+#endif
+    
+    float c = sqrt(xyz.y * xyz.y + xyz.z * xyz.z);
+    
+    return (float3){xyz.x, c, h};
+}
+
+static inline float3 IMPLch_2_Lab(float3 xyz) {
+    // let l = x
+    // let c = y
+    // let h = z
+    float h = xyz.z *  M_PI_F / 180;
+    return (float3){xyz.x, cos(h) * xyz.y, sin(h) * xyz.y};
+}
+
+//
+// YCbCr
+//
+// https://msdn.microsoft.com/en-us/library/ff635643.aspx
+//
+
+#define yCbCrHD_2_rgb_offset ((float3){0,128,128})
+
+// HD matrix YCbCr: 0-255
+#define yCbCrHD_2_rgb_Y  ((float3){ 0.299 * 255,  -0.168935 * 255,  0.499813 * 255})
+#define yCbCrHD_2_rgb_Cb ((float3){ 0.587 * 255,  -0.331665 * 255, -0.418531 * 255})
+#define yCbCrHD_2_rgb_Cr ((float3){ 0.114 * 255,   0.50059 * 255,  -0.081282 * 255})
+
+#define yCbCrHD_2_rgb_YI  ((float3){0.003921568627451,   0.003921555147863,  0.003921638035507})
+#define yCbCrHD_2_rgb_CbI ((float3){-0.0,               -0.001347958833295,  0.006940805571438})
+#define yCbCrHD_2_rgb_CrI ((float3){0.005500096251684,  -0.002801572617586, -0.0})
+
+//#define yCbCrHD_2_rgb_Y  ((float3){ 76.2450,  -43.0784,   127.4523 })
+//#define yCbCrHD_2_rgb_Cb ((float3){ 149.6850, -84.5746,  -106.7254})
+//#define yCbCrHD_2_rgb_Cr ((float3){ 29.0700,   127.6504, -20.7269})
+
+// STD matrix Y:16-235, Cb,Cr:16-240
+//#define yCbCr_2_rgb_Y  ((float3){ 65.481,  128.553, 24.966})
+//#define yCbCr_2_rgb_Cb ((float3){-37.797, -74.203,  112.0 })
+//#define yCbCr_2_rgb_Cr ((float3){ 112.0,  -93.786, -18.214})
+
+// YUV
+//#define yuv_2_rgb_Y ((float3){ ( 0.299),  ( 0.587), ( 0.114) })
+//#define yuv_2_rgb_U ((float3){ (-0.147),  (-0.289), ( 0.436) })
+//#define yuv_2_rgb_V ((float3){ ( 0.615),  (-0.515), (-0.100) })
+
+#define yCbCrHD_M  (float3x3){ yCbCrHD_2_rgb_Y,  yCbCrHD_2_rgb_Cb,  yCbCrHD_2_rgb_Cr }
+#define yCbCrHD_MI (float3x3){ yCbCrHD_2_rgb_YI, yCbCrHD_2_rgb_CbI, yCbCrHD_2_rgb_CrI}
+
+static inline float3 IMPrgb_2_YCbCrHD(float3 rgb){
+#ifdef __METAL_VERSION__
+    return float3(yCbCrHD_M * rgb + yCbCrHD_2_rgb_offset);
+#else
+    return (matrix_multiply(yCbCrHD_M,rgb) + yCbCrHD_2_rgb_offset);
+#endif
+}
+
+static inline float3 IMPYCbCrHD_2_rgb(float3 YCbCr){
+#ifdef __METAL_VERSION__
+    return float3(yCbCrHD_MI * float3(YCbCr - yCbCrHD_2_rgb_offset));
+#else
+    return matrix_multiply(yCbCrHD_MI,(float3)(YCbCr - yCbCrHD_2_rgb_offset));
+#endif
 }
 
 #endif /* IMPOperations_Bridgin_Metal_h */

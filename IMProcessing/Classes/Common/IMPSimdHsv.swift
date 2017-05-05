@@ -19,6 +19,14 @@ public extension float3{
         return IMPBridge.hsv_2_rgb(self)
     }
     
+    public func hsv2hsl() -> float3 {
+        return hsv2rgb().rgb2hsl()
+    }
+    
+    public func hsv2ycbcrHD() -> float3 {
+        return hsv2rgb().rgb2ycbcrHD()
+    }
+    
     public func hsv2lab() -> float3 {
         return hsv2rgb().rgb2lab()
     }

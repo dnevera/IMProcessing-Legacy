@@ -27,6 +27,13 @@ public extension float3{
         return IMPBridge.rgb_2_hsv(self)
     }
     
+    public func rgb2hsl() -> float3 {
+        return IMPBridge.rgb_2_hsl(self)
+    }
+
+    public func rgb2ycbcrHD() -> float3 {
+        return IMPBridge.rgb_2_ycbcrHD(self)
+    }
 
     public func rgb2luv() ->float3 {
         return rgb2xyz().xyz2luv()
