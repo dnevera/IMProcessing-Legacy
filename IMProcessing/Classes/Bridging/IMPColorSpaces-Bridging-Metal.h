@@ -13,7 +13,7 @@
 
 //
 // capces sources: http://www.easyrgb.com/index.php?X=MATH&H=02#text2
-// luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
+// luv sources:    https://www.ludd.ltu.se/~torger/dcamprof.html
 //
 static inline float lab_ft_forward(float t)
 {
