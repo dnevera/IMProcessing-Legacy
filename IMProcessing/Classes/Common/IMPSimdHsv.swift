@@ -16,7 +16,7 @@ import simd
 public extension float3{
         
     public func hsv2rgb() -> float3 {
-        return IMPBridge.hsv_2_rgb(self)
+        return IMPBridge.hsv2rgb(self)
     }
     
     public func hsv2hsl() -> float3 {

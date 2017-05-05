@@ -25,7 +25,7 @@ public extension float3{
     
     public func luv2xyz() -> float3
     {
-        return IMPBridge.luv_2_xyz(self) 
+        return IMPBridge.luv2xyz(self) 
     }
     
     public func luv2rgb() -> float3 {

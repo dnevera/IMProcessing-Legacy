@@ -22,15 +22,15 @@ public extension float3{
     //
 
     public func xyz2luv() ->float3 {
-        return  IMPBridge.xyz_2_luv(self)
+        return  IMPBridge.xyz2luv(self)
     }
 
     public func xyz2rgb() -> float3 {
-        return IMPBridge.xyz_2_rgb(self)
+        return IMPBridge.xyz2rgb(self)
     }
     
     public func xyz2lab() -> float3 {        
-        return IMPBridge.xyz_2_lab(self)
+        return IMPBridge.xyz2lab(self)
         
     }
     

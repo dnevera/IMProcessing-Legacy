@@ -19,7 +19,7 @@ public extension float3{
         // let h = z
         //let h = z * Float.pi / 180
         //return float3(x, cos(h) * y, sin(h) * y)
-        return IMPBridge.lch_2_lab(self)
+        return IMPBridge.lch2lab(self)
     }
     
     public func lch2rgb() -> float3 {

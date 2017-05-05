@@ -44,14 +44,14 @@ public extension float3{
     }
     
     public func lab2xyz() -> float3 {        
-        return IMPBridge.lab_2_xyz(self)
+        return IMPBridge.lab2xyz(self)
     }
             
     public func lab2lch() -> float3 {
         // let l = x
         // let a = y
         // let b = z, lch = xyz
-        return IMPBridge.lab_2_lch(self)
+        return IMPBridge.lab2lch(self)
     }
     
     public func lab2luv() -> float3 {

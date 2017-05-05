@@ -8,6 +8,7 @@
 #include "IMPTypes-Bridging-Metal.h"
 #include "IMPConstants-Bridging-Metal.h"
 #include "IMPOperations-Bridging-Metal.h"
+#include "IMPColorSpaces-Bridging-Metal.h"
 #include "IMPHistogramTypes-Bridging-Metal.h"
 
 #ifndef __METAL_VERSION__

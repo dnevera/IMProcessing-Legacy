@@ -18,7 +18,7 @@ import IMProcessing
 public extension float3{
     
     public func ycbcrHD2rgb() -> float3 {
-        return IMPBridge.ycbcrHD_2_rgb(self)
+        return IMPBridge.ycbcrHD2rgb(self)
     }
     
     public func ycbcrHD2lab() -> float3 {

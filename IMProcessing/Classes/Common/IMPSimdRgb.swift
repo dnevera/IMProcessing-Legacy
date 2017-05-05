@@ -20,19 +20,19 @@ func IMPstep(_ edge:Float, _ x:Float) -> Float {
 public extension float3{
     
     public func rgb2xyz() -> float3 {
-        return IMPBridge.rgb_2_xyz(self)
+        return IMPBridge.rgb2xyz(self)
     }
     
     public func rgb2hsv() -> float3 {
-        return IMPBridge.rgb_2_hsv(self)
+        return IMPBridge.rgb2hsv(self)
     }
     
     public func rgb2hsl() -> float3 {
-        return IMPBridge.rgb_2_hsl(self)
+        return IMPBridge.rgb2hsl(self)
     }
 
     public func rgb2ycbcrHD() -> float3 {
-        return IMPBridge.rgb_2_ycbcrHD(self)
+        return IMPBridge.rgb2ycbcrHD(self)
     }
 
     public func rgb2luv() ->float3 {
