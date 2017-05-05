@@ -10,6 +10,7 @@
 #import <simd/simd.h>
 
 #include "IMPConstants-Bridging-Metal.h"
+#include "IMPTypes-Bridging-Metal.h"
 
 @interface IMPBridge : NSObject
 
@@ -76,5 +77,7 @@
 + (float3) ycbcrHD2hsv:(float3)color;
 + (float3) ycbcrHD2hsl:(float3)color;
 + (float3) ycbcrHD2xyz:(float3)color;
+
++ (float3) convert:(IMPColorSpaceIndex)from to:(IMPColorSpaceIndex)to value:(float3)value;
 
 @end

@@ -75,4 +75,8 @@
 + (float3) ycbcrHD2hsl:(float3)color     { return IMPycbcrHD2hsl(color); }
 + (float3) ycbcrHD2xyz:(float3)color     { return IMPycbcrHD2xyz(color); }
 
++ (float3) convert:(IMPColorSpaceIndex)from to:(IMPColorSpaceIndex)to value:(vector_float3)value {
+    return IMPConvertColor(from, to, value);
+}
+
 @end

@@ -10,6 +10,7 @@
 #define IMPColorSpaces_Bridging_Metal_h
 
 #include "IMPConstants-Bridging-Metal.h"
+#include "IMPTypes-Bridging-Metal.h"
 
 //
 // capces sources: http://www.easyrgb.com/index.php?X=MATH&H=02#text2
@@ -562,5 +563,172 @@ static inline float3 IMPycbcrHD2xyz(float3 color){
 static inline float3 IMPycbcrHD2luv(float3 color){
     return IMPrgb2luv(IMPycbcrHD2rgb(color));
 }
+
+static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIndex to_cs, float3 value) {
+    switch (to_cs) {
+        
+        case IMPRgbSpace:
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return value;
+                case IMPLabSpace:
+                    return IMPlab2rgb(value);
+                case IMPLchSpace:
+                    return IMPlch2rgb(value);
+                case IMPHsvSpace:
+                    return IMPhsv2rgb(value);
+                case IMPHslSpace:
+                    return IMPhsl2rgb(value);
+                case IMPXyzSpace:
+                    return IMPxyz2rgb(value);
+                case IMPLuvSpace:
+                    return IMPluv2rgb(value);
+                case IMPYcbcrHDSpace:
+                    return IMPycbcrHD2rgb(value);
+            }
+            break;
+    case IMPLabSpace:
+        switch (from_cs) {
+        case IMPRgbSpace:
+            return IMPrgb2lab(value);
+        case IMPLabSpace:
+            return value;
+        case IMPLchSpace:
+            return IMPlch2lab(value);
+        case IMPHsvSpace:
+            return IMPhsv2lab(value);
+        case IMPHslSpace:
+            return IMPhsl2lab(value);
+        case IMPXyzSpace:
+            return IMPxyz2lab(value);
+        case IMPLuvSpace:
+            return IMPluv2lab(value);
+        case IMPYcbcrHDSpace:
+            return IMPycbcrHD2lab(value);
+        }
+        
+    case IMPLuvSpace:
+        switch (from_cs) {
+        case IMPRgbSpace:
+            return IMPrgb2luv(value);
+        case IMPLabSpace:
+            return IMPlab2luv(value);
+        case IMPLchSpace:
+            return IMPlch2luv(value);
+        case IMPHsvSpace:
+            return IMPhsv2luv(value);
+        case IMPHslSpace:
+            return IMPhsl2luv(value);
+        case IMPXyzSpace:
+            return IMPxyz2luv(value);
+        case IMPLuvSpace:
+            return value;
+        case IMPYcbcrHDSpace:
+            return IMPycbcrHD2luv(value);
+        }
+        
+    case IMPXyzSpace:
+        switch (from_cs) {
+        case IMPRgbSpace:
+            return IMPrgb2xyz(value);
+        case IMPLabSpace:
+            return IMPlab2xyz(value);
+        case IMPLchSpace:
+            return IMPlch2xyz(value);
+        case IMPHsvSpace:
+            return IMPhsv2xyz(value);
+        case IMPHslSpace:
+            return IMPhsl2xyz(value);
+        case IMPXyzSpace:
+            return value;
+        case IMPLuvSpace:
+            return IMPluv2xyz(value);
+        case IMPYcbcrHDSpace:
+            return IMPycbcrHD2xyz(value);
+        }
+        
+    case IMPHsvSpace:
+        switch (from_cs) {
+        case IMPRgbSpace:
+            return IMPrgb2hsv(value);
+        case IMPLabSpace:
+            return IMPlab2hsv(value);
+        case IMPLchSpace:
+            return IMPlch2hsv(value);
+        case IMPHsvSpace:
+            return value;
+        case IMPHslSpace:
+            return IMPhsl2hsv(value);
+        case IMPXyzSpace:
+            return IMPxyz2hsv(value);
+        case IMPLuvSpace:
+            return IMPluv2hsv(value);
+        case IMPYcbcrHDSpace:
+            return IMPycbcrHD2hsv(value);
+        }
+        
+    case IMPHslSpace:
+        switch (from_cs) {
+        case IMPRgbSpace:
+            return IMPrgb2hsl(value);
+        case IMPLabSpace:
+            return IMPlab2hsl(value);
+        case IMPLchSpace:
+            return IMPlch2hsl(value);
+        case IMPHsvSpace:
+            return IMPhsv2hsl(value);
+        case IMPHslSpace:
+            return value;
+        case IMPXyzSpace:
+            return IMPxyz2hsl(value);
+        case IMPLuvSpace:
+            return IMPluv2hsl(value);
+        case IMPYcbcrHDSpace:
+            return IMPycbcrHD2hsl(value);
+        }
+        
+    case IMPLchSpace:
+        switch (from_cs) {
+        case IMPRgbSpace:
+            return IMPrgb2lch(value);
+        case IMPLabSpace:
+            return IMPlab2lch(value);
+        case IMPLchSpace:
+            return value;
+        case IMPHsvSpace:
+            return IMPhsv2lch(value);
+        case IMPHslSpace:
+            return IMPhsl2lch(value);
+        case IMPXyzSpace:
+            return IMPxyz2lch(value);
+        case IMPLuvSpace:
+            return IMPluv2lch(value);
+        case IMPYcbcrHDSpace:
+            return IMPycbcrHD2lch(value);
+        }
+        
+    case IMPYcbcrHDSpace:
+        switch (from_cs) {
+        case IMPRgbSpace:
+            return IMPrgb2ycbcrHD(value);
+        case IMPLabSpace:
+            return IMPlab2ycbcrHD(value);
+        case IMPLchSpace:
+            return IMPlch2ycbcrHD(value);
+        case IMPHsvSpace:
+            return IMPhsv2ycbcrHD(value);
+        case IMPHslSpace:
+            return IMPhsl2ycbcrHD(value);
+        case IMPXyzSpace:
+            return IMPxyz2ycbcrHD(value);
+        case IMPLuvSpace:
+            return IMPluv2ycbcrHD(value);
+        case IMPYcbcrHDSpace:
+            return value;
+        }
+    }
+    return value;;
+}
+
 
 #endif /* IMPColorSpaces_Bridging_Metal_h */
