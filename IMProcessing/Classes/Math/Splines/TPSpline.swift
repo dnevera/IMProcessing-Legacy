@@ -20,12 +20,19 @@ typealias LAInt = __CLPK_integer // = Int32
 public extension Collection where Iterator.Element == [Float] {
     
     public func tpSpline(controls controlPoints:[float3], scale:Float=0, regularization:Float = 0)  -> [Float]{
+        if self.count != 2 {
+            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
+        }        
+        let tps = TPSpline(controls: controlPoints, regularization: regularization)
+        return self.tpSpline(tps:tps, scale:scale, regularization:regularization)
+    }
+    
+    public func tpSpline(tps:TPSpline, scale:Float=0, regularization:Float = 0)  -> [Float]{
         
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
         }
         
-        let tps = TPSpline(controls: controlPoints, regularization: regularization)
         var curve   = [Float]()
         let xPoints = self[0 as! Self.Index]
         let yPoints = self[count - 1 as! Self.Index]
@@ -42,9 +49,10 @@ public extension Collection where Iterator.Element == [Float] {
             max = scale/max
             vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
         }
-
+        
         return curve
     }
+
 }
 
 public protocol IMP3DInterpolator{
@@ -74,8 +82,8 @@ public extension IMP3DInterpolator {
 
 public class TPSpline:IMP3DInterpolator{
   
-    public var weights:Matrix<Float> {
-        return V
+    public var weights:[Float] {
+        return V[column:0]
     }
 
     public var alpha:Float {
