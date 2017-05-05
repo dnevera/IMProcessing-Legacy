@@ -35,18 +35,18 @@ public extension float3{
     }
     
     public func xyz2lch() -> float3{
-        return xyz2lab().lab2lch()
+        return IMPBridge.xyz2lch(self)
     }
     
     public func xyz2hsv() -> float3 {
-        return xyz2rgb().rgb2hsv()
+        return IMPBridge.xyz2hsv(self)
     }
     
     public func xyz2hsl() -> float3 {
-        return xyz2rgb().rgb2hsl()
+        return IMPBridge.xyz2hsl(self)
     }
     
-    public func xzy2ycbcrHD() -> float3 {
-        return xyz2rgb().rgb2ycbcrHD()
+    public func xyz2ycbcrHD() -> float3 {
+        return IMPBridge.xyz2ycbcrHD(self)
     }
 }

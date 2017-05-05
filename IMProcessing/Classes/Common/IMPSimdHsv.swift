@@ -20,27 +20,27 @@ public extension float3{
     }
     
     public func hsv2hsl() -> float3 {
-        return hsv2rgb().rgb2hsl()
+        return IMPBridge.hsv2hsl(self)
     }
     
     public func hsv2ycbcrHD() -> float3 {
-        return hsv2rgb().rgb2ycbcrHD()
+        return IMPBridge.hsv2ycbcrHD(self)
     }
     
     public func hsv2lab() -> float3 {
-        return hsv2rgb().rgb2lab()
+        return IMPBridge.hsv2lab(self)
     }
     
     public func hsv2lch() -> float3 {
-        return hsv2lab().lab2lch()
+        return IMPBridge.hsv2lch(self)
     }
     
     public func hsv2xyz() -> float3 {
-        return hsv2lab().lab2xyz()
+        return IMPBridge.hsv2xyz(self)
     }
     
     public func hsv2luv() -> float3 {
-        return hsv2xyz().xyz2luv()
+        return IMPBridge.hsv2luv(self)
     }
 
 }

@@ -36,14 +36,14 @@ public extension float3{
     }
 
     public func rgb2luv() ->float3 {
-        return rgb2xyz().xyz2luv()
+        return IMPBridge.rgb2luv(self)
     }
     
     public func rgb2lab() -> float3 {
-        return  rgb2xyz().xyz2lab()
+        return  IMPBridge.rgb2lab(self)
     }
 
        public func rgb2lch() -> float3 {
-        return rgb2lab().lab2lch()
+        return IMPBridge.rgb2lch(self)
     }
 }

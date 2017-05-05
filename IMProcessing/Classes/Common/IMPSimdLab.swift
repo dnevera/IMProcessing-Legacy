@@ -39,8 +39,7 @@ public func lab_ft_inverse(_ t:Float) -> Float
 public extension float3{
         
     public func lab2rgb() -> float3 {
-        let xyz = lab2xyz()
-        return  xyz.xyz2rgb()
+        return  IMPBridge.lab2rgb(self)
     }
     
     public func lab2xyz() -> float3 {        
@@ -55,18 +54,18 @@ public extension float3{
     }
     
     public func lab2luv() -> float3 {
-        return lab2xyz().xyz2luv()
+        return IMPBridge.lab2luv(self)
     }
 
     public func lab2hsv() -> float3 {
-        return lab2rgb().rgb2hsv()
+        return IMPBridge.lab2hsv(self)
     }
     
     public func lab2hsl() -> float3 {
-        return lab2rgb().rgb2hsl()
+        return IMPBridge.lab2hsl(self)
     }
     
     public func lab2ycbcrHD() -> float3 {
-        return lab2rgb().rgb2ycbcrHD()
+        return IMPBridge.lab2ycbcrHD(self)
     }
 }

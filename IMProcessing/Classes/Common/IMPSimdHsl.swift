@@ -16,31 +16,31 @@ import simd
 public extension float3{
     
     public func hsl2rgb() -> float3 {
-        return IMPBridge.hsv2rgb(self)
+        return IMPBridge.hsl2rgb(self)
     }
     
     public func hsl2ycbcrHD() -> float3 {
-        return hsl2rgb().rgb2ycbcrHD()
+        return IMPBridge.hsl2ycbcrHD(self)
     }
 
     public func hsl2lab() -> float3 {
-        return hsl2rgb().rgb2lab()
+        return IMPBridge.hsl2lab(self)
     }
     
     public func hsl2hsv() -> float3 {
-        return hsl2rgb().rgb2hsv()
+        return IMPBridge.hsl2hsv(self)
     }
     
     public func hsl2lch() -> float3 {
-        return hsl2lab().lab2lch()
+        return IMPBridge.hsl2lch(self)
     }
     
     public func hsl2xyz() -> float3 {
-        return hsl2lab().lab2xyz()
+        return IMPBridge.hsl2xyz(self)
     }
     
     public func hsl2luv() -> float3 {
-        return hsl2xyz().xyz2luv()
+        return IMPBridge.hsl2luv(self)
     }
     
 }

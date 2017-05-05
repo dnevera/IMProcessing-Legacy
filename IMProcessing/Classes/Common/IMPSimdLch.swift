@@ -17,31 +17,29 @@ public extension float3{
         // let l = x
         // let c = y
         // let h = z
-        //let h = z * Float.pi / 180
-        //return float3(x, cos(h) * y, sin(h) * y)
         return IMPBridge.lch2lab(self)
     }
     
     public func lch2rgb() -> float3 {
-        return lch2lab().lab2rgb()
+        return IMPBridge.lch2rgb(self)
     }
     
     public func lch2hsv() -> float3 {
-        return lch2rgb().rgb2hsv()
+        return IMPBridge.lch2hsv(self)
     }
 
     public func lch2hsl() -> float3 {
-        return lch2rgb().rgb2hsl()
+        return IMPBridge.lch2hsl(self)
     }
     public func lch2luv() -> float3 {
-        return lch2xyz().xyz2luv()
+        return IMPBridge.lch2luv(self)
     }
 
     public func lch2xyz() -> float3 {
-        return lch2lab().lab2xyz()
+        return IMPBridge.lch2xyz(self)
     }
     
     public func lch2ycbcrHD() -> float3 {
-        return lch2rgb().rgb2ycbcrHD()
+        return IMPBridge.lch2ycbcrHD(self)
     }
 }

@@ -22,26 +22,26 @@ public extension float3{
     }
     
     public func ycbcrHD2lab() -> float3 {
-        return ycbcrHD2rgb().rgb2lab()
+        return IMPBridge.ycbcrHD2lab(self)
     }
     
     public func ycbcrHD2lch() -> float3 {
-        return ycbcrHD2lab().lab2lch()
+        return IMPBridge.ycbcrHD2lch(self)
     }
     
     public func ycbcrHD2xyz() -> float3 {
-        return ycbcrHD2lab().lab2xyz()
+        return IMPBridge.ycbcrHD2xyz(self)
     }
     
     public func ycbcrHD2luv() -> float3 {
-        return ycbcrHD2xyz().xyz2luv()
+        return IMPBridge.ycbcrHD2luv(self)
     }
     
     public func ycbcrHD2hsv() -> float3 {
-        return ycbcrHD2rgb().rgb2hsv()
+        return IMPBridge.ycbcrHD2hsv(self)
     }
 
     public func ycbcrHD2hsl() -> float3 {
-        return ycbcrHD2rgb().rgb2hsl()
+        return IMPBridge.ycbcrHD2hsl(self)
     }
 }

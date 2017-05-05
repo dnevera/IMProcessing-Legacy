@@ -284,7 +284,7 @@ public enum IMPColorSpace:String {
             case .hsl:
                 return value.hsl2ycbcrHD()
             case .xyz:
-                return value.xzy2ycbcrHD()
+                return value.xyz2ycbcrHD()
             case .luv:
                 return value.luv2ycbcrHD()
             case .ycbcrHD:
