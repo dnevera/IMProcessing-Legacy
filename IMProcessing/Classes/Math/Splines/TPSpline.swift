@@ -22,12 +22,12 @@ public extension Collection where Iterator.Element == [Float] {
     public func tpSpline(controls controlPoints:[float3], scale:Float=0, regularization:Float = 0)  -> [Float]{
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
-        }        
-        let tps = TPSpline(controls: controlPoints, regularization: regularization)
+        }
+        let tps = IMPTPSpline(controls: controlPoints, regularization: regularization)
         return self.tpSpline(tps:tps, scale:scale, regularization:regularization)
     }
     
-    public func tpSpline(tps:TPSpline, scale:Float=0, regularization:Float = 0)  -> [Float]{
+    public func tpSpline(tps:IMPTPSpline, scale:Float=0, regularization:Float = 0)  -> [Float]{
         
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
@@ -80,7 +80,7 @@ public extension IMP3DInterpolator {
     }
 }
 
-public class TPSpline:IMP3DInterpolator{
+public class IMPTPSpline:IMP3DInterpolator{
   
     public var weights:[Float] {
         return V[column:0]
@@ -124,7 +124,7 @@ public class TPSpline:IMP3DInterpolator{
         for i in 0..<p {
             pt_i = controls[i]
             pt_i[2] = 0
-            h += V[i,0] * TPSpline.baseFunction(difflen(pt_i, pt_cur))
+            h += V[i,0] * IMPTPSpline.baseFunction(difflen(pt_i, pt_cur))
         }
         
         return h
@@ -153,7 +153,7 @@ public class TPSpline:IMP3DInterpolator{
                 pt_i[2] = 0
                 pt_j[2] = 0
                 let elen = difflen(pt_i, pt_j)
-                let u = TPSpline.baseFunction(elen)
+                let u = IMPTPSpline.baseFunction(elen)
                 L[i,j] = u
                 L[j,i] = u
                 K[i,j] = u
