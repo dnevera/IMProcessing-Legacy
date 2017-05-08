@@ -13,6 +13,37 @@
 #include "IMPTypes-Bridging-Metal.h"
 
 //
+// IMPRgbSpace = 0,
+// IMPLabSpace = 1,
+// IMPLchSpace = 2,
+// IMPXyzSpace = 3,
+// IMPLuvSpace = 4,
+// IMPHsvSpace = 5,
+// IMPHslSpace = 6,
+// IMPYcbcrHDSpace = 7 // Full-range type
+//
+
+static constant float2 kIMP_ColorSpaceRanges[8][3] = {
+    { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPRgbSpace
+    { (float2){0,100},     (float2){-128,127},  (float2){-128,127} },  // IMPLabSpace https://en.wikipedia.org/wiki/Lab_color_space#Range_of_coordinates
+    { (float2){0,100},     (float2){0,200},     (float2){0,360} },     // IMPLchSpace
+    { (float2){0,95.047},  (float2){0,100},     (float2){0,108.883} }, // IMPXyzSpace http://www.easyrgb.com/en/math.php#text22
+    //
+    // TODO: Luv - is not a real Luv, it is a LutSpace from dcampof
+    //
+    { (float2){0,100},     (float2){-134,220},  (float2){-140,122} },  // IMPLuvSpace http://cs.haifa.ac.il/hagit/courses/ist/Lectures/Demos/ColorApplet/me/
+    { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPHsvSpace
+    { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPHslSpace
+    { (float2){0,255},     (float2){0,255},     (float2){0,255} }      // IMPYcbcrHDSpace  http://www.equasys.de/colorconversion.html
+};
+
+
+static inline float2 IMPgetColorSpaceRange (IMPColorSpaceIndex space, int channel) {
+    return kIMP_ColorSpaceRanges[(int)(space)][channel];
+}
+
+
+//
 // capces sources: http://www.easyrgb.com/index.php?X=MATH&H=02#text2
 // luv sources:    https://www.ludd.ltu.se/~torger/dcamprof.html
 //

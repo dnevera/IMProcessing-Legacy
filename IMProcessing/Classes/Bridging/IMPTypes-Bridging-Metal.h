@@ -52,6 +52,8 @@ extern "C" {
         IMPYcbcrHDSpace = 7 // Full-range type
     } IMPColorSpaceIndex;
 
+    
+    
     typedef struct {
         float2 position;
         float2 slope;

@@ -108,16 +108,8 @@ public enum IMPColorSpace:String {
     }
     
     public var channelRanges:[float2] {
-        switch self {
-        case .rgb: return [float2(0,1),       float2(0,1),       float2(0,1)]
-        case .lab: return [float2(0,100),     float2(-128,127),  float2(-128,127)]  // https://en.wikipedia.org/wiki/Lab_color_space#Range_of_coordinates
-        case .lch: return [float2(0,100),     float2(0,200),     float2(0,360)]
-        case .hsv: return [float2(0,1),       float2(0,1),       float2(0,1)]
-        case .hsl: return [float2(0,1),       float2(0,1),       float2(0,1)]
-        case .luv: return [float2(0,100),     float2(-134,220),  float2(-140,122)]  // http://cs.haifa.ac.il/hagit/courses/ist/Lectures/Demos/ColorApplet/me/infoluv.html
-        case .xyz: return [float2(0,95.047),  float2(0,100.000), float2(0,108.883)] // http://www.easyrgb.com/en/math.php#text22
-        case .ycbcrHD: return [float2(0,255), float2(0,255),     float2(0,255)]     // http://www.equasys.de/colorconversion.html
-        }
+        let ranges = Array(Mirror.init(reflecting: kIMP_ColorSpaceRanges).children)[self.index].value as! (float2,float2,float2)
+        return [ranges.0, ranges.1, ranges.2]
     }
     
     public func from(_ space: IMPColorSpace, value: float3) -> float3 {
