@@ -31,7 +31,8 @@ static constant float2 kIMP_ColorSpaceRanges[8][3] = {
     //
     // TODO: Luv - is not a real Luv, it is a LutSpace from dcampof
     //
-    { (float2){0,100},     (float2){-134,220},  (float2){-140,122} },  // IMPLuvSpace http://cs.haifa.ac.il/hagit/courses/ist/Lectures/Demos/ColorApplet/me/
+    // { (float2){0,100},     (float2){-134,220},  (float2){-140,122} },  // IMPLuvSpace http://cs.haifa.ac.il/hagit/courses/ist/Lectures/Demos/ColorApplet/me/
+    { (float2){0,6},       (float2){0,1},       (float2){0,1} },
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPHsvSpace
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPHslSpace
     { (float2){0,255},     (float2){0,255},     (float2){0,255} }      // IMPYcbcrHDSpace  http://www.equasys.de/colorconversion.html
