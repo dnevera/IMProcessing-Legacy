@@ -164,7 +164,7 @@ public class IMPView: MTKView {
     
     lazy var frameImage:IMPImageProvider = IMPImage(context: self.context)
     
-    lazy var operation:OperationQueue = {
+    public let operation:OperationQueue = {
         let o = OperationQueue()
         o.maxConcurrentOperationCount = 1
         o.name = "com.improcessing.IMPView"
