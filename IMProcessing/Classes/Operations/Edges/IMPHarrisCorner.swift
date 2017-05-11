@@ -15,7 +15,7 @@ public class IMPHarrisCorner: IMPFilter{
 
     public var sensitivity:Float = IMPHarrisCorner.defaultSensitivity {
         didSet{
-            sensitivityBuffer <- sensitivity
+            sensitivityBuffer <= sensitivity
             dirty = true
         }
     }

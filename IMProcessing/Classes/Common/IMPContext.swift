@@ -398,20 +398,25 @@ public extension IMPContext {
     }
 }
 
-infix operator <-: AdditionPrecedence
+precedencegroup Precedence {
+    associativity: right
+    lowerThan: AdditionPrecedence
+}
+
+infix operator <=: Precedence
 
 
-func fatalAssignment<T>(_ left: MTLBuffer, _ right: T) {
+private func fatalAssignment<T>(_ left: MTLBuffer, _ right: T) {
     fatalError("MTLBuffer: invalid buffer assighment size: \(left.length) from \(MemoryLayout<T>.size)")
 }
 
-public func <-<T> (left: MTLBuffer, right: T) {
+public func <=<M:MTLBuffer,T> (left: M, right: T) {
     guard left.length == MemoryLayout<T>.size else { fatalAssignment(left, right); return }
     var value = right
     memcpy(left.contents(), &value, left.length)
 }
 
-public func <-<T:Collection> (left: MTLBuffer, right: T) {
+public func <=<M:MTLBuffer,T:Collection> (left: M, right: T) {
     var value = right
     let size = MemoryLayout.size(ofValue: value) * Int(value.count.toIntMax())
     guard left.length == size else { fatalAssignment(left, right); return }

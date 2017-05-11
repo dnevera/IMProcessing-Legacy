@@ -15,7 +15,7 @@ public class IMPNonMaximumSuppression: IMPDerivative {
     
     public var threshold:Float = defaultThreshold {
         didSet{
-            thresholdBuffer <- threshold
+            thresholdBuffer <= threshold
             dirty = true
         }
     }
@@ -52,14 +52,14 @@ public class IMPDirectionalNonMaximumSuppression: IMPDerivative {
     
     public var upperThreshold:Float = defaultUpperThreshold {
         didSet{
-            upperThresholdBuffer <- upperThreshold
+            upperThresholdBuffer <= upperThreshold
             dirty = true
         }
     }
     
     public var lowerThreshold:Float = defaultLowerThreshold {
         didSet{
-            lowerThresholdBuffer <- lowerThreshold
+            lowerThresholdBuffer <= lowerThreshold
             dirty = true
         }
     }

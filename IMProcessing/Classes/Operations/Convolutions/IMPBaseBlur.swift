@@ -24,7 +24,7 @@ public class IMPBaseBlur: IMPFilter {
     
     public var adjustment:IMPAdjustment!{
         didSet{
-            adjustmentBuffer <- adjustment
+            adjustmentBuffer <= adjustment
             update()
         }
     }
