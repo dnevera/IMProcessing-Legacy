@@ -90,8 +90,16 @@ public class IMPTPSpline:IMP3DInterpolator{
         return _alpha
     }
     
-    public var regularization:Float = 0
-    public var controls: [float3]
+    public var regularization:Float = 0 {
+        didSet{
+            prepare()
+        }
+    }
+    public var controls: [float3] {
+        didSet{
+            prepare()
+        }
+    }
     
     public init(controls points: [float3], regularization lambda:Float) {
         controls = points
