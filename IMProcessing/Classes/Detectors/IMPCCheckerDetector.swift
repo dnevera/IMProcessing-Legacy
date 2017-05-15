@@ -11,6 +11,10 @@ import Metal
 
 public class IMPCCheckerDetector: IMPDetector {
     
+    public var isDetected:Bool {
+        return _isDetected
+    }
+    
     public var radius  = 1 {
         didSet{
             opening.dimensions = (radius,radius)
@@ -174,17 +178,20 @@ public class IMPCCheckerDetector: IMPDetector {
     }()
     
     
+    public var _isDetected:Bool = false
+    
     private lazy var patchDetector:IMPFilter = {
         let f = IMPFilter(context:self.context)
         f.add(function: self.patchDetectorKernel){ (source) in
             
+            self._isDetected = false
             guard let size = source.size else {return}
             
             memcpy(&self.corners, self.cornersBuffer.contents(), MemoryLayout<IMPCorner>.size * self.corners.count)
             self.patchGrid.corners = self.corners
-            
             if let r = self.patchGrid.approximate(withSize: size){
                 (self.hLines, self.vLines) = r
+                self._isDetected = true
             }
             
             memcpy(self.centersBuffer.contents(), self.patchGrid.target.centers, self.centersBuffer.length)
