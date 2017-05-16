@@ -50,6 +50,21 @@ public struct IMPLineSegment: Equatable {
         self.p1 = clamp(float2(x2,y2), min: float2(0), max: float2(1))
     }
     
+    public var slopeInterceptForm:float2 {
+        let k = (p1.y-p0.y)/(p1.x-p0.x)
+        return float2(k, (p0.y-k*p0.x))
+    }
+    
+    public func angle(with line: IMPLineSegment) -> Float {
+        let k0 = self.slopeInterceptForm.x
+        let k1 = line.slopeInterceptForm.x
+        return atan((k1-k0)/(1+k1*k0))
+    }
+    
+    public var length:Float {
+        return distance(p0, p1)
+    }
+    
     public init(p0:float2,p1:float2){
         self.p0 = float2(p0.x,p0.y)
         self.p1 = float2(p1.x,p1.y)
