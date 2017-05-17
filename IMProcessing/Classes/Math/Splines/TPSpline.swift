@@ -113,6 +113,9 @@ public class IMPTPSpline:IMP3DInterpolator{
     }
     
     private func prepare() {
+        K = makeKMatrix()
+        L = makeLMatrix()
+        V = makeVMatrix()
         _alpha = prepareK()
         prepareP()
         prepareO()
@@ -224,10 +227,22 @@ public class IMPTPSpline:IMP3DInterpolator{
             NSLog("IMPTSpline error: \(error)")
         }
     }
-    
-    lazy var L:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:self.controls.count+3, repeatedValue:0)
-    lazy var V:Matrix<Float> = Matrix<Float>(rows:self.controls.count+3, columns:1, repeatedValue:0)
-    lazy var K:Matrix<Float> = Matrix<Float>(rows:self.controls.count, columns:self.controls.count, repeatedValue:0)
+
+    func makeLMatrix() -> Matrix<Float> {
+        return Matrix<Float>(rows:self.controls.count+3, columns:self.controls.count+3, repeatedValue:0)
+    }
+
+    func makeKMatrix() -> Matrix<Float> {
+        return Matrix<Float>(rows:self.controls.count, columns:self.controls.count, repeatedValue:0)
+    }
+
+    func makeVMatrix() -> Matrix<Float> {
+        return Matrix<Float>(rows:self.controls.count+3, columns:1, repeatedValue:0)
+    }
+
+    lazy var L:Matrix<Float> = self.makeLMatrix()
+    lazy var K:Matrix<Float> = self.makeKMatrix()
+    lazy var V:Matrix<Float> = self.makeVMatrix()
     
     public static func baseFunction(_ r:Float) -> Float
     {
