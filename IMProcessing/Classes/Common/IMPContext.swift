@@ -403,22 +403,29 @@ precedencegroup Precedence {
     lowerThan: AdditionPrecedence
 }
 
-infix operator <=: Precedence
-
+//infix operator <=: Precedence
 
 private func fatalAssignment<T>(_ left: MTLBuffer, _ right: T) {
     fatalError("MTLBuffer: invalid buffer assighment size: \(left.length) from \(MemoryLayout<T>.size)")
 }
 
-public func <=<M:MTLBuffer,T> (left: M, right: T) {
-    guard left.length == MemoryLayout<T>.size else { fatalAssignment(left, right); return }
-    var value = right
-    memcpy(left.contents(), &value, left.length)
+public extension MTLBuffer{
+    public func copy<T>(from value:T) {
+        guard length == MemoryLayout<T>.size else { fatalAssignment(self, value); return }
+        var value = value
+        memcpy(contents(), &value, length)
+    }
 }
 
-public func <=<M:MTLBuffer,T:Collection> (left: M, right: T) {
-    var value = right
-    let size = MemoryLayout.size(ofValue: value) * Int(value.count.toIntMax())
-    guard left.length == size else { fatalAssignment(left, right); return }
-    memcpy(left.contents(), &value, left.length)
-}
+//public func <=<M:MTLBuffer,T> (left: M, right: T) {
+//    guard left.length == MemoryLayout<T>.size else { fatalAssignment(left, right); return }
+//    var value = right
+//    memcpy(left.contents(), &value, left.length)
+//}
+
+//public func <=<M:MTLBuffer,T:Collection> (left: M, right: T) {
+//    var value = right
+//    let size = MemoryLayout.size(ofValue: value) * Int(value.count.toIntMax())
+//    guard left.length == size else { fatalAssignment(left, right); return }
+//    memcpy(left.contents(), &value, left.length)
+//}
