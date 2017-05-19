@@ -20,26 +20,23 @@ using namespace metal;
 
 namespace IMProcessing
 {
-    //
-    // luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
-    //
    
-    inline float rgb_gamma_correct(float c, float gamma)
-    {
-        const float a = 0.055;
-        if(c < 0.0031308)
-            return 12.92*c;
-        else
-            return (1.0+a)*pow(c, 1.0/gamma) - a;
-    }
-    
-    inline float3 rgb_gamma_correct (float3 rgb, float gamma) {
-        return float3(
-                      rgb_gamma_correct(rgb.x,gamma),
-                      rgb_gamma_correct(rgb.y,gamma),
-                      rgb_gamma_correct(rgb.z,gamma)
-                      );
-    }
+//    inline float rgb_gamma_correct(float c, float gamma)
+//    {
+//        const float a = 0.055;
+//        if(c < 0.0031308)
+//            return 12.92*c;
+//        else
+//            return (1.0+a)*pow(c, 1.0/gamma) - a;
+//    }
+//    
+//    inline float3 rgb_gamma_correct (float3 rgb, float gamma) {
+//        return float3(
+//                      rgb_gamma_correct(rgb.x,gamma),
+//                      rgb_gamma_correct(rgb.y,gamma),
+//                      rgb_gamma_correct(rgb.z,gamma)
+//                      );
+//    }
 }
 #endif
 

@@ -20,29 +20,32 @@ private var __colorSpaceList = [IMPColorSpace]()
 
 public enum IMPColorSpace:String {
     
-    public static let rgbIndex = Int(IMPRgbSpace.rawValue)
-    public static let labIndex = Int(IMPLabSpace.rawValue)
-    public static let lchIndex = Int(IMPLchSpace.rawValue)
-    public static let xyzIndex = Int(IMPXyzSpace.rawValue)
-    public static let luvIndex = Int(IMPLuvSpace.rawValue)
-    public static let hsvIndex = Int(IMPHsvSpace.rawValue)
-    public static let hslIndex = Int(IMPHslSpace.rawValue)
+    public static let rgbIndex  = Int(IMPRgbSpace.rawValue)
+    public static let srgbIndex = Int(IMPsRgbSpace.rawValue)
+    public static let labIndex  = Int(IMPLabSpace.rawValue)
+    public static let lchIndex  = Int(IMPLchSpace.rawValue)
+    public static let xyzIndex  = Int(IMPXyzSpace.rawValue)
+    public static let luvIndex  = Int(IMPLuvSpace.rawValue)
+    public static let hsvIndex  = Int(IMPHsvSpace.rawValue)
+    public static let hslIndex  = Int(IMPHslSpace.rawValue)
     public static let ycbcrHDIndex = Int(IMPYcbcrHDSpace.rawValue)
     
     public static let spacesCount = 7
     
-    case rgb = "RGB"
-    case lab = "L*a*b"
-    case lch = "L*c*h"
-    case xyz = "XYZ"
-    case luv = "Luv"
-    case hsv = "HSV"
-    case hsl = "HSL"
+    case rgb  = "Linear RGB"
+    case srgb = "sRGB"
+    case lab  = "L*a*b"
+    case lch  = "L*c*h"
+    case xyz  = "XYZ"
+    case luv  = "Luv"
+    case hsv  = "HSV"
+    case hsl  = "HSL"
     case ycbcrHD = "YCbCr/HD"
     
     public init(index:Int) {
         switch index {
         case IMPColorSpace.rgbIndex:  self = .rgb  // 0
+        case IMPColorSpace.srgbIndex: self = .srgb  // 0
         case IMPColorSpace.labIndex:  self = .lab
         case IMPColorSpace.lchIndex:  self = .lch
         case IMPColorSpace.hsvIndex:  self = .hsv
@@ -59,6 +62,7 @@ public enum IMPColorSpace:String {
         get {
             switch self {
             case .rgb: return IMPColorSpace.rgbIndex
+            case .srgb:return IMPColorSpace.srgbIndex
             case .lab: return IMPColorSpace.labIndex
             case .lch: return IMPColorSpace.lchIndex
             case .hsv: return IMPColorSpace.hsvIndex
@@ -83,13 +87,14 @@ public enum IMPColorSpace:String {
     
     public var channelNames: [String] {
         switch self {
-        case .rgb: return ["R","G", "B"]
-        case .lab: return ["L*","a*", "b*"]
-        case .lch: return ["L*","c*", "h"]
-        case .hsv: return ["H","S", "V"]
-        case .hsl: return ["H","S", "L"]
-        case .luv: return ["L","u", "v"]
-        case .xyz: return ["X","Y", "Z"]
+        case .rgb:  return ["R","G", "B"]
+        case .srgb: return ["R","G", "B"]
+        case .lab:  return ["L*","a*", "b*"]
+        case .lch:  return ["L*","c*", "h"]
+        case .hsv:  return ["H","S", "V"]
+        case .hsl:  return ["H","S", "L"]
+        case .luv:  return ["L","u", "v"]
+        case .xyz:  return ["X","Y", "Z"]
         case .ycbcrHD: return ["Y","Cb", "Cr"]
         }
     }
@@ -97,6 +102,7 @@ public enum IMPColorSpace:String {
     public var channelColors:[NSColor] {
         switch self {
         case .rgb: return [NSColor.red,    NSColor.green,  NSColor.blue]
+        case .srgb:return [NSColor.red,    NSColor.green,  NSColor.blue]
         case .lab: return [NSColor.white,  NSColor.orange, NSColor.blue]
         case .lch: return [NSColor.white,  NSColor.orange, NSColor.blue]
         case .hsv: return [NSColor.magenta,NSColor.red,    NSColor.white]

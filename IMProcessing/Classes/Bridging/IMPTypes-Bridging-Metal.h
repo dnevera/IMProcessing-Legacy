@@ -42,14 +42,15 @@ extern "C" {
 #endif
     
     typedef enum:int {
-        IMPRgbSpace = 0,
-        IMPLabSpace = 1,
-        IMPLchSpace = 2,
-        IMPXyzSpace = 3,
-        IMPLuvSpace = 4,
-        IMPHsvSpace = 5,
-        IMPHslSpace = 6,
-        IMPYcbcrHDSpace = 7 // Full-range type
+        IMPRgbSpace     = 0,
+        IMPsRgbSpace    = 1,
+        IMPLabSpace     = 2,
+        IMPLchSpace     = 3,
+        IMPXyzSpace     = 4,
+        IMPLuvSpace     = 5,
+        IMPHsvSpace     = 6,
+        IMPHslSpace     = 7,
+        IMPYcbcrHDSpace = 8 // Full-range type
     } IMPColorSpaceIndex;
 
     

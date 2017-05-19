@@ -23,8 +23,9 @@
 // IMPYcbcrHDSpace = 7 // Full-range type
 //
 
-static constant float2 kIMP_ColorSpaceRanges[8][3] = {
+static constant float2 kIMP_ColorSpaceRanges[9][3] = {
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPRgbSpace
+    { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPsRgbSpace
     { (float2){0,100},     (float2){-128,127},  (float2){-128,127} },  // IMPLabSpace https://en.wikipedia.org/wiki/Lab_color_space#Range_of_coordinates
     { (float2){0,100},     (float2){0,200},     (float2){0,360} },     // IMPLchSpace
     { (float2){0,95.047},  (float2){0,100},     (float2){0,108.883} }, // IMPXyzSpace http://www.easyrgb.com/en/math.php#text22
@@ -41,6 +42,23 @@ static constant float2 kIMP_ColorSpaceRanges[8][3] = {
 
 static inline float2 IMPgetColorSpaceRange (IMPColorSpaceIndex space, int channel) {
     return kIMP_ColorSpaceRanges[(int)(space)][channel];
+}
+
+static inline float rgb_gamma_correct(float c, float gamma)
+{
+    constexpr float a = 0.055;
+    if(c < 0.0031308)
+        return 12.92*c;
+    else
+        return (1.0+a)*pow(c, 1.0/gamma) - a;
+}
+
+static inline float3 rgb_gamma_correct_r3 (float3 rgb, float gamma) {
+    return (float3){
+        rgb_gamma_correct(rgb.x,gamma),
+        rgb_gamma_correct(rgb.y,gamma),
+        rgb_gamma_correct(rgb.z,gamma)
+    };
 }
 
 
@@ -397,6 +415,9 @@ static inline float3 IMPYCbCrHD_2_rgb(float3 YCbCr){
 //
 // RGB
 //
+static inline float3 IMPrgb2srgb(float3 color){
+    return rgb_gamma_correct_r3(color, 2.2);
+}
 static inline float3 IMPrgb2xyz(float3 color){
     return IMPrgb_2_XYZ(color);
 }
@@ -418,6 +439,7 @@ static inline float3 IMPrgb2luv(float3 color){
 static inline float3 IMPrgb2ycbcrHD(float3 color){
     return IMPrgb_2_YCbCrHD(color);
 }
+
 
 //
 // Lab
@@ -444,6 +466,12 @@ static inline float3 IMPlab2luv(float3 color){
     return IMPXYZ_2_Luv(IMPlab2xyz(color));
 }
 
+static inline float3 IMPlab2srgb(float3 color){
+    return IMPrgb2srgb(IMPlab2rgb(color));
+}
+
+
+
 //
 // XYZ
 //
@@ -469,6 +497,9 @@ static inline float3 IMPxyz2luv(float3 color){
     return IMPXYZ_2_Luv(color);
 }
 
+static inline float3 IMPxyz2srgb(float3 color){
+    return IMPrgb2srgb(IMPxyz2rgb(color));
+}
 
 //
 // LCH
@@ -493,6 +524,10 @@ static inline float3 IMPlch2luv(float3 color){
 }
 static inline float3 IMPlch2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPlch2rgb(color));
+}
+
+static inline float3 IMPlch2srgb(float3 color){
+    return IMPrgb2srgb(IMPlch2rgb(color));
 }
 
 //
@@ -520,6 +555,10 @@ static inline float3 IMPhsv2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPhsv2rgb(color));
 }
 
+static inline float3 IMPhsv2srgb(float3 color){
+    return IMPrgb2srgb(IMPhsv2rgb(color));
+}
+
 //
 // HSL
 //
@@ -543,6 +582,10 @@ static inline float3 IMPhsl2luv(float3 color){
 }
 static inline float3 IMPhsl2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPhsl2rgb(color));
+}
+
+static inline float3 IMPhsl2srgb(float3 color){
+    return IMPrgb2srgb(IMPhsl2rgb(color));
 }
 
 
@@ -571,6 +614,11 @@ static inline float3 IMPluv2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPluv2rgb(color));
 }
 
+static inline float3 IMPluv2srgb(float3 color){
+    return IMPrgb2srgb(IMPluv2rgb(color));
+}
+
+
 //
 // YCbCrHD
 //
@@ -596,13 +644,49 @@ static inline float3 IMPycbcrHD2luv(float3 color){
     return IMPrgb2luv(IMPycbcrHD2rgb(color));
 }
 
+static inline float3 IMPycbcrHD2srgb(float3 color){
+    return IMPrgb2srgb(IMPycbcrHD2rgb(color));
+}
+
+//
+//sRGB
+//
+static inline float3 IMPsrgb2rgb(float3 color){
+    return rgb_gamma_correct_r3(color, 1/2.2);
+}
+static inline float3 IMPsrgb2lab(float3 color){
+    return IMPrgb2lab(IMPsrgb2rgb(color));
+}
+static inline float3 IMPsrgb2xyz(float3 color){
+    return IMPrgb2xyz(IMPsrgb2rgb(color));
+}
+static inline float3 IMPsrgb2lch(float3 color){
+    return IMPrgb2lch(IMPsrgb2rgb(color));
+}
+static inline float3 IMPsrgb2hsv(float3 color){
+    return IMPrgb2hsv(IMPsrgb2rgb(color));
+}
+static inline float3 IMPsrgb2hsl(float3 color){
+    return IMPrgb2hsl(IMPsrgb2rgb(color));
+}
+static inline float3 IMPsrgb2luv(float3 color){
+    return IMPrgb2luv(IMPsrgb2rgb(color));
+}
+static inline float3 IMPsrgb2ycbcrHD(float3 color){
+    return IMPrgb2ycbcrHD(IMPsrgb2rgb(color));
+}
+
+
+
 static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIndex to_cs, float3 value) {
     switch (to_cs) {
-        
+            
         case IMPRgbSpace:
             switch (from_cs) {
                 case IMPRgbSpace:
                     return value;
+                case IMPsRgbSpace:
+                    return IMPrgb2srgb(value);
                 case IMPLabSpace:
                     return IMPlab2rgb(value);
                 case IMPLchSpace:
@@ -619,145 +703,183 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return IMPycbcrHD2rgb(value);
             }
             break;
-    case IMPLabSpace:
-        switch (from_cs) {
-        case IMPRgbSpace:
-            return IMPrgb2lab(value);
+            
+        case IMPsRgbSpace:
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return IMPrgb2srgb(value);
+                case IMPsRgbSpace:
+                    return value;
+                case IMPLabSpace:
+                    return IMPlab2srgb(value);
+                case IMPLchSpace:
+                    return IMPlch2srgb(value);
+                case IMPHsvSpace:
+                    return IMPhsv2srgb(value);
+                case IMPHslSpace:
+                    return IMPhsl2srgb(value);
+                case IMPXyzSpace:
+                    return IMPxyz2srgb(value);
+                case IMPLuvSpace:
+                    return IMPluv2srgb(value);
+                case IMPYcbcrHDSpace:
+                    return IMPycbcrHD2srgb(value);
+            }
+            break;
+          
         case IMPLabSpace:
-            return value;
-        case IMPLchSpace:
-            return IMPlch2lab(value);
-        case IMPHsvSpace:
-            return IMPhsv2lab(value);
-        case IMPHslSpace:
-            return IMPhsl2lab(value);
-        case IMPXyzSpace:
-            return IMPxyz2lab(value);
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return IMPrgb2lab(value);
+                case IMPsRgbSpace:
+                    return IMPsrgb2lab(value);
+                case IMPLabSpace:
+                    return value;
+                case IMPLchSpace:
+                    return IMPlch2lab(value);
+                case IMPHsvSpace:
+                    return IMPhsv2lab(value);
+                case IMPHslSpace:
+                    return IMPhsl2lab(value);
+                case IMPXyzSpace:
+                    return IMPxyz2lab(value);
+                case IMPLuvSpace:
+                    return IMPluv2lab(value);
+                case IMPYcbcrHDSpace:
+                    return IMPycbcrHD2lab(value);
+            }
+            
         case IMPLuvSpace:
-            return IMPluv2lab(value);
-        case IMPYcbcrHDSpace:
-            return IMPycbcrHD2lab(value);
-        }
-        
-    case IMPLuvSpace:
-        switch (from_cs) {
-        case IMPRgbSpace:
-            return IMPrgb2luv(value);
-        case IMPLabSpace:
-            return IMPlab2luv(value);
-        case IMPLchSpace:
-            return IMPlch2luv(value);
-        case IMPHsvSpace:
-            return IMPhsv2luv(value);
-        case IMPHslSpace:
-            return IMPhsl2luv(value);
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return IMPrgb2luv(value);
+                case IMPsRgbSpace:
+                    return IMPsrgb2luv(value);
+                case IMPLabSpace:
+                    return IMPlab2luv(value);
+                case IMPLchSpace:
+                    return IMPlch2luv(value);
+                case IMPHsvSpace:
+                    return IMPhsv2luv(value);
+                case IMPHslSpace:
+                    return IMPhsl2luv(value);
+                case IMPXyzSpace:
+                    return IMPxyz2luv(value);
+                case IMPLuvSpace:
+                    return value;
+                case IMPYcbcrHDSpace:
+                    return IMPycbcrHD2luv(value);
+            }
+            
         case IMPXyzSpace:
-            return IMPxyz2luv(value);
-        case IMPLuvSpace:
-            return value;
-        case IMPYcbcrHDSpace:
-            return IMPycbcrHD2luv(value);
-        }
-        
-    case IMPXyzSpace:
-        switch (from_cs) {
-        case IMPRgbSpace:
-            return IMPrgb2xyz(value);
-        case IMPLabSpace:
-            return IMPlab2xyz(value);
-        case IMPLchSpace:
-            return IMPlch2xyz(value);
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return IMPrgb2xyz(value);
+                case IMPsRgbSpace:
+                    return IMPsrgb2xyz(value);
+                case IMPLabSpace:
+                    return IMPlab2xyz(value);
+                case IMPLchSpace:
+                    return IMPlch2xyz(value);
+                case IMPHsvSpace:
+                    return IMPhsv2xyz(value);
+                case IMPHslSpace:
+                    return IMPhsl2xyz(value);
+                case IMPXyzSpace:
+                    return value;
+                case IMPLuvSpace:
+                    return IMPluv2xyz(value);
+                case IMPYcbcrHDSpace:
+                    return IMPycbcrHD2xyz(value);
+            }
+            
         case IMPHsvSpace:
-            return IMPhsv2xyz(value);
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return IMPrgb2hsv(value);
+                case IMPsRgbSpace:
+                    return IMPsrgb2hsv(value);
+                case IMPLabSpace:
+                    return IMPlab2hsv(value);
+                case IMPLchSpace:
+                    return IMPlch2hsv(value);
+                case IMPHsvSpace:
+                    return value;
+                case IMPHslSpace:
+                    return IMPhsl2hsv(value);
+                case IMPXyzSpace:
+                    return IMPxyz2hsv(value);
+                case IMPLuvSpace:
+                    return IMPluv2hsv(value);
+                case IMPYcbcrHDSpace:
+                    return IMPycbcrHD2hsv(value);
+            }
+            
         case IMPHslSpace:
-            return IMPhsl2xyz(value);
-        case IMPXyzSpace:
-            return value;
-        case IMPLuvSpace:
-            return IMPluv2xyz(value);
-        case IMPYcbcrHDSpace:
-            return IMPycbcrHD2xyz(value);
-        }
-        
-    case IMPHsvSpace:
-        switch (from_cs) {
-        case IMPRgbSpace:
-            return IMPrgb2hsv(value);
-        case IMPLabSpace:
-            return IMPlab2hsv(value);
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return IMPrgb2hsl(value);
+                case IMPsRgbSpace:
+                    return IMPsrgb2hsl(value);
+                case IMPLabSpace:
+                    return IMPlab2hsl(value);
+                case IMPLchSpace:
+                    return IMPlch2hsl(value);
+                case IMPHsvSpace:
+                    return IMPhsv2hsl(value);
+                case IMPHslSpace:
+                    return value;
+                case IMPXyzSpace:
+                    return IMPxyz2hsl(value);
+                case IMPLuvSpace:
+                    return IMPluv2hsl(value);
+                case IMPYcbcrHDSpace:
+                    return IMPycbcrHD2hsl(value);
+            }
+            
         case IMPLchSpace:
-            return IMPlch2hsv(value);
-        case IMPHsvSpace:
-            return value;
-        case IMPHslSpace:
-            return IMPhsl2hsv(value);
-        case IMPXyzSpace:
-            return IMPxyz2hsv(value);
-        case IMPLuvSpace:
-            return IMPluv2hsv(value);
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return IMPrgb2lch(value);
+                case IMPsRgbSpace:
+                    return IMPsrgb2lch(value);
+                case IMPLabSpace:
+                    return IMPlab2lch(value);
+                case IMPLchSpace:
+                    return value;
+                case IMPHsvSpace:
+                    return IMPhsv2lch(value);
+                case IMPHslSpace:
+                    return IMPhsl2lch(value);
+                case IMPXyzSpace:
+                    return IMPxyz2lch(value);
+                case IMPLuvSpace:
+                    return IMPluv2lch(value);
+                case IMPYcbcrHDSpace:
+                    return IMPycbcrHD2lch(value);
+            }
+            
         case IMPYcbcrHDSpace:
-            return IMPycbcrHD2hsv(value);
-        }
-        
-    case IMPHslSpace:
-        switch (from_cs) {
-        case IMPRgbSpace:
-            return IMPrgb2hsl(value);
-        case IMPLabSpace:
-            return IMPlab2hsl(value);
-        case IMPLchSpace:
-            return IMPlch2hsl(value);
-        case IMPHsvSpace:
-            return IMPhsv2hsl(value);
-        case IMPHslSpace:
-            return value;
-        case IMPXyzSpace:
-            return IMPxyz2hsl(value);
-        case IMPLuvSpace:
-            return IMPluv2hsl(value);
-        case IMPYcbcrHDSpace:
-            return IMPycbcrHD2hsl(value);
-        }
-        
-    case IMPLchSpace:
-        switch (from_cs) {
-        case IMPRgbSpace:
-            return IMPrgb2lch(value);
-        case IMPLabSpace:
-            return IMPlab2lch(value);
-        case IMPLchSpace:
-            return value;
-        case IMPHsvSpace:
-            return IMPhsv2lch(value);
-        case IMPHslSpace:
-            return IMPhsl2lch(value);
-        case IMPXyzSpace:
-            return IMPxyz2lch(value);
-        case IMPLuvSpace:
-            return IMPluv2lch(value);
-        case IMPYcbcrHDSpace:
-            return IMPycbcrHD2lch(value);
-        }
-        
-    case IMPYcbcrHDSpace:
-        switch (from_cs) {
-        case IMPRgbSpace:
-            return IMPrgb2ycbcrHD(value);
-        case IMPLabSpace:
-            return IMPlab2ycbcrHD(value);
-        case IMPLchSpace:
-            return IMPlch2ycbcrHD(value);
-        case IMPHsvSpace:
-            return IMPhsv2ycbcrHD(value);
-        case IMPHslSpace:
-            return IMPhsl2ycbcrHD(value);
-        case IMPXyzSpace:
-            return IMPxyz2ycbcrHD(value);
-        case IMPLuvSpace:
-            return IMPluv2ycbcrHD(value);
-        case IMPYcbcrHDSpace:
-            return value;
-        }
+            switch (from_cs) {
+                case IMPRgbSpace:
+                    return IMPrgb2ycbcrHD(value);
+                case IMPsRgbSpace:
+                    return IMPsrgb2ycbcrHD(value);
+                case IMPLabSpace:
+                    return IMPlab2ycbcrHD(value);
+                case IMPLchSpace:
+                    return IMPlch2ycbcrHD(value);
+                case IMPHsvSpace:
+                    return IMPhsv2ycbcrHD(value);
+                case IMPHslSpace:
+                    return IMPhsl2ycbcrHD(value);
+                case IMPXyzSpace:
+                    return IMPxyz2ycbcrHD(value);
+                case IMPLuvSpace:
+                    return IMPluv2ycbcrHD(value);
+                case IMPYcbcrHDSpace:
+                    return value;
+            }
     }
     return value;;
 }
