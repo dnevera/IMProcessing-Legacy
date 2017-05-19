@@ -35,11 +35,11 @@ public struct IMPTriangle {
         return [line0.normalIntersection(point: point), line1.normalIntersection(point: point)]
     }
     
-    public func distancesTo(point:float2) -> [float2] {
-        let line0 = IMPLineSegment(p0: p0, p1: pc)
-        let line1 = IMPLineSegment(p0: p1, p1: pc)
-        return [line0.distanceTo(point: point),line1.distanceTo(point: point)]
-    }
+//    public func distancesTo(point:float2) -> [float2] {
+//        let line0 = IMPLineSegment(p0: p0, p1: pc)
+//        let line1 = IMPLineSegment(p0: p1, p1: pc)
+//        return [line0.distanceTo(point: point),line1.distanceTo(point: point)]
+//    }
     
     /// Vector of distance from base vertex to opposite side
     public var heightVector:float2 {

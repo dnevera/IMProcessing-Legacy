@@ -206,8 +206,8 @@ public struct IMPLineSegment: Equatable {
     }
     
     
-    public func distanceTo(point:float2) -> float2 {
-        return normalIntersection(point: point) - point
+    public func distanceTo(point:float2) -> Float {
+        return distance(normalIntersection(point: point),point)
     }
     
     public func distanceTo(parallelLine line:IMPLineSegment) -> Float {
