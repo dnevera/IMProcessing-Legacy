@@ -92,6 +92,8 @@ public class IMPCCheckerDetector: IMPDetector {
     
     public var patchGrid:IMPPatchesGrid = IMPPatchesGrid(colors:IMPPassportCC24) {
         didSet{
+            dirty = true
+            patchColors.dirty = true
             //colorsBuffer = makeColorsBuffer()
             //centersBuffer = makeCentersBuffer()
 //            patchColorsKernel.preferedDimension =  MTLSize(width: patchGrid.dimension.width * patchGrid.dimension.height,

@@ -23,6 +23,8 @@
 // IMPYcbcrHDSpace = 7 // Full-range type
 //
 
+#define kIMP_STD_GAMMA 2.2
+
 static constant float2 kIMP_ColorSpaceRanges[9][3] = {
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPRgbSpace
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPsRgbSpace
@@ -46,11 +48,12 @@ static inline float2 IMPgetColorSpaceRange (IMPColorSpaceIndex space, int channe
 
 static inline float rgb_gamma_correct(float c, float gamma)
 {
-    constexpr float a = 0.055;
-    if(c < 0.0031308)
-        return 12.92*c;
-    else
-        return (1.0+a)*pow(c, 1.0/gamma) - a;
+//    constexpr float a = 0.055;
+//    if(c < 0.0031308)
+//        return 12.92*c;
+//    else
+//        return (1.0+a)*pow(c, 1.0/gamma) - a;
+    return pow(c, 1.0/gamma);
 }
 
 static inline float3 rgb_gamma_correct_r3 (float3 rgb, float gamma) {
@@ -416,7 +419,7 @@ static inline float3 IMPYCbCrHD_2_rgb(float3 YCbCr){
 // RGB
 //
 static inline float3 IMPrgb2srgb(float3 color){
-    return rgb_gamma_correct_r3(color, 2.2);
+    return rgb_gamma_correct_r3(color, kIMP_STD_GAMMA);
 }
 static inline float3 IMPrgb2xyz(float3 color){
     return IMPrgb_2_XYZ(color);
@@ -652,7 +655,7 @@ static inline float3 IMPycbcrHD2srgb(float3 color){
 //sRGB
 //
 static inline float3 IMPsrgb2rgb(float3 color){
-    return rgb_gamma_correct_r3(color, 1/2.2);
+    return rgb_gamma_correct_r3(color, 1/kIMP_STD_GAMMA);
 }
 static inline float3 IMPsrgb2lab(float3 color){
     return IMPrgb2lab(IMPsrgb2rgb(color));

@@ -91,10 +91,18 @@ public struct IMPPatchesGrid {
     }
     
     public init(colors: [[uint3]] = IMPPassportCC24) {
+        //dimension = Dimension(width: colors[0].count, height: colors.count)
+        //target = PatchesInfo(dimension: dimension)
+        //source = colors.map({ return $0.map({ return float3(Float($0.x),Float($0.y),Float($0.z))/float3(255) }) })
+        self.init(colors: colors.map({ return $0.map({ return float3(Float($0.x),Float($0.y),Float($0.z))/float3(255) }) }))
+    }
+    
+    public init(colors: [[float3]]) {
+        source = colors
         dimension = Dimension(width: colors[0].count, height: colors.count)
-        source = colors.map({ return $0.map({ return float3(Float($0.x),Float($0.y),Float($0.z))/float3(255) }) })
         target = PatchesInfo(dimension: dimension)
     }
+    
     
     public var corners = [IMPCorner]() { didSet{ match() } }
     

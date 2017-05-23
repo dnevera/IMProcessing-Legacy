@@ -30,7 +30,7 @@ public enum IMPColorSpace:String {
     public static let hslIndex  = Int(IMPHslSpace.rawValue)
     public static let ycbcrHDIndex = Int(IMPYcbcrHDSpace.rawValue)
     
-    public static let spacesCount = 7
+    public static let spacesCount = 8
     
     case rgb  = "Linear RGB"
     case srgb = "sRGB"
