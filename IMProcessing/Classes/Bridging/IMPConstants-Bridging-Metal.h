@@ -53,6 +53,9 @@ using namespace metal;
 
 # include <simd/simd.h>
 
+static constant float kIMP_Std_Gamma      = 2.2;
+static constant float kIMP_RGB2SRGB_Gamma = 2.4;
+
 static constant float kIMP_Cielab_X = 95.047;
 static constant float kIMP_Cielab_Y = 100.000;
 static constant float kIMP_Cielab_Z = 108.883;

@@ -23,8 +23,6 @@
 // IMPYcbcrHDSpace = 7 // Full-range type
 //
 
-#define kIMP_STD_GAMMA 2.2
-
 static constant float2 kIMP_ColorSpaceRanges[9][3] = {
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPRgbSpace
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPsRgbSpace
@@ -418,9 +416,42 @@ static inline float3 IMPYCbCrHD_2_rgb(float3 YCbCr){
 //
 // RGB
 //
-static inline float3 IMPrgb2srgb(float3 color){
-    return rgb_gamma_correct_r3(color, kIMP_STD_GAMMA);
+// https://web.archive.org/web/20030212204955/http://www.srgb.com:80/basicsofsrgb.htm
+// The linear RGB values are transformed to nonlinear sR'G'B' values as follows:
+//
+// If  R,G, B <= 0.0031308
+// RsRGB = 12.92 * R
+// GsRGB = 12.92 * G
+// BsRGB = 12.92 * B
+//
+// else if  R,G, B > 0.0031308
+// RsRGB = 1.055 * R(1.0/2.4) - 0.055
+// GsRGB = 1.055 * G(1.0/2.4) - 0.055
+// BsRGB = 1.055 * B(1.0/2.4) - 0.055
+//
+
+static inline float rgb2srgb_transform(float c, float gamma)
+{
+    constexpr float a = 0.055;
+    if(c <= 0.0031308)
+        return 12.92*c;
+    else
+        return (1.0+a)*pow(c, 1.0/gamma) - a;
 }
+
+static inline float3 rgb2srgb_transform_r3 (float3 rgb, float gamma) {
+    return (float3){
+        rgb2srgb_transform(rgb.x,gamma),
+        rgb2srgb_transform(rgb.y,gamma),
+        rgb2srgb_transform(rgb.z,gamma)
+    };
+}
+
+static inline float3 IMPrgb2srgb(float3 color){
+    return rgb2srgb_transform_r3(color, kIMP_RGB2SRGB_Gamma);
+}
+
+
 static inline float3 IMPrgb2xyz(float3 color){
     return IMPrgb_2_XYZ(color);
 }
@@ -654,9 +685,41 @@ static inline float3 IMPycbcrHD2srgb(float3 color){
 //
 //sRGB
 //
-static inline float3 IMPsrgb2rgb(float3 color){
-    return rgb_gamma_correct_r3(color, 1/kIMP_STD_GAMMA);
+//
+//
+// The nonlinear sR'G'B' values are transformed to linear R,G, B values by:
+//
+// If  RsRGB,GsRGB, BsRGB <= 0.04045
+// R =  RsRGB * 12.92
+// G =  GsRGB * 12.92
+// B =  BsRGB * 12.92
+//
+// else if  RsRGB,GsRGB, BsRGB > 0.04045
+// R = ((RsRGB + 0.055) / 1.055)^2.4
+// G = ((GsRGB + 0.055) / 1.055)^2.4
+// B = ((BsRGB + 0.055) / 1.055)^2.4
+
+static inline float srgb2rgb_transform(float c, float gamma)
+{
+    constexpr float a = 0.055;
+    if(c <= 0.04045)
+        return c/12.92;
+    else
+        return pow(((c + a)/(1+a)),gamma);
 }
+
+static inline float3 srgb2rgb_transform_r3 (float3 rgb, float gamma) {
+    return (float3){
+        srgb2rgb_transform(rgb.x,gamma),
+        srgb2rgb_transform(rgb.y,gamma),
+        srgb2rgb_transform(rgb.z,gamma)
+    };
+}
+
+static inline float3 IMPsrgb2rgb(float3 color){
+    return srgb2rgb_transform_r3(color, kIMP_RGB2SRGB_Gamma);
+}
+
 static inline float3 IMPsrgb2lab(float3 color){
     return IMPrgb2lab(IMPsrgb2rgb(color));
 }
@@ -689,7 +752,7 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                 case IMPRgbSpace:
                     return value;
                 case IMPsRgbSpace:
-                    return IMPrgb2srgb(value);
+                    return IMPsrgb2rgb(value);
                 case IMPLabSpace:
                     return IMPlab2rgb(value);
                 case IMPLchSpace:
