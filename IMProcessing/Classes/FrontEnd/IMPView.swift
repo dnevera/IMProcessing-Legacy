@@ -27,7 +27,7 @@ import MetalKit
     public typealias IMPDragOperationHandler = ((_ files:[String]) -> Bool)
       
     public extension NSView {
-        public var backgroundColor:NSColor? {
+        open var backgroundColor:NSColor? {
             set{
                 wantsLayer = true
                 layer?.backgroundColor = newValue?.cgColor
@@ -109,6 +109,16 @@ public class IMPView: MTKView {
                 needProcessing = true
             }
         }
+        else if filter?.source == nil {
+            let newSize = NSSize(width: self.bounds.size.width * screenScale,
+                                 height: self.bounds.size.height * screenScale)
+
+            drawableSize = NSSize(width: newSize.width, height: newSize.height)
+
+            if !needProcessing{
+                needProcessing = true
+            }
+        }
     }
     
     #if os(OSX)
@@ -183,9 +193,9 @@ public class IMPView: MTKView {
             
             if self.frameImage.texture != nil {
                 //NSLog("   !!!!!  new frame = \(self.frameImage.texture?.size)")
-                self.needProcessing = false
-                self.setNeedsDisplay()
             }
+            self.needProcessing = false
+            self.setNeedsDisplay()
         }
     }
 
@@ -206,11 +216,11 @@ public class IMPView: MTKView {
             return
         }
         
-        guard let sourceTexture = frameImage.texture else {
-            needProcessing = true
-            context.resume()
-            return
-        }
+        //guard let sourceTexture = frameImage.texture else {
+        //    needProcessing = true
+        //    context.resume()
+        //    return
+        //}
         
         guard let commandBuffer = context.commandBuffer else {
             context.resume()
@@ -225,22 +235,41 @@ public class IMPView: MTKView {
         
         let targetTexture = drawable.texture
         
-        if renderingEnabled == false &&
-            sourceTexture.cgsize == drawableSize  &&
-            sourceTexture.pixelFormat == targetTexture.pixelFormat{
-            let encoder = commandBuffer.makeBlitCommandEncoder()
-            encoder.copy(
-                from: sourceTexture,
-                sourceSlice: 0,
-                sourceLevel: 0,
-                sourceOrigin: MTLOrigin(x:0,y:0,z:0),
-                sourceSize: sourceTexture.size,
-                to: targetTexture,
-                destinationSlice: 0,
-                destinationLevel: 0,
-                destinationOrigin: MTLOrigin(x:0,y:0,z:0))
-            
-            encoder.endEncoding()
+        if  let sourceTexture = frameImage.texture  {
+            if renderingEnabled == false &&
+                sourceTexture.cgsize == drawableSize  &&
+                sourceTexture.pixelFormat == targetTexture.pixelFormat{
+                let encoder = commandBuffer.makeBlitCommandEncoder()
+                encoder.copy(
+                    from: sourceTexture,
+                    sourceSlice: 0,
+                    sourceLevel: 0,
+                    sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                    sourceSize: sourceTexture.size,
+                    to: targetTexture,
+                    destinationSlice: 0,
+                    destinationLevel: 0,
+                    destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                
+                encoder.endEncoding()
+            }
+            else {
+                renderPassDescriptor.colorAttachments[0].texture     = targetTexture
+                
+                let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
+                
+                if let pipeline = renderPipeline {
+                    
+                    encoder.setRenderPipelineState(pipeline)
+                    
+                    encoder.setVertexBuffer(vertexBuffer, offset:0, at:0)
+                    encoder.setFragmentTexture(sourceTexture, at:0)
+                    encoder.setViewport(viewPort)
+                    
+                    encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
+                    encoder.endEncoding()
+                }
+            }
         }
         else {
             renderPassDescriptor.colorAttachments[0].texture     = targetTexture
@@ -252,17 +281,15 @@ public class IMPView: MTKView {
                 encoder.setRenderPipelineState(pipeline)
                 
                 encoder.setVertexBuffer(vertexBuffer, offset:0, at:0)
-                //encoder.setFragmentTexture(sourceTexture.makeTextureView(pixelFormat: self.colorPixelFormat), at:0)
-                encoder.setFragmentTexture(sourceTexture, at:0)
+                encoder.setFragmentTexture(nil, at:0)
                 encoder.setViewport(viewPort)
                 
                 encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
                 encoder.endEncoding()
             }
         }
-        
         commandBuffer.present(drawable)
-        
+    
         commandBuffer.addCompletedHandler{ (commandBuffer) in
             self.context.resume()
         }

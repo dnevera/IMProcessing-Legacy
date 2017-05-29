@@ -48,6 +48,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     public typealias FailHandler     = ((_ error:RegisteringError)->Void)
     public typealias CompleteHandler = ((_ image:IMPImageProvider)->Void)
     public typealias UpdateHandler   = ((_ image:IMPImageProvider) -> Void)
+    public typealias NulableUpdateHandler   = ((_ image:IMPImageProvider?) -> Void)
     public typealias FilterHandler   = ((_ filter:IMPFilter, _ source:IMPImageProvider?, _ destination:IMPImageProvider) -> Void)
     
     // MARK: - public
@@ -68,7 +69,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public var source: IMPImageProvider? = nil {
         didSet{
-            //oldValue?.texture?.setPurgeableState(.volatile)
+            if source == nil {
+                oldValue?.texture?.setPurgeableState(.volatile)
+            }
             _destination.texture?.setPurgeableState(.empty)
             _destination.texture = nil
             executeNewSourceObservers(source: source)
@@ -341,7 +344,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     //
     // MARK: - observers
     //
-    public func addObserver(newSource observer:@escaping UpdateHandler){
+    public func addObserver(newSource observer:@escaping NulableUpdateHandler){
         newSourceObservers.append(observer)
     }
     public func addObserver(destinationUpdated observer:@escaping UpdateHandler){
@@ -750,10 +753,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     // MARK: - internal
     //
     internal func executeNewSourceObservers(source:IMPImageProvider?){
-        if let s = source {
-            for o in newSourceObservers {
-                o(s)
-            }
+        for o in newSourceObservers {
+            o(source)
         }
     }
     
@@ -792,7 +793,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     private var root:IMPFilter?
     
     private lazy var _destination:IMPImageProvider   = IMPImage(context: self.context)
-    private var newSourceObservers:[UpdateHandler]   = [UpdateHandler]()
+    private var newSourceObservers:[NulableUpdateHandler]   = [NulableUpdateHandler]()
     private var destinationObservers:[UpdateHandler] = [UpdateHandler]()
     private var dirtyObservers:[FilterHandler]       = [FilterHandler]()
     private var enablingObservers:[FilterHandler]    = [FilterHandler]()
