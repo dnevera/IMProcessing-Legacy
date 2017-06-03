@@ -27,7 +27,8 @@ static constant float2 kIMP_ColorSpaceRanges[9][3] = {
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPRgbSpace
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPsRgbSpace
     { (float2){0,100},     (float2){-128,127},  (float2){-128,127} },  // IMPLabSpace https://en.wikipedia.org/wiki/Lab_color_space#Range_of_coordinates
-    { (float2){0,100},     (float2){0,200},     (float2){0,360} },     // IMPLchSpace
+    { (float2){0,100},     (float2){0,141.421}, (float2){0,360} },     // IMPLchSpace
+    //{ (float2){0,100},     (float2){0,200},     (float2){0,360} },     // IMPLchSpace
     { (float2){0,95.047},  (float2){0,100},     (float2){0,108.883} }, // IMPXyzSpace http://www.easyrgb.com/en/math.php#text22
     //
     // TODO: Luv - is not a real Luv, it is a LutSpace from dcampof

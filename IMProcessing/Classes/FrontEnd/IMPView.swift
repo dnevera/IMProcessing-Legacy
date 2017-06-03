@@ -271,23 +271,23 @@ public class IMPView: MTKView {
                 }
             }
         }
-        else {
-            renderPassDescriptor.colorAttachments[0].texture     = targetTexture
-            
-            let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
-            
-            if let pipeline = renderPipeline {
-                
-                encoder.setRenderPipelineState(pipeline)
-                
-                encoder.setVertexBuffer(vertexBuffer, offset:0, at:0)
-                encoder.setFragmentTexture(nil, at:0)
-                encoder.setViewport(viewPort)
-                
-                encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
-                encoder.endEncoding()
-            }
-        }
+//        else {
+//            renderPassDescriptor.colorAttachments[0].texture     = targetTexture
+//            
+//            let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
+//            
+//            if let pipeline = renderPipeline {
+//                
+//                encoder.setRenderPipelineState(pipeline)
+//                
+//                encoder.setVertexBuffer(vertexBuffer, offset:0, at:0)
+//                encoder.setFragmentTexture(nil, at:0)
+//                encoder.setViewport(viewPort)
+//                
+//                encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
+//                encoder.endEncoding()
+//            }
+//        }
         commandBuffer.present(drawable)
     
         commandBuffer.addCompletedHandler{ (commandBuffer) in
@@ -342,7 +342,7 @@ public class IMPView: MTKView {
         #if os(iOS)
             contentMode = .scaleAspectFit
         #elseif os(OSX)
-            postsFrameChangedNotifications = true
+            postsFrameChangedNotifications = false
             //addObserver(self, forKeyPath: NSViewFrameDidChange.name, options: [.new], context: nil)
         #endif
         enableSetNeedsDisplay = false
