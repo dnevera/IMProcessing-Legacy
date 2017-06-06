@@ -12,17 +12,17 @@ import IMProcessing
 
 
 //
-// XYZ -> Luv, RGB, LAB/LCH, HSV
+// XYZ -> dcproflut, RGB, LAB/LCH, HSV
 //
 
 public extension float3{
     
     //
-    // luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
+    // dcproflut sources: https://www.ludd.ltu.se/~torger/dcamprof.html
     //
 
-    public func xyz2luv() ->float3 {
-        return  IMPBridge.xyz2luv(self)
+    public func xyz2dcproflut() ->float3 {
+        return  IMPBridge.xyz2dcproflut(self)
     }
 
     public func xyz2rgb() -> float3 {

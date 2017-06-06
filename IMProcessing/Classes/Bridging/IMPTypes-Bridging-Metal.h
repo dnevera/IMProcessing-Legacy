@@ -47,7 +47,7 @@ extern "C" {
         IMPLabSpace     = 2,
         IMPLchSpace     = 3,
         IMPXyzSpace     = 4,
-        IMPLuvSpace     = 5,
+        IMPDCProfLutSpace     = 5,
         IMPHsvSpace     = 6,
         IMPHslSpace     = 7,
         IMPYcbcrHDSpace = 8 // Full-range type

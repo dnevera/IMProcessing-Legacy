@@ -14,7 +14,7 @@ func IMPstep(_ edge:Float, _ x:Float) -> Float {
 }
 
 //
-// RGB -> Luv, XYZ, LAB/LCH, HSV
+// RGB -> dcproflut, XYZ, LAB/LCH, HSV
 //
 
 public extension float3{
@@ -35,8 +35,8 @@ public extension float3{
         return IMPBridge.rgb2ycbcrHD(self)
     }
 
-    public func rgb2luv() ->float3 {
-        return IMPBridge.rgb2luv(self)
+    public func rgb2dcproflut() ->float3 {
+        return IMPBridge.rgb2dcproflut(self)
     }
     
     public func rgb2lab() -> float3 {

@@ -10,7 +10,7 @@ import Foundation
 import simd
 
 //
-// HSV -> RGB, XYZ, LAB/LCH, LUV
+// HSV -> RGB, XYZ, LAB/LCH, dcproflut
 //
 
 public extension float3{
@@ -39,8 +39,8 @@ public extension float3{
         return IMPBridge.hsv2xyz(self)
     }
     
-    public func hsv2luv() -> float3 {
-        return IMPBridge.hsv2luv(self)
+    public func hsv2dcproflut() -> float3 {
+        return IMPBridge.hsv2dcproflut(self)
     }
 
 }

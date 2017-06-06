@@ -10,7 +10,7 @@ import Foundation
 import simd
 
 //
-// luv sources: https://www.ludd.ltu.se/~torger/dcamprof.html
+// dcproflut sources: https://www.ludd.ltu.se/~torger/dcamprof.html
 //
 
 public func lab_ft_forward(_ t:Float) -> Float
@@ -33,7 +33,7 @@ public func lab_ft_inverse(_ t:Float) -> Float
 
 
 //
-// LAB -> RGB, XYZ, LCH, LUV, HSV
+// LAB -> RGB, XYZ, LCH, dcproflut, HSV
 //
 
 public extension float3{
@@ -53,8 +53,8 @@ public extension float3{
         return IMPBridge.lab2lch(self)
     }
     
-    public func lab2luv() -> float3 {
-        return IMPBridge.lab2luv(self)
+    public func lab2dcproflut() -> float3 {
+        return IMPBridge.lab2dcproflut(self)
     }
 
     public func lab2hsv() -> float3 {

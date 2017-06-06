@@ -12,7 +12,7 @@ import IMProcessing
 
 
 //
-// YCrCb/HD -> Luv, RGB, LAB/LCH, HSV
+// YCrCb/HD -> dcproflut, RGB, LAB/LCH, HSV
 //
 
 public extension float3{
@@ -33,8 +33,8 @@ public extension float3{
         return IMPBridge.ycbcrHD2xyz(self)
     }
     
-    public func ycbcrHD2luv() -> float3 {
-        return IMPBridge.ycbcrHD2luv(self)
+    public func ycbcrHD2dcproflut() -> float3 {
+        return IMPBridge.ycbcrHD2dcproflut(self)
     }
     
     public func ycbcrHD2hsv() -> float3 {

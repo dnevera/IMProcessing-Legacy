@@ -17,7 +17,7 @@
 // IMPLabSpace = 1,
 // IMPLchSpace = 2,
 // IMPXyzSpace = 3,
-// IMPLuvSpace = 4,
+// IMPDCProfLutSpace = 4,
 // IMPHsvSpace = 5,
 // IMPHslSpace = 6,
 // IMPYcbcrHDSpace = 7 // Full-range type
@@ -28,13 +28,8 @@ static constant float2 kIMP_ColorSpaceRanges[9][3] = {
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPsRgbSpace
     { (float2){0,100},     (float2){-128,127},  (float2){-128,127} },  // IMPLabSpace https://en.wikipedia.org/wiki/Lab_color_space#Range_of_coordinates
     { (float2){0,100},     (float2){0,141.421}, (float2){0,360} },     // IMPLchSpace
-    //{ (float2){0,100},     (float2){0,200},     (float2){0,360} },     // IMPLchSpace
     { (float2){0,95.047},  (float2){0,100},     (float2){0,108.883} }, // IMPXyzSpace http://www.easyrgb.com/en/math.php#text22
-    //
-    // TODO: Luv - is not a real Luv, it is a LutSpace from dcampof
-    //
-    // { (float2){0,100},     (float2){-134,220},  (float2){-140,122} },  // IMPLuvSpace http://cs.haifa.ac.il/hagit/courses/ist/Lectures/Demos/ColorApplet/me/
-    { (float2){0,6},       (float2){0,1},       (float2){0,1} },
+    { (float2){0,6},       (float2){0,1},       (float2){0,1} },       // IMPDCProfLutSpace
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPHsvSpace
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPHslSpace
     { (float2){0,255},     (float2){0,255},     (float2){0,255} }      // IMPYcbcrHDSpace  http://www.equasys.de/colorconversion.html
@@ -65,8 +60,7 @@ static inline float3 rgb_gamma_correct_r3 (float3 rgb, float gamma) {
 
 
 //
-// capces sources: http://www.easyrgb.com/index.php?X=MATH&H=02#text2
-// luv sources:    https://www.ludd.ltu.se/~torger/dcamprof.html
+// sources: http://www.easyrgb.com/index.php?X=MATH&H=02#text2
 //
 static inline float lab_ft_forward(float t)
 {
@@ -86,10 +80,11 @@ static inline float lab_ft_inverse(float t)
     }
 }
 
+
 //
-// LUV
+// dcproflut sources:    https://www.ludd.ltu.se/~torger/dcamprof.html
 //
-static inline float3 IMPXYZ_2_Luv(float3 xyz)
+static inline float3 IMPXYZ_2_dcproflut(float3 xyz)
 {
     float x = xyz[0], y = xyz[1], z = xyz[2];
     // u' v' and L*
@@ -102,7 +97,7 @@ static inline float3 IMPXYZ_2_Luv(float3 xyz)
     return (float3){ L*0.01, up, vp };
 }
 
-static inline float3 IMPLuv_2_XYZ(float3 lutspace)
+static inline float3 IMPdcproflut_2_XYZ(float3 lutspace)
 {
     float L = lutspace[0]*100.0, up = lutspace[1], vp = lutspace[2];
     float y = (L + 16)/116;
@@ -468,8 +463,8 @@ static inline float3 IMPrgb2lab(float3 color){
 static inline float3 IMPrgb2lch(float3 color){
     return IMPLab_2_Lch(IMPrgb2lab(color));
 }
-static inline float3 IMPrgb2luv(float3 color){
-    return IMPXYZ_2_Luv(IMPrgb_2_XYZ(color));
+static inline float3 IMPrgb2dcproflut(float3 color){
+    return IMPXYZ_2_dcproflut(IMPrgb_2_XYZ(color));
 }
 static inline float3 IMPrgb2ycbcrHD(float3 color){
     return IMPrgb_2_YCbCrHD(color);
@@ -497,8 +492,8 @@ static inline float3 IMPlab2hsl(float3 color){
 static inline float3 IMPlab2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPlab2rgb(color));
 }
-static inline float3 IMPlab2luv(float3 color){
-    return IMPXYZ_2_Luv(IMPlab2xyz(color));
+static inline float3 IMPlab2dcproflut(float3 color){
+    return IMPXYZ_2_dcproflut(IMPlab2xyz(color));
 }
 
 static inline float3 IMPlab2srgb(float3 color){
@@ -528,8 +523,8 @@ static inline float3 IMPxyz2hsl(float3 color){
 static inline float3 IMPxyz2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPxyz2rgb(color));
 }
-static inline float3 IMPxyz2luv(float3 color){
-    return IMPXYZ_2_Luv(color);
+static inline float3 IMPxyz2dcproflut(float3 color){
+    return IMPXYZ_2_dcproflut(color);
 }
 
 static inline float3 IMPxyz2srgb(float3 color){
@@ -554,8 +549,8 @@ static inline float3 IMPlch2hsl(float3 color){
 static inline float3 IMPlch2xyz(float3 color){
     return IMPlab2xyz(IMPlch2lab(color));
 }
-static inline float3 IMPlch2luv(float3 color){
-    return IMPXYZ_2_Luv(IMPlch2xyz(color));
+static inline float3 IMPlch2dcproflut(float3 color){
+    return IMPXYZ_2_dcproflut(IMPlch2xyz(color));
 }
 static inline float3 IMPlch2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPlch2rgb(color));
@@ -583,8 +578,8 @@ static inline float3 IMPhsv2hsl(float3 color){
 static inline float3 IMPhsv2xyz(float3 color){
     return IMPrgb2xyz(IMPhsv2rgb(color));
 }
-static inline float3 IMPhsv2luv(float3 color){
-    return IMPXYZ_2_Luv(IMPhsv2xyz(color));
+static inline float3 IMPhsv2dcproflut(float3 color){
+    return IMPXYZ_2_dcproflut(IMPhsv2xyz(color));
 }
 static inline float3 IMPhsv2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPhsv2rgb(color));
@@ -612,8 +607,8 @@ static inline float3 IMPhsl2hsv(float3 color){
 static inline float3 IMPhsl2xyz(float3 color){
     return IMPrgb2xyz(IMPhsl2rgb(color));
 }
-static inline float3 IMPhsl2luv(float3 color){
-    return IMPXYZ_2_Luv(IMPhsl2xyz(color));
+static inline float3 IMPhsl2dcproflut(float3 color){
+    return IMPXYZ_2_dcproflut(IMPhsl2xyz(color));
 }
 static inline float3 IMPhsl2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPhsl2rgb(color));
@@ -625,32 +620,32 @@ static inline float3 IMPhsl2srgb(float3 color){
 
 
 //
-// Luv
+// dcproflut
 //
-static inline float3 IMPluv2rgb(float3 color){
-    return IMPXYZ_2_rgb(IMPLuv_2_XYZ(color));
+static inline float3 IMPdcproflut2rgb(float3 color){
+    return IMPXYZ_2_rgb(IMPdcproflut_2_XYZ(color));
 }
-static inline float3 IMPluv2lab(float3 color){
-    return IMPxyz2lab(IMPLuv_2_XYZ(color));
+static inline float3 IMPdcproflut2lab(float3 color){
+    return IMPxyz2lab(IMPdcproflut_2_XYZ(color));
 }
-static inline float3 IMPluv2lch(float3 color){
-    return IMPlab2lch(IMPluv2lab(color));
+static inline float3 IMPdcproflut2lch(float3 color){
+    return IMPlab2lch(IMPdcproflut2lab(color));
 }
-static inline float3 IMPluv2hsv(float3 color){
-    return IMPrgb2hsv(IMPluv2rgb(color));
+static inline float3 IMPdcproflut2hsv(float3 color){
+    return IMPrgb2hsv(IMPdcproflut2rgb(color));
 }
-static inline float3 IMPluv2hsl(float3 color){
-    return IMPrgb2hsl(IMPluv2rgb(color));
+static inline float3 IMPdcproflut2hsl(float3 color){
+    return IMPrgb2hsl(IMPdcproflut2rgb(color));
 }
-static inline float3 IMPluv2xyz(float3 color){
-    return IMPLuv_2_XYZ(color);
+static inline float3 IMPdcproflut2xyz(float3 color){
+    return IMPdcproflut_2_XYZ(color);
 }
-static inline float3 IMPluv2ycbcrHD(float3 color){
-    return IMPrgb2ycbcrHD(IMPluv2rgb(color));
+static inline float3 IMPdcproflut2ycbcrHD(float3 color){
+    return IMPrgb2ycbcrHD(IMPdcproflut2rgb(color));
 }
 
-static inline float3 IMPluv2srgb(float3 color){
-    return IMPrgb2srgb(IMPluv2rgb(color));
+static inline float3 IMPdcproflut2srgb(float3 color){
+    return IMPrgb2srgb(IMPdcproflut2rgb(color));
 }
 
 
@@ -675,8 +670,8 @@ static inline float3 IMPycbcrHD2hsl(float3 color){
 static inline float3 IMPycbcrHD2xyz(float3 color){
     return  IMPrgb_2_XYZ(IMPycbcrHD2rgb(color));
 }
-static inline float3 IMPycbcrHD2luv(float3 color){
-    return IMPrgb2luv(IMPycbcrHD2rgb(color));
+static inline float3 IMPycbcrHD2dcproflut(float3 color){
+    return IMPrgb2dcproflut(IMPycbcrHD2rgb(color));
 }
 
 static inline float3 IMPycbcrHD2srgb(float3 color){
@@ -736,8 +731,8 @@ static inline float3 IMPsrgb2hsv(float3 color){
 static inline float3 IMPsrgb2hsl(float3 color){
     return IMPrgb2hsl(IMPsrgb2rgb(color));
 }
-static inline float3 IMPsrgb2luv(float3 color){
-    return IMPrgb2luv(IMPsrgb2rgb(color));
+static inline float3 IMPsrgb2dcproflut(float3 color){
+    return IMPrgb2dcproflut(IMPsrgb2rgb(color));
 }
 static inline float3 IMPsrgb2ycbcrHD(float3 color){
     return IMPrgb2ycbcrHD(IMPsrgb2rgb(color));
@@ -764,8 +759,8 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return IMPhsl2rgb(value);
                 case IMPXyzSpace:
                     return IMPxyz2rgb(value);
-                case IMPLuvSpace:
-                    return IMPluv2rgb(value);
+                case IMPDCProfLutSpace:
+                    return IMPdcproflut2rgb(value);
                 case IMPYcbcrHDSpace:
                     return IMPycbcrHD2rgb(value);
             }
@@ -787,8 +782,8 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return IMPhsl2srgb(value);
                 case IMPXyzSpace:
                     return IMPxyz2srgb(value);
-                case IMPLuvSpace:
-                    return IMPluv2srgb(value);
+                case IMPDCProfLutSpace:
+                    return IMPdcproflut2srgb(value);
                 case IMPYcbcrHDSpace:
                     return IMPycbcrHD2srgb(value);
             }
@@ -810,32 +805,32 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return IMPhsl2lab(value);
                 case IMPXyzSpace:
                     return IMPxyz2lab(value);
-                case IMPLuvSpace:
-                    return IMPluv2lab(value);
+                case IMPDCProfLutSpace:
+                    return IMPdcproflut2lab(value);
                 case IMPYcbcrHDSpace:
                     return IMPycbcrHD2lab(value);
             }
             
-        case IMPLuvSpace:
+        case IMPDCProfLutSpace:
             switch (from_cs) {
                 case IMPRgbSpace:
-                    return IMPrgb2luv(value);
+                    return IMPrgb2dcproflut(value);
                 case IMPsRgbSpace:
-                    return IMPsrgb2luv(value);
+                    return IMPsrgb2dcproflut(value);
                 case IMPLabSpace:
-                    return IMPlab2luv(value);
+                    return IMPlab2dcproflut(value);
                 case IMPLchSpace:
-                    return IMPlch2luv(value);
+                    return IMPlch2dcproflut(value);
                 case IMPHsvSpace:
-                    return IMPhsv2luv(value);
+                    return IMPhsv2dcproflut(value);
                 case IMPHslSpace:
-                    return IMPhsl2luv(value);
+                    return IMPhsl2dcproflut(value);
                 case IMPXyzSpace:
-                    return IMPxyz2luv(value);
-                case IMPLuvSpace:
+                    return IMPxyz2dcproflut(value);
+                case IMPDCProfLutSpace:
                     return value;
                 case IMPYcbcrHDSpace:
-                    return IMPycbcrHD2luv(value);
+                    return IMPycbcrHD2dcproflut(value);
             }
             
         case IMPXyzSpace:
@@ -854,8 +849,8 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return IMPhsl2xyz(value);
                 case IMPXyzSpace:
                     return value;
-                case IMPLuvSpace:
-                    return IMPluv2xyz(value);
+                case IMPDCProfLutSpace:
+                    return IMPdcproflut2xyz(value);
                 case IMPYcbcrHDSpace:
                     return IMPycbcrHD2xyz(value);
             }
@@ -876,8 +871,8 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return IMPhsl2hsv(value);
                 case IMPXyzSpace:
                     return IMPxyz2hsv(value);
-                case IMPLuvSpace:
-                    return IMPluv2hsv(value);
+                case IMPDCProfLutSpace:
+                    return IMPdcproflut2hsv(value);
                 case IMPYcbcrHDSpace:
                     return IMPycbcrHD2hsv(value);
             }
@@ -898,8 +893,8 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return value;
                 case IMPXyzSpace:
                     return IMPxyz2hsl(value);
-                case IMPLuvSpace:
-                    return IMPluv2hsl(value);
+                case IMPDCProfLutSpace:
+                    return IMPdcproflut2hsl(value);
                 case IMPYcbcrHDSpace:
                     return IMPycbcrHD2hsl(value);
             }
@@ -920,8 +915,8 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return IMPhsl2lch(value);
                 case IMPXyzSpace:
                     return IMPxyz2lch(value);
-                case IMPLuvSpace:
-                    return IMPluv2lch(value);
+                case IMPDCProfLutSpace:
+                    return IMPdcproflut2lch(value);
                 case IMPYcbcrHDSpace:
                     return IMPycbcrHD2lch(value);
             }
@@ -942,8 +937,8 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
                     return IMPhsl2ycbcrHD(value);
                 case IMPXyzSpace:
                     return IMPxyz2ycbcrHD(value);
-                case IMPLuvSpace:
-                    return IMPluv2ycbcrHD(value);
+                case IMPDCProfLutSpace:
+                    return IMPdcproflut2ycbcrHD(value);
                 case IMPYcbcrHDSpace:
                     return value;
             }

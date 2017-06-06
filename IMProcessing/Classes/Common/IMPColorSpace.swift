@@ -25,7 +25,7 @@ public enum IMPColorSpace:String {
     public static let labIndex  = Int(IMPLabSpace.rawValue)
     public static let lchIndex  = Int(IMPLchSpace.rawValue)
     public static let xyzIndex  = Int(IMPXyzSpace.rawValue)
-    public static let luvIndex  = Int(IMPLuvSpace.rawValue)
+    public static let dcproflutIndex  = Int(IMPDCProfLutSpace.rawValue)
     public static let hsvIndex  = Int(IMPHsvSpace.rawValue)
     public static let hslIndex  = Int(IMPHslSpace.rawValue)
     public static let ycbcrHDIndex = Int(IMPYcbcrHDSpace.rawValue)
@@ -37,7 +37,7 @@ public enum IMPColorSpace:String {
     case lab  = "L*a*b"
     case lch  = "L*c*h"
     case xyz  = "XYZ"
-    case luv  = "Luv"
+    case dcproflut  = "DCProf Lut"
     case hsv  = "HSV"
     case hsl  = "HSL"
     case ycbcrHD = "YCbCr/HD"
@@ -51,7 +51,7 @@ public enum IMPColorSpace:String {
         case IMPColorSpace.hsvIndex:  self = .hsv
         case IMPColorSpace.hslIndex:  self = .hsl
         case IMPColorSpace.xyzIndex:  self = .xyz
-        case IMPColorSpace.luvIndex:  self = .luv
+        case IMPColorSpace.dcproflutIndex:  self = .dcproflut
         case IMPColorSpace.ycbcrHDIndex:  self = .ycbcrHD
         default:
             self = .rgb
@@ -68,7 +68,7 @@ public enum IMPColorSpace:String {
             case .hsv: return IMPColorSpace.hsvIndex
             case .hsl: return IMPColorSpace.hslIndex
             case .xyz: return IMPColorSpace.xyzIndex
-            case .luv: return IMPColorSpace.luvIndex
+            case .dcproflut: return IMPColorSpace.dcproflutIndex
             case .ycbcrHD: return IMPColorSpace.ycbcrHDIndex
             }
         }
@@ -93,7 +93,7 @@ public enum IMPColorSpace:String {
         case .lch:  return ["L*","c*", "h"]
         case .hsv:  return ["H","S", "V"]
         case .hsl:  return ["H","S", "L"]
-        case .luv:  return ["L","u", "v"]
+        case .dcproflut:  return ["L","u", "v"]
         case .xyz:  return ["X","Y", "Z"]
         case .ycbcrHD: return ["Y","Cb", "Cr"]
         }
@@ -107,7 +107,7 @@ public enum IMPColorSpace:String {
         case .lch: return [NSColor.white,  NSColor.orange, NSColor.blue]
         case .hsv: return [NSColor.magenta,NSColor.red,    NSColor.white]
         case .hsl: return [NSColor.magenta,NSColor.red,    NSColor.white]
-        case .luv: return [NSColor.white,  NSColor.orange, NSColor.blue]
+        case .dcproflut: return [NSColor.white,  NSColor.orange, NSColor.blue]
         case .xyz: return [NSColor.red,    NSColor.green,  NSColor.blue]
         case .ycbcrHD: return [NSColor.red,NSColor.green,  NSColor.blue]
         }
