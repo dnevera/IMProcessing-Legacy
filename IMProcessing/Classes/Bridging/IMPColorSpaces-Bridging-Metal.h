@@ -26,13 +26,13 @@
 static constant float2 kIMP_ColorSpaceRanges[9][3] = {
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPRgbSpace
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPsRgbSpace
-    { (float2){0,100},     (float2){-128,127},  (float2){-128,127} },  // IMPLabSpace https://en.wikipedia.org/wiki/Lab_color_space#Range_of_coordinates
+    { (float2){0,100},     (float2){-128,127},  (float2){-128,127} },  // IMPLabSpace       https://en.wikipedia.org/wiki/Lab_color_space#Range_of_coordinates
     { (float2){0,100},     (float2){0,141.421}, (float2){0,360} },     // IMPLchSpace
-    { (float2){0,95.047},  (float2){0,100},     (float2){0,108.883} }, // IMPXyzSpace http://www.easyrgb.com/en/math.php#text22
-    { (float2){0,6},       (float2){0,1},       (float2){0,1} },       // IMPDCProfLutSpace
+    { (float2){0,95.047},  (float2){0,100},     (float2){0,108.883} }, // IMPXyzSpace       http://www.easyrgb.com/en/math.php#text22
+    { (float2){0,10},      (float2){0,1},       (float2){0,1} },       // IMPDCProfLutSpace https://www.ludd.ltu.se/~torger/dcamprof.html
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPHsvSpace
     { (float2){0,1},       (float2){0,1},       (float2){0,1} },       // IMPHslSpace
-    { (float2){0,255},     (float2){0,255},     (float2){0,255} }      // IMPYcbcrHDSpace  http://www.equasys.de/colorconversion.html
+    { (float2){0,255},     (float2){0,255},     (float2){0,255} }      // IMPYcbcrHDSpace   http://www.equasys.de/colorconversion.html
 };
 
 
