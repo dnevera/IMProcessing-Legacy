@@ -80,6 +80,7 @@ public extension float4 {
     }
 
     public var xy:float2 { get{ return float2(x,y) } set{self.x=newValue.x; self.y=newValue.y}}
+    public var zw:float2 { get{ return float2(z,w) } set{self.z=newValue.x; self.w=newValue.y}}
     public var wz:float2 { get{ return float2(w,z) } set{self.w=newValue.x; self.z=newValue.y}}
     
     public var xxx:float3 { get{ return float3(x,x,x) } }
@@ -88,6 +89,8 @@ public extension float4 {
     public var www:float3 { get{ return float3(w,w,w) } }
     
     public var xyw:float3 { get{ return float3(x,y,w) } set{self.x=newValue.x; self.y=newValue.y; self.w=newValue.z}}
+    public var xwy:float3 { get{ return float3(x,w,y) } set{self.x=newValue.x; self.w=newValue.y; self.y=newValue.z}}
+    public var wxy:float3 { get{ return float3(w,x,y) } set{self.w=newValue.x; self.x=newValue.y; self.y=newValue.z}}
     public var yzx:float3 { get{ return float3(y,z,x) } set{self.y=newValue.x; self.z=newValue.y; self.x=newValue.z}}
     public var xyz:float3 { get{ return float3(x,y,z) } set{self.x=newValue.x; self.y=newValue.y; self.z=newValue.z}}
 }
