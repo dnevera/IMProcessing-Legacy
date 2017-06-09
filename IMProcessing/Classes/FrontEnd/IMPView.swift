@@ -76,11 +76,11 @@ public class IMPView: MTKView {
             
             filter?.addObserver(newSource: { (source) in
                 
-                DispatchQueue.global().asyncAfter(wallDeadline: .now() + 1/30, execute: {
-                    DispatchQueue.main.async {
+                //DispatchQueue.global().asyncAfter(wallDeadline: .now() + 1/30, execute: {
+                    //DispatchQueue.main.async {
                         self.updateDrawbleSize()
-                    }
-                })
+                    //}
+                //})
                 
             })
             
@@ -271,40 +271,24 @@ public class IMPView: MTKView {
                 }
             }
         }
-//        else {
-//            renderPassDescriptor.colorAttachments[0].texture     = targetTexture
-//            
-//            let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
-//            
-//            if let pipeline = renderPipeline {
-//                
-//                encoder.setRenderPipelineState(pipeline)
-//                
-//                encoder.setVertexBuffer(vertexBuffer, offset:0, at:0)
-//                encoder.setFragmentTexture(nil, at:0)
-//                encoder.setViewport(viewPort)
-//                
-//                encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
-//                encoder.endEncoding()
-//            }
-//        }
+        
         commandBuffer.present(drawable)
-    
+        
         commandBuffer.addCompletedHandler{ (commandBuffer) in
             self.context.resume()
         }
         
         commandBuffer.commit()
-
+        
         //
         // https://forums.developer.apple.com/thread/64889
         //
         self.draw()
-
-        if frameCounter > 0  && isFirstFrame {
-            isFirstFrame = false
-            if viewReadyHandler !=  nil {
-                viewReadyHandler!()
+        
+        if self.frameCounter > 0  && self.isFirstFrame {
+            self.isFirstFrame = false
+            if self.viewReadyHandler !=  nil {
+                self.viewReadyHandler!()
             }
         }
     }
@@ -532,8 +516,11 @@ extension IMPView: MTKViewDelegate {
         
         lastUpdatesTimesCounter += 1
         
-        context.runOperation(.async) { [unowned self] in
+        //context.runOperation(.async) { [unowned self] in
+        operation.cancelAllOperations()
+        operation.addOperation { 
             self.refresh(rect: view.bounds)
         }
+        //}
     }
 }

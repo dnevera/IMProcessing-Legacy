@@ -52,7 +52,6 @@ public extension Collection where Iterator.Element == [Float] {
         
         return curve
     }
-
 }
 
 public protocol IMP3DInterpolator{
