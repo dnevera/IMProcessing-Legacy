@@ -211,9 +211,14 @@ public class IMPView: MTKView {
         
         context.wait()
         
-        guard let drawable = self.currentDrawable else {
-            context.resume()
-            return
+        var drawable:CAMetalDrawable!
+        
+        DispatchQueue.main.sync {
+            guard let d = self.currentDrawable else {
+                self.context.resume()
+                return
+            }
+            drawable = d
         }
         
         //guard let sourceTexture = frameImage.texture else {
@@ -283,7 +288,10 @@ public class IMPView: MTKView {
         //
         // https://forums.developer.apple.com/thread/64889
         //
-        self.draw()
+        
+        DispatchQueue.main.sync {
+            self.draw()
+        }
         
         if self.frameCounter > 0  && self.isFirstFrame {
             self.isFirstFrame = false

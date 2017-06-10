@@ -90,7 +90,7 @@ open class IMPContext {
         return try device.makeLibrary(source: source, options: options)
     }
     
-    fileprivate let semaphore = DispatchSemaphore(value: 3)
+    fileprivate let semaphore = DispatchSemaphore(value: 1)
     
     open func wait() {
         semaphore.wait()
