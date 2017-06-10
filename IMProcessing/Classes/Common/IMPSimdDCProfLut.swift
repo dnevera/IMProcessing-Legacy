@@ -47,6 +47,11 @@ public extension float3{
     public func dcproflut2hsl() -> float3 {
         return IMPBridge.dcproflut2hsl(self)
     }
+    
+    public func dcproflut2hsp() -> float3 {
+        return IMPBridge.dcproflut2hsp(self)
+    }
+    
     public func dcproflut2ycbcrHD() -> float3 {
         return IMPBridge.dcproflut2ycbcrHD(self)
     }

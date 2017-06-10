@@ -31,6 +31,11 @@ public extension float3{
     public func lch2hsl() -> float3 {
         return IMPBridge.lch2hsl(self)
     }
+    
+    public func lch2hsp() -> float3 {
+        return IMPBridge.lch2hsp(self)
+    }
+    
     public func lch2dcproflut() -> float3 {
         return IMPBridge.lch2dcproflut(self)
     }

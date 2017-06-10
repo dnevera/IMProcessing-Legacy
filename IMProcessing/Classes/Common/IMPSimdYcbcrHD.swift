@@ -44,4 +44,8 @@ public extension float3{
     public func ycbcrHD2hsl() -> float3 {
         return IMPBridge.ycbcrHD2hsl(self)
     }
+    
+    public func ycbcrHD2hsp() -> float3 {
+        return IMPBridge.ycbcrHD2hsp(self)
+    }
 }

@@ -50,7 +50,8 @@ extern "C" {
         IMPDCProfLutSpace     = 5,
         IMPHsvSpace     = 6,
         IMPHslSpace     = 7,
-        IMPYcbcrHDSpace = 8 // Full-range type
+        IMPYcbcrHDSpace = 8, // Full-range type
+        IMPHspSpace     = 9  // http://alienryderflex.com/hsp.html
     } IMPColorSpaceIndex;
 
     

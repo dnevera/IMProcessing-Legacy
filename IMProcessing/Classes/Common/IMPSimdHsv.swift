@@ -23,6 +23,10 @@ public extension float3{
         return IMPBridge.hsv2hsl(self)
     }
     
+    public func hsv2hsp() -> float3 {
+        return IMPBridge.hsv2hsp(self)
+    }
+    
     public func hsv2ycbcrHD() -> float3 {
         return IMPBridge.hsv2ycbcrHD(self)
     }

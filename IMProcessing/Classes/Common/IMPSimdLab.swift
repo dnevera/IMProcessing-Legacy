@@ -65,6 +65,10 @@ public extension float3{
         return IMPBridge.lab2hsl(self)
     }
     
+    public func lab2hsp() -> float3 {
+        return IMPBridge.lab2hsp(self)
+    }
+    
     public func lab2ycbcrHD() -> float3 {
         return IMPBridge.lab2ycbcrHD(self)
     }

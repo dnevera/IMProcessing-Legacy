@@ -30,6 +30,10 @@ public extension float3{
     public func rgb2hsl() -> float3 {
         return IMPBridge.rgb2hsl(self)
     }
+    
+    public func rgb2hsp() -> float3 {
+        return IMPBridge.rgb2hsp(self)
+    }
 
     public func rgb2ycbcrHD() -> float3 {
         return IMPBridge.rgb2ycbcrHD(self)

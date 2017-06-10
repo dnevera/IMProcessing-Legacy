@@ -29,8 +29,9 @@ public enum IMPColorSpace:String {
     public static let hsvIndex  = Int(IMPHsvSpace.rawValue)
     public static let hslIndex  = Int(IMPHslSpace.rawValue)
     public static let ycbcrHDIndex = Int(IMPYcbcrHDSpace.rawValue)
+    public static let hspIndex  = Int(IMPHspSpace.rawValue)
     
-    public static let spacesCount = 8
+    public static let spacesCount = 9
     
     case rgb  = "Linear RGB"
     case srgb = "sRGB"
@@ -40,6 +41,7 @@ public enum IMPColorSpace:String {
     case dcproflut  = "DCProf Lut"
     case hsv  = "HSV"
     case hsl  = "HSL"
+    case hsp  = "HSP"
     case ycbcrHD = "YCbCr/HD"
     
     public init(index:Int) {
@@ -53,6 +55,7 @@ public enum IMPColorSpace:String {
         case IMPColorSpace.xyzIndex:  self = .xyz
         case IMPColorSpace.dcproflutIndex:  self = .dcproflut
         case IMPColorSpace.ycbcrHDIndex:  self = .ycbcrHD
+        case IMPColorSpace.hspIndex:  self = .hsp
         default:
             self = .rgb
         }
@@ -70,6 +73,7 @@ public enum IMPColorSpace:String {
             case .xyz: return IMPColorSpace.xyzIndex
             case .dcproflut: return IMPColorSpace.dcproflutIndex
             case .ycbcrHD: return IMPColorSpace.ycbcrHDIndex
+            case .hsp: return IMPColorSpace.hspIndex
             }
         }
     }
@@ -96,6 +100,7 @@ public enum IMPColorSpace:String {
         case .dcproflut:  return ["L","u", "v"]
         case .xyz:  return ["X","Y", "Z"]
         case .ycbcrHD: return ["Y","Cb", "Cr"]
+        case .hsp: return ["H","S", "P"]
         }
     }
     
@@ -107,6 +112,7 @@ public enum IMPColorSpace:String {
         case .lch: return [NSColor.white,  NSColor.orange, NSColor.blue]
         case .hsv: return [NSColor.magenta,NSColor.red,    NSColor.white]
         case .hsl: return [NSColor.magenta,NSColor.red,    NSColor.white]
+        case .hsp: return [NSColor.magenta,NSColor.red,    NSColor.white]
         case .dcproflut: return [NSColor.white,  NSColor.orange, NSColor.blue]
         case .xyz: return [NSColor.red,    NSColor.green,  NSColor.blue]
         case .ycbcrHD: return [NSColor.red,NSColor.green,  NSColor.blue]
