@@ -104,6 +104,21 @@ public enum IMPColorSpace:String {
         }
     }
     
+    public var channelDescription: [String] {
+        switch self {
+        case .rgb:  return ["Red","Green", "Blue"]
+        case .srgb: return ["Red","Green", "Blue"]
+        case .lab:  return ["Lightness","a-channel", "b-channel"]
+        case .lch:  return ["Lightness","Chroma", "Hue"]
+        case .hsv:  return ["Hue","Saturation", "Value"]
+        case .hsl:  return ["Hue","Saturation", "Luminosity"]
+        case .dcproflut:  return ["Lightness","u-channel", "v-channel"]
+        case .xyz:  return ["X-channel","Y-channel", "Z-channel"]
+        case .ycbcrHD: return ["Y-channel","Cb-channel", "Cr-channel"]
+        case .hsp: return ["Hue","Saturation", "Perceived brightness"]
+        }
+    }
+    
     public var channelColors:[NSColor] {
         switch self {
         case .rgb: return [NSColor.red,    NSColor.green,  NSColor.blue]
