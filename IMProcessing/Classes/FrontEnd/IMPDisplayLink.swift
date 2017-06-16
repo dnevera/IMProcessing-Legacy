@@ -7,11 +7,10 @@
 //
 
 import Foundation
+import AVFoundation
+import CoreVideo
 
 #if os(iOS)
-    
-    import AVFoundation
-    import CoreVideo
     
     public class IMPDisplayLink {
         
@@ -59,7 +58,6 @@ import Foundation
     }
     
 #elseif os(OSX)
-    import CoreVideo
     
     //
     //
@@ -68,7 +66,7 @@ import Foundation
     //
     public class IMPDisplayLink {
         
-       public  var isPaused:Bool = false {
+        public  var isPaused:Bool = false {
             didSet(oldValue){
                 guard let link = displayLink else { return }
                 if  isPaused {
@@ -96,12 +94,12 @@ import Foundation
             context = Context(prefered: preferredFramesPerSecond, system: systemFramesPersecond, handler:execute)
             CVDisplayLinkSetOutputCallback(link, displayLinkOutputCallback, &context)
         }
-
+        
         //
         // does not affect ths version
         //
         public lazy var preferredFramesPerSecond: Int = self.systemFramesPersecond
-
+        
         public var systemFramesPersecond: Int {
             return _systemFramesPersecond
         }
@@ -119,11 +117,11 @@ import Foundation
             return link
         } ()
         
-
+        
         private struct Context{
             
             var handler:((CFTimeInterval)->Void)
-
+            
             var preferredFramesPerSecond:Int = 0
             var systemFramesPersecond: Int = 0
             
