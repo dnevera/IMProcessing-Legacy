@@ -208,17 +208,36 @@ public class IMPCurve {
     }
 
     
-    public func closeToCurve(point: float2, distance:Float?=nil) -> float2? {
+    public func closestPointOfCurve(to point:float2) -> float2 {
+        var dist = MAXFLOAT
+        var closestPoint = point
         
         for i in 0..<_curve.count {
             let x = Float(i)/Float(_curve.count) * bounds.last.x
             let y = _curve[i]
             let p = float2(x,y)
-            if simd.distance(p, point) <= distance ?? closeDistance {
-                return p
+            let ndist = simd.distance(p, point)
+            if  ndist < dist {
+                dist = ndist
+                closestPoint = p
             }
         }
         
+        return closestPoint
+    }
+    
+    public func closeToCurve(point: float2, distance:Float?=nil) -> float2? {
+
+        let d = distance ?? closeDistance
+        
+        for i in 0..<_curve.count {
+            let x = Float(i)/Float(_curve.count) * bounds.last.x
+            let y = _curve[i]
+            let p = float2(x,y)
+            if simd.distance(float2(x,y), point) <= d {
+                return p
+            }
+        }
         return nil
     }
     
