@@ -89,8 +89,9 @@ public class IMPCurve {
             if isBounds(point: p) {
                 continue
             }
-            if let i = _controlPoints.index(of: p) {
-                if i != 0 && i != _controlPoints.count-1{
+            
+            if let i = indexOf(point: p) /*_controlPoints.index(of: p)*/ {
+                if i > 0 && i < _controlPoints.count-1{
                     _controlPoints.remove(at: i)
                     f = true
                 }
