@@ -72,7 +72,9 @@ public class IMPCurve {
                 _controlPoints[i] = p
                 continue
             }
-            if let index = (_controlPoints.index { $0.x > p.x }) {
+            if let index = _controlPoints.index(where: { (cp) -> Bool in
+                return cp.x>p.x
+            }) {
                 _controlPoints.insert(p, at: index)
             }
             else {
