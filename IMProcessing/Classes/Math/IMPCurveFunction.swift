@@ -25,7 +25,7 @@ public enum IMPCurveFunction: String {
         }
     }
     
-    public static var CatmullRom:IMPCurve.FunctionType = { (controls, segments) -> [Float] in
+    public static var CatmullRom:IMPCurve.FunctionType = { (controls, segments, userInfo) -> [Float] in
         var c = [float2](controls)
         if c.count == 2 {
             c.append(float2(1))
@@ -33,11 +33,11 @@ public enum IMPCurveFunction: String {
         return segments.catmullRomSpline(controls: c)
     }
     
-    public static var Cubic:IMPCurve.FunctionType = { (controls, segments) -> [Float] in
+    public static var Cubic:IMPCurve.FunctionType = { (controls, segments, userInfo) -> [Float] in
         return segments.cubicSpline(controls: controls)
     }
     
-    public static var Bezier:IMPCurve.FunctionType = { (controls, segments) -> [Float] in
+    public static var Bezier:IMPCurve.FunctionType = { (controls, segments, userInfo) -> [Float] in
         return segments.cubicBezierSpline(controls: controls)
     }
     

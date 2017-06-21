@@ -13,7 +13,7 @@ import simd
 public class IMPCurve {
     
     public typealias UpdateHandlerType = ((_ curve:IMPCurve)->Void)
-    public typealias FunctionType = ((_ controls:[float2], _ segments:[Float])-> [Float])
+    public typealias FunctionType = ((_ controls:[float2], _ segments:[Float], _ userInfo:Any?)-> [Float])
     public typealias BoundsType = (first:float2,last:float2)
     
     public let function:FunctionType
@@ -23,6 +23,11 @@ public class IMPCurve {
     public let segments:[Float]
     public var controlPoints:[float2] { return _controlPoints }
     public var precision:Float?
+    public var userInfo:Any? {
+        didSet {
+            updateCurve()
+        }
+    }
     
     public var _bounds:BoundsType
     
@@ -286,7 +291,7 @@ public class IMPCurve {
     private var observers = [UpdateHandlerType]()
     
     private func updateCurve()  {
-        _curve = self.function(_controlPoints, segments)
+        _curve = self.function(_controlPoints, segments, userInfo)
     }
     
     private func executeObservers()  {
