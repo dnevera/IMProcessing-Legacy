@@ -11,6 +11,60 @@ import simd
 import Accelerate
 
 
+public protocol IMPInterpolator{
+    var minimumControls:Int {get}
+    var controls:[float2] {get set}
+    var resolution:Int {get}
+    init(resolution:Int)
+    func value(at x:Float) -> Float
+}
+
+public extension IMPInterpolator {
+    
+    public subscript(_ t: Float) -> Float {
+        return value(at: t)
+    }
+    
+    public var step:Float {
+        return 1/Float(resolution)
+    }
+    
+    public func bounds(at t:Int) -> Int {
+        return t <= 0 ? 0 :  t >= (controls.count-1) ? controls.count - 1 : t
+    }
+    
+    public func controlIndices(at x: Float) -> (i1:Int,i2:Int)? {
+        guard let i = controls.index(where: { (cp) -> Bool in return cp.x>=x }) else { return nil }
+        return (bounds(at:i-1), bounds(at: i))
+    }
+    
+}
+
+public class IMPLinearInterpolator : IMPInterpolator {
+    public var minimumControls:Int {return 1}
+    
+    public let resolution: Int
+    
+    public var controls = [float2]()
+    
+    public required init(resolution:Int) {
+        self.resolution = resolution
+    }
+    
+    public func value(at x: Float) -> Float {
+        guard let (k1,k2) = controlIndices(at: x) else {return x}
+        
+        let P0 = controls[k1]
+        let P1 = controls[k2]
+        
+        let d = P1.x - P0.x
+        let x = d == 0 ? 0 : (x-P0.x)/d
+        
+        return P0.y + (P1.y-P0.y)*x
+    }
+}
+
+
 //public protocol IMPInterpolator{
 //    
 //    var controls:[Float] {get}

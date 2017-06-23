@@ -8,63 +8,8 @@
 
 import Foundation
 import Accelerate
+import Surge
 import simd
-
-public protocol IMPInterpolator{
-    var controls:[float2] {get set}
-    var resolution:Int {get}
-    init(resolution:Int)
-    func value(at x:Float) -> Float
-}
-
-public extension IMPInterpolator {
-   
-    public subscript(_ t: Float) -> Float {
-        return value(at: t)
-    }
-    
-    public var step:Float {
-        return 1/Float(resolution)
-    }
-
-    public func bounds(at t:Int) -> Int {
-        return t <= 0 ? 0 :  t >= (controls.count-1) ? controls.count - 1 : t
-    }
-    
-    //public func index(at t:Float) -> Int {
-    //    return Int(t*Float(resolution))+1
-    //}
-
-    public func controlIndices(at x: Float) -> (i1:Int,i2:Int)? {
-        guard let i = controls.index(where: { (cp) -> Bool in return cp.x>x }) else { return nil }
-        //let i = index(at: x)
-        return (bounds(at:i-1), bounds(at: i))
-    }
-    
-}
-
-public class IMPLinearInterpolator : IMPInterpolator {
-    
-    public let resolution: Int
-    
-    public var controls = [float2]()
-    
-    public required init(resolution:Int) {
-        self.resolution = resolution
-    }
-    
-    public func value(at x: Float) -> Float {
-        guard let (k1,k2) = controlIndices(at: x) else {return x}
-        
-        let P0 = controls[k1]
-        let P1 = controls[k2]
-        
-        let d = P1.x - P0.x
-        let x = d == 0 ? 0 : (x-P0.x)/d
-        
-        return P0.y + (P1.y-P0.y)*x
-    }
-}
 
 public class IMPCurve {
     
@@ -73,10 +18,12 @@ public class IMPCurve {
     public typealias BoundsType = (first:float2,last:float2)
     
     public var interpolator:IMPInterpolator {return _interpolator }
-    public var bounds:BoundsType { return _bounds }
+    public var bounds:BoundsType        { return _bounds }
+    public var edges:([float2],[float2])   { return _edges }
+    public var fixed:BoundsType { return _bounds }
     public let maxControlPoints:Int
     public let segments:[Float]
-    public var controlPoints:[float2] { return interpolator.controls }
+    public var controlPoints:[float2] { return _controlPoints }
     public var precision:Float?
     public var userInfo:Any? {
         didSet {
@@ -84,23 +31,29 @@ public class IMPCurve {
         }
     }
     
-    public var _bounds:BoundsType
+    private var _bounds:BoundsType
+    private var _edges:([float2],[float2])
+    
+    private var _fixedIndices:([Int],[Int]) = ([Int](),[Int]())
     
     public var values:[Float] {
         return _curve
     }
     
-    public required init(bounds:BoundsType    = (float2(0),float2(1)),
-                         maxControlPoints:Int = 32,
-                         interpolator:IMPInterpolator){
+    public required init(interpolator:IMPInterpolator,
+                         bounds:BoundsType         = (float2(0),float2(1)),
+                         edges:([float2],[float2]) = ([float2(0)],[float2(1)]),
+                         maxControlPoints:Int = 32
+                         ){
         
         self._interpolator = interpolator
         self._bounds = bounds
+        self._edges = edges
         self.maxControlPoints = maxControlPoints
         self.segments = Float.range(start: self._bounds.first.x, step: self._bounds.last.x/Float(self._interpolator.resolution), end: self._bounds.last.x)
+        
         defer {
-            self._interpolator.controls.append(bounds.first)
-            self._interpolator.controls.append(bounds.last)
+            _controlPoints.append(contentsOf: [bounds.first,bounds.last])
             updateCurve()
         }
     }
@@ -122,25 +75,31 @@ public class IMPCurve {
     }
     
     public func add(points: [float2]) {
-        
+
         for p in points {
-            if isBounds(point: p) {
-                continue
-            }
+//            if isBounds(point: p) {
+//                continue
+//            }
             if findXPoint(point: p) != nil {
                 continue
             }
             if let i = indexOf(point: p) {
-                _interpolator.controls[i] = p
+                _controlPoints[i] = p
                 continue
             }
-            if let index = _interpolator.controls.index(where: { (cp) -> Bool in
+            
+            if let index = _controlPoints.index(where: { (cp) -> Bool in
                 return cp.x>p.x
             }) {
-                _interpolator.controls.insert(p, at: index)
+                guard maxControlPoints>_controlPoints.count else { return }
+                _controlPoints.insert(p, at: index)
+            }
+            else if closeness(one: p, two: bounds.first) {
+                _controlPoints.insert(p, at: 0)
             }
             else {
-                _interpolator.controls.append(p)
+                guard maxControlPoints>_controlPoints.count else { return }
+                _controlPoints.append(p)
             }
         }
         
@@ -149,27 +108,40 @@ public class IMPCurve {
     
     public func remove(points: [float2], complete:((_ flag:Bool)->Void)? = nil){
         var f = false
+
         for p in points {
             if isBounds(point: p) {
                 continue
             }
             
             if let i = indexOf(point: p) {
-                if i > 0 && i < interpolator.controls.count-1{
-                    _interpolator.controls.remove(at: i)
-                    f = true
+                
+                NSLog("remove(point:\(p), atIndex:\(i) = _fixedIndices \(_fixedIndices))")
+                
+                let doRestoreLast = _controlPoints.count-1 == i
+                let doRestoreFirst = i == 0
+                
+                _controlPoints.remove(at: i)
+                if doRestoreLast {
+                    _controlPoints.append(bounds.last)
                 }
+                if doRestoreFirst {
+                    _controlPoints.insert(bounds.first, at: 0)
+                }
+                f = true
             }
         }
+        
         updateCurve()
         complete?(f)
     }
     
     public func set(point: float2, atIndex:Int) -> float2? {
         var point = point
-        
-        if atIndex == 0 || atIndex == interpolator.controls.count-1 {
-            
+        var result:float2? = nil
+
+         if atIndex < _controlPoints.count {
+
             if point.x<bounds.first.x {
                 point.x = bounds.first.x
             }
@@ -186,32 +158,12 @@ public class IMPCurve {
                 point.y = bounds.last.y
             }
             
-            _interpolator.controls[atIndex] = point
-            updateCurve()
-            return point
-        }
-        
-        var result:float2? = nil
-        
-        if atIndex < _interpolator.controls.count {
-            
-            let cp = _interpolator.controls[atIndex]
-            
-            
-            if outOfBounds(point:point) {
-                if !isBounds(point: cp) {
-                    _interpolator.controls.remove(at: atIndex)
-                }
-            }
-            else {
-                result = point
+            result = point
+            if var p = result {
+                _controlPoints[atIndex] = p
             }
         }
-        
-        if let p = result {
-            _interpolator.controls[atIndex] = p
-        }
-        
+
         updateCurve()
         
         return result
@@ -248,16 +200,15 @@ public class IMPCurve {
                 }
             }
         }
-        else if let i = indexOf(point: xy, distance: precision) {
-            currentPoint = set(point: xy, atIndex: i)
-        }
-        else if distance(bounds.first, xy) < closeDistance {
-            
-            currentPoint = set(point: xy, atIndex: 0)
-        }
-        else if distance(bounds.last, xy) < closeDistance {
-            currentPoint = set(point: xy, atIndex: controlPoints.count-1)
-        }
+//        else if let i = indexOf(point: xy, distance: precision) {
+//            currentPoint = set(point: xy, atIndex: i)
+//        }
+//        else if distance(bounds.first, xy) < closeDistance {
+//            currentPoint = set(point: xy, atIndex: 0)
+//        }
+//        else if distance(bounds.last, xy) < closeDistance {
+//            currentPoint = set(point: xy, atIndex: controlPoints.count-1)
+//        }
         else {
             for i in 0..<_curve.count {
                 if distance(location(i, spline: self), xy) < closeDistance {
@@ -310,8 +261,8 @@ public class IMPCurve {
         
         guard let p = point else { return  nil}
         
-        for i in 0..<interpolator.controls.count {
-            if closeness(one: interpolator.controls[i], two: p, distance: distance) {
+        for i in 0..<_controlPoints.count {
+            if closeness(one: _controlPoints[i], two: p, distance: distance) {
                 return i
             }
         }
@@ -332,9 +283,8 @@ public class IMPCurve {
     }
     
     private func reset() {
-        _interpolator.controls.removeAll()
-        _interpolator.controls.append(bounds.first)
-        _interpolator.controls.append(bounds.last)
+        _controlPoints.removeAll()
+        updateCurve()
     }
     
     private var _interpolator:IMPInterpolator
@@ -347,8 +297,25 @@ public class IMPCurve {
     
     private var observers = [UpdateHandlerType]()
     
+    private var _controlPoints:[float2] = [float2]()
+    
     private func updateCurve()  {
         _curve.removeAll()
+        if _controlPoints.count>1 {
+            if let p = _controlPoints.first{
+                if !closeness(one: p, two: bounds.first){
+                    _controlPoints.insert(bounds.first, at:0)
+                }
+            }
+            if let p = _controlPoints.last {
+                if !closeness(one: p, two: bounds.last){
+                    _controlPoints.append(bounds.last)
+                }
+            }
+        }
+        _interpolator.controls = controlPoints
+        _interpolator.controls.insert(contentsOf: _edges.0, at: 0)
+        _interpolator.controls.append(contentsOf: _edges.1)
         for x in segments {
             _curve.append(interpolator.value(at: x))
         }
@@ -364,8 +331,8 @@ public class IMPCurve {
         
         guard let p = point else { return  nil}
         
-        for i in 0..<interpolator.controls.count {
-            if abs(interpolator.controls[i].x - p.x) < closeDistance {
+        for i in 0..<controlPoints.count {
+            if abs(controlPoints[i].x - p.x) < closeDistance {
                 return i
             }
         }
