@@ -221,6 +221,14 @@ public class IMPCurve {
             }
         }
         else {
+            if type == .smooth {
+                if let index = indexOf(point: xy) {
+                    currentIndex = index
+                    _controlPoints[index] = xy
+                    complete?(isNew, currentPoint, currentIndex)
+                    return
+                }
+            }
             for i in 0..<_curve.count {
                 if distance(location(i, spline: self), xy) < closeDistance {
                     currentPoint = xy

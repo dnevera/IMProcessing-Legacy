@@ -34,8 +34,13 @@ public extension IMPInterpolator {
     }
     
     public func controlIndices(at x: Float) -> (i1:Int,i2:Int)? {
-        guard let i = controls.index(where: { (cp) -> Bool in return cp.x>=x }) else { return nil }
-        return (bounds(at:i-1), bounds(at: i))
+        var k = (0,controls.count-1)
+        while k.1-k.0 > 1 {
+            let i = floor(Float(k.1+k.0)/2.0).int
+            if controls[i].x > x { k.1 = i }
+            else                 { k.0 = i }
+        }
+        return k
     }
     
 }
