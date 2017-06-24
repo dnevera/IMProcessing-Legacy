@@ -224,62 +224,62 @@ public extension Collection where Iterator.Element == Float {
 // MARK: - 3D Cubic piecewise surface spline
 public extension Collection where Iterator.Element == [Float] {
     
-    public func cubicSpline(surface controlPoints:IMPSurfaceMatrix, scale:Float=0)  -> [Float]{
-        
-        if self.count != 2 {
-            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
-        }
-        
-        var curve   = [Float]()
-        let xPoints = self[0 as! Self.Index]
-        let yPoints = self[count - 1 as! Self.Index]
-        
-        
-        //
-        // y-z
-        //
-        var ysplines = [Float]()
-        for i in 0 ..< controlPoints.columns.count {
-            
-            var points = [float2]()
-            
-            for yi in 0 ..< controlPoints.rows.count {
-                let y = controlPoints.rows[yi]
-                let z = controlPoints.row(yi)[i]
-                points.append(float2(y,z))
-            }
-            
-            let spline = yPoints.cubicSpline(controls: points, scale: 0) as [Float]
-            ysplines.append(contentsOf: spline)
-        }
-        
-        let z = IMPSurfaceMatrix(xy: [yPoints,controlPoints.columns], weights: ysplines)
-        
-        //
-        // x-y-z
-        //
-        for i in 0 ..< yPoints.count {
-            
-            var points = [float2]()
-            
-            for xi in 0 ..< controlPoints.columns.count {
-                let x = controlPoints.columns[xi]
-                let y = z.row(xi)[i]
-                points.append(float2(x,y))
-            }
-            let spline = xPoints.cubicSpline(controls: points, scale: 0) as [Float]
-            curve.append(contentsOf: spline)
-        }
-        
-        if scale>0 {
-            var max:Float = 0
-            vDSP_maxv(curve, 1, &max, vDSP_Length(curve.count))
-            max = scale/max
-            vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
-        }
-        
-        return curve
-    }
+//    public func cubicSpline(surface controlPoints:IMPSurfaceMatrix, scale:Float=0)  -> [Float]{
+//        
+//        if self.count != 2 {
+//            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
+//        }
+//        
+//        var curve   = [Float]()
+//        let xPoints = self[0 as! Self.Index]
+//        let yPoints = self[count - 1 as! Self.Index]
+//        
+//        
+//        //
+//        // y-z
+//        //
+//        var ysplines = [Float]()
+//        for i in 0 ..< controlPoints.columns.count {
+//            
+//            var points = [float2]()
+//            
+//            for yi in 0 ..< controlPoints.rows.count {
+//                let y = controlPoints.rows[yi]
+//                let z = controlPoints.row(yi)[i]
+//                points.append(float2(y,z))
+//            }
+//            
+//            let spline = yPoints.cubicSpline(controls: points, scale: 0) as [Float]
+//            ysplines.append(contentsOf: spline)
+//        }
+//        
+//        let z = IMPSurfaceMatrix(xy: [yPoints,controlPoints.columns], weights: ysplines)
+//        
+//        //
+//        // x-y-z
+//        //
+//        for i in 0 ..< yPoints.count {
+//            
+//            var points = [float2]()
+//            
+//            for xi in 0 ..< controlPoints.columns.count {
+//                let x = controlPoints.columns[xi]
+//                let y = z.row(xi)[i]
+//                points.append(float2(x,y))
+//            }
+//            let spline = xPoints.cubicSpline(controls: points, scale: 0) as [Float]
+//            curve.append(contentsOf: spline)
+//        }
+//        
+//        if scale>0 {
+//            var max:Float = 0
+//            vDSP_maxv(curve, 1, &max, vDSP_Length(curve.count))
+//            max = scale/max
+//            vDSP_vsmul(curve, 1, &max, &curve, 1, vDSP_Length(curve.count))
+//        }
+//        
+//        return curve
+//    }
 }
 
 
