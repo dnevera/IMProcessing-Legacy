@@ -34,15 +34,31 @@ public extension IMPInterpolator {
     }
     
     public func controlIndices(at x: Float) -> (i1:Int,i2:Int)? {
-        var k = (0,controls.count-1)
+        return Self.indices(of:controls, at: x)
+    }
+    
+
+    public static func linear(of spline:[float2], at x:Float) -> Float {
+        guard let (k1,k2) = Self.indices(of:spline, at: x) else {return x}
+        
+        let P0 = spline[k1]
+        let P1 = spline[k2]
+        
+        let d = P1.x - P0.x
+        let x = d == 0 ? 0 : (x-P0.x)/d
+        
+        return P0.y + (P1.y-P0.y)*x
+    }
+    
+    public static func indices(of spline:[float2], at x: Float) -> (i1:Int,i2:Int)? {
+        var k = (0,spline.count-1)
         while k.1-k.0 > 1 {
             let i = floor(Float(k.1+k.0)/2.0).int
-            if controls[i].x > x { k.1 = i }
+            if spline[i].x > x { k.1 = i }
             else                 { k.0 = i }
         }
         return k
     }
-    
 }
 
 public class IMPLinearInterpolator : IMPInterpolator {
@@ -57,15 +73,7 @@ public class IMPLinearInterpolator : IMPInterpolator {
     }
     
     public func value(at x: Float) -> Float {
-        guard let (k1,k2) = controlIndices(at: x) else {return x}
-        
-        let P0 = controls[k1]
-        let P1 = controls[k2]
-        
-        let d = P1.x - P0.x
-        let x = d == 0 ? 0 : (x-P0.x)/d
-        
-        return P0.y + (P1.y-P0.y)*x
+        return IMPLinearInterpolator.linear(of: controls, at: x)
     }
 }
 
