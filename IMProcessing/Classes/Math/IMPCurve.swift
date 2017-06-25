@@ -41,7 +41,7 @@ public class IMPCurve {
     public required init(interpolator:IMPInterpolator,
                          type:ApproximationType,
                          bounds:BoundsType            = (float2(0),float2(1)),
-                         edges:([float2],[float2])    = ([float2(0)],[float2(1)]),
+                         edges:([float2],[float2])    = ([float2(0)+float2(Float.ulpOfOne)],[float2(1)-float2(Float.ulpOfOne)]),
                          initials:([float2],[float2]) = ([float2(0)],[float2(1)]),
                          maxControlPoints:Int = 32
                          ){
