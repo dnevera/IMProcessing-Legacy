@@ -12,6 +12,8 @@ import simd
 
 open class IMPMatrixBasedSpline:IMPInterpolator{
     
+    public var bounds:(left:float2,right:float2) = (float2(0), float2(1)) { didSet{  didControlsUpdate() } }
+
     open var minimumControls:Int {return 4}
     
     open var controls = [float2]() { didSet{  didControlsUpdate() } }
@@ -26,6 +28,7 @@ open class IMPMatrixBasedSpline:IMPInterpolator{
     
     public func value(at x: Float) -> Float {
         guard controls.count >= minimumControls else { return x }
+        if let y = testBounds(at: x) { return y }
         return IMPMatrixBasedSpline.linear(of: curve, at: x)
     }
     
