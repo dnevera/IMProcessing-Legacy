@@ -25,6 +25,7 @@ open class IMPMatrixBasedSpline:IMPInterpolator{
     public let resolution: Int
     
     public func value(at x: Float) -> Float {
+        guard controls.count >= minimumControls else { return x }
         return IMPMatrixBasedSpline.linear(of: curve, at: x)
     }
     

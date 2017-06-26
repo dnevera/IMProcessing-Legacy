@@ -8,7 +8,6 @@
 
 
 import Foundation
-import Surge
 import simd
 
 public class IMPCubicBetaSpline:IMPMatrixBasedSpline{
