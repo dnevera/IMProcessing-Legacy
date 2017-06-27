@@ -50,7 +50,7 @@ public class IMPCurve {
     public required init(interpolator:IMPInterpolator,
                          type:ApproximationType,
                          bounds:IMPInterpolator.Bounds = (float2(0),float2(1)),
-                         edges:([float2],[float2])     = ([],[]),
+                         edges:([float2],[float2])     = ([float2(0)],[float2(1)]),
                          initials:([float2],[float2])  = ([],[]),
                          maxControlPoints:Int = 32
         ){
@@ -256,7 +256,9 @@ public class IMPCurve {
                         currentIndex = index
                         _controlPoints[index] = xy
                     }
-                    else {
+                    else if xy.x - _controlPoints[0].x > closeDistance &&
+                         _controlPoints[_controlPoints.count-1].x - xy.x > closeDistance
+                    {
                         currentIndex = add(point: xy)
                         isNew = true
                     }
@@ -324,7 +326,7 @@ public class IMPCurve {
 //            point.y < bounds.first.y || point.y > bounds.last.y)
 //    }
 //    
-    private var closeDistance:Float {
+    public var closeDistance:Float {
         return precision ?? 1/Float(interpolator.resolution/2)
     }
     
