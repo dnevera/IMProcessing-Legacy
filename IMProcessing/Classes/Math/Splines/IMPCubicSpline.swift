@@ -16,21 +16,13 @@ import simd
 
 public class IMPCubicSpline:IMPInterpolator {
     
-    public var secondDerivative:Float = 1 {
-        didSet{
-            guard controls.count > minimumControls else { return }
-            coeffs = getCoeffs()
-        }
-    }
+    public var bounds:(left:float2,right:float2) = (float2(0), float2(1)) { didSet{ didUpdate() } }
+
+    public var secondDerivative:Float = 1 { didSet{ didUpdate() } }
     
-    public var minimumControls: Int {return 2}
+    public var minimumControls: Int {return 3}
     
-    public var controls:[float2] = [float2]() {
-        didSet{
-            guard controls.count > minimumControls else { return }
-            coeffs = getCoeffs()
-        }
-    }
+    public var controls:[float2] = [float2]() { didSet{ didUpdate() } }
     
     public var resolution:Int
     
@@ -40,6 +32,9 @@ public class IMPCubicSpline:IMPInterpolator {
     
     public func value(at x:Float) -> Float {
         guard controls.count > minimumControls else { return x }
+
+        if let y = testBounds(at: x) { return y }
+
         guard let i = controlIndices(at: x) else { return x }
         
         let h  = controls[i.1].x - controls[i.0].x
@@ -51,6 +46,11 @@ public class IMPCubicSpline:IMPInterpolator {
             + (controls[i.0].y*x1 + controls[i.1].y*x0)/h
         
         return y
+    }
+    
+    private func didUpdate() {
+        guard controls.count > minimumControls else { return }
+        coeffs = getCoeffs()
     }
     
     private var coeffs = [Float]()

@@ -12,9 +12,13 @@ import Accelerate
 
 
 public protocol IMPInterpolator{
+    
+    typealias Bounds = (left:float2,right:float2)
+    
     var minimumControls:Int {get}
     var controls:[float2] {get set}
     var resolution:Int {get}
+    var bounds:Bounds {get set}
     init(resolution:Int)
     func value(at x:Float) -> Float
 }
@@ -28,19 +32,20 @@ public extension IMPInterpolator {
     public var step:Float {
         return 1/Float(resolution)
     }
-    
-    public func bounds(at t:Int) -> Int {
-        return t <= 0 ? 0 :  t >= (controls.count-1) ? controls.count - 1 : t
+        
+    public func testBounds(at x:Float) -> Float? {
+        if bounds.left.x>=x { return bounds.left.y }
+        if bounds.right.x<=x { return bounds.right.y }
+        return nil
     }
     
     public func controlIndices(at x: Float) -> (i1:Int,i2:Int)? {
         return Self.indices(of:controls, at: x)
     }
     
-
     public static func linear(of spline:[float2], at x:Float) -> Float {
         guard let (k1,k2) = Self.indices(of:spline, at: x) else {return x}
-        
+
         let P0 = spline[k1]
         let P1 = spline[k2]
         
@@ -62,6 +67,9 @@ public extension IMPInterpolator {
 }
 
 public class IMPLinearInterpolator : IMPInterpolator {
+
+    public var bounds:(left:float2,right:float2) = (float2(0), float2(1))
+
     public var minimumControls:Int {return 1}
     
     public let resolution: Int
@@ -73,6 +81,9 @@ public class IMPLinearInterpolator : IMPInterpolator {
     }
     
     public func value(at x: Float) -> Float {
+        if let y = testBounds(at: x) { return y }
+        guard controls.count > minimumControls else { return x }
+
         return IMPLinearInterpolator.linear(of: controls, at: x)
     }
 }
