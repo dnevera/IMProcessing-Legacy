@@ -20,11 +20,10 @@ public class IMPBaseBlur: IMPFilter {
     
     public static let radiusRange:(minimum:Float, maximum:Float) = (minimum:0.5, maximum:1000)
     
-    public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
+    public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: .normal, opacity: 1))
     
     public var adjustment:IMPAdjustment!{
         didSet{
-            //adjustmentBuffer <= adjustment
             adjustmentBuffer.copy(from: adjustment)
             update()
         }

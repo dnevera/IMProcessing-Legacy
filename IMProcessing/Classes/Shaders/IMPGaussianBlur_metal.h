@@ -85,7 +85,7 @@ namespace IMProcessing
         float4 inColor = IMProcessing::sampledColor(background,destination,gid);
         float3 rgb     = IMProcessing::sampledColor(source,destination,gid).rgb;
         
-        if (adjustment.blending.mode == 0)
+        if (adjustment.blending.mode == IMPLuminosity)
             inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
         else // only two modes yet
             inColor = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
@@ -105,7 +105,7 @@ namespace IMProcessing
         float4 inColor = source.sample(s, in.texcoord.xy);
         float3 rgb = texture.sample(s, in.texcoord.xy).rgb;
         
-        if (adjustment.blending.mode == 0)
+        if (adjustment.blending.mode == IMPLuminosity)
             inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
         else // only two modes yet
             inColor = IMProcessing::blendNormal(inColor, float4(rgb, adjustment.blending.opacity));

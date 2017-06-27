@@ -41,7 +41,7 @@ class IMPDrawLinesCoreMTLShader: IMPCoreImageMTLShader {
 
 public class IMPLinesGenerator: IMPFilter {
     
-    public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
+    public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: .normal, opacity: 1))
     
     public var adjustment:IMPAdjustment!{
         didSet{

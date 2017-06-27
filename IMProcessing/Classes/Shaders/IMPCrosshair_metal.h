@@ -91,7 +91,7 @@ namespace IMProcessing
         float4 inColor = source.sample(s, in.texcoord.xy);
         float4 rgba = texture.sample(s, in.texcoord.xy);
         
-        if (adjustment.blending.mode == 0)
+        if (adjustment.blending.mode == IMPLuminosity)
             inColor = IMProcessing::blendLuminosity(inColor, float4(rgba.rgb,adjustment.blending.opacity * rgba.a));
         else // only two modes yet
             inColor = IMProcessing::blendNormal(inColor, float4(rgba.rgb, adjustment.blending.opacity * rgba.a ));

@@ -11,6 +11,10 @@
 
 #include "IMPConstants-Bridging-Metal.h"
 
+#ifndef __METAL_VERSION__
+#import <Foundation/Foundation.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -54,7 +58,22 @@ extern "C" {
         IMPHspSpace     = 9  // http://alienryderflex.com/hsp.html
     } IMPColorSpaceIndex;
 
+#ifndef __METAL_VERSION__
     
+    typedef NS_ENUM(uint, IMPBlendingMode) {
+        IMPLuminosity = 0,
+        IMPNormal     = 1,
+    };
+    
+#else
+    
+    typedef enum : uint {
+        IMPLuminosity = 0,
+        IMPNormal     = 1
+    }IMPBlendingMode;
+    
+#endif
+  
     
     typedef struct {
         float2 position;
@@ -82,11 +101,6 @@ extern "C" {
     typedef struct {
         float2 point[3][3];
     } IMPGradientCoords;
-    
-    typedef enum : uint {
-        LUMINOSITY = 0,
-        NORMAL
-    }IMPBlendingMode;
     
     typedef struct {
         IMPBlendingMode    mode;

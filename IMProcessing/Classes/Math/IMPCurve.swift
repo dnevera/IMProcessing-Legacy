@@ -11,8 +11,17 @@ import Accelerate
 import Surge
 import simd
 
-public class IMPCurve {
+public class IMPCurve: Hashable {
+    public /// The hash value.
+    ///
+    /// Hash values are not guaranteed to be equal across different executions of
+    /// your program. Do not save hash values to use during a future execution.
+    let hashValue: Int = UUID().hashValue
     
+    public static func ==(lhs: IMPCurve, rhs: IMPCurve) -> Bool {
+        return lhs.hashValue == rhs.hashValue
+    }
+
     public enum ApproximationType {
         case interpolated
         case smooth
@@ -20,30 +29,29 @@ public class IMPCurve {
     
     public typealias UpdateHandlerType = ((_ curve:IMPCurve)->Void)
     
+    public var values:[Float] { return _curve }
+
     public var interpolator:IMPInterpolator  {return _interpolator }
+    
     public var bounds:IMPInterpolator.Bounds {
-        set{
-            _interpolator.bounds = newValue
-            updateCurve()
-        }
-        get{
-            return _interpolator.bounds
-        }
+        set{ _interpolator.bounds = newValue; updateCurve() }
+        get{  return _interpolator.bounds }
     }
-    public var edges:([float2],[float2])     { return _edges }
+    
     public let maxControlPoints:Int
-    public let segments:[Float]
     public var controlPoints:[float2] { return _controlPoints }
+
+    public var edges:([float2],[float2]) { return _edges }
+    public let segments:[Float]
+    
     public var precision:Float?
-    public var userInfo:Any? { didSet { updateCurve() } }
+    
     public let type:ApproximationType
+    
+    public var userInfo:Any? { didSet { updateCurve() } }
     
     private var _edges:([float2],[float2])
     
-    public var values:[Float] {
-        return _curve
-    }
-
     public required init(interpolator:IMPInterpolator,
                          type:ApproximationType,
                          bounds:IMPInterpolator.Bounds = (float2(0),float2(1)),
@@ -223,7 +231,6 @@ public class IMPCurve {
         
         complete?(isNew, currentPoint, currentIndex)
     }
-
     
     public func closestPointOfCurve(to point:float2) -> float2 {
         var dist = MAXFLOAT
@@ -275,7 +282,7 @@ public class IMPCurve {
     }
     
     public var closeDistance:Float {
-        return precision ?? 1/Float(interpolator.resolution/2)
+        return precision ?? 1/Float(_interpolator.resolution/2)
     }
     
     private func reset() {
@@ -285,11 +292,7 @@ public class IMPCurve {
     
     private var _interpolator:IMPInterpolator
     
-    private var _curve = [Float]() {
-        didSet{
-            executeObservers()
-        }
-    }
+    private var _curve = [Float]()
     
     private var observers = [UpdateHandlerType]()
     
@@ -301,8 +304,9 @@ public class IMPCurve {
         _interpolator.controls.insert(contentsOf: _edges.0, at: 0)
         _interpolator.controls.append(contentsOf: _edges.1)
         for x in segments {
-            _curve.append(interpolator.value(at: x))
+            _curve.append(_interpolator.value(at: x))
         }
+        executeObservers()
     }
     
     private func executeObservers()  {

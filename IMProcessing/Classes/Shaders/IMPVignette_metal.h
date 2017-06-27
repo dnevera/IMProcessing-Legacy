@@ -49,7 +49,7 @@ namespace IMProcessing
         float3 rgb     = mix(inColor.rgb, color, percent);
         float4 result  = float4(rgb,inColor.a);
         
-        if (adjustment.blending.mode == 0)
+        if (adjustment.blending.mode == IMPLuminosity)
             result = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
         else // only two modes yet
             result = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
@@ -117,7 +117,7 @@ namespace IMProcessing
         float3 rgb     = mix(inColor.rgb, color, percent);
         float4 result  = float4(rgb,1);
         
-        if (adjustment.blending.mode == 0)
+        if (adjustment.blending.mode == IMPLuminosity)
             result = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
         else // only two modes yet
             result = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
