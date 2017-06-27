@@ -32,23 +32,17 @@ public extension IMPInterpolator {
     public var step:Float {
         return 1/Float(resolution)
     }
-    
-    
+        
     public func testBounds(at x:Float) -> Float? {
         if bounds.left.x>=x { return bounds.left.y }
         if bounds.right.x<=x { return bounds.right.y }
         return nil
     }
     
-    //public func bounds(at t:Int) -> Int {
-    //    return t <= 0 ? 0 :  t >= (controls.count-1) ? controls.count - 1 : t
-    //}
-    
     public func controlIndices(at x: Float) -> (i1:Int,i2:Int)? {
         return Self.indices(of:controls, at: x)
     }
     
-
     public static func linear(of spline:[float2], at x:Float) -> Float {
         guard let (k1,k2) = Self.indices(of:spline, at: x) else {return x}
 

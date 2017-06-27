@@ -10,7 +10,7 @@
 import Foundation
 import simd
 
-public class IMPCubicBetaSpline:IMPMatrixBasedSpline{
+public class IMPBSpline:IMPMatrixBasedSpline{
     
     public override var matrix:float4x4 { return Mb }
     

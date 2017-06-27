@@ -12,7 +12,6 @@ import simd
 
 public class IMPCatmulRomSpline:IMPMatrixBasedSpline{
     
-    
     //
     // CatmulRom tension is 1/2 by default
     //
