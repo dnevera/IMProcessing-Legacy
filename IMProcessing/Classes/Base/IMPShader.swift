@@ -31,7 +31,7 @@ extension IMPShaderProvider{
     }
 }
 
-public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSizeProvider, Equatable {
+open class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSizeProvider, Equatable {
    
     public var destinationSize: NSSize?
    
@@ -180,7 +180,7 @@ public class IMPShader: IMPContextProvider, IMPShaderProvider, IMPDestinationSiz
         return v
     }()
 
-    public var vertexDescriptor:MTLVertexDescriptor? {
+    open var vertexDescriptor:MTLVertexDescriptor? {
         return _vertexDescriptor
     }
     
