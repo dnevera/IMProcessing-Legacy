@@ -40,6 +40,7 @@
 #include "IMPAdaptiveThreshold_metal.h"
 #include "IMPCChekerDetector_metal.h"
 
+#include "IMPCurves_metal.h"
 //#include "IMPHistogram_metal.h"
 //#include "IMPHistogramLayer_metal.h"
 //#include "IMPAdjustment_metal.h"
