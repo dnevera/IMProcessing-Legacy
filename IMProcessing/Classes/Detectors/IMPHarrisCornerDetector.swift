@@ -96,7 +96,7 @@ public class IMPHarrisCornerDetector: IMPDetector{
         texelRadius = IMPHarrisCornerDetector.defaultTexelRadius
         
         pointsScannerKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
-        pointsScannerKernel.preferedDimension =  MTLSize(width: self.regionSize, height: self.regionSize, depth: 1)
+        pointsScannerKernel.preferedDimension =  MTLSize(width: regionSize, height: regionSize, depth: 1)
     
         add(filter: xyDerivative) { (source) in
             self.derivativeTexture = source.texture

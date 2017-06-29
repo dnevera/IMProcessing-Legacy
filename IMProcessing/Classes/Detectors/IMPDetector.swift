@@ -22,8 +22,10 @@ open class IMPDetector: IMPResampler {
         })
     }
     
-    open lazy var regionSize:Int = {
-        return Int(sqrt(Float(self.context.maxThreads.width)))
-    }()
+    open var regionSize:Int {
+        return _regionSize
+    }
 
+    private lazy var _regionSize:Int = Int(sqrt(Float(self.context.maxThreads.width)))
+    
 }
