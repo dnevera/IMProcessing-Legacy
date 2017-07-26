@@ -32,7 +32,13 @@ open class IMPResampler: IMPFilter{
         if let size = source?.size,
             let maxSize = self.maxSize {
             let scale = fmax(fmin(fmin(maxSize/size.width, maxSize/size.height),1),0.01)
-            resampler.destinationSize = NSSize(width: size.width * scale, height: size.height * scale)
+            destinationSize = NSSize(width: size.width * scale, height: size.height * scale);
+        }
+    }
+    
+    public override var destinationSize: NSSize? {
+        didSet{
+            resampler.destinationSize = destinationSize // NSSize(width: size.width * scale, height: size.height * scale)
         }
     }
     
