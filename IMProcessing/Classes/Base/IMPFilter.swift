@@ -61,7 +61,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         return _name!
     }
     
-    public lazy var _name: String? = self.context.uid
+    public lazy var _name: String? = String.uniqString() //self.context.uid
     
     public var context: IMPContext
     
@@ -86,7 +86,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public required init(context:IMPContext, name: String? = nil) {
         self.context = context
-        //self.name = name
+        _name = name
         defer {
             configure()
         }
@@ -117,7 +117,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     public func extendName(suffix:String) {
         _name = {
             if _name == nil {
-                return self.context.uid + ":" + suffix
+                return String.uniqString() + ":" + suffix
             }
             return self._name! + ":" + suffix
         }()

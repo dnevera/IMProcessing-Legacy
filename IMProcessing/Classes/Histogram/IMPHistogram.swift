@@ -173,8 +173,18 @@ public class IMPHistogram {
         updateBinCountForChannel(channel: channel.rawValue)
     }
     
+    public func update(data dataIn: UnsafeMutableRawPointer){
+        update(data: UnsafeMutablePointer<UInt32>(OpaquePointer(dataIn)))
+       // self.clearHistogram()
+        //let op = OpaquePointer(dataIn)
+        //let address = UnsafePointer<UInt32>(op)
+        //let address = UnsafePointer<UInt32>(dataIn)
+        //for c in 0..<channels.count{
+        //    self.updateContinuesData(channel: &channels[c], address: address, index: c)
+        //}
+    }
     
-    public func updateWithConinuesData(dataIn: UnsafeMutablePointer<UInt32>){
+    public func update(data dataIn: UnsafeMutablePointer<UInt32>){
         self.clearHistogram()
         let address = UnsafePointer<UInt32>(dataIn)
         for c in 0..<channels.count{

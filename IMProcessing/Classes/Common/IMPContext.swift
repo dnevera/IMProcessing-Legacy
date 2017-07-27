@@ -23,8 +23,8 @@ public protocol IMPContextProvider{
     var context:IMPContext {get}
 }
 
-extension String{
-    static func uniqString() -> String{
+public extension String{
+    public static func uniqString() -> String{
         return CFUUIDCreateString(nil, CFUUIDCreate(nil)) as String
     }
 }

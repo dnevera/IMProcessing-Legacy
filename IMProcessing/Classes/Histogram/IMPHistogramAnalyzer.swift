@@ -17,8 +17,6 @@ public class IMPHistogramAnalyzer: IMPDetector{
             channelsToCompute = histogram.channels.count
         }
     }
-
-    private var channelsToCompute:Int = 4 { didSet { dirty = true } }
     
     public override func configure(complete: IMPFilterProtocol.CompleteHandler?) {
         extendName(suffix: "HistogramAnalyzer")
@@ -40,19 +38,21 @@ public class IMPHistogramAnalyzer: IMPDetector{
         add(function: partialHistogramKernel)
         
         add(function: accumHistogramKernel) { (result) in
-            var hist = IMPHistogramBuffer()
-            memcpy(&hist, self.completeBuffer.contents(), MemoryLayout<IMPHistogramBuffer>.stride)
+            self.histogram.update(data: self.completeBuffer.contents())
             complete?(result)
-        }
-        
+        }        
     }
-    
+
+    private var channelsToCompute:Int = 4 { didSet { dirty = true } }
+
     private lazy var partialHistogramKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_partialHistogram")
         
         f.optionsHandler = { (function, command, input, output) in
             command.setBuffer(self.partialBuffer,       offset: 0, at: 0)
             command.setBytes(&self.region, length: MemoryLayout.size(ofValue: self.region),   at: 1)
+            var np = self.channelsToCompute;
+            command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   at: 2)
         }
         
         return f
@@ -61,17 +61,18 @@ public class IMPHistogramAnalyzer: IMPDetector{
     private lazy var accumHistogramKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_accumHistogram")
         
-        f.optionsHandler = { (function, command, input, output) in            
+        f.optionsHandler = { (function, command, input, output) in
             command.setBuffer(self.partialBuffer,  offset: 0, at: 0)
             command.setBuffer(self.completeBuffer, offset: 0, at: 1)
             
             var np = self.numParts;
             command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   at: 2)
+            np = self.channelsToCompute;
+            command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   at: 3)
         }
         
         return f
     }()
-
     
     private var gridDimension:MTLSize {
         return MTLSize(width: 16, height: 16, depth: 1);

@@ -10,6 +10,7 @@ import Foundation
 
 infix operator => : AdditionPrecedence
 infix operator --> : AdditionPrecedence
+infix operator ==> : AdditionPrecedence
 
 
 /// Async redirect source image frame to another filter
@@ -68,6 +69,32 @@ infix operator --> : AdditionPrecedence
     sourceFilter.addObserver(destinationUpdated: { (destination) in
         nextFilter.context.runOperation(.async, {
             nextFilter.source = destination
+            nextFilter.process()
+        })
+    })
+    
+    return nextFilter
+}
+
+
+/// Async redirect source(!) image frames to next processing filter
+///
+/// - Parameters:
+///   - sourceFilter: source filter which processed image frames
+///   - destinationFilter: next filter which should process next processing stage
+/// - Returns: next filter
+//
+@discardableResult public func ==><T:IMPFilter>(sourceFilter:T, nextFilter:T) -> T {
+    
+    sourceFilter.addObserver(newSource:{ (source) in
+        sourceFilter.context.runOperation(.async, {
+            sourceFilter.process()
+        })
+    })
+    
+    sourceFilter.addObserver(newSource: { (source) in
+        nextFilter.context.runOperation(.async, {
+            nextFilter.source = source
             nextFilter.process()
         })
     })

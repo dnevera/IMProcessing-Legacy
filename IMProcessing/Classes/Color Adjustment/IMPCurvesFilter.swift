@@ -35,6 +35,7 @@ public class IMPCurvesFilter: IMPFilter {
                     }
                     self.dirty = true
                 })
+                dirty = true
             }
         }
     }
@@ -60,8 +61,10 @@ public class IMPCurvesFilter: IMPFilter {
     
     public override func configure(complete: IMPFilter.CompleteHandler?) {
         extendName(suffix: "Curve Filter")
-        super.configure(complete: complete)
-        add(function: curvesKernel)
+        super.configure()
+        add(function: curvesKernel) { (source) in
+            complete?(source)
+        }
     }
     
     private var curvesHash = [IMPCurve:Int]()
@@ -85,6 +88,7 @@ public class IMPCurvesFilter: IMPFilter {
     private lazy var curvesKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_adjustChannelCurves")
         f.optionsHandler = { (function, command, input, output) in
+        
             command.setTexture(self.lut.texture, at:2)
             
             var cs = self.colorSpace.index
