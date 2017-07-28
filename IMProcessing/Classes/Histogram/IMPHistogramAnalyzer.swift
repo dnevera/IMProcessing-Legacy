@@ -37,10 +37,21 @@ public class IMPHistogramAnalyzer: IMPDetector{
         
         add(function: partialHistogramKernel)
         
+        //var time = Date()
+        //var size:Float = 0
+        
         add(function: accumHistogramKernel) { (result) in
             self.histogram.update(data: self.completeBuffer.contents())
+            //NSLog("Bandwidth  = \(size/(-time.timeIntervalSinceNow.float)/1024/1024/1024)Gb/s")
             complete?(result)
-        }        
+        }
+        
+        /*addObserver(newSource: { (source) in
+            if let w = source?.texture?.size {
+                size = Float(w.width*w.height*MemoryLayout<uint>.size * 4)
+            }
+            time = Date()
+        })*/
     }
 
     private var channelsToCompute:Int = 4 { didSet { dirty = true } }
