@@ -25,21 +25,7 @@ namespace IMProcessing
 {
     
     static constant float3 Im(kIMP_HistogramSize - 1);
-    
-    
-    ///  @brief Test is there pixel inside in a box or not
-    ///
-    ///  @param v          pixel coordinate
-    ///  @param bottomLeft offset from bottom-left conner
-    ///  @param topRight   offset from top-right conner
-    ///
-    ///  @return 0 or 1
-    ///
-    //inline  float coordsIsInsideBox(float2 v, float2 bottomLeft, float2 topRight) {
-    //    float2 s =  step(bottomLeft, v) - step(topRight, v);
-    //    return s.x * s.y;
-   // }
-    
+          
     inline float4 histogramSampledColor(
                                         texture2d<float, access::sample>  inTexture,
                                         constant IMPRegion               &regionIn,
@@ -69,13 +55,23 @@ namespace IMProcessing
     inline uint4 channel_binIndex(
                                   texture2d<float, access::sample>  inTexture,
                                   constant IMPRegion               &regionIn,
+                                  constant IMPColorSpaceIndex      &space,
                                   uint2 gid
                                   ){
         
         float4 inColor = histogramSampledColor(inTexture,regionIn,gid);
         uint   Y       = uint(dot(inColor.rgb, kIMP_Y_YCbCr_factor) * inColor.a * Im.x);
         
-        return uint4(uint3(inColor.rgb * Im), Y);
+        float3 color = IMPConvertColor(IMPRgbSpace, space, inColor.rgb);
+        float2 x     = IMPgetColorSpaceRange(space,0);
+        float2 y     = IMPgetColorSpaceRange(space,1);
+        float2 z     = IMPgetColorSpaceRange(space,2);
+        
+        color.x = (color.x - x.x)/(x.y-x.x);
+        color.y = (color.y - y.x)/(y.y-y.x);
+        color.z = (color.z - z.x)/(z.y-z.x);
+        
+        return uint4(uint3(color * Im), Y);
     }
     
     //
@@ -111,7 +107,8 @@ namespace IMProcessing
                                         device   IMPHistogramBuffer      *out         [[ buffer(0)]],
                                         constant IMPRegion               &regionIn    [[ buffer(1)]],
                                         constant uint                    &channels    [[ buffer(2)]],
-                                        
+                                        constant IMPColorSpaceIndex      &space       [[ buffer(3)]],
+
                                         uint2 gridDim   [[threadgroups_per_grid]],
                                         uint2 blockDim  [[threads_per_threadgroup]],
                                         uint2 blockIdx  [[threadgroup_position_in_grid]],
@@ -153,10 +150,10 @@ namespace IMProcessing
             for (uint row = y; row < height; row += ny) {
                 
                 uint2 gid = uint2(col,row);
-                uint4 rgby  = channel_binIndex(inTexture,regionIn,gid);
+                uint4 xyzw = channel_binIndex(inTexture,regionIn,space,gid);
                 
                 for (uint c = 0; c < kIMP_HistogramMaxChannels && c < channels; c++) {
-                    atomic_fetch_add_explicit(&(temp[c][rgby[c]]), 1, memory_order_relaxed);
+                    atomic_fetch_add_explicit(&(temp[c][xyzw[c]]), 1, memory_order_relaxed);
                 }
             }
         }

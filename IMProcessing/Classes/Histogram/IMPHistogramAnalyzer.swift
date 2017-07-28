@@ -10,6 +10,8 @@ import Foundation
 
 public class IMPHistogramAnalyzer: IMPDetector{
     
+    public var colorSpace:IMPColorSpace = .rgb {didSet{ dirty = true }}
+
     public var region = IMPRegion()
     
     public var histogram = IMPHistogram(){
@@ -64,6 +66,9 @@ public class IMPHistogramAnalyzer: IMPDetector{
             command.setBytes(&self.region, length: MemoryLayout.size(ofValue: self.region),   at: 1)
             var np = self.channelsToCompute;
             command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   at: 2)
+            var cs = self.colorSpace.index
+            command.setBytes(&cs,length:MemoryLayout.stride(ofValue: cs),at:3)
+
         }
         
         return f
