@@ -190,3 +190,110 @@ public extension Float{
         
     }
 }
+
+// MARK: - Gaussian distribution
+public extension Sequence where Iterator.Element == Float {
+    
+    ///  Create gaussian distribution of discrete values of Y's from mean parameters
+    ///
+    ///  - parameter fi:    ƒ
+    ///  - parameter mu:    µ
+    ///  - parameter sigma: ß
+    ///
+    ///  - returns: discrete gaussian distribution
+    public func gaussianDistribution(fi:Float, mu:Float, sigma:Float) -> [Float]{
+        var a = [Float]()
+        for i in self{
+            a.append(i.gaussianPoint(fi: fi, mu: mu, sigma: sigma))
+        }
+        return a
+    }
+    
+    ///  Create gaussian distribution of discrete values of Y points from two points of means
+    ///
+    ///  - parameter fi:    float2(ƒ1,ƒ2)
+    ///  - parameter mu:    float2(µ1,µ2)
+    ///  - parameter sigma: float2(ß1,ß2)
+    ///
+    ///  - returns: discrete gaussian distribution
+    public func gaussianDistribution(fi:float2, mu:float2, sigma:float2) -> [Float]{
+        var a = [Float]()
+        for i in self{
+            a.append(i.gaussianPoint(fi: fi, mu: mu, sigma: sigma))
+        }
+        return a
+    }
+    
+    ///  Create normalized gaussian distribution of discrete values of Y's from mean parameters
+    ///
+    ///  - parameter mu:    µ
+    ///  - parameter sigma: ß
+    ///
+    ///  - returns: discrete gaussian distribution
+    public func gaussianDistribution(mu:Float, sigma:Float) -> [Float]{
+        return self.gaussianDistribution(fi: 1/(sigma*sqrt(2*M_PI.float)), mu: mu, sigma: sigma)
+    }
+    
+    ///  Create normalized gaussian distribution of discrete values of Y points from two points of means
+    ///
+    ///  - parameter mu:    float2(µ1,µ2)
+    ///  - parameter sigma: float2(ß1,ß2)
+    ///
+    ///  - returns: discrete gaussian distribution
+    public func gaussianDistribution(mu:float2, sigma:float2) -> [Float]{
+        return self.gaussianDistribution(fi: float2(1/(sigma.x*sigma.y*sqrt(2*M_PI.float))), mu: mu, sigma: sigma)
+    }
+}
+
+
+///
+/// In two dimensions, the circular Gaussian function is the distribution function for uncorrelated variates X and Y having
+/// a bivariate normal distribution and equal standard deviation sigma=sigma_x=sigma_y,
+///
+public extension Collection where Iterator.Element == [Float] {
+    
+    ///  Create 2D gaussian distribution of discrete values of X/Y's
+    ///
+    ///  - parameter fi:    ƒ
+    ///  - parameter mu:    µ
+    ///  - parameter sigma: ß
+    ///
+    ///  - returns: discrete 2D gaussian distribution
+    ///
+    /// http://mathworld.wolfram.com/GaussianFunction.html
+    ///
+    public func gaussianDistribution(fi:Float, mu:float2, sigma:float2) -> [Float]{
+        if self.count != 2 {
+            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
+        }
+        
+        var a  = [Float]()
+        for y in self[1 as! Self.Index]{
+            let yd = pow(( y - mu.y ),2) / (2*pow(sigma.y, 2))
+            for x in self[0 as! Self.Index]{
+                let xd = pow(( x - mu.x ),2) / (2*pow(sigma.x, 2))
+                a.append(fi * exp( -(xd+yd) ))
+            }
+        }
+        return a
+    }
+    
+    ///  Create normalized 2D gaussian distribution of discrete values of X/Y's
+    ///
+    ///  - parameter mu:    µ
+    ///  - parameter sigma: ß
+    ///
+    ///  - returns: discrete 2D gaussian distribution
+    ///
+    /// http://mathworld.wolfram.com/GaussianFunction.html
+    ///
+    public func gaussianDistribution(mu:float2, sigma:float2) -> [Float]{
+        if self.count != 2 {
+            fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
+        }
+        let fi = 1/(sigma.x*sigma.y*sqrt(2*M_PI.float))
+        
+        return gaussianDistribution(fi: fi, mu: mu, sigma: sigma)
+    }
+    
+}

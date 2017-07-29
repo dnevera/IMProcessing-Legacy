@@ -8,7 +8,61 @@
 
 import Foundation
 
-public class IMPHistogramAnalyzer: IMPDetector{
+
+///
+/// Common protocol defines histogram class API.
+///
+public protocol IMPHistogramAnalyzerProtocol:IMPFilterProtocol {
+    
+    ///
+    /// Histogram updates handler.
+    ///
+    typealias UpdateHandler =  ((_ histogram:IMPHistogram) -> Void)
+    
+    var colorSpace:IMPColorSpace {set get}
+    var region:IMPRegion {set get}
+    var histogram:IMPHistogram {set get }
+    
+    func add(solver:IMPHistogramSolver, complete:IMPHistogramSolver.CompleteHandler?)
+}
+
+///
+/// Histogram solvers protocol. Solvers define certain computations to calculate measurements metrics such as:
+/// 1. histogram range (dynamic range)
+/// 2. get peaks and valyes
+/// 3. ... etc
+///
+public protocol IMPHistogramSolver {
+
+    typealias CompleteHandler =  ((_ histogram:IMPHistogramSolver) -> Void)
+
+    var complete:CompleteHandler? {set get}
+    func analizer(
+        didUpdate analizer: IMPHistogramAnalyzerProtocol,
+        histogram: IMPHistogram,
+        imageSize: CGSize)
+}
+
+
+public extension IMPHistogramSolver {
+    public func executeComplete(){
+            complete?(self)
+    }
+}
+
+public extension IMPHistogramAnalyzerProtocol {
+    public mutating func setCenterRegion(inPercent value:Float){
+        let half = value/2.0
+        region = IMPRegion(
+            left:   0.5 - half,
+            right:  1.0 - (0.5+half),
+            top:    0.5 - half,
+            bottom: 1.0 - (0.5+half)
+        )
+    }
+}
+
+public class IMPHistogramAnalyzer: IMPDetector, IMPHistogramAnalyzerProtocol{
     
     public var colorSpace:IMPColorSpace = .rgb {didSet{ dirty = true }}
 
@@ -45,6 +99,7 @@ public class IMPHistogramAnalyzer: IMPDetector{
         add(function: accumHistogramKernel) { (result) in
             self.histogram.update(data: self.completeBuffer.contents())
             //NSLog("Bandwidth  = \(size/(-time.timeIntervalSinceNow.float)/1024/1024/1024)Gb/s")
+            self.executeSolverObservers()
             complete?(result)
         }
         
@@ -54,6 +109,26 @@ public class IMPHistogramAnalyzer: IMPDetector{
             }
             time = Date()
         })*/
+    }
+
+    ///
+    ///
+    ///
+    public func add(solver:IMPHistogramSolver, complete:IMPHistogramSolver.CompleteHandler?=nil){
+        var s = solver
+        s.complete = complete
+        solvers.append(s)
+    }
+
+    public func executeSolverObservers() {
+        guard let srcSize = source?.size else { return }
+        if observersEnabled {
+            for s in solvers {
+                let size = destinationSize ?? srcSize
+                s.analizer(didUpdate: self, histogram: self.histogram, imageSize: size)
+                s.executeComplete()
+            }
+        }
     }
 
     private var channelsToCompute:Int = 4 { didSet { dirty = true } }
@@ -108,5 +183,7 @@ public class IMPHistogramAnalyzer: IMPDetector{
     private lazy var partialBuffer:MTLBuffer = self.partialBufferGetter()
 
     private lazy var completeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramBuffer>.stride, options: .storageModeShared)
+
+    private var solvers:[IMPHistogramSolver] = [IMPHistogramSolver]()
 
 }
