@@ -30,7 +30,7 @@ public class IMPHistogramDominantColorSolver: NSObject, IMPHistogramSolver {
     public func analizer(didUpdate analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
         for i in 0..<histogram.channels.count{
             let index = IMPHistogram.ChannelNo(rawValue: i)!
-            color[i] = histogram.mean(channel: index)
+            color[i] = histogram.meanOf(channel: index)
         }
     }
 }

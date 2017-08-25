@@ -9,5 +9,6 @@
         <page name='3D B-Spline'/>
         <page name='3D Catmul-rom'/>
         <page name='TPSpline'/>
+        <page name='String'/>
     </pages>
 </playground>

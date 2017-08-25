@@ -45,8 +45,8 @@ public class IMPHistogramRangeSolver: NSObject, IMPHistogramSolver {
     public func analizer(didUpdate analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
         for i in 0..<histogram.channels.count{
             let index = IMPHistogram.ChannelNo(rawValue: i)!
-            minimum[i] = histogram.low(channel: index, clipping: clipping.shadows)
-            maximum[i] = histogram.high(channel: index, clipping: clipping.highlights)
+            minimum[i] = histogram.lowOf(channel: index, clipping: clipping.shadows)
+            maximum[i] = histogram.highOf(channel: index, clipping: clipping.highlights)
         }
     }
 }

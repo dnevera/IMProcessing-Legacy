@@ -18,7 +18,7 @@ import Metal
 import AVFoundation
 import ImageIO
 
-public class IMPImage: IMPImageProvider {
+open class IMPImage: IMPImageProvider {
 
     public let storageMode: IMPImageStorageMode
     

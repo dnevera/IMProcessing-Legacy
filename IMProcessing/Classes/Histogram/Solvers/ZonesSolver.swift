@@ -52,6 +52,8 @@ public class IMPHistogramZonesSolver: NSObject, IMPHistogramSolver {
             balance.y = subzoneSum(histogram: &histogram, multiply: &midWeights)/binCount
             balance.z = subzoneSum(histogram: &histogram, multiply: &highlightsWeights)/binCount
             
+            balance = balance.normalized()
+            
             spots.x = steps[3]
             spots.y = steps[5]
             spots.z = steps[7]
@@ -65,13 +67,13 @@ public class IMPHistogramZonesSolver: NSObject, IMPHistogramSolver {
             range = range.normalized()
         }
         
-        static let line =  Float.range(0..<256, scale: 1)
+        private static let line =  Float.range(0..<256, scale: 1)
         
-        var shadowsWeights    = Zones.line.gaussianDistribution(fi:1, mu: 0,   sigma: 0.1)
-        var midWeights        = Zones.line.gaussianDistribution(fi:1, mu: 0.5, sigma: 0.1)
-        var highlightsWeights = Zones.line.gaussianDistribution(fi:1, mu: 1.0, sigma: 0.2)
+        fileprivate var shadowsWeights    = Zones.line.gaussianDistribution(fi:1, mu: 0,   sigma: 0.1)
+        fileprivate var midWeights        = Zones.line.gaussianDistribution(fi:1, mu: 0.5, sigma: 0.1)
+        fileprivate var highlightsWeights = Zones.line.gaussianDistribution(fi:1, mu: 1.0, sigma: 0.2)
         
-        func subzoneSum( histogram:inout [Float], multiply:inout [Float]) -> Float {
+        private func subzoneSum( histogram:inout [Float], multiply:inout [Float]) -> Float {
             var sum:Float = 0
             var tmp = [Float](repeating: 0, count: multiply.count)
             vDSP_vmul(histogram, 1, multiply, 1, &tmp, 1, vDSP_Length(multiply.count))
@@ -86,6 +88,6 @@ public class IMPHistogramZonesSolver: NSObject, IMPHistogramSolver {
     
     public func analizer(didUpdate analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
         var h = histogram[.w]
-        zones.update(histogram: &h, binCount: histogram.binCount(channel: .w))
+        zones.update(histogram: &h, binCount: histogram.countOfBins(forChannel: .w))
     }
 }
