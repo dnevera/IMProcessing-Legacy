@@ -12,6 +12,25 @@
     import Cocoa
 #endif
 
+public extension String {
+    
+    public var floatValue: Float {
+        return (self as NSString).floatValue
+    }
+    public var intValue: Int {
+        return (self as NSString).integerValue
+    }
+    public var isNumeric: Bool {
+        if Float(self) != nil {
+            return true
+        }
+        else if Int(self) != nil {
+            return true
+        }
+        return false
+    }
+}
+
 public extension Double{
     
     public var int:Int{

@@ -84,25 +84,6 @@ extension float4: Equatable {}
 
 // MARK: - Basic color extention
 
-public extension String {
-    
-    var floatValue: Float {
-        return (self as NSString).floatValue
-    }
-    var intValue: Int {
-        return (self as NSString).integerValue
-    }
-    var isNumeric: Bool {
-        if Float(self) != nil {
-            return true
-        }
-        else if Int(self) != nil {
-            return true
-        }
-        return false
-    }
-}
-
 public extension float3 {
     func euclidean_distance(to p_2: float3) -> Float {
         var sum:Float = 0
