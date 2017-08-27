@@ -43,6 +43,8 @@ static inline float2 IMPgetColorSpaceRange (IMPColorSpaceIndex space, int channe
     return kIMP_ColorSpaceRanges[(int)(space)][channel];
 }
 
+#define IMPGetColorSpaceRange IMPgetColorSpaceRange
+
 static inline float rgb_gamma_correct(float c, float gamma)
 {
 //    constexpr float a = 0.055;
@@ -1175,5 +1177,28 @@ static inline float3 IMPConvertColor(IMPColorSpaceIndex from_cs, IMPColorSpaceIn
     return value;;
 }
 
+static inline float3 IMPConvertToNormalizedColor(IMPColorSpaceIndex from, IMPColorSpaceIndex to, float3 rgb) {
+    float3 color = IMPConvertColor(from, to, rgb);
+    
+    float2 xr = IMPgetColorSpaceRange(to,0);
+    float2 yr = IMPgetColorSpaceRange(to,1);
+    float2 zr = IMPgetColorSpaceRange(to,2);
+    
+    return (float3){(color.x-xr.x)/(xr.y-xr.x), (color.y-yr.x)/(yr.y-yr.x), (color.z-zr.x)/(zr.y-zr.x)};
+}
+
+static inline float3 IMPConvertFromNormalizedColor(IMPColorSpaceIndex from, IMPColorSpaceIndex to, float3 rgb) {
+    
+    float2 xr = IMPgetColorSpaceRange(from,0);
+    float2 yr = IMPgetColorSpaceRange(from,1);
+    float2 zr = IMPgetColorSpaceRange(from,2);
+    
+    float x = rgb.x * (xr.y-xr.x) + xr.x;
+    float y = rgb.y * (yr.y-yr.x) + yr.x;
+    float z = rgb.z * (zr.y-zr.x) + zr.x;
+    
+    return IMPConvertColor(from, to, (float3){x,y,z});
+    
+}
 
 #endif /* IMPColorSpaces_Bridging_Metal_h */
