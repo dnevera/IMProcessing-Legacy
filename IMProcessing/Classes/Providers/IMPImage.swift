@@ -47,7 +47,13 @@ open class IMPImage: IMPImageProvider {
         }
         get {
             if _image == nil && _texture != nil {
-                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+                if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){
+                    //
+                    // convert back to MTL texture coordinates system
+                    //
+                    let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: im.extent.height)
+                    _image = im.applying(transform)
+                }
             }
             return _image
         }
@@ -71,8 +77,9 @@ open class IMPImage: IMPImageProvider {
     //
     lazy public var colorSpace:CGColorSpace = {
         if #available(iOS 10.0, *) {
+            return CGColorSpace(name: CGColorSpace.sRGB)!
             //return  CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
-            return  CGColorSpace(name: CGColorSpace.genericRGBLinear)!
+            //return  CGColorSpace(name: CGColorSpace.genericRGBLinear)!
         }
         else {
             fatalError("extendedLinearSRGB: ios >10.0 supports only")
