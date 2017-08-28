@@ -17,6 +17,9 @@
 #include <simd/simd.h>
 #include "IMPSwift-Bridging-Metal.h"
 
+constexpr sampler lutSampler(address::clamp_to_edge, filter::linear, coord::normalized);
+
+
 ///
 /// @brief Kernel optimized 3D LUT identity
 ///
@@ -73,28 +76,23 @@ kernel void kernel_convert3DLut_to_2DLut(
                                          texture2d<float, access::write>     d2DLut       [[texture(2)]],
                                          uint2 gid [[thread_position_in_grid]]){
     
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
     
     float3 rgb    = d2DLutSource.read(gid).rgb;
-    float4 result = d3DLut.sample(s, rgb);
+    float4 result = d3DLut.sample(lutSampler, rgb);
     
     d2DLut.write(float4(result.rgb,1),gid);
 }
 
-///
-/// @brief Kernel optimized convertion from 2D LUT to new 3D Lut
-///
-kernel void kernel_convert2DLut_to_3DLut(
-                                         texture2d<float, access::sample>    d2DLut       [[texture(0)]],
-                                         texture3d<float, access::read>      d3DLutSource [[texture(1)]],
-                                         texture3d<float, access::write>     d3DLut       [[texture(2)]],
-                                         constant uint  &inClevel [[buffer(0)]],
-                                         uint3 gid [[thread_position_in_grid]]){
-    
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
-    
-    float3 rgb     = d3DLutSource.read(gid).rgb;
-    
+
+/**
+ Look up color in Hald-like 2D representaion of 3D LUT
+
+ @param rgb input color
+ @param d2DLut d2DLut Hald-like texture: cube-size*cube-size * level = r-g * b boxed regiones
+ @param inClevel level
+ @return maped color
+ */
+static inline float3 sample2DLut(float3 rgb,  texture2d<float, access::sample> d2DLut, uint inClevel){
     float  size    = float(d2DLut.get_width());
     float  clevel  = float(inClevel);
     
@@ -121,12 +119,91 @@ kernel void kernel_convert2DLut_to_3DLut(
     texPos2.x = (quad2.x * denom) + 0.5/size + ((denom - 1.0/size) * rgb.r);
     texPos2.y = (quad2.y * denom) + 0.5/size + ((denom - 1.0/size) * rgb.g);
     
-    float4 newColor1 = d2DLut.sample(s, texPos1);
-    float4 newColor2 = d2DLut.sample(s, texPos2);
+    float4 newColor1 = d2DLut.sample(lutSampler, texPos1);
+    float4 newColor2 = d2DLut.sample(lutSampler, texPos2);
     
-    float4 color = mix(newColor1, newColor2, fract(blueColor));
+    return mix(newColor1, newColor2, fract(blueColor)).rgb;
+}
+
+///
+/// @brief Kernel optimized convertion from 2D LUT to new 3D Lut
+///
+kernel void kernel_convert2DLut_to_3DLut(
+                                         texture2d<float, access::sample>    d2DLut       [[texture(0)]],
+                                         texture3d<float, access::read>      d3DLutSource [[texture(1)]],
+                                         texture3d<float, access::write>     d3DLut       [[texture(2)]],
+                                         constant uint  &inClevel [[buffer(0)]],
+                                         uint3 gid [[thread_position_in_grid]]){
     
+    float3 color = sample2DLut(d3DLutSource.read(gid).rgb, d2DLut, inClevel);
     d3DLut.write(float4(color.r,color.g,color.b,1),gid);
+}
+
+///
+/// @brief Kernel optimized convertion from 1D LUT to new 3D Lut
+///
+kernel void kernel_convert1DLut_to_3DLut(
+                                         texture1d<float, access::sample>    d1DLut       [[texture(0)]],
+                                         texture3d<float, access::read>      d3DLutSource [[texture(1)]],
+                                         texture3d<float, access::write>     d3DLut       [[texture(2)]],
+                                         uint3 gid [[thread_position_in_grid]]){
+    
+    float3 rgb     = d3DLutSource.read(gid).rgb;
+    
+    float x = d1DLut.sample(lutSampler, rgb.x).x;
+    float y = d1DLut.sample(lutSampler, rgb.y).y;
+    float z = d1DLut.sample(lutSampler, rgb.z).z;
+
+    d3DLut.write(float4(x,y,z, 1),gid);
+    
+}
+
+///
+/// @brief Kernel optimized convertion from 1D LUT to new 2D Lut
+///
+kernel void kernel_convert1DLut_to_2DLut(
+                                         texture1d<float, access::sample>    d1DLut       [[texture(0)]],
+                                         texture2d<float, access::read>      d2DLutSource [[texture(1)]],
+                                         texture2d<float, access::write>     d2DLut       [[texture(2)]],
+                                         uint2 gid [[thread_position_in_grid]]){
+    
+    float3 rgb     = d2DLutSource.read(gid).rgb;
+    
+    float x = d1DLut.sample(lutSampler, rgb.x).x;
+    float y = d1DLut.sample(lutSampler, rgb.y).y;
+    float z = d1DLut.sample(lutSampler, rgb.z).z;
+    
+    d2DLut.write(float4(x,y,z, 1),gid);
+    
+}
+
+///
+/// @brief Kernel optimized convertion from 2D LUT to new 1D Lut
+///
+kernel void kernel_convert2DLut_to_1DLut(
+                                         texture2d<float, access::sample>    d2DLut       [[texture(0)]],
+                                         texture1d<float, access::read>      d1DLutSource [[texture(1)]],
+                                         texture1d<float, access::write>     d1DLut       [[texture(2)]],
+                                         constant uint  &inClevel [[buffer(0)]],
+                                         uint gid [[thread_position_in_grid]]){
+    
+    float3 color = sample2DLut(d1DLutSource.read(gid).rgb, d2DLut, inClevel);
+    d1DLut.write(float4(color.r,color.g,color.b,1),gid);
+}
+
+///
+/// @brief Kernel optimized convertion from 3D LUT to new 1D Lut
+///
+kernel void kernel_convert3DLut_to_1DLut(
+                                         texture3d<float, access::sample>    d3DLut       [[texture(0)]],
+                                         texture1d<float, access::read>      d1DLutSource [[texture(1)]],
+                                         texture1d<float, access::write>     d1DLut       [[texture(2)]],
+                                         uint gid [[thread_position_in_grid]]){
+    
+    float3 rgb    = d1DLutSource.read(gid).rgb;
+    float4 result = d3DLut.sample(lutSampler, rgb);
+    
+    d1DLut.write(float4(result.rgb,1),gid);
 }
 
 

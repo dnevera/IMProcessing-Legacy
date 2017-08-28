@@ -46,18 +46,44 @@ public extension IMPCLut {
         var threadgroups:MTLSize!
         var level:uint? = nil
 
-        if _type == .lut_3d || lut._type == .lut_2d {
+        if _type == .lut_3d && lut._type == .lut_2d {
             kernel = IMPFunction(context: context, kernelName: "kernel_convert3DLut_to_2DLut")
             threads = kernel.threadsPerThreadgroup
             threadgroups = MTLSizeMake(newtext.width/threads.width, newtext.height/threads.height, 1)
         }
-        else if _type == .lut_2d || lut._type == .lut_3d {
+
+        else if _type == .lut_2d && lut._type == .lut_3d {
             kernel = IMPFunction(context: context, kernelName: "kernel_convert2DLut_to_3DLut")
             threads = MTLSizeMake(4, 4, 4)
             threadgroups  = MTLSizeMake(newtext.width/threads.width, newtext.height/threads.height, newtext.depth/threads.depth)
             level = uint(sqrt(Float(_lutSize)))
         }
-        
+
+        else if _type == .lut_1d && lut._type == .lut_3d {
+            kernel = IMPFunction(context: context, kernelName: "kernel_convert1DLut_to_3DLut")
+            threads = MTLSizeMake(4, 4, 4)
+            threadgroups  = MTLSizeMake(newtext.width/threads.width, newtext.height/threads.height, newtext.depth/threads.depth)
+        }
+
+        else if _type == .lut_1d && lut._type == .lut_2d {
+            kernel = IMPFunction(context: context, kernelName: "kernel_convert1DLut_to_2DLut")
+            threads = kernel.threadsPerThreadgroup
+            threadgroups = MTLSizeMake(newtext.width/threads.width, newtext.height/threads.height, 1)
+        }
+
+        else if _type == .lut_2d && lut._type == .lut_1d {
+            kernel = IMPFunction(context: context, kernelName: "kernel_convert2DLut_to_1DLut")
+            threads = MTLSizeMake(4, 1, 1)
+            threadgroups = MTLSizeMake(newtext.width/threads.width, 1, 1)
+            level = uint(sqrt(Float(_lutSize)))
+        }
+
+        else if _type == .lut_3d && lut._type == .lut_1d {
+            kernel = IMPFunction(context: context, kernelName: "kernel_convert3DLut_to_1DLut")
+            threads = MTLSizeMake(4, 1, 1)
+            threadgroups = MTLSizeMake(newtext.width/threads.width, 1, 1)
+        }
+
         context.execute(.sync, wait: true){ (commandBuffer) in
             let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
             commandEncoder.setTexture(text, at:0)
