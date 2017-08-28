@@ -10,9 +10,8 @@ import Foundation
 import Metal
 import simd
 
-/// Load a LUT from the Adobe cube file format.
-/// Cube LUT Specification Version 1.0
-///  http://wwwimages.adobe.com/content/dam/Adobe/en/products/speedgrade/cc/pdfs/cube-lut-specification-1.0.pdf
+
+/// Common Color LUT (Look Up Table) provider
 public class IMPCLut: IMPImage {
     
     
@@ -50,6 +49,16 @@ public class IMPCLut: IMPImage {
         public let file:String
         public let line:Int
         public let kind:Kind
+        public let source:String
+        public let sourceLine:Int
+        
+        public init(file: String, line: Int, kind:Kind, source:String = #file, sourceLine:Int=#line){
+            self.file = file
+            self.line = line
+            self.kind = kind
+            self.source = source
+            self.sourceLine = sourceLine
+        }
     }
     
     
@@ -79,8 +88,6 @@ public class IMPCLut: IMPImage {
     internal var _domainMin = float3(0)
     internal var _domainMax = float3(1)
     internal var _lutSize = Int(0)
-    
-    
 }
 
 
@@ -95,7 +102,7 @@ public extension IMPCLut {
     ///   - lutType: cube type: LutType.lut_3d or .lut_1d
     ///   - format: cube number format: Format.integer or .float
     ///   - title: cube file title
-    public convenience init(context: IMPContext, lutSize:Int, lutType:LutType = .lut_3d, format:Format = .integer, title:String? = nil) throws {
+    public convenience init(context: IMPContext, lutType:LutType, lutSize:Int, format:Format = .integer, title:String? = nil) throws {
         self.init(context: context, storageMode:nil)
         _title    = title ?? "IMPCLut \(lutSize):\(lutType):\(format)"
         _lutSize  = lutSize

@@ -110,6 +110,8 @@ public enum IMPImageStorageMode {
     case local
 }
 
+
+/// Image provider base protocol
 public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{    
     var image:CIImage?{ get set }
     var size:NSSize? {get}
@@ -120,6 +122,8 @@ public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
     init(context:IMPContext, storageMode:IMPImageStorageMode?)
 }
 
+
+// MARK: - construcutors
 public extension IMPImageProvider {
     
     public init(context: IMPContext,
@@ -473,6 +477,8 @@ public extension IMPImageProvider {
     }
 }
 
+
+// MARK: - render
 public extension IMPImageProvider {
     
     public func render(to texture: inout MTLTexture?) {
@@ -597,3 +603,52 @@ public extension IMPImageProvider {
 }
 
 
+
+#if os(OSX)
+
+    extension NSImage {
+        
+        var pngData: Data? {
+            guard let tiffRepresentation = tiffRepresentation, let bitmapImage = NSBitmapImageRep(data: tiffRepresentation) else { return nil }
+            return bitmapImage.representation(using: .PNG, properties: [:])
+        }
+        
+        func pngWrite(to url: URL, options: Data.WritingOptions = .atomic) throws {
+            try pngData?.write(to: url, options: options)
+        }
+        
+        convenience init?(ciimage:CIImage?){
+            
+            guard var image = ciimage else {
+                return nil
+            }
+            
+            //
+            // convert back to MTL texture coordinates system
+            //
+            let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.height)
+            image = image.applying(transform)
+            
+            self.init(size: image.extent.size)
+            let rep = NSCIImageRep(ciImage: image)
+            addRepresentation(rep)
+        }
+        
+    }
+    
+    // MARK: - export to files
+    public extension IMPImageProvider{
+        public func writeAsPng(to url: URL) throws {
+            try NSImage(ciimage:image)?.pngWrite(to: url)
+        }
+
+        public func writeAsPng(to path: String) throws {
+            try NSImage(ciimage:image)?.pngWrite(to: URL(fileURLWithPath: path))
+        }
+        
+        public func representationAsPng() ->Data? {
+            return NSImage(ciimage:image)?.pngData
+        }
+    }
+    
+#endif

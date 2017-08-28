@@ -18,7 +18,7 @@
 #include "IMPSwift-Bridging-Metal.h"
 
 ///
-/// @brief Kernel optimized 3D LUT
+/// @brief Kernel optimized 3D LUT identity
 ///
 kernel void kernel_make3DLut(
                              texture3d<float, access::write>         d3DLut     [[texture(0)]],
@@ -30,6 +30,9 @@ kernel void kernel_make3DLut(
 }
 
 
+///
+/// @brief Kernel optimized 2D LUT identity
+///
 kernel void kernel_make2DLut(
                              texture2d<float, access::write>         d2DLut     [[texture(0)]],
                              constant uint  &clevel [[buffer(0)]],
@@ -49,9 +52,8 @@ kernel void kernel_make2DLut(
     d2DLut.write(float4(r,g,b,1),gid.xy);
 }
 
-
 ///
-/// @brief Kernel optimized 1D LUT
+/// @brief Kernel optimized 1D LUT identity
 ///
 kernel void kernel_make1DLut(
                              texture1d<float, access::write>   d1DLut     [[texture(0)]],
@@ -62,6 +64,70 @@ kernel void kernel_make1DLut(
     d1DLut.write(input_color, gid);
 }
 
+///
+/// @brief Kernel optimized convertion from 3D LUT to new 2D Lut
+///
+kernel void kernel_convert3DLut_to_2DLut(
+                                         texture3d<float, access::sample>    d3DLut       [[texture(0)]],
+                                         texture2d<float, access::read>      d2DLutSource [[texture(1)]],
+                                         texture2d<float, access::write>     d2DLut       [[texture(2)]],
+                                         uint2 gid [[thread_position_in_grid]]){
+    
+    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    
+    float3 rgb    = d2DLutSource.read(gid).rgb;
+    float4 result = d3DLut.sample(s, rgb);
+    
+    d2DLut.write(float4(result.rgb,1),gid);
+}
+
+///
+/// @brief Kernel optimized convertion from 2D LUT to new 3D Lut
+///
+kernel void kernel_convert2DLut_to_3DLut(
+                                         texture2d<float, access::sample>    d2DLut       [[texture(0)]],
+                                         texture3d<float, access::read>      d3DLutSource [[texture(1)]],
+                                         texture3d<float, access::write>     d3DLut       [[texture(2)]],
+                                         constant uint  &inClevel [[buffer(0)]],
+                                         uint3 gid [[thread_position_in_grid]]){
+    
+    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    
+    float3 rgb     = d3DLutSource.read(gid).rgb;
+    
+    float  size    = float(d2DLut.get_width());
+    float  clevel  = float(inClevel);
+    
+    float cube_size = clevel*clevel;
+    
+    float blueColor = rgb.b * (cube_size-1);
+    
+    float2 quad1;
+    quad1.y = floor(floor(blueColor) / clevel);
+    quad1.x = floor(blueColor) - (quad1.y * clevel);
+    
+    float2 quad2;
+    quad2.y = floor(ceil(blueColor) / clevel);
+    quad2.x = ceil(blueColor) - (quad2.y * clevel);
+    
+    float2 texPos1;
+    
+    float denom = 1/clevel;
+    
+    texPos1.x = (quad1.x * denom) + 0.5/size + ((denom - 1.0/size) * rgb.r);
+    texPos1.y = (quad1.y * denom) + 0.5/size + ((denom - 1.0/size) * rgb.g);
+    
+    float2 texPos2;
+    texPos2.x = (quad2.x * denom) + 0.5/size + ((denom - 1.0/size) * rgb.r);
+    texPos2.y = (quad2.y * denom) + 0.5/size + ((denom - 1.0/size) * rgb.g);
+    
+    float4 newColor1 = d2DLut.sample(s, texPos1);
+    float4 newColor2 = d2DLut.sample(s, texPos2);
+    
+    float4 color = mix(newColor1, newColor2, fract(blueColor));
+    
+    d3DLut.write(float4(color.r,color.g,color.b,1),gid);
+}
 
 
 #endif

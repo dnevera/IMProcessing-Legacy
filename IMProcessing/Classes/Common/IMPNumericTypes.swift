@@ -127,6 +127,12 @@ public extension Int {
             self = Int(newValue)
         }
     }
+    
+    /// Function to check if x is power of 2
+    public var isPowerOfTwo:Bool {
+        /* First x in the below expression is for the case when x is 0 */
+        return ((self > 0) && !(( Int(self) & Int(self-1))>0) )
+    }
 }
 
 public extension CGFloat{

@@ -11,6 +11,9 @@ import Metal
 import simd
 
 // MARK: - Create Cube from Adobe Cube Lut file
+/// Load a LUT from the Adobe cube file format.
+/// Cube LUT Specification Version 1.0
+///  http://wwwimages.adobe.com/content/dam/Adobe/en/products/speedgrade/cc/pdfs/cube-lut-specification-1.0.pdf
 public extension IMPCLut {
     
     /// Load data from URL (the current version is supported local file only!)
@@ -25,6 +28,14 @@ public extension IMPCLut {
         try update(cube: url.path)
     }
     
+    
+    /// Load data from URL (the current version is supported local file only!)
+    ///
+    /// - Parameters:
+    ///   - context:  processing context
+    ///   - path: path
+    ///   - storageMode: storageMode
+    /// - Throws: `FormatError`
     public convenience init(context:IMPContext,  cube path: String, storageMode:IMPImageStorageMode?=nil) throws {
         self.init(context:context, storageMode:storageMode)
         try update(cube: path)
@@ -55,12 +66,11 @@ extension uint8:Decimals{
 // MARK: - exports
 public extension IMPCLut {
     
-    /// Export Cube Lut to file
+    /// Export as Adobe Cube Lut to file
     ///
     /// - Parameter path: file path
     /// - Throws: FormatError
-    
-    public func export(to path: String) throws {
+    public func writeAsCube(to path: String) throws {
         try autoreleasepool{
             
             if _type == .lut_2d {
@@ -178,7 +188,7 @@ public extension IMPCLut {
 
 // MARK: - Internal update from Adobe Cube file
 extension IMPCLut {
-    internal func update(cube path: String) throws {
+    fileprivate func update(cube path: String) throws {
         
         if (FileManager.default.fileExists(atPath: path) == false) {
             throw FormatError(file: path, line: 0, kind: .notFound)

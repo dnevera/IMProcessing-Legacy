@@ -1,0 +1,78 @@
+//
+//  CLut(Convertions).swift
+//  Pods
+//
+//  Created by denis svinarchuk on 28.08.17.
+//
+//
+
+import Foundation
+import Metal
+import simd
+
+
+// MARK: - Convert from between types
+public extension IMPCLut {
+    
+    
+    /// Convert the CLut object to another representation
+    ///
+    /// - Parameters:
+    ///   - newType: new type `LutType`
+    ///   - newLutSize: new lut size
+    ///   - newFormat: new format `Format`
+    ///   - newTitle: new title
+    /// - Returns: IMPCLut
+    /// - Throws: `FormatError`
+    public func convert(to newType: LutType, lutSize newLutSize:Int? = nil, format newFormat: Format? = nil, title newTitle:String?=nil) throws -> IMPCLut {
+        
+        if newType == self._type {
+            //
+            // the same
+            //
+            return self
+        }
+        
+        //
+        // make new identity
+        //
+        let lut = try IMPCLut(context: context, lutType: newType, lutSize: newLutSize ?? _lutSize, format: newFormat ?? _format, title: newTitle ?? _title)
+        
+        guard let newtext = lut.texture else { throw FormatError(file: "", line: 0, kind: .empty) }
+        guard let text = texture else { throw FormatError(file: "", line: 0, kind: .empty) }
+
+        var kernel:IMPFunction!
+        var threads:MTLSize!
+        var threadgroups:MTLSize!
+        var level:uint? = nil
+
+        if _type == .lut_3d || lut._type == .lut_2d {
+            kernel = IMPFunction(context: context, kernelName: "kernel_convert3DLut_to_2DLut")
+            threads = kernel.threadsPerThreadgroup
+            threadgroups = MTLSizeMake(newtext.width/threads.width, newtext.height/threads.height, 1)
+        }
+        else if _type == .lut_2d || lut._type == .lut_3d {
+            kernel = IMPFunction(context: context, kernelName: "kernel_convert2DLut_to_3DLut")
+            threads = MTLSizeMake(4, 4, 4)
+            threadgroups  = MTLSizeMake(newtext.width/threads.width, newtext.height/threads.height, newtext.depth/threads.depth)
+            level = uint(sqrt(Float(_lutSize)))
+        }
+        
+        context.execute(.sync, wait: true){ (commandBuffer) in
+            let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
+            commandEncoder.setTexture(text, at:0)
+            commandEncoder.setTexture(newtext, at:1)
+            commandEncoder.setTexture(newtext, at:2)
+            if var l = level {
+                commandEncoder.setBytes(&l,  length:MemoryLayout.stride(ofValue: l),  at:0)
+            }
+            commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threads)
+            commandEncoder.endEncoding()
+        }
+        
+        lut.texture = newtext
+        
+        return lut
+    }
+    
+}

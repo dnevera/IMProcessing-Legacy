@@ -47,13 +47,15 @@ open class IMPImage: IMPImageProvider {
         }
         get {
             if _image == nil && _texture != nil {
-                if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){
+                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+                //if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){
                     //
                     // convert back to MTL texture coordinates system
                     //
-                    let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: im.extent.height)
-                    _image = im.applying(transform)
-                }
+                    //let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: im.extent.height)
+                    //_image = im.applying(transform)
+                    //_image = im
+                //}
             }
             return _image
         }
