@@ -13,7 +13,8 @@ import simd
 
 /// Common Color LUT (Look Up Table) provider
 public class IMPCLut: IMPImage {
-    
+    public typealias UpdateHandler   = ((_ lut:IMPCLut) -> Void)
+
     
     /// Lute export generator version
     public static let version = "1.0"
@@ -81,6 +82,9 @@ public class IMPCLut: IMPImage {
     
     /// Current cube precision presentation
     public var format:Format {return _format }
+        
+    /// Lut level
+    public var level:Int { return Int(sqrt(Float(_lutSize))) }
     
     internal var _format:Format = .float
     internal var _type:LutType = .lut_3d
@@ -88,12 +92,15 @@ public class IMPCLut: IMPImage {
     internal var _domainMin = float3(0)
     internal var _domainMax = float3(1)
     internal var _lutSize = Int(0)
+    
+    fileprivate var observers:[UpdateHandler] = [UpdateHandler]()
 }
 
 
 // MARK: - Create identity Cube LUT
 public extension IMPCLut {
     
+
     /// Create identity Cube Lut
     ///
     /// - Parameters:
@@ -137,6 +144,60 @@ public extension IMPCLut {
             commandEncoder.endEncoding()
         }
     }
+    
+    public func update(from image: IMPImageProvider) throws {
+        
+        guard let txt = image.texture else { 
+             throw FormatError(file: "", line: 0, kind: .empty) 
+        }
+        
+        guard let oldtxt = texture else { 
+            throw FormatError(file: "", line: 0, kind: .empty) 
+        }
+        guard txt.textureType == oldtxt.textureType else {
+            throw FormatError(file: "", line: 0, kind: .wrangType)
+        }
+        
+        guard txt.pixelFormat == oldtxt.pixelFormat else {
+            throw FormatError(file: "", line: 0, kind: .wrangFormat)
+        }
+        
+        guard txt.size.width == oldtxt.size.width else {
+            throw FormatError(file: "", line: 0, kind: .wrangRange)
+        }
+        
+        context.execute(.sync, wait: true, complete: {
+            
+            for o in self.observers {
+                o(self)
+            }
+            
+        }){ (commandBuffer) in            
+            let blt = commandBuffer.makeBlitCommandEncoder()
+            blt.copy(from: txt, 
+                     sourceSlice: 0, 
+                     sourceLevel: 0, 
+                     sourceOrigin: MTLOrigin(x:0,y:0,z:0), 
+                     sourceSize: txt.size, 
+                     to: oldtxt, 
+                     destinationSlice: 0, 
+                     destinationLevel: 0, 
+                     destinationOrigin:  MTLOrigin(x:0,y:0,z:0))
+            blt.endEncoding()
+        }                 
+    }
+    
+    public func removeAllObservers() {
+        observers.removeAll()
+    }
+    
+    public func addObserver(updated observer:@escaping UpdateHandler){
+        observers.append(observer)
+    }
+    
+    public var identity:IMPCLut {
+        return try! IMPCLut(context: context, lutType: _type, lutSize: _lutSize, format:_format, title:_title)
+    }        
 }
 
 // MARK: - Internal extension

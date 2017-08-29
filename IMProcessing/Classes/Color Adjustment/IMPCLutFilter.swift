@@ -1,0 +1,87 @@
+//
+//  IMPCLutFilter.swift
+//  Pods
+//
+//  Created by denis svinarchuk on 29.08.17.
+//
+//
+
+import Foundation
+
+public class IMPCLutFilter: IMPFilter {
+    
+    public static let defaultAdjustment = IMPAdjustment( blending: IMPBlending(mode: .normal, opacity: 1))
+    public var adjustment:IMPAdjustment = defaultAdjustment { didSet{ dirty = true } }
+    
+    public var clut:IMPCLut? {
+        willSet{
+            clut?.removeAllObservers()
+        }
+        didSet{
+            guard oldValue !== clut else {                
+                return 
+            }
+            
+            if let kernel = currentKernel {
+                remove(function: kernel)
+            }
+            
+            if let lut =  clut {
+                switch lut.type {
+                case .lut_1d:
+                    currentKernel = kernel1D
+                case .lut_2d:
+                    currentKernel = kernel2D
+                case .lut_3d:
+                    currentKernel = kernel3D
+                }
+            }
+            if let kernel = currentKernel {
+                insert(function: kernel, at: 0) { (imp) in  
+                    self.completeHandler?(imp)
+                }
+                dirty = true
+            }
+            
+            clut?.addObserver(updated: { (lut) in
+                self.dirty = true
+            })
+        }
+    }
+ 
+    public override func configure(complete: IMPFilterProtocol.CompleteHandler?) {
+        completeHandler = complete
+        extendName(suffix: "LutFilter")
+        
+        super.configure()
+        
+        func optionsHandler(_ function:IMPFunction, 
+                            _ command:MTLComputeCommandEncoder, 
+                            _ inputTexture:MTLTexture?, 
+                            _ outputTexture:MTLTexture?){
+                        
+            guard let lut = self.clut else { return }
+            
+            command.setTexture(lut.texture, at:2)
+                        
+            command.setBytes(&self.adjustment, length:MemoryLayout.stride(ofValue: self.adjustment),at:0)
+            if lut.type == .lut_2d {
+                var level = lut.level 
+                command.setBytes(&level,              length:MemoryLayout.stride(ofValue: level),       at:1)
+            }
+        }
+        
+        kernel1D.optionsHandler = optionsHandler
+        kernel2D.optionsHandler = optionsHandler
+        kernel3D.optionsHandler = optionsHandler
+        
+        clut = try! IMPCLut(context: context, lutType: .lut_2d, lutSize: 32)
+    }
+    
+    private lazy var kernel1D:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_adjustLutD1D")    
+    private lazy var kernel2D:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_adjustLutD2D")
+    private lazy var kernel3D:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_adjustLutD3D")
+    
+    private var currentKernel:IMPFunction?  
+    private var completeHandler:IMPFilterProtocol.CompleteHandler?
+}
