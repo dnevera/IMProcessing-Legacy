@@ -75,7 +75,7 @@ public class IMPCLutFilter: IMPFilter {
         kernel2D.optionsHandler = optionsHandler
         kernel3D.optionsHandler = optionsHandler
         
-        clut = try! IMPCLut(context: context, lutType: .lut_2d, lutSize: 32)
+        clut = try! IMPCLut(context: context, lutType: .lut_2d, lutSize: 64)
     }
     
     private lazy var kernel1D:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_adjustLutD1D")    
