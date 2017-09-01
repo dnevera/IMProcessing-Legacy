@@ -74,14 +74,8 @@ public class IMPView: MTKView {
             
             self.needProcessing = true
             
-            filter?.addObserver(newSource: { (source) in
-                
-                //DispatchQueue.global().asyncAfter(wallDeadline: .now() + 1/30, execute: {
-                    //DispatchQueue.main.async {
-                        self.updateDrawbleSize()
-                    //}
-                //})
-                
+            filter?.addObserver(newSource: { (source) in                
+                self.updateDrawbleSize()                
             })
             
             filter?.addObserver(dirty: { (filter, source, destintion) in
@@ -190,10 +184,7 @@ public class IMPView: MTKView {
             
             filter.destinationSize = size
             self.frameImage = filter.destination
-            
-            if self.frameImage.texture != nil {
-                //NSLog("   !!!!!  new frame = \(self.frameImage.texture?.size)")
-            }
+                        
             self.needProcessing = false
             self.setNeedsDisplay()
         }
@@ -220,12 +211,11 @@ public class IMPView: MTKView {
             }
             drawable = d
         }
-        
-        //guard let sourceTexture = frameImage.texture else {
-        //    needProcessing = true
-        //    context.resume()
-        //    return
-        //}
+                                        
+        guard let sourceTexture = frameImage.texture else {
+            context.resume()
+            return
+        }
         
         guard let commandBuffer = context.commandBuffer else {
             context.resume()

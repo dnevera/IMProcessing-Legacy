@@ -70,7 +70,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     public var source: IMPImageProvider? = nil {
         didSet{
             if source == nil {
-                oldValue?.texture?.setPurgeableState(.volatile)
+               oldValue?.texture?.setPurgeableState(.volatile)
             }
             _destination.texture?.setPurgeableState(.empty)
             _destination.texture = nil
@@ -257,9 +257,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                     filter.executeDestinationObservers(destination: filter._destination)
                 }
                 
-            }, fail: {
+            }, fail: {                
                 
-                NSLog("IMPFilter applying failed .... ")
+                NSLog("IMPFilter: applying failed.")
                 
             }, action: { (commandBuffer) in
                 
@@ -326,9 +326,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                 }
             })
             
-            if let comlete = c.complete {
-                comlete(IMPImage(context:self.context, texture: currentResult))
-            }
+            c.complete?(IMPImage(context:self.context, texture: currentResult))
         }
         return currentResult
     }
