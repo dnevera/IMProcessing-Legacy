@@ -606,17 +606,25 @@ public extension IMPImageProvider {
 
 #if os(OSX)
 
+    public typealias IMPImageFileType = NSBitmapImageFileType
+    
     extension NSImage {
-        
-        var pngData: Data? {
-            guard let tiffRepresentation = tiffRepresentation, let bitmapImage = NSBitmapImageRep(data: tiffRepresentation) else { return nil }
-            return bitmapImage.representation(using: .PNG, properties: [:])
+                      
+        func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data? {
+                                    
+            guard let tiffRepresentation = tiffRepresentation(using: .none, factor: factor ?? 1.0), 
+                let bitmapImage = NSBitmapImageRep(data: tiffRepresentation) 
+                else { return nil }
+            
+            var properties:[String : Any] = [:]
+            
+            if type == .JPEG {
+                properties = [NSImageCompressionFactor: factor ?? 1.0]
+            }
+            
+            return bitmapImage.representation(using: type, properties: properties)            
         }
-        
-        func pngWrite(to url: URL, options: Data.WritingOptions = .atomic) throws {
-            try pngData?.write(to: url, options: options)
-        }
-        
+                
         convenience init?(ciimage:CIImage?){
             
             guard var image = ciimage else {
@@ -638,17 +646,33 @@ public extension IMPImageProvider {
     
     // MARK: - export to files
     public extension IMPImageProvider{
-        public func writeAsPng(to url: URL) throws {
-            try NSImage(ciimage:image)?.pngWrite(to: url)
-        }
-
-        public func writeAsPng(to path: String) throws {
-            try NSImage(ciimage:image)?.pngWrite(to: URL(fileURLWithPath: path))
+        
+        
+        /// Image provider representaion as Data?
+        ///
+        /// - Parameters:
+        ///   - type: representation type: `IMPImageFileType`
+        ///   - factor: compression factor (.JPEG only)
+        /// - Returns: representation Data?
+        public func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data?{
+            return NSImage(ciimage:image)?.representation(using: type, compression: factor)
         }
         
-        public func representationAsPng() ->Data? {
-            return NSImage(ciimage:image)?.pngData
+        
+        /// Write image to URL
+        ///
+        /// - Parameters:
+        ///   - url: url
+        ///   - type: image type
+        ///   - factor: compression factor (.JPEG only)
+        /// - Throws: `Error`
+        public func write(to url: URL, using type: IMPImageFileType, compression factor:Float? = nil) throws {
+            try representation(using: type, compression: factor)?.write(to: url, options: .atomic)
         }
+        
+        public func write(to path: String, using type: IMPImageFileType, compression factor:Float? = nil) throws {
+            try representation(using: type, compression: factor)?.write(to: URL(fileURLWithPath: path), options: .atomic)
+        }        
     }
     
 #endif

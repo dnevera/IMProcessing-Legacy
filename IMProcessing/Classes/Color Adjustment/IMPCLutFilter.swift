@@ -8,11 +8,19 @@
 
 import Foundation
 
+
+/// Color LUT filter 
 public class IMPCLutFilter: IMPFilter {
     
+    
+    /// Default adjustment
     public static let defaultAdjustment = IMPAdjustment( blending: IMPBlending(mode: .normal, opacity: 1))
+    
+    /// Current addjustment
     public var adjustment:IMPAdjustment = defaultAdjustment { didSet{ dirty = true } }
     
+    
+    /// Color LUT is nil by default. Application of the filter is no effect in this case. 
     public var clut:IMPCLut? {
         willSet{
             clut?.removeAllObservers()
@@ -50,11 +58,19 @@ public class IMPCLutFilter: IMPFilter {
         }
     }
  
-    public convenience init(context: IMPContext, lutType:IMPCLut.LutType, lutSize:Int, format:IMPCLut.Format, title:String? = nil) {
+    
+    /// Create color LUT filtering with 2d color LUT
+    ///
+    /// - Parameters:
+    ///   - context: filtering context    
+    ///   - lutSize: 3D lut size
+    ///   - format: precision format .integer or .float
+    ///   - title: lut title
+    public convenience init(context: IMPContext, lutSize:Int, format:IMPCLut.Format, title:String? = nil) {
         self.init(context: context, name: title)
         defer {
             do {
-                clut = try IMPCLut(context: context, lutType: lutType, lutSize: lutSize, format: format, title: title)
+                clut = try IMPCLut(context: context, lutType: .lut_2d, lutSize: lutSize, format: format, title: title)
             }
             catch let error {
                 fatalError("IMPCLutFilter Error: \(error)")
