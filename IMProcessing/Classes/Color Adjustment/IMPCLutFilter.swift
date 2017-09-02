@@ -18,7 +18,8 @@ public class IMPCLutFilter: IMPFilter {
             clut?.removeAllObservers()
         }
         didSet{
-            guard oldValue !== clut else {                
+            guard oldValue !== clut else {    
+                dirty = true
                 return 
             }
             
@@ -49,6 +50,18 @@ public class IMPCLutFilter: IMPFilter {
         }
     }
  
+    public convenience init(context: IMPContext, lutType:IMPCLut.LutType, lutSize:Int, format:IMPCLut.Format, title:String? = nil) {
+        self.init(context: context, name: title)
+        defer {
+            do {
+                clut = try IMPCLut(context: context, lutType: lutType, lutSize: lutSize, format: format, title: title)
+            }
+            catch let error {
+                fatalError("IMPCLutFilter Error: \(error)")
+            }
+        }
+    }
+    
     public override func configure(complete: IMPFilterProtocol.CompleteHandler?) {
         completeHandler = complete
         extendName(suffix: "LutFilter")
@@ -73,9 +86,7 @@ public class IMPCLutFilter: IMPFilter {
         
         kernel1D.optionsHandler = optionsHandler
         kernel2D.optionsHandler = optionsHandler
-        kernel3D.optionsHandler = optionsHandler
-        
-        clut = try! IMPCLut(context: context, lutType: .lut_2d, lutSize: 64)
+        kernel3D.optionsHandler = optionsHandler                            
     }
     
     private lazy var kernel1D:IMPFunction = IMPFunction(context: self.context, kernelName: "kernel_adjustLutD1D")    
