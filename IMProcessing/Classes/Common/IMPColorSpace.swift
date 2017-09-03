@@ -33,7 +33,7 @@ public enum IMPColorSpace:String {
     
     public static let spacesCount = 9
     
-    case rgb  = "Linear RGB"
+    case rgb  = "RGB"
     case srgb = "sRGB"
     case lab  = "L*a*b"
     case lch  = "L*c*h"
