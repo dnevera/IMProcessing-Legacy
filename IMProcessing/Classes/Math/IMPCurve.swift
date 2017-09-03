@@ -51,6 +51,7 @@ public class IMPCurve: Hashable {
     public var userInfo:Any? { didSet { updateCurve() } }
     
     private var _edges:([float2],[float2])
+    private var _initials:([float2],[float2])
     
     public required init(interpolator:IMPInterpolator,
                          type:ApproximationType,
@@ -64,22 +65,27 @@ public class IMPCurve: Hashable {
         self._interpolator = interpolator
         self._interpolator.bounds = bounds
         self._edges = edges
+        self._initials = initials
         self.maxControlPoints = maxControlPoints
         self.segments = Float.range(start: 0, step: 1/Float(self._interpolator.resolution), end: 1)
         
         defer {
-            var inits = [float2]()
-            if initials.0.count>0 {
-                inits.append(contentsOf: initials.0)
-            }
-            
-            if initials.1.count>0 {
-                inits.append(contentsOf: initials.1)
-            }
-           
-            _controlPoints.append(contentsOf: inits)
+            resetControlPoints()
             updateCurve()
         }
+    }
+    
+    private func resetControlPoints(){
+        var inits = [float2]()
+        if self._initials.0.count>0 {
+            inits.append(contentsOf: self._initials.0)
+        }
+        
+        if _initials.1.count>0 {
+            inits.append(contentsOf: self._initials.1)
+        }
+        
+        _controlPoints.append(contentsOf: inits)        
     }
     
     public func update()  {
@@ -101,6 +107,7 @@ public class IMPCurve: Hashable {
     }
     
     private func add(point p: float2) -> Int? {
+        
         if findXPoint(point: p) != nil {
             return nil
         }
@@ -119,6 +126,16 @@ public class IMPCurve: Hashable {
         
         _controlPoints.append(p)
         
+        if maxControlPoints >= 2 {
+            if _controlPoints.count == 1 && _initials.0.count == 0 {
+                _initials.0.append(_controlPoints[0])
+            }
+            
+            if _controlPoints.count == 2 && _initials.1.count == 0 {
+                _initials.1.append(_controlPoints[1])
+            }
+        }
+        
         return _controlPoints.count-1
     }
     
@@ -136,12 +153,12 @@ public class IMPCurve: Hashable {
         complete?(f)
     }
     
-    public func set(point: float2, at atIndex:Int) -> float2? {
+    private func _set(point: float2, at atIndex:Int) -> float2? {
         var point = point
         var result:float2? = nil
-
-         if atIndex < _controlPoints.count {
-
+        
+        if atIndex < _controlPoints.count {
+            
             if point.x<=0 { point.x = 0 }
             
             if point.x>=1 { point.x = 1 }
@@ -152,20 +169,29 @@ public class IMPCurve: Hashable {
             
             _controlPoints[atIndex] = point
             result = _controlPoints[atIndex]
-        }
-
-        updateCurve()
-        
+        }                
         return result
+    }
+
+    public func set(point: float2, at atIndex:Int) -> float2? {
+        let r = _set(point:point, at: atIndex)
+        updateCurve()
+        return r
     }
     
     public func set(points: [float2]){
-        reset()
+        _controlPoints.removeAll()
         add(points: points)
+        updateCurve()
     }
-    
-    public func removeAll(){
-        reset()
+
+    private func clearControlPoints(){
+        _controlPoints.removeAll()        
+        resetControlPoints()
+    } 
+
+    public func reset(){
+        clearControlPoints()
         updateCurve()
     }
     
@@ -284,12 +310,7 @@ public class IMPCurve: Hashable {
     public var closeDistance:Float {
         return precision ?? 1/Float(_interpolator.resolution/2)
     }
-    
-    private func reset() {
-        _controlPoints.removeAll()
-        updateCurve()
-    }
-    
+        
     private var _interpolator:IMPInterpolator
     
     private var _curve = [Float]()
@@ -300,7 +321,7 @@ public class IMPCurve: Hashable {
     
     private func updateCurve()  {
         _curve.removeAll()
-        _interpolator.controls = controlPoints
+        _interpolator.controls = _controlPoints
         _interpolator.controls.insert(contentsOf: _edges.0, at: 0)
         _interpolator.controls.append(contentsOf: _edges.1)
         for x in segments {

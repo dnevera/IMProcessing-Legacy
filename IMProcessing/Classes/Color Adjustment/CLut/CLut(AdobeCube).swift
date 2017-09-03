@@ -132,8 +132,8 @@ public extension IMPCLut {
             let r = bytes[j].toFloat()/denom; j += 1
             let g = bytes[j].toFloat()/denom; j += 1
             let b = bytes[j].toFloat()/denom; j += 2
-            
-            write(to: file, string: "\(r) \(g) \(b)\n")
+                        
+            write(to: file, string: String(format: "%.6f %.6f %.6f\n", r,g,b))
         }
     }
     
@@ -145,7 +145,7 @@ public extension IMPCLut {
                     let r = bytes[index + 0 ].toFloat()/denom
                     let g = bytes[index + 1 ].toFloat()/denom
                     let b = bytes[index + 2 ].toFloat()/denom
-                    write(to: file, string: "\(r) \(g) \(b)\n")
+                    write(to: file, string: String(format: "%.6f %.6f %.6f\n", r,g,b))
                 }
             }
         }
