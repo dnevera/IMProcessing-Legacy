@@ -35,8 +35,8 @@ public class IMPCurvesFilter: IMPFilter {
                     }
                     self.dirty = true
                 })
-                dirty = true
             }
+            dirty = true
         }
     }
     

@@ -52,6 +52,7 @@ public class IMPCurve: Hashable {
     
     private var _edges:([float2],[float2])
     private var _initials:([float2],[float2])
+    private var _initialBounds:IMPInterpolator.Bounds
     
     public required init(interpolator:IMPInterpolator,
                          type:ApproximationType,
@@ -64,6 +65,7 @@ public class IMPCurve: Hashable {
         self.type = type
         self._interpolator = interpolator
         self._interpolator.bounds = bounds
+        _initialBounds = bounds
         self._edges = edges
         self._initials = initials
         self.maxControlPoints = maxControlPoints
@@ -191,7 +193,8 @@ public class IMPCurve: Hashable {
     } 
 
     public func reset(){
-        clearControlPoints()
+        bounds = _initialBounds
+        clearControlPoints()        
         updateCurve()
     }
     
