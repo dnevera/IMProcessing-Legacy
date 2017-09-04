@@ -225,6 +225,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                 result.image = filter.outputImage
             }
             else if let filter = c.filter {
+                if !filter.enabled {
+                    continue
+                }
                 filter.source = IMPImage(context: filter.context, provider: result)
                 result = filter.destination
             }
@@ -306,6 +309,10 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                     }
                 }
                 else if let filter = c.filter {
+                    
+                    if !filter.enabled {
+                        return
+                    }
                     
                     if filter.source == nil {
                         filter.source = IMPImage(context: self.context)

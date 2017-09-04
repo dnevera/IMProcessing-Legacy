@@ -27,12 +27,19 @@ public class IMPCurvesFilter: IMPFilter {
     public var master:IMPCurve? {
         didSet{
             if oldValue != master {
-                master?.addUpdateObserver(observer: { (curve) in
+                
+                func update(){
                     for (i,current) in self.channels.enumerated() {
                         if let c = current {
                             self.lut.channels[i] = self.matchMaster(c.values)
                         }
                     }
+                }
+                
+                update()
+                
+                master?.addUpdateObserver(observer: { (curve) in
+                    update()
                     self.dirty = true
                 })
             }
@@ -45,6 +52,7 @@ public class IMPCurvesFilter: IMPFilter {
             for (i,c) in channels.enumerated() {
                 if let hash = c {
                     curvesHash[hash] = i
+                    self.lut.channels[i] = self.matchMaster(hash.values)                    
                 }
                 if  c != oldValue[i] {
                     c?.addUpdateObserver(observer: { (curve) in
