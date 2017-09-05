@@ -11,6 +11,19 @@ import Accelerate
 import Surge
 import simd
 
+
+extension Array where Element: Equatable {
+    func uniq() -> [Element] {
+        return self.reduce([], { (objects, object) -> [Element] in
+            var objects = objects
+            if !objects.contains(object) {
+                objects.append(object)
+            }
+            return objects
+        })
+    }
+}
+
 public class IMPCurve: Hashable {
     public /// The hash value.
     ///
@@ -34,7 +47,9 @@ public class IMPCurve: Hashable {
     public var interpolator:IMPInterpolator  {return _interpolator }
     
     public var bounds:IMPInterpolator.Bounds {
-        set{ _interpolator.bounds = newValue; updateCurve() }
+        set{
+            _interpolator.bounds = newValue; updateCurve() 
+        }
         get{  return _interpolator.bounds }
     }
     
@@ -113,7 +128,7 @@ public class IMPCurve: Hashable {
         if findXPoint(point: p) != nil {
             return nil
         }
-        
+            
         if let i = indexOf(point: p) {
             _controlPoints[i] = p
             return i
@@ -128,16 +143,22 @@ public class IMPCurve: Hashable {
         
         _controlPoints.append(p)
         
+        if _controlPoints.count >= 2{ 
+            _controlPoints[0] = bounds.left
+            _controlPoints[1] = bounds.right
+        }
+
         if maxControlPoints >= 2 {
+                        
             if _controlPoints.count == 1 && _initials.0.count == 0 {
                 _initials.0.append(_controlPoints[0])
             }
             
             if _controlPoints.count == 2 && _initials.1.count == 0 {
                 _initials.1.append(_controlPoints[1])
-            }
+            }                    
         }
-        
+                
         return _controlPoints.count-1
     }
     
