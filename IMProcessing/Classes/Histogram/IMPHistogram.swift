@@ -63,9 +63,6 @@ public class IMPHistogram {
     }
     
     private var binCounts:[Float]
-    //public func binCount(channel:ChannelNo)->Float{
-    //    return binCounts[channel.rawValue]
-    //}
     public func countOfBins(forChannel index:ChannelNo)->Float {
         return binCounts[index.rawValue]
     }
