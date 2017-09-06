@@ -86,7 +86,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public required init(context:IMPContext, name: String? = nil) {
         self.context = context
-        _name = name
+        _name = name ?? String.uniqString()
         defer {
             configure()
         }
