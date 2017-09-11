@@ -54,17 +54,10 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
         _ outputTexture:MTLTexture?)->Void)? = nil
     
     public required init(context:IMPContext,
-                         kernelName:String = "kernel_passthrough",
-                         name:String? = nil) {
+                         kernelName:String = "kernel_passthrough"){
         self.context = context
         self.kernelName = kernelName
-        
-        if name != nil {
-            self._name = String.uniqString() + ":" + name!
-        }
-        else {
-            self._name = context.uid + ":" + String.uniqString() + ":" + self.kernelName
-        }
+        self._name = context.uid + ":" + String.uniqString() + ":" + self.kernelName
     }
     
     public static func == (lhs: IMPFunction, rhs: IMPFunction) -> Bool {
