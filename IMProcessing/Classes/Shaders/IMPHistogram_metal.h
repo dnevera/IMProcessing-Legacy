@@ -52,7 +52,12 @@ namespace IMProcessing
     ///
     ///  @return bin index
     ///
-    inline uint4 channel_binIndex(
+    typedef struct {
+        uint4 index;
+        bool  counted;
+    }ChannelBin;
+    
+    inline ChannelBin channel_binIndex(
                                   texture2d<float, access::sample>  inTexture,
                                   constant IMPRegion               &regionIn,
                                   constant IMPColorSpaceIndex      &space,
@@ -71,7 +76,13 @@ namespace IMProcessing
         color.y = (color.y - y.x)/(y.y-y.x);
         color.z = (color.z - z.x)/(z.y-z.x);
         
-        return uint4(uint3(color * Im), Y);
+        ChannelBin bin;
+        
+        bin.index = uint4(uint3(color * Im), Y);
+        bin.counted = inColor.a>0 ? true : false;
+        
+        //return uint4(uint3(color * Im), Y);
+        return bin;
     }
     
     //
@@ -150,7 +161,11 @@ namespace IMProcessing
             for (uint row = y; row < height; row += ny) {
                 
                 uint2 gid = uint2(col,row);
-                uint4 xyzw = channel_binIndex(inTexture,regionIn,space,gid);
+                ChannelBin bin = channel_binIndex(inTexture,regionIn,space,gid); 
+                
+                if (!bin.counted) continue; 
+                
+                uint4 xyzw = bin.index; //channel_binIndex(inTexture,regionIn,space,gid);
                 
                 for (uint c = 0; c < kIMP_HistogramMaxChannels && c < channels; c++) {
                     atomic_fetch_add_explicit(&(temp[c][xyzw[c]]), 1, memory_order_relaxed);
