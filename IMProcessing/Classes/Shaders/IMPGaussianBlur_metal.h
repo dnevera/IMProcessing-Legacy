@@ -84,11 +84,13 @@ namespace IMProcessing
     {
         float4 inColor = IMProcessing::sampledColor(background,destination,gid);
         float3 rgb     = IMProcessing::sampledColor(source,destination,gid).rgb;
+
+        inColor = IMProcessing::blend(inColor, float4(rgb,1), adjustment.blending);
         
-        if (adjustment.blending.mode == IMPLuminosity)
-            inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
-        else // only two modes yet
-            inColor = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
+//        if (adjustment.blending.mode == IMPLuminosity)
+//            inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
+//        else // only two modes yet
+//            inColor = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
         
         destination.write(inColor, gid);
     }
@@ -104,11 +106,13 @@ namespace IMProcessing
         
         float4 inColor = source.sample(s, in.texcoord.xy);
         float3 rgb = texture.sample(s, in.texcoord.xy).rgb;
-        
-        if (adjustment.blending.mode == IMPLuminosity)
-            inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
-        else // only two modes yet
-            inColor = IMProcessing::blendNormal(inColor, float4(rgb, adjustment.blending.opacity));
+
+        inColor = IMProcessing::blend(inColor, float4(rgb,1), adjustment.blending);
+
+//        if (adjustment.blending.mode == IMPLuminosity)
+//            inColor = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
+//        else // only two modes yet
+//            inColor = IMProcessing::blendNormal(inColor, float4(rgb, adjustment.blending.opacity));
         
         return  inColor;
     }

@@ -35,13 +35,15 @@ inline float4 adjustChannelCurves(
     
     color = IMPConvertFromNormalizedColor(space, IMPRgbSpace, float3(x,y,z));
     
-    float4 result = float4(color, adjustment.blending.opacity);
+    float4 result = IMProcessing::blend(inColor, float4(color,1), adjustment.blending);
     
-    if (adjustment.blending.mode == IMPLuminosity)
-        result = IMProcessing::blendLuminosity(inColor, result);
-    else // only two modes yet
-        result = IMProcessing::blendNormal(inColor, result);
-    
+//    float4 result = float4(color, adjustment.blending.opacity);
+//    
+//    if (adjustment.blending.mode == IMPLuminosity)
+//        result = IMProcessing::blendLuminosity(inColor, result);
+//    else // only two modes yet
+//        result = IMProcessing::blendNormal(inColor, result);
+//    
     return result;
 }
 

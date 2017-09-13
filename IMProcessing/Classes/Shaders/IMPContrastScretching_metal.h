@@ -25,12 +25,14 @@ inline float4 adjustContrastScretching(float4 inColor, constant IMPContrastAdjus
     
     result.rgb  = clamp((result.rgb - alow)/(ahigh-alow), float3(0.0), float3(1.0));
     
-    if (adjustment.blending.mode == IMPLuminosity) {
-        result = IMProcessing::blendLuminosity(inColor, float4(result.rgb, adjustment.blending.opacity));
-    }
-    else {// only two modes yet
-        result = IMProcessing::blendNormal(inColor, float4(result.rgb, adjustment.blending.opacity));
-    }
+    result = IMProcessing::blend(inColor, result, adjustment.blending); 
+
+//    if (adjustment.blending.mode == IMPLuminosity) {
+//        result = IMProcessing::blendLuminosity(inColor, float4(result.rgb, adjustment.blending.opacity));
+//    }
+//    else {// only two modes yet
+//        result = IMProcessing::blendNormal(inColor, float4(result.rgb, adjustment.blending.opacity));
+//    }
     
     return result;
 }

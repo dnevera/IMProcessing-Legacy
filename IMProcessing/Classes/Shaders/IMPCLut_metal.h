@@ -222,14 +222,17 @@ namespace IMProcessing
                                 ){
         
         float4 result = lut.sample(lutSampler, inColor.rgb);
-        result.rgba.a = adjustment.blending.opacity;
-        
-        if (adjustment.blending.mode == IMPLuminosity) {
-            result = blendLuminosity(inColor, result);
-        }
-        else {// only two modes yet
-            result = blendNormal(inColor, result);
-        }
+
+        result = IMProcessing::blend(inColor, result, adjustment.blending); 
+
+//        result.rgba.a = adjustment.blending.opacity;
+//        
+//        if (adjustment.blending.mode == IMPLuminosity) {
+//            result = blendLuminosity(inColor, result);
+//        }
+//        else {// only two modes yet
+//            result = blendNormal(inColor, result);
+//        }
         
         return result;
     }
@@ -243,15 +246,17 @@ namespace IMProcessing
         half red   = lut.sample(lutSampler, inColor.r).r;
         half green = lut.sample(lutSampler, inColor.g).g;
         half blue  = lut.sample(lutSampler, inColor.b).b;
-        
-        float4 result = float4(red, green, blue, adjustment.blending.opacity);
-        
-        if (adjustment.blending.mode == IMPLuminosity) {
-            result = blendLuminosity(inColor, result);
-        }
-        else {// only two modes yet
-            result = blendNormal(inColor, result);
-        }
+
+        float4 result = IMProcessing::blend(inColor, float4(red, green, blue,1), adjustment.blending); 
+
+//        float4 result = float4(red, green, blue, adjustment.blending.opacity);
+//        
+//        if (adjustment.blending.mode == IMPLuminosity) {
+//            result = blendLuminosity(inColor, result);
+//        }
+//        else {// only two modes yet
+//            result = blendNormal(inColor, result);
+//        }
         
         return result;
     }
@@ -288,14 +293,17 @@ namespace IMProcessing
                                     uint2 gid [[thread_position_in_grid]]){
         
         float4 inColor = IMProcessing::sampledColor(inTexture,outTexture,gid);
-        float4 result = float4(sample2DLut(inColor.rgb, lut, inClevel), adjustment.blending.opacity);
-        
-        if (adjustment.blending.mode == IMPLuminosity) {
-            result = blendLuminosity(inColor, result);
-        }
-        else {// only two modes yet
-            result = blendNormal(inColor, result);
-        }
+
+        float4 result = IMProcessing::blend(inColor, float4(sample2DLut(inColor.rgb, lut, inClevel),1), adjustment.blending); 
+
+//        float4 result = float4(sample2DLut(inColor.rgb, lut, inClevel), adjustment.blending.opacity);
+//        
+//        if (adjustment.blending.mode == IMPLuminosity) {
+//            result = blendLuminosity(inColor, result);
+//        }
+//        else {// only two modes yet
+//            result = blendNormal(inColor, result);
+//        }
         
         outTexture.write(result, gid);
     }
