@@ -93,7 +93,7 @@ open class IMPCLut: IMPImage {
     internal var _domainMax = float3(1)
     internal var _lutSize = Int(0)
     
-    fileprivate var observers:[UpdateHandler] = [UpdateHandler]()
+    internal var observers:[UpdateHandler] = [UpdateHandler]()
 }
 
 

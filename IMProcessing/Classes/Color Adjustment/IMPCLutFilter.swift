@@ -20,16 +20,21 @@ public class IMPCLutFilter: IMPFilter {
     public var adjustment:IMPAdjustment = defaultAdjustment { didSet{ dirty = true } }
     
     
-    /// Color LUT is nil by default. Application of the filter is no effect in this case. 
+    /// Color LUT is nil by default. Application of the filter is no effect in this case.    
     public var clut:IMPCLut? {
         willSet{
-            clut?.removeAllObservers()
+            //clut?.removeAllObservers()
         }
         didSet{
             guard oldValue !== clut else {    
                 dirty = true
                 return 
             }
+                     
+            if let o = oldValue?.observers{
+                clut?.observers = o
+            }
+            oldValue?.removeAllObservers()
             
             if let kernel = currentKernel {
                 remove(function: kernel)
