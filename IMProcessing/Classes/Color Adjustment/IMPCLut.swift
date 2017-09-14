@@ -12,7 +12,7 @@ import simd
 
 
 /// Common Color LUT (Look Up Table) provider
-public class IMPCLut: IMPImage {
+open class IMPCLut: IMPImage {
     public typealias UpdateHandler   = ((_ lut:IMPCLut) -> Void)
 
     
