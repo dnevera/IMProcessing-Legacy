@@ -150,34 +150,7 @@ public extension IMPCLut {
             }
         }
     }
-    
-    private func getBytes<T>(texture:MTLTexture) -> (UnsafeMutablePointer<T>,Int) {
-        
-        let componentBytes = MemoryLayout<T>.size
-        
-        let width       = texture.size.width
-        let height      = texture.size.height
-        let depth       = texture.size.depth
-        
-        let bytesPerPixel = 4 * componentBytes
-        let bytesPerRow   = bytesPerPixel * width
-        let bytesPerImage = height * bytesPerRow
-        
-        let bytes = UnsafeMutablePointer<T>.allocate(capacity:bytesPerImage*depth)
-        
-        #if os(OSX)
-            context.execute(wait: true) { (commandBuffer) in
-                let blit = commandBuffer.makeBlitCommandEncoder()
-                blit.synchronize(resource: texture)
-                blit.endEncoding()
-            }
-        #endif
-        
-        texture.getBytes(bytes, bytesPerRow: bytesPerRow, bytesPerImage: bytesPerImage, from: MTLRegion(origin: MTLOrigin(x: 0,y: 0,z: 0), size: texture.size), mipmapLevel: 0, slice: 0)
-        
-        return (bytes,bytesPerImage/componentBytes)
-    }
-    
+         
     private func write(to fp:UnsafeMutablePointer<FILE>!, string: String) {
         let byteArray = Array(string.utf8)
         _ = fwrite(byteArray, 1, byteArray.count, fp)

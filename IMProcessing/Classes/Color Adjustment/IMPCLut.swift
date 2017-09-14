@@ -9,7 +9,8 @@
 import Foundation
 import Metal
 import simd
-
+import Surge
+import Accelerate
 
 /// Common Color LUT (Look Up Table) provider
 open class IMPCLut: IMPImage {
@@ -109,7 +110,7 @@ public extension IMPCLut {
     ///   - lutType: cube type: LutType.lut_3d or .lut_1d
     ///   - format: cube number format: Format.integer or .float
     ///   - title: cube file title
-    public convenience init(context: IMPContext, lutType:LutType, lutSize:Int, format:Format = .integer, title:String? = nil) throws {
+    public convenience init(context: IMPContext, lutType:LutType, lutSize:Int, format:Format = .float, title:String? = nil) throws {
         self.init(context: context, storageMode:nil)
         _title    = title ?? "IMPCLut \(lutSize):\(lutType):\(format)"
         _lutSize  = lutSize
@@ -200,8 +201,41 @@ public extension IMPCLut {
     }        
 }
 
-// MARK: - Internal extension
+
+// MARK: - Utilities
 public extension IMPCLut {
+    public var min:float3? {
+
+        
+        do{
+            guard let txt = try convert(to: .lut_3d).texture else { return nil }
+
+            if _format == .float {
+                let (bytes,count) =  getBytes(texture: txt) as (UnsafeMutablePointer<Float32>,Int)
+                var r: Float = 0.0
+                var g: Float = 0.0
+                var b: Float = 0.0
+                vDSP_minv(bytes+0, 4, &r, vDSP_Length(count/4))
+                vDSP_minv(bytes+1, 4, &g, vDSP_Length(count/4))
+                vDSP_minv(bytes+2, 4, &b, vDSP_Length(count/4))
+                return float3(r,g,b)
+            }
+            else {
+                let (bytes,count) =  getBytes(texture: txt) as (UnsafeMutablePointer<uint8>,Int)
+                
+            }            
+        }
+        catch {
+            return nil
+        }
+
+        return nil
+    }
+}
+
+
+// MARK: - Internal extension
+internal extension IMPCLut {
     internal func makeTexture(size nSize:Int, type nType:LutType, format nFormat:Format) -> MTLTexture {
         
         let textureDescriptor = MTLTextureDescriptor()
@@ -209,15 +243,15 @@ public extension IMPCLut {
         var width  = nSize
         var height = nType == .lut_1d ? 1 : nSize
         let depth  = nType == .lut_1d ? 1 : nType == .lut_2d ? 1 :nSize
-        
-        
+                
         textureDescriptor.textureType = nType == .lut_1d ? .type1D : nType == .lut_2d ? .type2D : .type3D
         textureDescriptor.width  = width
         textureDescriptor.height = height
         textureDescriptor.depth  = depth
         
         if (nFormat != .float) {
-            textureDescriptor.pixelFormat = .rgba8Unorm
+            textureDescriptor.pixelFormat = .rgba8Snorm
+            //textureDescriptor.pixelFormat = .rgba8Unorm
         }
         else{
             textureDescriptor.pixelFormat = .rgba32Float
@@ -227,5 +261,33 @@ public extension IMPCLut {
         textureDescriptor.mipmapLevelCount = 1;
         
         return context.device.makeTexture(descriptor: textureDescriptor)
+    }
+    
+        
+    internal func getBytes<T>(texture:MTLTexture) -> (UnsafeMutablePointer<T>,Int) {
+        
+        let componentBytes = MemoryLayout<T>.size
+        
+        let width       = texture.size.width
+        let height      = texture.size.height
+        let depth       = texture.size.depth
+        
+        let bytesPerPixel = 4 * componentBytes
+        let bytesPerRow   = bytesPerPixel * width
+        let bytesPerImage = height * bytesPerRow
+        
+        let bytes = UnsafeMutablePointer<T>.allocate(capacity:bytesPerImage*depth)
+        
+        #if os(OSX)
+            context.execute(wait: true) { (commandBuffer) in
+                let blit = commandBuffer.makeBlitCommandEncoder()
+                blit.synchronize(resource: texture)
+                blit.endEncoding()
+            }
+        #endif
+        
+        texture.getBytes(bytes, bytesPerRow: bytesPerRow, bytesPerImage: bytesPerImage, from: MTLRegion(origin: MTLOrigin(x: 0,y: 0,z: 0), size: texture.size), mipmapLevel: 0, slice: 0)
+        
+        return (bytes,bytesPerImage/componentBytes)
     }
 }
