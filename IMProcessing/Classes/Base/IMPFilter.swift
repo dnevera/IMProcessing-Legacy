@@ -70,11 +70,13 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     public var source: IMPImageProvider? = nil {
         didSet{
             if source == nil {
-               oldValue?.texture?.setPurgeableState(.volatile)
+               //oldValue?.texture?.setPurgeableState(.volatile)
             }
-            _destination.texture?.setPurgeableState(.empty)
-            _destination.texture = nil
-            executeNewSourceObservers(source: source)
+            //autoreleasepool {
+                //_destination.texture?.setPurgeableState(.empty)
+                _destination.texture = nil
+                executeNewSourceObservers(source: source)                
+            //}
         }
     }
     
@@ -152,11 +154,13 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     private func apply(result:IMPImageProvider) -> IMPImageProvider {
         
         guard let source = self.source else {
+            executeDestinationObservers(destination: result)
             dirty = false
             return result
         }
         
         guard let size = source.size else {
+            executeDestinationObservers(destination: result)
             dirty = false
             return result
         }
@@ -166,8 +170,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         if fmax(size.width, size.height) <= IMPContext.maximumTextureSize.cgfloat {
             
             if enabled == false {
-                dirty = false
                 result.texture = source.texture
+                executeDestinationObservers(destination: result)
+                dirty = false
                 return result
             }
             
@@ -187,9 +192,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
 //            })
 
             result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: nil)
-            self.dirty = false
             
             self.executeDestinationObservers(destination: result)
+            self.dirty = false
             return result
         }
         
@@ -212,6 +217,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         result.image = scaledImage
         
         if enabled == false {
+            executeDestinationObservers(destination: result)
             dirty = false
             return result
         }
