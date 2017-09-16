@@ -147,9 +147,40 @@ public enum IMPColorSpace:String {
         return convert(from: self, to: space, value: value)
     }
     
+    public func toNormalized(_ space: IMPColorSpace, value: float3) -> float3 {
+        return toNormalized(from: self, to: space, value: value)
+    }
+
+    public func fromNormalized(_ space: IMPColorSpace, value: float3) -> float3 {
+        return fromNormalized(from: space, to: self, value: value)
+    }
+
+    public func toTempTint(_ value: float3) -> float2 {
+        let xy = IMPBridge.xyz2xy(self.to(.xyz, value: value))
+        return IMPBridge.xy2TempTint(xy)
+    }
+
+    public func fromTempTint(_ value: float2) -> float3 {
+        let xyz = IMPBridge.xy2xyz(IMPBridge.tempTint2xy(value))
+        return to(self, value: xyz)
+    }
+    
     private func convert(from from_cs:IMPColorSpace, to to_cs:IMPColorSpace, value:float3) -> float3 {
         return IMPBridge.convert(IMPColorSpaceIndex(rawValue: Int32(from_cs.index)),
                                  to: IMPColorSpaceIndex(rawValue: Int32(to_cs.index)),
                                  value: value)
-    }    
+    } 
+    
+    private func toNormalized(from from_cs:IMPColorSpace, to to_cs:IMPColorSpace, value:float3) -> float3 {
+        return IMPBridge.toNormalized(IMPColorSpaceIndex(rawValue: Int32(from_cs.index)),
+                                 to: IMPColorSpaceIndex(rawValue: Int32(to_cs.index)),
+                                 value: value)
+    } 
+    
+    private func fromNormalized(from from_cs:IMPColorSpace, to to_cs:IMPColorSpace, value:float3) -> float3 {
+        return IMPBridge.fromNormalized(IMPColorSpaceIndex(rawValue: Int32(from_cs.index)),
+                                      to: IMPColorSpaceIndex(rawValue: Int32(to_cs.index)),
+                                      value: value)
+    }
+        
 }

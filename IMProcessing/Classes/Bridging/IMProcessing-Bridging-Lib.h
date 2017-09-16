@@ -114,5 +114,13 @@
 
 
 + (float3) convert:(IMPColorSpaceIndex)from to:(IMPColorSpaceIndex)to value:(float3)value;
++ (float3) toNormalized:(IMPColorSpaceIndex)from to:(IMPColorSpaceIndex)to value:(float3)value;
++ (float3) fromNormalized:(IMPColorSpaceIndex)from to:(IMPColorSpaceIndex)to value:(float3)value;
+
++ (float2) xyz2xy:(float3)color;
++ (float3) xy2xyz:(float2)coord;
+
++ (float2) xy2TempTint:(float2)coord;
++ (float2) tempTint2xy:(float2)tempTint;
 
 @end

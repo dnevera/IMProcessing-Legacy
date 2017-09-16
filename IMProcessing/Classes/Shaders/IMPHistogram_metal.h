@@ -65,23 +65,15 @@ namespace IMProcessing
                                   ){
         
         float4 inColor = histogramSampledColor(inTexture,regionIn,gid);
-        uint   Y       = uint(dot(inColor.rgb, kIMP_Y_YCbCr_factor) * inColor.a * Im.x);
-        
-        float3 color = IMPConvertColor(IMPRgbSpace, space, inColor.rgb);
-        float2 x     = IMPgetColorSpaceRange(space,0);
-        float2 y     = IMPgetColorSpaceRange(space,1);
-        float2 z     = IMPgetColorSpaceRange(space,2);
-        
-        color.x = (color.x - x.x)/(x.y-x.x);
-        color.y = (color.y - y.x)/(y.y-y.x);
-        color.z = (color.z - z.x)/(z.y-z.x);
+        uint   Y       = uint(lum(inColor.rgb) * inColor.a * Im.x);
+
+        float3 color = IMPConvertToNormalizedColor(IMPRgbSpace, space, inColor.rgb);
         
         ChannelBin bin;
         
         bin.index = uint4(uint3(color * Im), Y);
         bin.counted = inColor.a>0 ? true : false;
         
-        //return uint4(uint3(color * Im), Y);
         return bin;
     }
     
@@ -165,7 +157,7 @@ namespace IMProcessing
                 
                 if (!bin.counted) continue; 
                 
-                uint4 xyzw = bin.index; //channel_binIndex(inTexture,regionIn,space,gid);
+                uint4 xyzw = bin.index; 
                 
                 for (uint c = 0; c < kIMP_HistogramMaxChannels && c < channels; c++) {
                     atomic_fetch_add_explicit(&(temp[c][xyzw[c]]), 1, memory_order_relaxed);

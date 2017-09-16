@@ -72,6 +72,8 @@ class ViewController: NSViewController {
         }
     }
     
+    @IBOutlet weak var temperatureLabel: NSTextField!
+    @IBOutlet weak var tintLabel: NSTextField!
     
     @IBOutlet weak var matchingXValue: NSTextField!
     @IBOutlet weak var matchingYValue: NSTextField!
@@ -181,6 +183,11 @@ class ViewController: NSViewController {
         for (i,_) in toValues.enumerated() {
             matchingValues[i].floatValue = t[i]
         }
+        
+        let tempTint = from.toTempTint(c)
+        temperatureLabel.stringValue = String(format: "%.2f",tempTint.x)
+        tintLabel.stringValue = String(format: "%.2f",tempTint.y)
+        
     }
     
     let rgbColors = [
@@ -230,16 +237,15 @@ class ViewController: NSViewController {
         updateMatching(fromValues: sourceValues, toValues: destinationValues, from: sourceColorSpace, to: destinationColorSpace)
 
         for c in rgbColors {
-            Swift.print("\(c) rgb -> hsv \(c.rgb2hsv()) -> lab \(c.rgb2hsv().hsv2lab()) -> luv \(c.rgb2hsv().hsv2lab().lab2luv()) -> rgb \(c.rgb2hsv().hsv2lab().lab2luv().luv2rgb())")
+            Swift.print("\(c) rgb -> hsv \(c.rgb2hsv()) -> lab \(c.rgb2hsv().hsv2lab()) -> luv \(c.rgb2hsv().hsv2lab().lab2dcproflut()) -> rgb \(c.rgb2hsv().hsv2lab().lab2dcproflut().dcproflut2rgb())")
         }
         
         Swift.print(" --- ")
 
         for c in rgbColors {
-            Swift.print("\(c) rgb -> xyz \(c.rgb2xyz()) -> luv \(c.rgb2xyz().xyz2luv()) -> rgb \(c.rgb2xyz().xyz2luv().luv2rgb())")
+            Swift.print("\(c) rgb -> xyz \(c.rgb2xyz()) -> luv \(c.rgb2xyz().xyz2dcproflut()) -> rgb \(c.rgb2xyz().xyz2dcproflut().dcproflut2rgb())")
         }
         
     }
-
 }
 

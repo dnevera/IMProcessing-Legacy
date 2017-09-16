@@ -41,14 +41,9 @@ kernel void kernel_adjustWhiteBalance(texture2d<float, access::sample>        in
                               (rgb.g < 0.5 ? (2.0 * rgb.g * warmFilter.g) : (1.0 - 2.0 * (1.0 - rgb.g) * (1.0 - warmFilter.g))),
                               (rgb.b < 0.5 ? (2.0 * rgb.b * warmFilter.b) : (1.0 - 2.0 * (1.0 - rgb.b) * (1.0 - warmFilter.b))));
     
-    float4 result = float4(mix(rgb, processed, temperature), adjustment.blending.opacity);
+    float4 result = float4(mix(rgb, processed, temperature), 1);
 
     result = IMProcessing::blend(inColor, result, adjustment.blending);
-
-//    if (adjustment.blending.mode == IMPLuminosity)
-//    result = IMProcessing::blendLuminosity(inColor, result);
-//    else // only two modes yet
-//    result = IMProcessing::blendNormal(inColor, result);
     
     outTexture.write(result,gid);
 }

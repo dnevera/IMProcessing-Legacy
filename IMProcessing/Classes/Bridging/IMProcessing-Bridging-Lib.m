@@ -112,4 +112,28 @@
     return IMPConvertColor(from, to, value);
 }
 
++ (float3) toNormalized:(IMPColorSpaceIndex)from to:(IMPColorSpaceIndex)to value:(vector_float3)value{
+    return  IMPConvertToNormalizedColor(from, to, value);
+}
+
++ (float3) fromNormalized:(IMPColorSpaceIndex)from to:(IMPColorSpaceIndex)to value:(vector_float3)value{
+    return IMPConvertFromNormalizedColor(from, to, value);
+}
+
++ (float2) xyz2xy:(float3)color {    
+    return IMPxyz2xy(color);
+}
+
++ (float3) xy2xyz:(float2)coord {
+    return IMPxy2xyz(coord);
+}
+
++ (float2) xy2TempTint:(float2)coord{
+    return IMPxy2tempTint(coord);
+}
+
++ (float2) tempTint2xy:(float2)tempTint{
+    return IMPtempTint2xy(tempTint);
+}
+
 @end
