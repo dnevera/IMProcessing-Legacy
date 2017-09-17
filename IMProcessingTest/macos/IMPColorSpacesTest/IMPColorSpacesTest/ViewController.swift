@@ -15,7 +15,7 @@ extension String {
     
     func isFloat(_ range:float2) -> Bool {
     
-        Swift.print("range = \(range)")
+        //Swift.print("range = \(range)")
         
         if let floatValue = Float(self){
             if floatValue.isFinite {
@@ -74,6 +74,7 @@ class ViewController: NSViewController {
     
     @IBOutlet weak var temperatureLabel: NSTextField!
     @IBOutlet weak var tintLabel: NSTextField!
+    @IBOutlet weak var fromTempTintLabel: NSTextField!
     
     @IBOutlet weak var matchingXValue: NSTextField!
     @IBOutlet weak var matchingYValue: NSTextField!
@@ -169,6 +170,35 @@ class ViewController: NSViewController {
 
         updateFormaters(sources: sourceValues, space: sourceColorSpace)
         updateMatching(fromValues: sourceValues, toValues: destinationValues, from: sourceColorSpace, to: destinationColorSpace)
+        
+//        let tempTint = sourceColorSpace.toTempTint(t)
+//        temperatureLabel.stringValue = String(format: "%.2f",tempTint.x)
+//        tintLabel.stringValue = String(format: "%.2f",tempTint.y)
+//        
+//        let xxx = sourceColorSpace.fromTempTint(tempTint)
+//        fromTempTintLabel.stringValue = String(format: "%.2f, %.2f, %.2f",xxx.x,xxx.y,xxx.z) 
+
+        let rgb  = sourceColorSpace.to(.rgb, value: t)
+        
+        let tempTint = IMPBridge.tempTint(for: rgb, from: float3(122,122,121)/float3(255))
+        temperatureLabel.stringValue = String(format: "%.2f",tempTint.x)
+        tintLabel.stringValue = String(format: "%.2f",tempTint.y)
+        
+        //let dTempTint = float2(5000,0)-tempTint
+        var tx    = tempTint.x+5000
+        var rgb1  = rgb
+        while tx>5000.0 {
+            rgb1 = IMPBridge.adjustTempTint(float2(tx,tempTint.y), for: rgb1)
+            let rrr = IMPBridge.tempTint(for: rgb1, from: float3(122,122,121)/float3(255))
+            Swift.print("[\(tx)] rrr = \(rrr) rgb1 = \(rgb1)")
+            tx -= 1
+        }
+        
+        let xxx = IMPBridge.adjustTempTint(float2(5000,0), for: rgb)
+        fromTempTintLabel.stringValue = String(format: "%.3f, %.3f, %.3f",xxx.x,xxx.y,xxx.z)
+        
+        //Swift.print(" tempTint -> color\(sourceColorSpace.rawValue) \(sourceColorSpace.fromTempTint(tempTint))")
+
     }
 
     func updateMatching(fromValues:[NSTextField], toValues:[NSTextField], from:IMPColorSpace, to:IMPColorSpace) {
@@ -182,12 +212,7 @@ class ViewController: NSViewController {
         let t = from.to(to, value: c)
         for (i,_) in toValues.enumerated() {
             matchingValues[i].floatValue = t[i]
-        }
-        
-        let tempTint = from.toTempTint(c)
-        temperatureLabel.stringValue = String(format: "%.2f",tempTint.x)
-        tintLabel.stringValue = String(format: "%.2f",tempTint.y)
-        
+        }        
     }
     
     let rgbColors = [

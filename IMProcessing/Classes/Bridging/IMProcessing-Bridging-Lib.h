@@ -123,4 +123,7 @@
 + (float2) xy2TempTint:(float2)coord;
 + (float2) tempTint2xy:(float2)tempTint;
 
++ (float2) tempTintFor:(float3)color from:(float3)gray;
++ (float3) adjustTempTint:(float2)tempTint for:(float3)color;
+
 @end

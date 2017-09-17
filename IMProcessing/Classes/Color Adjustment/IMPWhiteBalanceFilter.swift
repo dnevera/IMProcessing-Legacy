@@ -14,7 +14,7 @@ public class IMPWhiteBalanceFilter: IMPFilter {
 
     public var temperature:Float = 5000.0 { 
         didSet { 
-            _temperature = temperature < 5000.0 ? 0.0004 * (temperature - 5000.0) : 0.00006 * (temperature - 5000.0)
+            //_temperature = temperature < 5000.0 ? 0.0004 * (temperature - 5000.0) : 0.00006 * (temperature - 5000.0)
             dirty = true
         } 
     }
@@ -34,13 +34,13 @@ public class IMPWhiteBalanceFilter: IMPFilter {
     private lazy var kernel:IMPFunction = {
         var f = IMPFunction(context: self.context, kernelName: "kernel_adjustWhiteBalance")
         f.optionsHandler = { (function, command, input, output) in
-            command.setBytes(&self._temperature, length:MemoryLayout.stride(ofValue: self._temperature), at:0)
+            command.setBytes(&self.temperature,  length:MemoryLayout.stride(ofValue: self.temperature), at:0)
             command.setBytes(&self.tint,         length:MemoryLayout.stride(ofValue: self.tint),         at:1)
             command.setBytes(&self.adjustment,   length:MemoryLayout.stride(ofValue: self.adjustment),   at:2)
         }        
         return f
     }()
     
-    private var _temperature:Float = 0.0
+    //private var _temperature:Float = 0.0
     
 }

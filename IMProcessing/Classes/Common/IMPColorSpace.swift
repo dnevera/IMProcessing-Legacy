@@ -154,15 +154,26 @@ public enum IMPColorSpace:String {
     public func fromNormalized(_ space: IMPColorSpace, value: float3) -> float3 {
         return fromNormalized(from: space, to: self, value: value)
     }
-
+    
+    static let rgb2xyzM = float3x3(rows:[
+        float3(0.49,    0.31,   0.2)/float3(0.17697),
+        float3(0.17697, 0.8124, 0.01063)/float3(0.17697),
+        float3(0.0,     0.01,   0.99)/float3(0.17697)]);
+    static let xyz2rgbM = float3x3(rows:[
+        float3(0.41847,   -0.15866,  -0.082835),
+        float3(-0.091169,  0.25243,   0.015708 ),
+        float3(0.0009209, -0.0025498, 0.17860)]);
+    
     public func toTempTint(_ value: float3) -> float2 {
-        let xy = IMPBridge.xyz2xy(self.to(.xyz, value: value))
+        let xyz = IMPColorSpace.rgb2xyzM * self.to(.rgb, value: value)
+        let xy = IMPBridge.xyz2xy(xyz)
         return IMPBridge.xy2TempTint(xy)
     }
 
     public func fromTempTint(_ value: float2) -> float3 {
-        let xyz = IMPBridge.xy2xyz(IMPBridge.tempTint2xy(value))
-        return to(self, value: xyz)
+        let xy  = IMPBridge.tempTint2xy(value)
+        let rgb = IMPColorSpace.xyz2rgbM * IMPBridge.xy2xyz(xy) 
+        return from(.rgb, value: rgb)
     }
     
     private func convert(from from_cs:IMPColorSpace, to to_cs:IMPColorSpace, value:float3) -> float3 {

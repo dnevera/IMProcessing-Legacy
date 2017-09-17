@@ -363,16 +363,30 @@ static inline float3 IMPrgb_2_XYZ(float3 rgb)
     float g = rgb.y;
     float b = rgb.z;
     
+    float3 xyz;
     
-    if ( r > 0.04045 ) r = pow((( r + 0.055) / 1.055 ), 2.4);
-    else               r = r / 12.92;
+    xyz.x = r * 41.24 + g * 35.76 + b * 18.05;
+    xyz.y = r * 21.26 + g * 71.52 + b * 7.22;
+    xyz.z = r * 1.93  + g * 11.92 + b * 95.05;
+        
+    return xyz;
+}
+
+static inline float3 IMPsrgb_2_XYZ(float3 rgb)
+{
+    float r = rgb.x;
+    float g = rgb.y;
+    float b = rgb.z;
     
-    if ( g > 0.04045 ) g = pow((( g + 0.055) / 1.055 ), 2.4);
-    else               g = g / 12.92;;
-    
-    if ( b > 0.04045 ) b = pow((( b + 0.055) / 1.055 ), 2.4);
-    else               b = b / 12.92;
-    
+        if ( r > 0.04045 ) r = pow((( r + 0.055) / 1.055 ), 2.4);
+        else               r = r / 12.92;
+        
+        if ( g > 0.04045 ) g = pow((( g + 0.055) / 1.055 ), 2.4);
+        else               g = g / 12.92;;
+        
+        if ( b > 0.04045 ) b = pow((( b + 0.055) / 1.055 ), 2.4);
+        else               b = b / 12.92;
+        
     float3 xyz;
     
     xyz.x = r * 41.24 + g * 35.76 + b * 18.05;
@@ -382,7 +396,23 @@ static inline float3 IMPrgb_2_XYZ(float3 rgb)
     return xyz;
 }
 
+
 static inline float3 IMPXYZ_2_rgb (float3 xyz){
+    
+    float var_X = xyz.x / 100.0;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
+    float var_Y = xyz.y / 100.0;       //Y from 0 to 100.000
+    float var_Z = xyz.z / 100.0;       //Z from 0 to 108.883
+    
+    float3 rgb;
+    
+    rgb.x = var_X *  3.2406 + var_Y * -1.5372 + var_Z * -0.4986;
+    rgb.y = var_X * -0.9689 + var_Y *  1.8758 + var_Z *  0.0415;
+    rgb.z = var_X *  0.0557 + var_Y * -0.2040 + var_Z *  1.0570;
+    
+    return rgb;
+}
+
+static inline float3 IMPXYZ_2_srgb (float3 xyz){
     
     float var_X = xyz.x / 100.0;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
     float var_Y = xyz.y / 100.0;       //Y from 0 to 100.000
@@ -405,6 +435,7 @@ static inline float3 IMPXYZ_2_rgb (float3 xyz){
     
     return rgb;
 }
+
 
 
 //
@@ -906,7 +937,7 @@ static inline float3 IMPsrgb2lab(float3 color){
     return IMPrgb2lab(IMPsrgb2rgb(color));
 }
 static inline float3 IMPsrgb2xyz(float3 color){
-    return IMPrgb2xyz(IMPsrgb2rgb(color));
+    return  IMPrgb2xyz(IMPsrgb2rgb(color));
 }
 static inline float3 IMPsrgb2lch(float3 color){
     return IMPrgb2lch(IMPsrgb2rgb(color));
@@ -1275,7 +1306,7 @@ static inline float3 IMPxy2xyz (const float2 coord)
 // Scale factor between distances in uv space to a more user friendly "tint"
 // parameter.
 
-static const float kTintScale = -3000.0;
+static constant float kTintScale = -3000.0;
 
 /*****************************************************************************/
 
@@ -1289,7 +1320,7 @@ typedef struct
     float t;
 } ruvt;
 
-static const ruvt kTempTable [] =
+static constant ruvt kTempTable [] =
 {
     {	0, 0.18006, 0.26352, -0.24341 },
     {  10, 0.18066, 0.26589, -0.25479 },
@@ -1343,7 +1374,7 @@ static inline float2 IMPxy2tempTint (const float2 xy)
     float last_dv = 0.0;
     float last_du = 0.0;
     
-    for (uint32 index = 1; index <= 30; index++)
+    for (uint index = 1; index <= 30; index++)
     {
         
         // Convert slope to delta-u and delta-v, with length 1.
@@ -1431,7 +1462,7 @@ static inline float2 IMPxy2tempTint (const float2 xy)
 }
 
 
-float2 IMPtempTint2xy (float2 tempTint) {
+static inline float2 IMPtempTint2xy (float2 tempTint) {
     
     float2 result = (float2){0,0};
     
@@ -1445,7 +1476,7 @@ float2 IMPtempTint2xy (float2 tempTint) {
     
     // Search for line pair containing coordinate.
     
-    for (uint32 index = 0; index <= 29; index++)
+    for (uint index = 0; index <= 29; index++)
     {
         
         if (r < kTempTable [index + 1] . r || index == 29)
@@ -1501,13 +1532,107 @@ float2 IMPtempTint2xy (float2 tempTint) {
             result.x = 1.5 * u / (u - 4.0 * v + 2.0);
             result.y =		 v / (u - 4.0 * v + 2.0);
             
-            break;
-            
+            break;            
         } 
         
     }
     
     return result;    
+}
+
+
+/// tempTint-rgb, rgb-tempTint
+
+static constant float3   warmFilter   = (float3)  {0.93, 0.54, 0.0};
+static constant float    tintScale    = 0.5226;
+//static constant float3   tempTintGray = (float3){122/255,122/255,121/255};
+
+#define RGBtoYIQ_M_R ((float3){0.299,  0.587,  0.114})
+#define RGBtoYIQ_M_G ((float3){0.596, -0.274, -0.322})
+#define RGBtoYIQ_M_B ((float3){0.212, -0.523,  0.311})
+
+#define YIQtoRGB_M_Y ((float3){1.0,  0.956,  0.621})
+#define YIQtoRGB_M_I ((float3){1.0, -0.272, -0.647})
+#define YIQtoRGB_M_Q ((float3){1.0, -1.105,  1.702})
+
+#define RGBtoYIQ_M ((float3x3){ RGBtoYIQ_M_R,  RGBtoYIQ_M_G, RGBtoYIQ_M_B })
+#define YIQtoRGB_M ((float3x3){ YIQtoRGB_M_Y,  YIQtoRGB_M_I, YIQtoRGB_M_Q })
+
+static inline float3 __temp_processed(float3 rgb){
+    
+    float3 processed = (float3){
+        (rgb.x < 0.5 ? (2.0 * rgb.x * warmFilter.x) : (1.0 - 2.0 * (1.0 - rgb.x) * (1.0 - warmFilter.x))), 
+        (rgb.y < 0.5 ? (2.0 * rgb.y * warmFilter.y) : (1.0 - 2.0 * (1.0 - rgb.y) * (1.0 - warmFilter.y))),
+        (rgb.z < 0.5 ? (2.0 * rgb.z * warmFilter.z) : (1.0 - 2.0 * (1.0 - rgb.z) * (1.0 - warmFilter.z)))};
+    
+    return  processed;
+}
+
+
+static inline float2 IMPtempTintFromGray(float3 color, float3 rgbGray){
+    
+#ifdef __METAL_VERSION__  
+    float3 yiq = RGBtoYIQ_M * color;
+    float3 yiqGray = RGBtoYIQ_M * rgbGray;
+#else
+    float3 yiq = matrix_multiply(RGBtoYIQ_M,color);
+    float3 yiqGray = matrix_multiply(RGBtoYIQ_M,rgbGray);
+#endif
+
+#ifdef __METAL_VERSION__
+    float tint = clamp((yiq.y-yiqGray.y)/tintScale, float(-1.0), float(1.0));
+#else
+    float tint = vector_clamp((yiq.y-yiqGray.y)/tintScale, -1, 1);
+#endif
+    
+    yiq.y = vector_clamp(yiq.y - tint*tintScale, -tintScale, tintScale);
+    
+#ifdef __METAL_VERSION__
+    float3 rgb = YIQtoRGB_M * yiq;
+#else
+    float3 rgb = matrix_multiply(YIQtoRGB_M,yiq);
+#endif
+    
+    float3 processed = __temp_processed(rgb);
+    
+    float temp = (color.x - rgbGray.x)/(processed.x-rgbGray.x);
+    
+    temp = temp < 0 ? (temp / 0.0004 + 5000.0) : (temp / 0.00006 + 5000.0);
+    
+    return (float2){temp,tint};
+}
+
+static inline float3 IMPadjustTempTint(float2 tempTint, float3 color){
+        
+    float temperature = tempTint.x;
+    
+    temperature = temperature < 5000.0 ? 0.0004 * (temperature - 5000.0) : 0.00006 * (temperature - 5000.0);
+    
+    float tint        = tempTint.y;
+    
+#ifdef __METAL_VERSION__  
+    float3 yiq = RGBtoYIQ_M * color;
+#else
+    float3 yiq = matrix_multiply(RGBtoYIQ_M,color);
+#endif
+
+    //adjusting tint
+#ifdef __METAL_VERSION__
+    yiq.y = clamp(yiq.y + tint*tintScale, -tintScale, tintScale);
+#else
+    yiq.y = vector_clamp(yiq.y + tint*tintScale, -tintScale, tintScale);
+#endif
+    
+#ifdef __METAL_VERSION__
+    float3 rgb = YIQtoRGB_M * yiq;
+#else
+    float3 rgb = matrix_multiply(YIQtoRGB_M,yiq);
+#endif
+    
+    //adjusting temperature
+    float3 processed = __temp_processed(rgb);
+    
+    return vector_mix(rgb, processed, temperature);
 }
 
 #endif /* IMPColorSpaces_Bridging_Metal_h */

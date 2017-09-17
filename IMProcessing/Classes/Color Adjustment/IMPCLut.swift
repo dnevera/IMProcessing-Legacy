@@ -206,25 +206,25 @@ public extension IMPCLut {
 public extension IMPCLut {
     public var min:float3? {
 
-        let analazer = IMPHistogramAnalyzer(context: self.context)
-        analazer.colorSpace = .lab
-        let range = IMPHistogramRangeSolver()
-        
-        
-        
-        analazer.add(solver: range) { (solver) in
-            var lm = range.minimum.xyz
-            var lM = range.maximum.xyz
-//            lm.y = 0.5
-//            lm.z = 0.5
-//            lM.y = 0.5
-//            lM.z = 0.5
-            Swift.print("lab L    min = \(IMPColorSpace.lab.fromNormalized(.lab, value: range.minimum.xyz).x) max = \(IMPColorSpace.lab.fromNormalized(.lab, value: range.maximum.xyz).x)")
-            Swift.print("rgb luma min = \(IMPColorSpace.hsv.fromNormalized(.lab, value: lm).z) max = \(IMPColorSpace.hsv.fromNormalized(.lab, value: lM).z)")
-        }
-        
-        analazer.source = self
-        analazer.process()
+//        let analazer = IMPHistogramAnalyzer(context: self.context)
+//        analazer.colorSpace = .lab
+//        let range = IMPHistogramRangeSolver()
+//        
+//        
+//        
+//        analazer.add(solver: range) { (solver) in
+//            var lm = range.minimum.xyz
+//            var lM = range.maximum.xyz
+////            lm.y = 0.5
+////            lm.z = 0.5
+////            lM.y = 0.5
+////            lM.z = 0.5
+//            //Swift.print("lab L    min = \(IMPColorSpace.lab.fromNormalized(.lab, value: range.minimum.xyz).x) max = \(IMPColorSpace.lab.fromNormalized(.lab, value: range.maximum.xyz).x)")
+//            //Swift.print("rgb luma min = \(IMPColorSpace.hsv.fromNormalized(.lab, value: lm).z) max = \(IMPColorSpace.hsv.fromNormalized(.lab, value: lM).z)")
+//        }
+//        
+//        analazer.source = self
+//        analazer.process()
         
         do{
             guard let txt = try convert(to: .lut_3d).texture else { return nil }
@@ -236,12 +236,11 @@ public extension IMPCLut {
                 var b: Float = 0.0
                 vDSP_minv(bytes+0, 4, &r, vDSP_Length(count/4))
                 vDSP_minv(bytes+1, 4, &g, vDSP_Length(count/4))
-                vDSP_minv(bytes+2, 4, &b, vDSP_Length(count/4))
+                vDSP_minv(bytes+2, 4, &b, vDSP_Length(count/4))                
                 return float3(r,g,b)
             }
             else {
                 let (bytes,count) =  getBytes(texture: txt) as (UnsafeMutablePointer<uint8>,Int)
-                
             }            
         }
         catch {
@@ -294,20 +293,17 @@ internal extension IMPCLut {
         let bytesPerRow   = bytesPerPixel * width
         let bytesPerImage = height * bytesPerRow
         let imageBytes    = bytesPerImage*depth
-        
-        //let bytes = UnsafeMutablePointer<T>.allocate(capacity:imageBytes)
-        
+                
         let buffer = self.context.device.makeBuffer(length: imageBytes, options: [])
             
-        context.execute(wait: true) { (commandBuffer) in
+        context.execute(.sync, wait: true) { (commandBuffer) in
             
             let blit = commandBuffer.makeBlitCommandEncoder()
             #if os(OSX)
                 blit.synchronize(resource: texture)
-                blit.endEncoding()
             #endif
             
-            blit.copy(from:          texture,
+            blit.copy(from:         texture,
                       sourceSlice:  0,
                       sourceLevel:  0,
                       sourceOrigin: MTLOrigin(x:0,y:0,z:0),
@@ -317,11 +313,17 @@ internal extension IMPCLut {
                       destinationBytesPerRow: bytesPerRow,
                       destinationBytesPerImage: bytesPerImage)
             
+            blit.endEncoding()
         }
         
-        //texture.getBytes(bytes, bytesPerRow: bytesPerRow, bytesPerImage: bytesPerImage, from: MTLRegion(origin: MTLOrigin(x: 0,y: 0,z: 0), size: texture.size), mipmapLevel: 0, slice: 0)
-        
-        let bytes = buffer.contents().assumingMemoryBound(to: T.self) 
+//        texture.getBytes(bytes, 
+//                         bytesPerRow: bytesPerRow, 
+//                         bytesPerImage: bytesPerImage, 
+//                         from: MTLRegion(origin: MTLOrigin(x: 0,y: 0,z: 0), size: texture.size), 
+//                         mipmapLevel: 0, 
+//                         slice: 0)
+                
+        let bytes =  buffer.contents().bindMemory(to: T.self, capacity: bytesPerImage)
         
         return (bytes,bytesPerImage/componentBytes)
     }
