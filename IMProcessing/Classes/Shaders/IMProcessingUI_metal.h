@@ -45,8 +45,8 @@ fragment float4 fragment_passview(
                                   VertexOut in [[ stage_in ]],
                                   texture2d<float, access::sample> texture [[ texture(0) ]]
                                   ) {
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
-    float3 rgb = texture.sample(s, in.texcoord).rgb;
+    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    float3 rgb = texture.sample(IMProcessing::baseSampler, in.texcoord).rgb;
     return float4(rgb, 1.0);
 }
 

@@ -116,7 +116,7 @@ kernel void kernel_median(texture2d<float, access::sample> source      [[texture
                            uint2 gid [[thread_position_in_grid]])
 {
 
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
     
     thread float3 array[QSORT_MAX_SIZE];
 
@@ -133,8 +133,8 @@ kernel void kernel_median(texture2d<float, access::sample> source      [[texture
     uint index   = 0;
     for(uint x = 1; x<=mediani; x+=1){
         for(uint y = 1; y<=mediani; y+=1){
-            float3 colorNeg = source.sample(s, (texCoord - texelSize * float2(x,y))).rgb;
-            float3 colorPos = source.sample(s, (texCoord + texelSize * float2(x,y))).rgb;
+            float3 colorNeg = source.sample(IMProcessing::baseSampler, (texCoord - texelSize * float2(x,y))).rgb;
+            float3 colorPos = source.sample(IMProcessing::baseSampler, (texCoord + texelSize * float2(x,y))).rgb;
             array[index] = colorNeg; index++;
             array[index] = colorPos; index++;
         }
@@ -155,7 +155,7 @@ kernel void kernel_median2pass(texture2d<float, access::sample> source      [[te
                                uint2 gid [[thread_position_in_grid]])
 {
     
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
     
     thread float3 array[QSORT_MAX_SIZE];
     
@@ -169,8 +169,8 @@ kernel void kernel_median2pass(texture2d<float, access::sample> source      [[te
     uint mediani = size/2;
     uint index   = 0;
     for(uint x = 1; x<=mediani; x+=1){
-        float3 colorNeg = source.sample(s, (texCoord - texelSize * float2(x))).rgb;
-        float3 colorPos = source.sample(s, (texCoord + texelSize * float2(x))).rgb;
+        float3 colorNeg = source.sample(IMProcessing::baseSampler, (texCoord - texelSize * float2(x))).rgb;
+        float3 colorPos = source.sample(IMProcessing::baseSampler, (texCoord + texelSize * float2(x))).rgb;
         array[index] = colorNeg; index++;
         array[index] = colorPos; index++;
     }

@@ -87,14 +87,23 @@ open class IMPCLut: IMPImage {
     /// Lut level
     public var level:Int { return Int(sqrt(Float(_lutSize))) }
     
+    public var compressionRange:float2 { return _compressionRange }
+    
     internal var _format:Format = .float
     internal var _type:LutType = .lut_3d
     internal var _title:String = ""
     internal var _domainMin = float3(0)
     internal var _domainMax = float3(1)
     internal var _lutSize = Int(0)
+    internal var _compressionRange = float2(0,1)
     
     internal var observers:[UpdateHandler] = [UpdateHandler]()
+    
+    private let compressionM = float2x2(rows:[float2(-1,1),float2(1,0)])
+    
+    internal var compression:float2 {
+        return compressionM*_compressionRange
+    }
 }
 
 
@@ -110,13 +119,15 @@ public extension IMPCLut {
     ///   - lutType: cube type: LutType.lut_3d or .lut_1d
     ///   - format: cube number format: Format.integer or .float
     ///   - title: cube file title
-    public convenience init(context: IMPContext, lutType:LutType, lutSize:Int, format:Format = .float, title:String? = nil) throws {
+    public convenience init(context: IMPContext, lutType:LutType, lutSize:Int, format:Format = .float, compression range:float2 = float2(0,1), title:String? = nil) throws {
         self.init(context: context, storageMode:nil)
         _title    = title ?? "IMPCLut \(lutSize):\(lutType):\(format)"
         _lutSize  = lutSize
         _type     = lutType
         _format = format
+        _compressionRange = range
         
+        var compression = self.compression
         let level = Int(sqrt(Double(_lutSize)))
 
         if _type == .lut_2d {
@@ -137,9 +148,12 @@ public extension IMPCLut {
         context.execute(.sync, wait: true){ (commandBuffer) in
             let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
             commandEncoder.setTexture(text, at:0)
+                                    
+            commandEncoder.setBytes(&compression,  length:MemoryLayout.stride(ofValue: compression),  at:0)
+            
             if self._type == .lut_2d {
                 var l = uint(level)
-                commandEncoder.setBytes(&l,  length:MemoryLayout.stride(ofValue: l),  at:0)
+                commandEncoder.setBytes(&l,  length:MemoryLayout.stride(ofValue: l),  at:1)
             }
             commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadsPerThreadgroup)
             commandEncoder.endEncoding()

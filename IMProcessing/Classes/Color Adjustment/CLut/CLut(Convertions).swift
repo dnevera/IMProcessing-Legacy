@@ -36,7 +36,7 @@ public extension IMPCLut {
         //
         // make new identity
         //
-        let lut = try IMPCLut(context: context, lutType: newType, lutSize: newLutSize ?? _lutSize, format: newFormat ?? _format, title: newTitle ?? _title)
+        let lut = try IMPCLut(context: context, lutType: newType, lutSize: newLutSize ?? _lutSize, format: newFormat ?? _format, compression: _compressionRange, title: newTitle ?? _title)
         
         guard let newtext = lut.texture else { throw FormatError(file: "", line: 0, kind: .empty) }
         guard let text = texture else { throw FormatError(file: "", line: 0, kind: .empty) }

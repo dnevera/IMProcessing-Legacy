@@ -171,14 +171,16 @@ namespace IMProcessing
         return c;
     }
 
+    constexpr sampler baseSampler(address::clamp_to_edge, filter::linear, coord::normalized);
+
     inline float4 sampledColor(
                                texture2d<float, access::sample> inTexture,
                                texture2d<float, access::write> outTexture,
                                uint2 gid
                                ){
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         float w = outTexture.get_width();
-        return mix(inTexture.sample(s, float2(gid) * float2(1.0/w, 1.0/outTexture.get_height())),
+        return mix(inTexture.sample(baseSampler, float2(gid) * float2(1.0/w, 1.0/outTexture.get_height())),
                    inTexture.read(gid),
                    IMProcessing::when_eq(inTexture.get_width(), w) // whe equal read exact texture color
                    );
@@ -198,12 +200,12 @@ namespace IMProcessing
                                float                   scale,
                                uint2 gid
                                ){
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         
         float w = float(inTexture.get_width())  * scale;
         float h = float(inTexture.get_height()) * scale;
         
-        return mix(inTexture.sample(s, float2(gid) * float2(1.0/w, 1.0/h)),
+        return mix(inTexture.sample(baseSampler, float2(gid) * float2(1.0/w, 1.0/h)),
                    inTexture.read(gid),
                    IMProcessing::when_eq(inTexture.get_width(), w) // whe equal read exact texture color
                    );

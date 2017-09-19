@@ -32,16 +32,16 @@ namespace IMProcessing
                                       float2 texelSize
                                       )
     {
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
 
-        float3 color  = source.sample(s, texCoord).rgb * weights.read(uint(0)).x;
+        float3 color  = source.sample(baseSampler, texCoord).rgb * weights.read(uint(0)).x;
         
         for( uint i = 1; i < weights.get_width(); i++ ){
             
             float2 texCoordOffset =  texelSize * offsets.read(i).x;
             
-            color += source.sample(s, (texCoord + texCoordOffset)).rgb * weights.read(i).x;
-            color += source.sample(s, (texCoord - texCoordOffset)).rgb * weights.read(i).x;
+            color += source.sample(baseSampler, (texCoord + texCoordOffset)).rgb * weights.read(i).x;
+            color += source.sample(baseSampler, (texCoord - texCoordOffset)).rgb * weights.read(i).x;
             
         }
         
@@ -102,10 +102,10 @@ namespace IMProcessing
                                          constant IMPAdjustment           &adjustment  [[buffer(0)]]
                                          
                                          ) {
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         
-        float4 inColor = source.sample(s, in.texcoord.xy);
-        float3 rgb = texture.sample(s, in.texcoord.xy).rgb;
+        float4 inColor = source.sample(baseSampler, in.texcoord.xy);
+        float3 rgb = texture.sample(baseSampler, in.texcoord.xy).rgb;
 
         inColor = IMProcessing::blend(inColor, float4(rgb,1), adjustment.blending);
 

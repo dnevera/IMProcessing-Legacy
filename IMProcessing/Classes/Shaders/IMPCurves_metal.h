@@ -25,13 +25,13 @@ inline float4 adjustChannelCurves(
                                   )
 {
     
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
     
     float3 color = IMPConvertToNormalizedColor(IMPRgbSpace, space, inColor.rgb);
     
-    float x = curvesTexure.sample(s, color.x, 0).x;
-    float y = curvesTexure.sample(s, color.y, 1).x;
-    float z = curvesTexure.sample(s, color.z, 2).x;
+    float x = curvesTexure.sample(IMProcessing::baseSampler, color.x, 0).x;
+    float y = curvesTexure.sample(IMProcessing::baseSampler, color.y, 1).x;
+    float z = curvesTexure.sample(IMProcessing::baseSampler, color.z, 2).x;
     
     color = IMPConvertFromNormalizedColor(space, IMPRgbSpace, float3(x,y,z));
     

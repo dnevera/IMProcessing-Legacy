@@ -29,7 +29,7 @@ kernel void kernel_erosion(texture2d<float, access::sample> source      [[textur
                            constant uint                   &dimensions  [[buffer(1)]],
                            uint2 gid [[thread_position_in_grid]]){
     
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
 
     float3 center = IMProcessing::sampledColor(source,destination,gid).rgb;
     
@@ -39,11 +39,11 @@ kernel void kernel_erosion(texture2d<float, access::sample> source      [[textur
     
     for(uint x = 1; x<dimensions/2; x+=1){
         
-        float3 colorNeg = source.sample(s, (texCoord - texelSize * float2(x))).rgb;
+        float3 colorNeg = source.sample(IMProcessing::baseSampler, (texCoord - texelSize * float2(x))).rgb;
         
         minv = min(colorNeg,minv);
         
-        float3 colorPos = source.sample(s, (texCoord + texelSize * float2(x))).rgb;
+        float3 colorPos = source.sample(IMProcessing::baseSampler, (texCoord + texelSize * float2(x))).rgb;
 
         minv = min(colorPos,minv);
 
@@ -59,7 +59,7 @@ kernel void kernel_dilation(texture2d<float, access::sample> source      [[textu
                            constant uint                   &dimensions  [[buffer(1)]],
                            uint2 gid [[thread_position_in_grid]])
 {
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
     
     float3 center = IMProcessing::sampledColor(source,destination,gid).rgb;
     
@@ -69,11 +69,11 @@ kernel void kernel_dilation(texture2d<float, access::sample> source      [[textu
     
     for(uint x = 1; x<dimensions/2; x+=1){
         
-        float3 colorNeg = source.sample(s, (texCoord - texelSize * float2(x))).rgb;
+        float3 colorNeg = source.sample(IMProcessing::baseSampler, (texCoord - texelSize * float2(x))).rgb;
         
         maxv = max(colorNeg,maxv);
         
-        float3 colorPos = source.sample(s, (texCoord + texelSize * float2(x))).rgb;
+        float3 colorPos = source.sample(IMProcessing::baseSampler, (texCoord + texelSize * float2(x))).rgb;
         
         maxv = max(colorPos,maxv);
         

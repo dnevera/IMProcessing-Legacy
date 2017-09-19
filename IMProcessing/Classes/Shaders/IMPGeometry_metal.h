@@ -75,19 +75,19 @@ namespace IMProcessing
                                             const device float4  &flip [[ buffer(0) ]],
                                             texture2d<float, access::sample> texture [[ texture(0) ]]
                                             ) {
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         float2 flipHorizontal = flip.xy;
         float2 flipVertical   = flip.zw;
         float2 xy = float2(flipHorizontal.x+in.texcoord.x*flipHorizontal.y, flipVertical.x+in.texcoord.y*flipVertical.y);
-        return texture.sample(s, xy);
+        return texture.sample(baseSampler, xy);
     }
     
     fragment float4 fragment_passthrough(
                                          IMPVertexOut in [[stage_in]],
                                          texture2d<float, access::sample> texture [[ texture(0) ]]
                                          ) {
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
-        return  texture.sample(s, in.texcoord.xy);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        return  texture.sample(baseSampler, in.texcoord.xy);
     }
     
     fragment float4 fragment_gridGenerator(
@@ -111,7 +111,7 @@ namespace IMProcessing
                                            const device uint      &spotAreaType    [[ buffer(6) ]]
                                            ) {
         
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         
         uint w = texture.get_width();
         uint h = texture.get_height();
@@ -119,7 +119,7 @@ namespace IMProcessing
         uint y = uint(in.texcoord.y*h);
         uint sd = gridStep*gridSubDiv;
         
-        float4 inColor = texture.sample(s, in.texcoord.xy);
+        float4 inColor = texture.sample(baseSampler, in.texcoord.xy);
         float4 color = inColor;
         
         if (x == 0 ) return color;
@@ -193,7 +193,7 @@ namespace IMProcessing
                                                       const device float4               &color    [[ buffer(1) ]]
                                                       ){
         
-        constexpr sampler s(address::clamp_to_zero, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_zero, filter::linear, coord::normalized);
         float3 p = float3(in.texcoord.xy,0);
         
         //
@@ -215,7 +215,7 @@ namespace IMProcessing
         
         float4 position = surface*BV*BU;
         
-        float4 inColor = inTexture.sample(s,position.xy);
+        float4 inColor = inTexture.sample(baseSampler,position.xy);
         
         if (inColor.a==0) {
             inColor = color;

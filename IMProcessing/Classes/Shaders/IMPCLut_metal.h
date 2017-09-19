@@ -27,16 +27,21 @@ namespace IMProcessing
     
     constexpr sampler lutSampler(address::clamp_to_edge, filter::linear, coord::normalized);
     
+    inline float3 compress(float3 rgb, float2 compression) {
+        return compression.x*rgb + compression.y;        
+    }
+    
     
     ///
     /// @brief Kernel optimized 3D LUT identity
     ///
     kernel void kernel_make3DLut(
                                  texture3d<float, access::write>         d3DLut     [[texture(0)]],
+                                 constant float2  &compression [[buffer(0)]],
                                  uint3 gid [[thread_position_in_grid]]){
-        
+                
         float3 denom = float3(d3DLut.get_width()-1,d3DLut.get_height()-1,d3DLut.get_depth()-1);
-        float4 input_color  = float4(float3(gid)/denom,1);
+        float4 input_color  = float4(compress(float3(gid)/denom, compression),1);
         d3DLut.write(input_color, gid);
     }
     
@@ -46,7 +51,8 @@ namespace IMProcessing
     ///
     kernel void kernel_make2DLut(
                                  texture2d<float, access::write>         d2DLut     [[texture(0)]],
-                                 constant uint  &clevel [[buffer(0)]],
+                                 constant float2  &compression [[buffer(0)]],
+                                 constant uint    &clevel      [[buffer(1)]],
                                  uint2 gid [[thread_position_in_grid]]){
         
         float qsize = float(clevel*clevel);
@@ -60,7 +66,9 @@ namespace IMProcessing
         float r = (float(gid.x)-xindex*(qsize))/(qsize-1);
         float g = (float(gid.y)-yindex*(qsize))/(qsize-1);
         
-        d2DLut.write(float4(r,g,b,1),gid.xy);
+        float3 rgb = compress(float3(r,g,b),compression);
+        
+        d2DLut.write(float4(rgb,1),gid.xy);
     }
     
     ///
@@ -68,10 +76,11 @@ namespace IMProcessing
     ///
     kernel void kernel_make1DLut(
                                  texture1d<float, access::write>   d1DLut     [[texture(0)]],
+                                 constant float2  &compression                [[buffer(0)]],
                                  uint gid [[thread_position_in_grid]]){
         
         float3 denom = float3(d1DLut.get_width()-1);
-        float4 input_color  = float4(float3(gid)/denom,1);
+        float4 input_color  = float4(compress(float3(gid)/denom, compression),1);
         d1DLut.write(input_color, gid);
     }
     
@@ -224,15 +233,6 @@ namespace IMProcessing
         float4 result = lut.sample(lutSampler, inColor.rgb);
 
         result = IMProcessing::blend(inColor, result, adjustment.blending); 
-
-//        result.rgba.a = adjustment.blending.opacity;
-//        
-//        if (adjustment.blending.mode == IMPLuminosity) {
-//            result = blendLuminosity(inColor, result);
-//        }
-//        else {// only two modes yet
-//            result = blendNormal(inColor, result);
-//        }
         
         return result;
     }
@@ -248,15 +248,6 @@ namespace IMProcessing
         half blue  = lut.sample(lutSampler, inColor.b).b;
 
         float4 result = IMProcessing::blend(inColor, float4(red, green, blue,1), adjustment.blending); 
-
-//        float4 result = float4(red, green, blue, adjustment.blending.opacity);
-//        
-//        if (adjustment.blending.mode == IMPLuminosity) {
-//            result = blendLuminosity(inColor, result);
-//        }
-//        else {// only two modes yet
-//            result = blendNormal(inColor, result);
-//        }
         
         return result;
     }
@@ -295,15 +286,6 @@ namespace IMProcessing
         float4 inColor = IMProcessing::sampledColor(inTexture,outTexture,gid);
 
         float4 result = IMProcessing::blend(inColor, float4(sample2DLut(inColor.rgb, lut, inClevel),1), adjustment.blending); 
-
-//        float4 result = float4(sample2DLut(inColor.rgb, lut, inClevel), adjustment.blending.opacity);
-//        
-//        if (adjustment.blending.mode == IMPLuminosity) {
-//            result = blendLuminosity(inColor, result);
-//        }
-//        else {// only two modes yet
-//            result = blendNormal(inColor, result);
-//        }
         
         outTexture.write(result, gid);
     }

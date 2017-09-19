@@ -130,9 +130,9 @@ inline float gaussianDerivativeComponent(
                                          float2 texelSize,
                                          const int offset,
                                          const int pitch ) {
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
     
-    float3 rgb = source.sample(s, (texCoord + texelSize * float2( offset * pitch))).rgb;
+    float3 rgb = source.sample(IMProcessing::baseSampler, (texCoord + texelSize * float2( offset * pitch))).rgb;
     return IMProcessing::max_component(rgb);
 }
 
@@ -143,7 +143,7 @@ inline float gaussianDerivative(
                                 float2 texelSize,
                                 const int pitch ) {
     
-    constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
     
     float2 texCoord  = float2(gid) / float2(destination.get_width(),destination.get_height());
     

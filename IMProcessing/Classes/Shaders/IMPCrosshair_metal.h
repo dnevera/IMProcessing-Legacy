@@ -86,10 +86,10 @@ namespace IMProcessing
                                          constant IMPAdjustment           &adjustment  [[buffer(0)]]
                                          
                                          ) {
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         
-        float4 inColor = source.sample(s, in.texcoord.xy);
-        float4 rgba = texture.sample(s, in.texcoord.xy);
+        float4 inColor = source.sample(baseSampler, in.texcoord.xy);
+        float4 rgba = texture.sample(baseSampler, in.texcoord.xy);
         
         inColor = IMProcessing::blend(inColor, rgba, adjustment.blending);
         
