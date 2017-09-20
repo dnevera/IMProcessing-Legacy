@@ -178,15 +178,23 @@ public extension Float{
     ///
     ///  - returns: X list
     static func range(start:Float, step:Float, end:Float) -> [Float] {
-        let size       = Int((end-start)/step)
+//        let size       = Int((end-start)/step)
+//        
+//        var h:[Float]  = [Float](repeating: 0, count: size)
+//        var zero:Float = start
+//        var v:Float    = step
+//        
+//        vDSP_vramp(&zero, &v, &h, 1, vDSP_Length(size))
+//        
+        precondition(start <= end, "start must be no larger than end.")
         
-        var h:[Float]  = [Float](repeating: 0, count: size)
-        var zero:Float = start
-        var v:Float    = step
+        var startFloat = Float(start)
+        var endFloat = Float(end)
+        let size   = Int((end-start)/step)
+        var result = [Float](repeating: 0.0, count: size)
         
-        vDSP_vramp(&zero, &v, &h, 1, vDSP_Length(size))
-        
-        return h
+        vDSP_vgen(&startFloat, &endFloat, &result, 1, vDSP_Length(size))
+        return result
         
     }
 }

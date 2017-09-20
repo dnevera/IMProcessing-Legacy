@@ -28,7 +28,8 @@ namespace IMProcessing
     constexpr sampler lutSampler(address::clamp_to_edge, filter::linear, coord::normalized);
     
     inline float3 compress(float3 rgb, float2 compression) {
-        return compression.x*rgb + compression.y;        
+        //return  pow(compression.x*rgb + compression.y, 1/1.8);
+        return  compression.x*rgb + compression.y;
     }
     
     

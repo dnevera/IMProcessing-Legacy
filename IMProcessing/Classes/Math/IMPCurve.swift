@@ -84,7 +84,7 @@ public class IMPCurve: Hashable {
         self._edges = edges
         self._initials = initials
         self.maxControlPoints = maxControlPoints
-        self.segments = Float.range(start: 0, step: 1/Float(self._interpolator.resolution), end: 1)
+        self.segments = Surge.linspace(Float(0), Float(1), num: self._interpolator.resolution) 
         
         defer {
             resetControlPoints()

@@ -11,17 +11,21 @@ import Surge
 
 public class IMPLut1DTexture: IMPTextureProvider, IMPContextProvider {
     
-    public static let identity:[Float] =  {
-        return Surge.linspace(Float(0), Float(1), num: kIMPCurveCollectionResolution)
+    public static let identity:[Float] =  {         
+        return getIdentity()
     }()
     
     public lazy var texture:MTLTexture? = self.context.device.texture1DArray(buffers: self.channels)
     public var context:IMPContext
     
-    public var channels = [identity,identity,identity] {
+    public var channels = [IMPLut1DTexture.getIdentity(),IMPLut1DTexture.getIdentity(),IMPLut1DTexture.getIdentity()] {
         didSet{
             update(channels: channels)
         }
+    }
+    
+    private static func getIdentity() -> [Float] {
+        return Surge.linspace(Float(0), Float(1), num: kIMPCurveCollectionResolution)
     }
     
     public init(context: IMPContext, channels:[[Float]]? = nil) {

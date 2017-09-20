@@ -88,6 +88,7 @@ public class IMPCurvesFilter: IMPFilter {
         
         vDSP_vsmsb(values, 1, &one, IMPLut1DTexture.identity, 1, &diff, 1, sz)
         vDSP_vsma(in_out, 1, &one, diff, 1, &diff, 1, sz)
+        
         return diff
     }
     
@@ -96,7 +97,9 @@ public class IMPCurvesFilter: IMPFilter {
     private lazy var curvesKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_adjustChannelCurves")
         f.optionsHandler = { (function, command, input, output) in
-        
+            
+            
+            
             command.setTexture(self.lut.texture, at:2)
             
             var cs = self.colorSpace.index
