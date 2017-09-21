@@ -118,7 +118,7 @@ public class IMPView: MTKView {
     #if os(OSX)
     var invalidateSizeTimer:Timer?
     
-    func invalidateSizeTimerHandler(timer:Timer?)  {
+    @objc func invalidateSizeTimerHandler(timer:Timer?)  {
         updateDrawbleSize()
     }
     

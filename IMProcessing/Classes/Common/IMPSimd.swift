@@ -43,13 +43,13 @@ public extension float2 {
 
 public extension float3 {
     
-    public static func == (left:float3,right:float3) -> Bool {
-        return (left.x == right.x) && (left.y == right.y) && (left.z == right.z)
-    }
-
-    public static func != (left:float3,right:float3) -> Bool {
-        return !(left == right)
-    }
+//    public static func == (left:float3,right:float3) -> Bool {
+//        return (left.x == right.x) && (left.y == right.y) && (left.z == right.z)
+//    }
+//
+//    public static func != (left:float3,right:float3) -> Bool {
+//        return !(left == right)
+//    }
     
     public func lerp(final:float3, t:Float) -> float3 {
         return (1-t)*self + t*final
@@ -119,9 +119,9 @@ public extension matrix_float3x3{
         self = matrix_from_rows(rows.0, rows.1, rows.2)
     }
     
-    public init(rows: [float3]){
-        self = matrix_from_rows(rows[0], rows[1], rows[2])
-    }
+//    public init(rows: [float3]){
+//        self = matrix_from_rows(rows[0], rows[1], rows[2])
+//    }
     
     public init(columns: [float3]){
         self = matrix_from_columns(columns[0], columns[1], columns[2])

@@ -78,9 +78,9 @@ public extension NSColor{
 }
 
 
-extension float2: Equatable {}
-extension float3: Equatable {}
-extension float4: Equatable {}
+//extension float2: Equatable {}
+//extension float3: Equatable {}
+//extension float4: Equatable {}
 
 // MARK: - Basic color extention
 

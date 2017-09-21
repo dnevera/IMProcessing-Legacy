@@ -254,7 +254,7 @@ public extension IMPCLut {
                 return float3(r,g,b)
             }
             else {
-                let (bytes,count) =  getBytes(texture: txt) as (UnsafeMutablePointer<uint8>,Int)
+                //let (bytes,count) =  getBytes(texture: txt) as (UnsafeMutablePointer<uint8>,Int)
             }            
         }
         catch {

@@ -112,6 +112,20 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
         _ destination:MTLTexture
         ) -> Void {
     }
+    
+    func processBigImage(index:Int) -> CIImage? {
+        guard let processor = self.processor else { return nil}
+        return processCIImage(command: processor)
+    }
+    
+    func processImage() -> CIImage? {
+        guard let processor = self.processor else { return nil}
+        return processCIImage(command: processor)
+    }
+    
+    func processCIImage(command:@escaping CommandProcessor) -> CIImage? {
+        return process(command: command).image
+    }
 }
 
 extension IMPCIFilter {
@@ -136,20 +150,6 @@ extension IMPCIFilter {
         source = nil
         destination.image = nil
         destinationSize = nil
-    }
-    
-    func processBigImage(index:Int) -> CIImage? {
-        guard let processor = self.processor else { return nil}
-        return processCIImage(command: processor)
-    }
-    
-    func processImage() -> CIImage? {
-        guard let processor = self.processor else { return nil}
-        return processCIImage(command: processor)
-    }
-    
-    func processCIImage(command:@escaping CommandProcessor) -> CIImage? {
-        return process(command: command).image
     }
     
 

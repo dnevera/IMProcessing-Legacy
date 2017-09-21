@@ -47,7 +47,7 @@ public class IMPFileManager {
         
         let result = openPanel.runModal()
         
-        if result == NSModalResponseOK {
+        if result == NSApplication.ModalResponse.OK {
             IMPFileManager.sharedInstance.currentFile = openPanel.urls[0].path
         }
     }

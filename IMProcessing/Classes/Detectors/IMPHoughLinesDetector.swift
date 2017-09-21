@@ -74,10 +74,10 @@ public class IMPHoughLinesDetector: IMPHoughSpaceDetector {
     }
     
     
-    private lazy var accumBuffer:MTLBuffer = self.accumBufferGetter()
-    private lazy var maximumsBuffer:MTLBuffer = self.maximumsBufferGetter()
-    private lazy var maximumsCountBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)!
-    private lazy var regionInBuffer:MTLBuffer  = self.context.makeBuffer(from: IMPRegion())
+    private lazy var accumBuffer:MTLBuffer? = self.accumBufferGetter()
+    private lazy var maximumsBuffer:MTLBuffer? = self.maximumsBufferGetter()
+    private lazy var maximumsCountBuffer:MTLBuffer? = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)!
+    private lazy var regionInBuffer:MTLBuffer?  = self.context.makeBuffer(from: IMPRegion())
     
     private lazy var houghTransformKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_houghTransformAtomic")
@@ -115,7 +115,11 @@ public class IMPHoughLinesDetector: IMPHoughSpaceDetector {
     private lazy var cannyEdge:IMPCannyEdges = IMPCannyEdges(context: self.context)
     
 
-    private func getGPULocalMaximums(_ countBuff:MTLBuffer, _ maximumsBuff:MTLBuffer) -> [uint2] {
+    private func getGPULocalMaximums(_ countBuff:MTLBuffer?, _ maximumsBuff:MTLBuffer?) -> [uint2] {
+        
+        guard var maximumsBuff = maximumsBuff else {return []}
+        guard var countBuff = countBuff else {return []}
+        
         let count = Int(countBuff.contents().bindMemory(to: uint.self,
                                                         capacity: MemoryLayout<uint>.size).pointee)
         var maximums = [uint2](repeating:uint2(0), count:  count)

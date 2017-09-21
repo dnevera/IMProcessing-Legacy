@@ -9,13 +9,14 @@
 import Cocoa
 import SnapKit
 import Accelerate
+import IMProcessing
 
-public class TestFilter: IMPFilter {
+open class TestFilter: IMPFilter {
     
     public var linesHandler:((_ h:[IMPPolarLine],_ v:[IMPPolarLine], _ size:NSSize?)->Void)?
     public var cornersHandler:((_ points:[IMPCorner], _ size:NSSize?)->Void)?
     
-    public override var source: IMPImageProvider? {
+    open override var source: IMPImageProvider? {
         didSet{
             self.linesHandler?([],[],source?.size)
             self.cornersHandler?([],source?.size)
@@ -77,31 +78,31 @@ public class TestFilter: IMPFilter {
         }
     }
     
-    lazy var kernelRedBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
+    lazy var kernelRedBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])!
     lazy var kernelRed:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_red")
         f.optionsHandler = { (kernel,commandEncoder, input, output) in
             var value  = self.redAmount
             var buffer = self.kernelRedBuffer
             memcpy(buffer.contents(), &value, buffer.length)
-            commandEncoder.setBuffer(buffer, offset: 0, at: 0)
+            commandEncoder.setBuffer(buffer, offset: 0, index: 0)
         }
         return f
     }()
     
-    lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])
+    lazy var kernelEVBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: [])!
     lazy var kernelEV:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_EV")
         f.optionsHandler = { (kernel,commandEncoder, input, output) in
             var value  = self.inputEV
             var buffer = self.kernelEVBuffer
             memcpy(buffer.contents(), &value, buffer.length)
-            commandEncoder.setBuffer(buffer, offset: 0, at: 0)
+            commandEncoder.setBuffer(buffer, offset: 0, index: 0)
         }
         return f
     }()
     
-    override public func configure(complete:CompleteHandler?=nil) {
+    override open func configure(complete:CompleteHandler?=nil) {
         extendName(suffix: "Test filter")
         super.configure()
         
@@ -377,15 +378,15 @@ class CanvasView: NSView {
                                  y: (1-corner.point.y.cgfloat) * bounds.size.height)
 
                 let textRect  = NSMakeRect(CGFloat(p0.x+4), CGFloat(p0.y-16), 100, 16)
-                let textStyle = NSMutableParagraphStyle.default().mutableCopy() as! NSMutableParagraphStyle
+                let textStyle = NSMutableParagraphStyle.default.mutableCopy() as! NSMutableParagraphStyle
                 textStyle.alignment = .left
                 
                 let textColor = NSColor(red: 0,   green: 0, blue: 0, alpha: 1)
 
                 let textFontAttributes = [
-                    NSFontAttributeName: actualFont,
-                    NSForegroundColorAttributeName: textColor,
-                    NSParagraphStyleAttributeName: textStyle
+                    NSAttributedStringKey.font: actualFont,
+                    NSAttributedStringKey.foregroundColor: textColor,
+                    NSAttributedStringKey.paragraphStyle: textStyle
                 ]
                 
                 text.draw(in: NSOffsetRect(textRect, 0, 0), withAttributes: textFontAttributes)
@@ -460,7 +461,7 @@ class ViewController: NSViewController {
         
         canvas.wantsLayer = true
         canvas.layer?.backgroundColor = NSColor.clear.cgColor
-        canvas.autoresizingMask = [.viewWidthSizable, .viewHeightSizable]
+        canvas.autoresizingMask = [.width, .height]
         
         imageView.snp.makeConstraints { (make) in
             make.left.equalTo(imageView.superview!).offset(0)
@@ -563,7 +564,7 @@ class ViewController: NSViewController {
 
     }
 
-    func clickHandler(gesture:NSClickGestureRecognizer)  {
+    @objc func clickHandler(gesture:NSClickGestureRecognizer)  {
         
         if  gesture.buttonMask == 1 {
             
@@ -596,7 +597,7 @@ class ViewController: NSViewController {
         }
     }
     
-    func sliderHandler(sender:NSSlider)  {
+    @objc func sliderHandler(sender:NSSlider)  {
         filter.context.runOperation(.async) {
             switch sender.tag {
             case 100:

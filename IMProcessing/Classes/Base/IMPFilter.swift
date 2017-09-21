@@ -67,7 +67,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public var observersEnabled: Bool = true
     
-    public var source: IMPImageProvider? = nil {
+    open var source: IMPImageProvider? = nil {
         didSet{
             if source == nil {
                //oldValue?.texture?.setPurgeableState(.volatile)

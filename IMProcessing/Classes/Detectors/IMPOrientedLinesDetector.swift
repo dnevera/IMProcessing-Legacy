@@ -84,14 +84,14 @@ public class IMPOrientedLinesDetector: IMPHoughSpaceDetector {
     }
     
 
-    private lazy var accumHorizonBuffer:MTLBuffer = self.accumBufferGetter()
-    private lazy var accumVerticalBuffer:MTLBuffer = self.accumBufferGetter()
+    private lazy var accumHorizonBuffer:MTLBuffer? = self.accumBufferGetter()
+    private lazy var accumVerticalBuffer:MTLBuffer? = self.accumBufferGetter()
     
-    private lazy var maximumsHorizonBuffer:MTLBuffer = self.maximumsBufferGetter()
-    private lazy var maximumsVerticalBuffer:MTLBuffer = self.maximumsBufferGetter()
+    private lazy var maximumsHorizonBuffer:MTLBuffer? = self.maximumsBufferGetter()
+    private lazy var maximumsVerticalBuffer:MTLBuffer? = self.maximumsBufferGetter()
     
-    private lazy var maximumsCountHorizonBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)!
-    private lazy var maximumsCountVerticalBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)!
+    private lazy var maximumsCountHorizonBuffer:MTLBuffer? = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
+    private lazy var maximumsCountVerticalBuffer:MTLBuffer? = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
     
     private lazy var regionInBuffer:MTLBuffer  = self.context.makeBuffer(from: IMPRegion())
     
@@ -138,7 +138,10 @@ public class IMPOrientedLinesDetector: IMPHoughSpaceDetector {
     
     private lazy var sobelEdges:IMPSobelEdgesGradient = IMPSobelEdgesGradient(context: self.context)
     
-    private func getGPULocalMaximums(_ countBuff:MTLBuffer, _ maximumsBuff:MTLBuffer) -> [uint2] {
+    private func getGPULocalMaximums(_ countBuff:MTLBuffer?, _ maximumsBuff:MTLBuffer?) -> [uint2] {
+        
+        guard var maximumsBuff = maximumsBuff else {return []}
+        guard var countBuff = countBuff else {return []}
         
         let count = Int(countBuff.contents().bindMemory(to: uint.self,
                                                         capacity: MemoryLayout<uint>.size).pointee)

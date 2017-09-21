@@ -33,7 +33,7 @@ open class IMPTwoPass: IMPFilter {
 //        }
 //    }
     
-    public override var source: IMPImageProvider? {
+    open override var source: IMPImageProvider? {
         didSet{
             updateSize()
         }
