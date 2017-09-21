@@ -127,9 +127,9 @@ public extension matrix_float3x3{
         self = matrix_from_columns(columns[0], columns[1], columns[2])
     }
     
-    public init(rows: [[Float]]){
-        self = matrix_from_rows(float3(rows[0]), float3(rows[1]), float3(rows[2]))
-    }
+//    public init(rows: [[Float]]){
+//        self = matrix_from_rows(float3(rows[0]), float3(rows[1]), float3(rows[2]))
+//    }
     
     public init(columns: [[Float]]){
         self = matrix_from_columns(float3(columns[0]), float3(columns[1]), float3(columns[2]))
@@ -155,9 +155,9 @@ public extension matrix_float4x4{
         self = matrix_from_columns(columns[0], columns[1], columns[2], columns[3])
     }
     
-    public init(rows: [[Float]]){
-        self = matrix_from_rows(float4(rows[0]), float4(rows[1]), float4(rows[2]), float4(rows[3]))
-    }
+//    public init(rows: [[Float]]){
+//        self = matrix_from_rows(float4(rows[0]), float4(rows[1]), float4(rows[2]), float4(rows[3]))
+//    }
     
     public init(columns: [[Float]]){
         self = matrix_from_columns(float4(columns[0]), float4(columns[1]), float4(columns[2]), float4(columns[3]))
@@ -210,25 +210,27 @@ public extension matrix_float4x4 {
     public mutating func rotate(radians:Float, point:float3) {
         
         let v =  normalize(point)
-        let cos = cosf(radians)
-        let cosp = 1.0 - cos
-        let sin = sinf(radians)
+        let _cos = cosf(radians)
+        let cosp = 1.0 - _cos
+        let _sin = sinf(radians)
         
-        let m = [
-            [cos  + cosp * v[0] * v[0],
-             cosp * v[0] * v[1] + v[2] * sin,
-             cosp * v[0] * v[2] - v[1] * sin,
-             0],
-            [cosp * v[0] * v[1] - v[2] * sin,
-             cos  + cosp * v[1] * v[1],
-             cosp * v[1] * v[2] + v[0] * sin,
-             0],
-            [cosp * v[0] * v[2] + v[1] * sin,
-             cosp * v[1] * v[2] - v[0] * sin,
-             cos  + cosp * v[2] * v[2],
-             0],
-            [0.0, 0.0, 0.0, 1.0]
-        ]
+        let m00 = _cos + cosp * v[0] * v[0]
+        let m01 = cosp * v[0] * v[1] + v[2] * _sin
+        let m02 = cosp * v[0] * v[2] - v[1] * _sin
+        let mm0 = [m01, m01, m02, 0.0]
+        
+        let m10 = cosp * v[0] * v[1] - v[2] * _sin
+        let m11 = _cos  + cosp * v[1] * v[1]
+        let m12 = cosp * v[1] * v[2] + v[0] * _sin
+        let mm1 =  [m10, m11, m12, 0.0]
+        
+        let m20 = cosp * v[0] * v[2] + v[1] * _sin
+        let m21 = cosp * v[1] * v[2] - v[0] * _sin
+        let m22 = _cos  + cosp * v[2] * v[2]
+        let mm2 = [m20, m21, m22, 0.0]
+        let mm3:[Float] = [0.0, 0.0, 0.0, 1.0]
+        
+        let m = [ mm0, mm1, mm2, mm3 ]
         
         self = matrix_multiply(matrix_float4x4(rows: m),self)
     }

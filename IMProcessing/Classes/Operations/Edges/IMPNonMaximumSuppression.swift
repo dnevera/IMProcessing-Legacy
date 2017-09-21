@@ -38,11 +38,11 @@ public class IMPNonMaximumSuppression: IMPDerivative {
                                         command: MTLRenderCommandEncoder,
                                         inputTexture: MTLTexture?,
                                         outputTexture: MTLTexture?) {
-        command.setFragmentBuffer(self.thresholdBuffer, offset: 0, at: 1)
+        command.setFragmentBuffer(self.thresholdBuffer, offset: 0, index: 1)
     }
     
     
-    lazy var thresholdBuffer:MTLBuffer = self.context.makeBuffer(from: defaultThreshold)
+    lazy var thresholdBuffer:MTLBuffer = self.context.makeBuffer(from: IMPNonMaximumSuppression.defaultThreshold)
     
 }
 
@@ -81,11 +81,11 @@ public class IMPDirectionalNonMaximumSuppression: IMPDerivative {
     }
     
     public override func optionsHandler(shader: IMPShader, command: MTLRenderCommandEncoder, inputTexture: MTLTexture?, outputTexture: MTLTexture?) {
-        command.setFragmentBuffer(self.upperThresholdBuffer, offset: 0, at: 1)
-        command.setFragmentBuffer(self.lowerThresholdBuffer, offset: 0, at: 2)
+        command.setFragmentBuffer(self.upperThresholdBuffer, offset: 0, index: 1)
+        command.setFragmentBuffer(self.lowerThresholdBuffer, offset: 0, index: 2)
     }
     
     
-    lazy var upperThresholdBuffer:MTLBuffer = self.context.makeBuffer(from: defaultUpperThreshold)
-    lazy var lowerThresholdBuffer:MTLBuffer = self.context.makeBuffer(from: defaultLowerThreshold)
+    lazy var upperThresholdBuffer:MTLBuffer = self.context.makeBuffer(from: IMPDirectionalNonMaximumSuppression.defaultUpperThreshold)
+    lazy var lowerThresholdBuffer:MTLBuffer = self.context.makeBuffer(from: IMPDirectionalNonMaximumSuppression.defaultLowerThreshold)
 }

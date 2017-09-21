@@ -18,12 +18,16 @@ public extension IMPTransfromModel{
 
 public struct IMPProjectionModel{
     
+    public static var identity:IMPProjectionModel { return IMPProjectionModel() }
+    
     var projectionMatrix  = float4x4(matrix_identity_float4x4)
     
     public var fovy:Float = Float.pi/2
     public var aspect:Float = 1
     public var near:Float = 0
     public var far:Float = 1
+    
+    public init(){}
     
     public var matrix:float4x4{
         get {
@@ -50,16 +54,18 @@ public struct IMPTransfromModel{
     public static let right45    = float3(0,0,45.float.radians)
     public static let left45     = float3(0,0,-45.float.radians)
     
+    public static let identity = IMPTransfromModel()
+    
     var rotationMatrix    = float4x4(matrix_identity_float4x4)
     var translationMatrix = float4x4(matrix_identity_float4x4)
     var scaleMatrix       = float4x4(matrix_identity_float4x4)
     
     public var projection = IMPProjectionModel()
-    
+        
     public init(translation:float3 = float3(0),
                 angle:float3 = float3(0),
                 scale:float3=float3(1),
-                projection:IMPProjectionModel = IMPProjectionModel()){
+                projection:IMPProjectionModel = IMPProjectionModel.identity){
         defer{
             self.projection = projection
             self.angle = angle

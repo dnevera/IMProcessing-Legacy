@@ -211,7 +211,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
             let scale = min(scaleX, scaleY)
             
             let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
-            scaledImage = sImage.applying(transform.scaledBy(x: scale, y: scale))
+            scaledImage = sImage.transformed(by: transform.scaledBy(x: scale, y: scale))
         }
         
         result.image = scaledImage

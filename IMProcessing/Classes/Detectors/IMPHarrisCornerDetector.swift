@@ -117,11 +117,11 @@ public class IMPHarrisCornerDetector: IMPDetector{
         //
         // to echange data should be .storageModeShared!!!!
         //
-        return context.device.makeBuffer(length: MemoryLayout<IMPCorner>.size * Int(pointsMax), options: .storageModeShared)
+        return context.device.makeBuffer(length: MemoryLayout<IMPCorner>.size * Int(pointsMax), options: .storageModeShared)!
     }
     
     fileprivate lazy var pointsBuffer:MTLBuffer = self.pointsBufferGetter()
-    fileprivate lazy var pointsCountBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
+    fileprivate lazy var pointsCountBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)!
     
     lazy var edgeDetector:IMPGaussianDerivativeEdges = IMPGaussianDerivativeEdges(context: self.context)
 
@@ -137,15 +137,15 @@ public class IMPHarrisCornerDetector: IMPDetector{
             
             memset(self.pointsCountBuffer.contents(),0,MemoryLayout<uint>.size)
             
-            command.setBuffer(self.pointsBuffer,       offset: 0, at: 0)
-            command.setBuffer(self.pointsCountBuffer,  offset: 0, at: 1)
+            command.setBuffer(self.pointsBuffer,       offset: 0, index: 0)
+            command.setBuffer(self.pointsCountBuffer,  offset: 0, index: 1)
             
             if let texture = self.derivativeTexture {
-                command.setTexture(texture, at: 2)
+                command.setTexture(texture, index: 2)
             }
 
             var mmx = uint(self.pointsMax)
-            command.setBytes(&mmx, length: MemoryLayout.size(ofValue: mmx),   at: 2)
+            command.setBytes(&mmx, length: MemoryLayout.size(ofValue: mmx),   index: 2)
         }
         
         return f

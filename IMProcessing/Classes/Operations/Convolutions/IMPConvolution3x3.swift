@@ -12,7 +12,7 @@ import simd
 
 public class IMPConvolution3x3: IMPFilter {
     
-    open func kernels() -> [float3x3] { return [float3x3(1)] }
+    open func kernels() -> [float3x3] { return [float3x3([float3(1),float3(1),float3(1)])] }
     
     public required init(context: IMPContext, name: String?=nil, functionName: String) {
         self.functionName = functionName
@@ -37,7 +37,7 @@ public class IMPConvolution3x3: IMPFilter {
     open func optionsHandler(shader:IMPFunction, command:MTLComputeCommandEncoder, inputTexture:MTLTexture?, outputTexture:MTLTexture?){}
     
     private let functionName: String
-    private var kernelMatrices = [float3x3(1)] {
+    private var kernelMatrices = [float3x3([float3(1,0,0),float3(0,1,0),float3(0,0,1)])] {
         didSet{
             matrixBuffers = [MTLBuffer]()
             for k in kernelMatrices {
@@ -56,7 +56,7 @@ public class IMPConvolution3x3: IMPFilter {
         let s = IMPFunction(context: self.context, kernelName: self.functionName)
         
         s.optionsHandler = { (shader, commandEncoder, input, output) in
-            commandEncoder.setBuffers(self.matrixBuffers, offsets: self.matrixBufferOffsets, with: NSMakeRange(0, self.matrixBuffers.count))
+            commandEncoder.setBuffers(self.matrixBuffers, offsets: self.matrixBufferOffsets, range: 0..<self.matrixBuffers.count)
             self.optionsHandler(shader: shader, command: commandEncoder, inputTexture: input, outputTexture: output)
         }
         return s

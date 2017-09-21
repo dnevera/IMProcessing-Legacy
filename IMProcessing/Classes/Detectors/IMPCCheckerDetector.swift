@@ -31,11 +31,11 @@ public class IMPCheckerColorObserver:IMPFilter {
     }
     
     fileprivate func makeCentersBuffer() -> MTLBuffer {
-        return context.device.makeBuffer(length: MemoryLayout<float2>.size * centers.count, options: [])
+        return context.device.makeBuffer(length: MemoryLayout<float2>.size * centers.count, options: [])!
     }
     
     fileprivate func makeColorsBuffer() -> MTLBuffer {
-        return context.device.makeBuffer(length: MemoryLayout<float3>.size * centers.count, options: .storageModeShared)
+        return context.device.makeBuffer(length: MemoryLayout<float3>.size * centers.count, options: .storageModeShared)!
     }
 
     fileprivate lazy var centersBuffer:MTLBuffer = self.makeCentersBuffer()
@@ -65,8 +65,8 @@ public class IMPCheckerColorObserver:IMPFilter {
         let f = IMPFunction(context: self.context, kernelName: "kernel_patchColors")
         f.optionsHandler = { (function,command,source,destination) in
             if self.centers.count > 0 {
-                command.setBuffer(self.centersBuffer,  offset: 0, at: 0)
-                command.setBuffer(self.colorsBuffer,   offset: 0, at: 1)
+                command.setBuffer(self.centersBuffer,  offset: 0, index: 0)
+                command.setBuffer(self.colorsBuffer,   offset: 0, index: 1)
             }
         }
         return f
@@ -207,7 +207,7 @@ public class IMPCCheckerDetector: IMPDetector {
     
     fileprivate lazy var cornersBuffer:MTLBuffer = self.context.device.makeBuffer(
         length: MemoryLayout<IMPCorner>.size * Int(self.harrisCornerDetector.pointsMax),
-        options: .storageModeShared)
+        options: .storageModeShared)!
     
     //func makeCentersBuffer() -> MTLBuffer {
     //    return context.device.makeBuffer(length: MemoryLayout<float2>.size * self.patchGrid.target.count, options: [])
@@ -228,10 +228,10 @@ public class IMPCCheckerDetector: IMPDetector {
         f.optionsHandler = { (function,command,source,destination) in
             
             if let texture = self.sourceImage?.texture {
-                command.setTexture(texture, at: 2)
+                command.setTexture(texture, index: 2)
             }
             
-            command.setBuffer(self.cornersBuffer,          offset: 0, at: 0)
+            command.setBuffer(self.cornersBuffer,          offset: 0, index: 0)
         }
         return f
     }()

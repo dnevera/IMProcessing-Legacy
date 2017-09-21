@@ -10,7 +10,7 @@
     import UIKit
     let screenScale = UIScreen.main.scale
 #else
-    let screenScale = NSScreen.main()?.backingScaleFactor ?? 1
+let screenScale = NSScreen.main?.backingScaleFactor ?? 1
 #endif
 
 import MetalKit
@@ -52,7 +52,7 @@ public class IMPView: MTKView {
             #if os(iOS)
                 return  Float(UIScreen.mainScreen().scale)
             #else
-                let screen = NSScreen.main()
+                let screen = NSScreen.main
                 let scaleFactor = screen?.backingScaleFactor ?? 1.0
                 return Float(scaleFactor)
             #endif
@@ -234,7 +234,7 @@ public class IMPView: MTKView {
             if renderingEnabled == false &&
                 sourceTexture.cgsize == drawableSize  &&
                 sourceTexture.pixelFormat == targetTexture.pixelFormat{
-                let encoder = commandBuffer.makeBlitCommandEncoder()
+                guard let encoder = commandBuffer.makeBlitCommandEncoder() else {return }
                 encoder.copy(
                     from: sourceTexture,
                     sourceSlice: 0,
@@ -251,14 +251,14 @@ public class IMPView: MTKView {
             else {
                 renderPassDescriptor.colorAttachments[0].texture     = targetTexture
                 
-                let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
+                guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else { return }
                 
                 if let pipeline = renderPipeline {
                     
                     encoder.setRenderPipelineState(pipeline)
-                    
-                    encoder.setVertexBuffer(vertexBuffer, offset:0, at:0)
-                    encoder.setFragmentTexture(sourceTexture, at:0)
+                                        
+                    encoder.setVertexBuffer(vertexBuffer, offset:0, index:0)
+                    encoder.setFragmentTexture(sourceTexture, index:0)
                     encoder.setViewport(viewPort)
                     
                     encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
@@ -356,11 +356,9 @@ public class IMPView: MTKView {
         return d
     }()
     
-    lazy var vertexBuffer:MTLBuffer = {
-        let v = self.context.device.makeBuffer(bytes: viewVertexData,
-                                               length:MemoryLayout<Float>.size*viewVertexData.count,
-                                               options:[])
-        v.label = "Vertices"
+    lazy var vertexBuffer:MTLBuffer? = {
+        let v = self.context.device.makeBuffer(bytes: IMPView.viewVertexData, length: MemoryLayout<Float>.size*IMPView.viewVertexData.count, options: [])
+        v?.label = "Vertices"
         return v
     }()
     
@@ -405,7 +403,9 @@ public class IMPView: MTKView {
         let sourceDragMask = sender.draggingSourceOperationMask()
         let pboard = sender.draggingPasteboard()
         
-        if pboard.availableType(from: [NSFilenamesPboardType]) == NSFilenamesPboardType {
+        let draggedType = NSPasteboard.PasteboardType(kUTTypeURL as String)
+        
+        if pboard.availableType(from: [draggedType]) == draggedType {
             if sourceDragMask.rawValue & NSDragOperation.generic.rawValue != 0 {
                 return NSDragOperation.generic
             }
@@ -417,7 +417,8 @@ public class IMPView: MTKView {
     public var dragOperation:IMPDragOperationHandler?
     
     public override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
-        if let files  = sender.draggingPasteboard().propertyList(forType: NSFilenamesPboardType) {
+        let draggedType = NSPasteboard.PasteboardType(kUTTypeURL as String)
+        if let files  = sender.draggingPasteboard().propertyList(forType: draggedType) {
             if let o = dragOperation {
                 return o(files as! [String])
             }

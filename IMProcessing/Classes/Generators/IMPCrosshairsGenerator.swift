@@ -14,7 +14,7 @@ public class IMPDrawPointsShader: IMPShader {
     public var points = [IMPCorner]() {
         didSet{
             if points.count > 1 {
-                _pointsBuffer = context.device.makeBuffer(bytes: points, length: points.count * MemoryLayout<IMPCorner>.size, options: [])
+                _pointsBuffer = context.device.makeBuffer(bytes: points, length: points.count * MemoryLayout<IMPCorner>.size, options: [])!
             }
         }
     }
@@ -27,7 +27,7 @@ public class IMPDrawPointsShader: IMPShader {
         return _pointsBuffer
     }
     
-    private lazy var _pointsBuffer: MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPCorner>.size, options: [])
+    private lazy var _pointsBuffer: MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPCorner>.size, options: [])!
 }
 
 class IMPDrawPointsCoreMTLShader: IMPCoreImageMTLShader {
@@ -43,18 +43,18 @@ class IMPDrawPointsCoreMTLShader: IMPCoreImageMTLShader {
                 
                 let renderEncoder = shader.commandEncoder(from: commandBuffer, width: destinationTexture)
                 
-                renderEncoder.setVertexBuffer(shader.pointsBuffer, offset: 0, at: 0)
-                renderEncoder.setFragmentTexture(sourceTexture, at:0)
+                renderEncoder?.setVertexBuffer(shader.pointsBuffer, offset: 0, index: 0)
+                renderEncoder?.setFragmentTexture(sourceTexture, index:0)
                 
-                if let handler = shader.optionsHandler {
-                    handler(shader, renderEncoder, sourceTexture, destinationTexture)
+                if let handler = shader.optionsHandler, let render = renderEncoder{
+                    handler(shader, render, sourceTexture, destinationTexture)
                 }
                 
-                renderEncoder.drawPrimitives(type: .point,
+                renderEncoder?.drawPrimitives(type: .point,
                                              vertexStart: 0,
                                              vertexCount: points.count,
                                              instanceCount: 4)
-                renderEncoder.endEncoding()
+                renderEncoder?.endEncoding()
             }
         }
     }
@@ -117,8 +117,8 @@ public class IMPCrosshairsGenerator: IMPFilter {
                                     vertexName: "vertex_crosshair",
                                     fragmentName: "fragment_crosshair")
         s.optionsHandler = { (shader, commandEncoder, input, output) in
-            commandEncoder.setVertexBuffer(self.widthBuffer, offset: 0, at: 1)
-            commandEncoder.setFragmentBuffer(self.colorBuffer, offset: 0, at: 0)
+            commandEncoder.setVertexBuffer(self.widthBuffer, offset: 0, index: 1)
+            commandEncoder.setFragmentBuffer(self.colorBuffer, offset: 0, index: 0)
         }
         return s
     }()
@@ -127,8 +127,8 @@ public class IMPCrosshairsGenerator: IMPFilter {
         let s = IMPShader(context: self.context,
                           fragmentName: "fragment_blendTextureSource")
         s.optionsHandler = { (shader,commandEncoder, input, output) in
-            commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, at: 0)
-            commandEncoder.setFragmentTexture((self.source?.texture)!, at:1)
+            commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, index: 0)
+            commandEncoder.setFragmentTexture((self.source?.texture)!, index:1)
         }
         return s
     }()
@@ -138,7 +138,7 @@ public class IMPCrosshairsGenerator: IMPFilter {
                                                    filter: IMPDrawPointsCoreMTLShader())
     }()
 
-    private lazy var widthBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.width), options: [])
-    private lazy var colorBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.color), options: [])
+    private lazy var widthBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.width), options: [])!
+    private lazy var colorBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.color), options: [])!
 
 }

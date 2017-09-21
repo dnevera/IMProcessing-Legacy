@@ -129,8 +129,8 @@ public class IMPCoreImageMTLKernel: IMPCIFilter{
         )  {
         let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
         
-        commandEncoder.setTexture(input, at:0)
-        commandEncoder.setTexture(output, at:1)
+        commandEncoder.setTexture(input, index:0)
+        commandEncoder.setTexture(output, index:1)
         
         if let handler = kernel.optionsHandler {
             handler(kernel, commandEncoder, input, output)

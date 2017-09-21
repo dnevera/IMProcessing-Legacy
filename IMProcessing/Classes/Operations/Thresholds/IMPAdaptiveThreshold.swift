@@ -37,7 +37,7 @@ public class IMPAdaptiveThreshold: IMPFilter {
         
         f.optionsHandler = { (function,command,source,destination) in
             if let text = self.luminanceOutput?.texture{
-                command.setTexture(text,at:2)
+                command.setTexture(text,index:2)
             }
         }
         

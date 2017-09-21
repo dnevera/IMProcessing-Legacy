@@ -133,7 +133,7 @@ open class IMPContext {
             fatalError("Default Metal command queue could not be created...")
         }
         
-        if let library = _device?.newDefaultLibrary(){
+        if let library = _device?.makeDefaultLibrary(){
             defaultLibrary = library
         }
         else{
@@ -231,7 +231,7 @@ open class IMPContext {
             
             let blit = commandBuffer.makeBlitCommandEncoder()
             
-            blit.copy(
+            blit?.copy(
                 from: texture,
                 sourceSlice: 0,
                 sourceLevel: 0,
@@ -242,7 +242,7 @@ open class IMPContext {
                 destinationLevel: 0,
                 destinationOrigin: MTLOrigin(x:0,y:0,z:0))
             
-            blit.endEncoding()
+            blit?.endEncoding()
         }
         
         return newTexture
@@ -262,7 +262,7 @@ open class IMPContext {
             
             let blit = commandBuffer.makeBlitCommandEncoder()
             
-            blit.copy(
+            blit?.copy(
                 from: texture,
                 sourceSlice: 0,
                 sourceLevel: 0,
@@ -273,7 +273,7 @@ open class IMPContext {
                 destinationLevel: 0,
                 destinationOrigin: MTLOrigin(x:0,y:0,z:0))
             
-            blit.endEncoding()
+            blit?.endEncoding()
         }
         
         return newTexture
@@ -370,7 +370,7 @@ public extension IMPContext {
                 length *= v.count
             }
         }
-        return device.makeBuffer(bytes: &value, length: length, options: options)
+        return device.makeBuffer(bytes: &value, length: length, options: options)!
     }
 
 //    public func makeBuffer<T:Array>(from value:T, options: MTLResourceOptions = []) -> MTLBuffer {

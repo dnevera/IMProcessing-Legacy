@@ -41,9 +41,12 @@ public class IMPCubicSpline:IMPInterpolator {
         let x0 = x - controls[i.0].x
         let x1 = controls[i.1].x - x
         
-        let y = (powf(x1,3) * coeffs[i.0] + powf(x0, 3) * coeffs[i.1])/6/h
-            - ( coeffs[i.0]*x1 + coeffs[i.1]*x0)*h/6
-            + (controls[i.0].y*x1 + controls[i.1].y*x0)/h
+        //var y = (powf(x1,3) * coeffs[i.0] + powf(x0, 3) * coeffs[i.1])/6/h
+        var y = powf(x1,3) * coeffs[i.0] + powf(x0, 3) * coeffs[i.1]
+            y = y/6/h
+            let z = coeffs[i.0]*x1 + coeffs[i.1]*x0
+            y = y - z*h/6
+            y = y + (controls[i.0].y*x1 + controls[i.1].y*x0)/h
         
         return y
     }

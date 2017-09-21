@@ -31,7 +31,7 @@ public class IMPContrastScretchingFilter:IMPFilter{
     private lazy var kernel:IMPFunction = {
         var f = IMPFunction(context: self.context, kernelName: "kernel_adjustContrastScretching")
         f.optionsHandler = { (function, command, input, output) in
-            command.setBytes(&self.adjustment, length:MemoryLayout.size(ofValue: self.adjustment),at:0)
+            command.setBytes(&self.adjustment, length:MemoryLayout.size(ofValue: self.adjustment),index:0)
         }
         return f
     }()    

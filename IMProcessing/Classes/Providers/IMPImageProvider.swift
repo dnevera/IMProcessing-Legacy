@@ -357,7 +357,7 @@ public extension IMPImageProvider {
         //
         transform = transform.rotated(by: CGFloat(angle))
         
-        return image.applying(transform)
+        return image.transformed(by: transform)
     }
 }
 
@@ -384,17 +384,17 @@ public extension IMPImageProvider {
             func readblit(commandBuffer:MTLCommandBuffer){
                 let blit = commandBuffer.makeBlitCommandEncoder()
                 
-                blit.copy(from:          texture,
+                blit?.copy(from:          texture,
                           sourceSlice:  0,
                           sourceLevel:  0,
                           sourceOrigin: MTLOrigin(x:0,y:0,z:0),
                           sourceSize:   texture.size,
-                          to:           buffer,
+                          to:           buffer!,
                           destinationOffset: 0,
                           destinationBytesPerRow: bytesPerRow,
                           destinationBytesPerImage: imageBytes)
                 
-                blit.endEncoding()
+                blit?.endEncoding()
             }
             
             
@@ -421,7 +421,7 @@ public extension IMPImageProvider {
                     //                blit.endEncoding()
                 }
             }
-            return (buffer,bytesPerRow,imageBytes)
+            return (buffer,bytesPerRow,imageBytes) as! (buffer: MTLBuffer, bytesPerRow: Int, imageBytes: Int)
         }
         
         
@@ -606,7 +606,7 @@ public extension IMPImageProvider {
 
 #if os(OSX)
 
-    public typealias IMPImageFileType = NSBitmapImageFileType
+    public typealias IMPImageFileType = NSBitmapImageRep.FileType
     
     extension NSImage {
                       
@@ -616,10 +616,10 @@ public extension IMPImageProvider {
                 let bitmapImage = NSBitmapImageRep(data: tiffRepresentation) 
                 else { return nil }
             
-            var properties:[String : Any] = [:]
+            var properties:[NSBitmapImageRep.PropertyKey : Any] = [:]
             
-            if type == .JPEG {
-                properties = [NSImageCompressionFactor: factor ?? 1.0]
+            if type == .jpeg {
+                properties = [NSBitmapImageRep.PropertyKey.compressionFactor: factor ?? 1.0]
             }
             
             return bitmapImage.representation(using: type, properties: properties)            
@@ -635,7 +635,7 @@ public extension IMPImageProvider {
             // convert back to MTL texture coordinates system
             //
             let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.height)
-            image = image.applying(transform)
+            image = image.transformed(by: transform)
             
             self.init(size: image.extent.size)
             let rep = NSCIImageRep(ciImage: image)

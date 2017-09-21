@@ -147,13 +147,13 @@ public extension IMPCLut {
         
         context.execute(.sync, wait: true){ (commandBuffer) in
             let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
-            commandEncoder.setTexture(text, at:0)
+            commandEncoder.setTexture(text, index:0)
                                     
-            commandEncoder.setBytes(&compression,  length:MemoryLayout.stride(ofValue: compression),  at:0)
+            commandEncoder.setBytes(&compression,  length:MemoryLayout.stride(ofValue: compression),  index:0)
             
             if self._type == .lut_2d {
                 var l = uint(level)
-                commandEncoder.setBytes(&l,  length:MemoryLayout.stride(ofValue: l),  at:1)
+                commandEncoder.setBytes(&l,  length:MemoryLayout.stride(ofValue: l),  index:1)
             }
             commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadsPerThreadgroup)
             commandEncoder.endEncoding()
@@ -189,7 +189,7 @@ public extension IMPCLut {
             
         }){ (commandBuffer) in            
             let blt = commandBuffer.makeBlitCommandEncoder()
-            blt.copy(from: txt, 
+            blt?.copy(from: txt, 
                      sourceSlice: 0, 
                      sourceLevel: 0, 
                      sourceOrigin: MTLOrigin(x:0,y:0,z:0), 
@@ -198,7 +198,7 @@ public extension IMPCLut {
                      destinationSlice: 0, 
                      destinationLevel: 0, 
                      destinationOrigin:  MTLOrigin(x:0,y:0,z:0))
-            blt.endEncoding()
+            blt?.endEncoding()
         }                 
     }
     
@@ -292,7 +292,7 @@ internal extension IMPCLut {
         textureDescriptor.arrayLength = 1;
         textureDescriptor.mipmapLevelCount = 1;
         
-        return context.device.makeTexture(descriptor: textureDescriptor)
+        return context.device.makeTexture(descriptor: textureDescriptor)!
     }
             
     internal func getBytes<T>(texture:MTLTexture) -> (UnsafeMutablePointer<T>,Int) {
@@ -314,20 +314,20 @@ internal extension IMPCLut {
             
             let blit = commandBuffer.makeBlitCommandEncoder()
             #if os(OSX)
-                blit.synchronize(resource: texture)
+                blit?.synchronize(resource: texture)
             #endif
             
-            blit.copy(from:         texture,
+            blit?.copy(from:         texture,
                       sourceSlice:  0,
                       sourceLevel:  0,
                       sourceOrigin: MTLOrigin(x:0,y:0,z:0),
                       sourceSize:   texture.size,
-                      to:           buffer,
+                      to:           buffer!,
                       destinationOffset: 0,
                       destinationBytesPerRow: bytesPerRow,
                       destinationBytesPerImage: bytesPerImage)
             
-            blit.endEncoding()
+            blit?.endEncoding()
         }
         
 //        texture.getBytes(bytes, 
@@ -337,8 +337,8 @@ internal extension IMPCLut {
 //                         mipmapLevel: 0, 
 //                         slice: 0)
                 
-        let bytes =  buffer.contents().bindMemory(to: T.self, capacity: bytesPerImage)
+        let bytes =  buffer?.contents().bindMemory(to: T.self, capacity: bytesPerImage)
         
-        return (bytes,bytesPerImage/componentBytes)
+        return (bytes!,bytesPerImage/componentBytes)
     }
 }

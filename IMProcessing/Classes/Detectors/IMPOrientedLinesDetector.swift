@@ -75,9 +75,9 @@ public class IMPOrientedLinesDetector: IMPHoughSpaceDetector {
         maximumsVerticalBuffer = self.maximumsBufferGetter()
         
         maximumsCountHorizonBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size,
-                                                                    options: .storageModeShared)
+                                                                    options: .storageModeShared)!
         maximumsCountVerticalBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size,
-                                                                     options: .storageModeShared)
+                                                                     options: .storageModeShared)!
         
         houghSpaceLocalMaximumsKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
         houghSpaceLocalMaximumsKernel.preferedDimension =  MTLSize(width: self.regionSize, height: self.regionSize, depth: 1)
@@ -90,8 +90,8 @@ public class IMPOrientedLinesDetector: IMPHoughSpaceDetector {
     private lazy var maximumsHorizonBuffer:MTLBuffer = self.maximumsBufferGetter()
     private lazy var maximumsVerticalBuffer:MTLBuffer = self.maximumsBufferGetter()
     
-    private lazy var maximumsCountHorizonBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
-    private lazy var maximumsCountVerticalBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
+    private lazy var maximumsCountHorizonBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)!
+    private lazy var maximumsCountVerticalBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)!
     
     private lazy var regionInBuffer:MTLBuffer  = self.context.makeBuffer(from: IMPRegion())
     
@@ -103,14 +103,14 @@ public class IMPOrientedLinesDetector: IMPHoughSpaceDetector {
         
         f.optionsHandler = { (function, command, input, output) in
             
-            command.setBuffer(self.accumHorizonBuffer,     offset: 0, at: 0)
-            command.setBuffer(self.accumVerticalBuffer,     offset: 0, at: 1)
-            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   at: 2)
-            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), at: 3)
-            command.setBytes(&self.rhoStep,   length: MemoryLayout.size(ofValue: self.rhoStep),  at: 4)
-            command.setBytes(&self.thetaStep, length: MemoryLayout.size(ofValue: self.thetaStep),at: 5)
-            command.setBytes(&self.minTheta,  length: MemoryLayout.size(ofValue: self.minTheta), at: 6)
-            command.setBuffer(self.regionInBuffer,  offset: 0, at: 7)
+            command.setBuffer(self.accumHorizonBuffer,     offset: 0, index: 0)
+            command.setBuffer(self.accumVerticalBuffer,     offset: 0, index: 1)
+            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   index: 2)
+            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), index: 3)
+            command.setBytes(&self.rhoStep,   length: MemoryLayout.size(ofValue: self.rhoStep),  index: 4)
+            command.setBytes(&self.thetaStep, length: MemoryLayout.size(ofValue: self.thetaStep),index: 5)
+            command.setBytes(&self.minTheta,  length: MemoryLayout.size(ofValue: self.minTheta), index: 6)
+            command.setBuffer(self.regionInBuffer,  offset: 0, index: 7)
         }
         
         return f
@@ -121,16 +121,16 @@ public class IMPOrientedLinesDetector: IMPHoughSpaceDetector {
         
         f.optionsHandler = { (function, command, input, output) in
             
-            command.setBuffer(self.accumHorizonBuffer,         offset: 0, at: 0)
-            command.setBuffer(self.accumVerticalBuffer,        offset: 0, at: 1)
-            command.setBuffer(self.maximumsHorizonBuffer,      offset: 0, at: 2)
-            command.setBuffer(self.maximumsVerticalBuffer,     offset: 0, at: 3)
-            command.setBuffer(self.maximumsCountHorizonBuffer, offset: 0, at: 4)
-            command.setBuffer(self.maximumsCountVerticalBuffer,offset: 0, at: 5)
+            command.setBuffer(self.accumHorizonBuffer,         offset: 0, index: 0)
+            command.setBuffer(self.accumVerticalBuffer,        offset: 0, index: 1)
+            command.setBuffer(self.maximumsHorizonBuffer,      offset: 0, index: 2)
+            command.setBuffer(self.maximumsVerticalBuffer,     offset: 0, index: 3)
+            command.setBuffer(self.maximumsCountHorizonBuffer, offset: 0, index: 4)
+            command.setBuffer(self.maximumsCountVerticalBuffer,offset: 0, index: 5)
             
-            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   at: 6)
-            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), at: 7)
-            command.setBytes(&self.threshold, length: MemoryLayout.size(ofValue: self.threshold), at: 8)
+            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   index: 6)
+            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), index: 7)
+            command.setBytes(&self.threshold, length: MemoryLayout.size(ofValue: self.threshold), index: 8)
         }
         
         return f

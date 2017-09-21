@@ -26,7 +26,7 @@ open class IMPMedian: IMPFilter {
 
         f.optionsHandler = { (function, command, input, output) in
             var d:uint = uint(self.dimensions)
-            command.setBytes(&d,length:MemoryLayout<uint>.size,at:0)
+            command.setBytes(&d,length:MemoryLayout<uint>.size,index:0)
         }
         
         return f
@@ -56,6 +56,6 @@ open class IMPTwoPassMedian: IMPTwoPass {
                                       inputTexture: MTLTexture?,
                                       outputTexture: MTLTexture?) {
         var d:uint = uint(self.dimensions)
-        command.setBytes(&d,length:MemoryLayout<uint>.size,at:1)
+        command.setBytes(&d,length:MemoryLayout<uint>.size,index:1)
     }
 }

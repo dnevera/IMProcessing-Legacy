@@ -21,7 +21,7 @@ class IMPAVSession:AVCaptureSession {
             o.setSampleBufferDelegate(delegate, queue: self.queue)
         }
         o.alwaysDiscardsLateVideoFrames = true
-        o.videoSettings = [kCVPixelBufferPixelFormatTypeKey as AnyHashable: kCVPixelFormatType_32BGRA]
+        o.videoSettings = [kCVPixelBufferPixelFormatTypeKey as AnyHashable as! String: kCVPixelFormatType_32BGRA]
         return o
     }()
     
@@ -52,18 +52,18 @@ class IMPAVSession:AVCaptureSession {
     private func configure(currentCamera:AVCaptureDevice)  {
         beginConfiguration()
         
-        sessionPreset = AVCaptureSessionPresetPhoto
+        sessionPreset = AVCaptureSession.Preset.photo
         
         do{
             
             if findInput(input:videoInput) {
-                removeInput(videoInput)
+                removeInput(videoInput!)
             }            
             
             videoInput = try AVCaptureDeviceInput(device: currentCamera)
             
-            if canAddInput(videoInput) {
-                addInput(videoInput)
+            if canAddInput(videoInput!) {
+                addInput(videoInput!)
             }
             
             if !findOutput(output:liveViewOutput) && canAddOutput(liveViewOutput){
@@ -101,7 +101,7 @@ class IMPAVSession:AVCaptureSession {
         //
         // Current capture connection
         //
-        currentConnection = liveViewOutput.connection(withMediaType: AVMediaTypeVideo)
+        currentConnection = liveViewOutput.connection(with: AVMediaType.video)
         
         currentConnection.automaticallyAdjustsVideoMirroring = false
         

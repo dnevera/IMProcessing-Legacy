@@ -70,10 +70,10 @@ public class IMPCoreImageMTLShader: IMPCIFilter{
         if let shader   = self.shader,
             let vertices = shader.vertices {
             
-            let renderEncoder = shader.commandEncoder(from: commandBuffer, width: destinationTexture)
+            guard let renderEncoder = shader.commandEncoder(from: commandBuffer, width: destinationTexture) else { return }
             
-            renderEncoder.setVertexBuffer(shader.verticesBuffer, offset: 0, at: 0)
-            renderEncoder.setFragmentTexture(sourceTexture, at:0)
+            renderEncoder.setVertexBuffer(shader.verticesBuffer, offset: 0, index: 0)
+            renderEncoder.setFragmentTexture(sourceTexture, index:0)
             
             if let handler = shader.optionsHandler {
                 handler(shader, renderEncoder, sourceTexture, destinationTexture)

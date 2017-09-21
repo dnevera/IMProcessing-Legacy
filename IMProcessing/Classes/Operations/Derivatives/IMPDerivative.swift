@@ -39,7 +39,7 @@ public class IMPDerivative: IMPFilter{
                           fragmentName: self.functionName)
         
         s.optionsHandler = { (shader, commandEncoder, input, output) in
-            commandEncoder.setFragmentBytes(&self.texelRadius,length:MemoryLayout<Float>.size,at:0)
+            commandEncoder.setFragmentBytes(&self.texelRadius,length:MemoryLayout<Float>.size,index:0)
             self.optionsHandler(shader: shader, command: commandEncoder, inputTexture: input, outputTexture: output)
         }
         return s

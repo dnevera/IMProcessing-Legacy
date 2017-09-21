@@ -22,7 +22,7 @@ public class IMPGaussianDerivativeEdges: IMPFilter{
         let f = IMPFunction(context: self.context, kernelName: "kernel_gaussianDerivativeEdge")
         f.optionsHandler = { (function, command, input, output) in
             var p = uint(self.pitch)
-            command.setBytes(&p,length:MemoryLayout<uint>.size,at:0)
+            command.setBytes(&p,length:MemoryLayout<uint>.size,index:0)
         }
         return f
     }()

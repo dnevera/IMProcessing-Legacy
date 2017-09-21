@@ -26,6 +26,6 @@ open class IMPMorphology: IMPTwoPass {
                                       inputTexture: MTLTexture?,
                                       outputTexture: MTLTexture?) {
         var d:uint = passnumber == .first ? uint(self.dimensions.width) : uint(self.dimensions.height)
-        command.setBytes(&d,length:MemoryLayout<uint>.size,at:1)
+        command.setBytes(&d,length:MemoryLayout<uint>.size,index:1)
     }
 }

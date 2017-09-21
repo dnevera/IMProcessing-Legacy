@@ -102,7 +102,7 @@ public class IMPBaseBlur: IMPFilter {
     }
     
     
-    private lazy var adjustmentBuffer:MTLBuffer = self.context.makeBuffer(from: defaultAdjustment)
+    private lazy var adjustmentBuffer:MTLBuffer = self.context.makeBuffer(from: IMPBaseBlur.defaultAdjustment)
     
     private func update()  {
         self.updateWeights()
@@ -159,8 +159,8 @@ public class IMPBaseBlur: IMPFilter {
     }
     
     
-    lazy var hTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
-    lazy var vTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
+    lazy var hTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])!
+    lazy var vTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])!
     lazy var weightsTexture:MTLTexture = {
         return self.context.device.texture1D(buffer:[Float](repeating:1, count:1))
     }()
@@ -175,8 +175,8 @@ public class IMPBaseBlur: IMPFilter {
         let s = IMPShader(context: self.context,
                           fragmentName: "fragment_blendSource", name:"Blur Upscale Stage #4")
         s.optionsHandler = { (shader,commandEncoder, input, output) in
-            commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, at: 0)
-            commandEncoder.setFragmentTexture((self.source?.texture)!, at:1)
+            commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, index: 0)
+            commandEncoder.setFragmentTexture((self.source?.texture)!, index:1)
         }
         return s
     }()
@@ -193,8 +193,8 @@ public class IMPBaseBlur: IMPFilter {
         
         f.optionsHandler = { (function,commandEncoder, input, output) in
             guard let texture = self.source?.texture else { return }
-            commandEncoder.setBuffer(self.adjustmentBuffer, offset: 0, at: 0)
-            commandEncoder.setTexture(texture, at:2)
+            commandEncoder.setBuffer(self.adjustmentBuffer, offset: 0, index: 0)
+            commandEncoder.setTexture(texture, index:2)
         }
         
         return f
@@ -206,9 +206,9 @@ public class IMPBaseBlur: IMPFilter {
                             kernelName: "kernel_gaussianSampledBlur")
         f.optionsHandler = { (function,commandEncoder, input, output) in
             
-            commandEncoder.setBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
-            commandEncoder.setTexture(self.weightsTexture, at:2)
-            commandEncoder.setTexture(self.offsetsTexture, at:3)
+            commandEncoder.setBuffer(self.hTexelSizeBuffer, offset: 0, index: 0)
+            commandEncoder.setTexture(self.weightsTexture, index:2)
+            commandEncoder.setTexture(self.offsetsTexture, index:3)
         }
         return f
     }()
@@ -218,9 +218,9 @@ public class IMPBaseBlur: IMPFilter {
                             kernelName: "kernel_gaussianSampledBlur")
         f.optionsHandler = { (function,commandEncoder, input, output) in
             
-            commandEncoder.setBuffer(self.vTexelSizeBuffer, offset: 0, at: 0)
-            commandEncoder.setTexture(self.weightsTexture, at:2)
-            commandEncoder.setTexture(self.offsetsTexture, at:3)
+            commandEncoder.setBuffer(self.vTexelSizeBuffer, offset: 0, index: 0)
+            commandEncoder.setTexture(self.weightsTexture, index:2)
+            commandEncoder.setTexture(self.offsetsTexture, index:3)
         }
         return f
     }()
@@ -231,9 +231,9 @@ public class IMPBaseBlur: IMPFilter {
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             
-            commandEncoder.setFragmentBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
-            commandEncoder.setFragmentTexture(self.weightsTexture, at:1)
-            commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
+            commandEncoder.setFragmentBuffer(self.hTexelSizeBuffer, offset: 0, index: 0)
+            commandEncoder.setFragmentTexture(self.weightsTexture, index:1)
+            commandEncoder.setFragmentTexture(self.offsetsTexture, index:2)
         }
         
         return s
@@ -246,9 +246,9 @@ public class IMPBaseBlur: IMPFilter {
         
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             
-            commandEncoder.setFragmentBuffer(self.vTexelSizeBuffer, offset: 0, at: 0)
-            commandEncoder.setFragmentTexture(self.weightsTexture, at:1)
-            commandEncoder.setFragmentTexture(self.offsetsTexture, at:2)
+            commandEncoder.setFragmentBuffer(self.vTexelSizeBuffer, offset: 0, index: 0)
+            commandEncoder.setFragmentTexture(self.weightsTexture, index:1)
+            commandEncoder.setFragmentTexture(self.offsetsTexture, index:2)
         }
         
         return s

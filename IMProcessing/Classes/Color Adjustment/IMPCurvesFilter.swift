@@ -100,11 +100,11 @@ public class IMPCurvesFilter: IMPFilter {
             
             
             
-            command.setTexture(self.lut.texture, at:2)
+            command.setTexture(self.lut.texture, index:2)
             
             var cs = self.colorSpace.index
-            command.setBytes(&cs,              length:MemoryLayout.stride(ofValue: cs),             at:0)
-            command.setBytes(&self.adjustment, length:MemoryLayout.stride(ofValue: self.adjustment),at:1)
+            command.setBytes(&cs,              length:MemoryLayout.stride(ofValue: cs),             index:0)
+            command.setBytes(&self.adjustment, length:MemoryLayout.stride(ofValue: self.adjustment),index:1)
         }
         return f
     }()

@@ -137,12 +137,12 @@ public class IMPHistogramAnalyzer: IMPDetector, IMPHistogramAnalyzerProtocol{
         let f = IMPFunction(context: self.context, kernelName: "kernel_partialHistogram")
         
         f.optionsHandler = { (function, command, input, output) in
-            command.setBuffer(self.partialBuffer,       offset: 0, at: 0)
-            command.setBytes(&self.region, length: MemoryLayout.size(ofValue: self.region),   at: 1)
+            command.setBuffer(self.partialBuffer,       offset: 0, index: 0)
+            command.setBytes(&self.region, length: MemoryLayout.size(ofValue: self.region),   index: 1)
             var np = self.channelsToCompute;
-            command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   at: 2)
+            command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   index: 2)
             var cs = self.colorSpace.index
-            command.setBytes(&cs,length:MemoryLayout.stride(ofValue: cs),at:3)
+            command.setBytes(&cs,length:MemoryLayout.stride(ofValue: cs),index:3)
 
         }
         
@@ -153,13 +153,13 @@ public class IMPHistogramAnalyzer: IMPDetector, IMPHistogramAnalyzerProtocol{
         let f = IMPFunction(context: self.context, kernelName: "kernel_accumHistogram")
         
         f.optionsHandler = { (function, command, input, output) in
-            command.setBuffer(self.partialBuffer,  offset: 0, at: 0)
-            command.setBuffer(self.completeBuffer, offset: 0, at: 1)
+            command.setBuffer(self.partialBuffer,  offset: 0, index: 0)
+            command.setBuffer(self.completeBuffer, offset: 0, index: 1)
             
             var np = self.numParts;
-            command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   at: 2)
+            command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   index: 2)
             np = self.channelsToCompute;
-            command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   at: 3)
+            command.setBytes(&np, length: MemoryLayout.size(ofValue: np),   index: 3)
         }
         
         return f
@@ -177,12 +177,12 @@ public class IMPHistogramAnalyzer: IMPDetector, IMPHistogramAnalyzerProtocol{
         //
         // to echange data should be .storageModeShared!!!!
         //
-        return context.device.makeBuffer(length: MemoryLayout<IMPHistogramBuffer>.stride * numParts, options: .storageModeShared)
+        return context.device.makeBuffer(length: MemoryLayout<IMPHistogramBuffer>.stride * numParts, options: .storageModeShared)!
     }
     
     private lazy var partialBuffer:MTLBuffer = self.partialBufferGetter()
 
-    private lazy var completeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramBuffer>.stride, options: .storageModeShared)
+    private lazy var completeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramBuffer>.stride, options: .storageModeShared)!
 
     private var solvers:[IMPHistogramSolver] = [IMPHistogramSolver]()
 

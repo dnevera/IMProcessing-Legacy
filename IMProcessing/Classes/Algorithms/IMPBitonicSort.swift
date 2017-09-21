@@ -76,25 +76,25 @@ public class IMPBitonicSort:IMPContextProvider{
     // Шаг сотрировки, подготовленные для передачи в контекст ядра
     private lazy var stageBuffer:MTLBuffer = self.context.device.makeBuffer(
         length: MemoryLayout<simd.uint>.size,
-        options: .cpuCacheModeWriteCombined)
+        options: .cpuCacheModeWriteCombined)!
     
     // Проход сортировки
     private lazy var passOfStageBuffer:MTLBuffer = self.context.device.makeBuffer(
         length: MemoryLayout<simd.uint>.size,
-        options: .cpuCacheModeWriteCombined)
+        options: .cpuCacheModeWriteCombined)!
     
     // Направление сортировки
     private lazy var directionBuffer:MTLBuffer = self.context.device.makeBuffer(
         length: MemoryLayout<simd.uint>.size,
-        options: .cpuCacheModeWriteCombined)
+        options: .cpuCacheModeWriteCombined)!
     
     ///
     /// Конфигурируем ядро
     ///
     public func configure(commandEncoder: MTLComputeCommandEncoder) {
-        commandEncoder.setBuffer(stageBuffer,       offset: 0, at: 2)
-        commandEncoder.setBuffer(passOfStageBuffer, offset: 0, at: 3)
-        commandEncoder.setBuffer(directionBuffer,   offset: 0, at: 4)
+        commandEncoder.setBuffer(stageBuffer,       offset: 0, index: 2)
+        commandEncoder.setBuffer(passOfStageBuffer, offset: 0, index: 3)
+        commandEncoder.setBuffer(directionBuffer,   offset: 0, index: 4)
     }
     
     private var threadgroups = MTLSizeMake(1,1,1)
@@ -145,12 +145,12 @@ public class IMPBitonicSort:IMPContextProvider{
                     
                     let commandEncoder = self.function.commandEncoder(from: commandBuffer)
                     
-                    commandEncoder.setBuffer(buffer, offset: 0, at: 0)
+                    commandEncoder.setBuffer(buffer, offset: 0, index: 0)
                    // commandEncoder.setBuffer(self.arraySizeBuffer, offset: 0, at: 1)
 
-                    commandEncoder.setBuffer(self.stageBuffer,       offset: 0, at: 1)
-                    commandEncoder.setBuffer(self.passOfStageBuffer, offset: 0, at: 2)
-                    commandEncoder.setBuffer(self.directionBuffer,   offset: 0, at: 3)
+                    commandEncoder.setBuffer(self.stageBuffer,       offset: 0, index: 1)
+                    commandEncoder.setBuffer(self.passOfStageBuffer, offset: 0, index: 2)
+                    commandEncoder.setBuffer(self.directionBuffer,   offset: 0, index: 3)
                     
                     commandEncoder.dispatchThreadgroups(self.threadgroups, threadsPerThreadgroup: self.threads)
                     commandEncoder.endEncoding()

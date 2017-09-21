@@ -76,14 +76,14 @@ open class IMPTwoPass: IMPFilter {
         }
     }
     
-    lazy var hTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
-    lazy var vTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])
+    lazy var hTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])!
+    lazy var vTexelSizeBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float2>.size, options: [])!
     
     private lazy var horizontalKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: self.kernelName)
         
         f.optionsHandler = { (function, commandEncoder, input, output) in
-            commandEncoder.setBuffer(self.hTexelSizeBuffer, offset: 0, at: 0)
+            commandEncoder.setBuffer(self.hTexelSizeBuffer, offset: 0, index: 0)
             self.optionsHandler(passnumber: .first,
                                 function: function,
                                 command: commandEncoder,
@@ -98,7 +98,7 @@ open class IMPTwoPass: IMPFilter {
         let f = IMPFunction(context: self.context, kernelName: self.kernelName)
         f.optionsHandler = { (function, commandEncoder, input, output) in
             //var d:uint = uint(self.dimensions.height)
-            commandEncoder.setBuffer(self.vTexelSizeBuffer, offset: 0, at: 0)
+            commandEncoder.setBuffer(self.vTexelSizeBuffer, offset: 0, index: 0)
             //commandEncoder.setBytes(&d,length:MemoryLayout<uint>.size,at:1)
             self.optionsHandler(passnumber: .first,
                                 function: function, 

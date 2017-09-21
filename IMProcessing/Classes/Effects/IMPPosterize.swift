@@ -23,7 +23,7 @@ public class IMPPosterize: IMPFilter{
     private lazy var kernel:IMPFunction = {
         let s = IMPFunction(context: self.context, kernelName: "kernel_posterize")
         s.optionsHandler = { (function, commandEncoder, input, output) in
-            commandEncoder.setBytes(&self.levels,length:MemoryLayout<Float>.size,at:0)
+            commandEncoder.setBytes(&self.levels,length:MemoryLayout<Float>.size,index:0)
         }
         return s
     }()

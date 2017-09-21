@@ -316,7 +316,8 @@ public class IMPHistogram {
         vDSP_vclr(&addata, 1, vDSP_Length(asize))
         
         var zero = channels[c.rawValue][0]
-        vDSP_vsadd(&addata, 1, &zero, &addata, 1, vDSP_Length(filter.count))
+        var a = addata
+        vDSP_vsadd(&a, 1, &zero, &addata, 1, vDSP_Length(filter.count))
         
         var one  =  channels[c.rawValue][self.size-1]
         var rest =  UnsafeMutablePointer<Float>(mutating: addata) + Int(size + Int(halfs))
@@ -572,7 +573,8 @@ public class IMPHistogram {
             
             denom /= scale
             
-            vDSP_vsdiv(&B, 1, &denom, &B, 1, rsize);
+            var BB = B
+            vDSP_vsdiv(&BB, 1, &denom, &B, 1, rsize);
         }
     }
     
@@ -583,17 +585,19 @@ public class IMPHistogram {
             vDSP_maxv (&A, 1, &denom, rsize);
             
             denom /= scale
-            
-            vDSP_vsdiv(&A, 1, &denom, &A, 1, rsize);
+            var AA = A
+            vDSP_vsdiv(&AA, 1, &denom, &A, 1, rsize);
         }
     }
     
     private func addFromData(data:[Float], toChannel:inout [Float]){
-        vDSP_vadd(&toChannel, 1, data, 1, &toChannel, 1, vDSP_Length(self.size))
+        var c = toChannel
+        vDSP_vadd(&c, 1, data, 1, &toChannel, 1, vDSP_Length(self.size))
     }
     
     private func mulFromData(data:[Float], toChannel:inout [Float]){
-        vDSP_vmul(&toChannel, 1, data, 1, &toChannel, 1, vDSP_Length(self.size))
+        var c = toChannel
+        vDSP_vmul(&c, 1, data, 1, &toChannel, 1, vDSP_Length(self.size))
     }
     
     private func clearChannel( channel:inout [Float]){

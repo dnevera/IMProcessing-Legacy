@@ -70,13 +70,13 @@ public class IMPHoughLinesDetector: IMPHoughSpaceDetector {
         houghSpaceLocalMaximumsKernel.preferedDimension =  MTLSize(width: self.regionSize, height: self.regionSize, depth: 1)
         
         maximumsCountBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size,
-                                                             options: .storageModeShared)
+                                                             options: .storageModeShared)!
     }
     
     
     private lazy var accumBuffer:MTLBuffer = self.accumBufferGetter()
     private lazy var maximumsBuffer:MTLBuffer = self.maximumsBufferGetter()
-    private lazy var maximumsCountBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)
+    private lazy var maximumsCountBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<uint>.size, options: .storageModeShared)!
     private lazy var regionInBuffer:MTLBuffer  = self.context.makeBuffer(from: IMPRegion())
     
     private lazy var houghTransformKernel:IMPFunction = {
@@ -84,13 +84,13 @@ public class IMPHoughLinesDetector: IMPHoughSpaceDetector {
         
         f.optionsHandler = { (function, command, input, output) in
             
-            command.setBuffer(self.accumBuffer,     offset: 0, at: 0)
-            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   at: 1)
-            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), at: 2)
-            command.setBytes(&self.rhoStep,   length: MemoryLayout.size(ofValue: self.rhoStep),  at: 3)
-            command.setBytes(&self.thetaStep, length: MemoryLayout.size(ofValue: self.thetaStep),at: 4)
-            command.setBytes(&self.minTheta,  length: MemoryLayout.size(ofValue: self.minTheta), at: 5)
-            command.setBuffer(self.regionInBuffer,  offset: 0, at: 6)
+            command.setBuffer(self.accumBuffer,     offset: 0, index: 0)
+            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   index: 1)
+            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), index: 2)
+            command.setBytes(&self.rhoStep,   length: MemoryLayout.size(ofValue: self.rhoStep),  index: 3)
+            command.setBytes(&self.thetaStep, length: MemoryLayout.size(ofValue: self.thetaStep),index: 4)
+            command.setBytes(&self.minTheta,  length: MemoryLayout.size(ofValue: self.minTheta), index: 5)
+            command.setBuffer(self.regionInBuffer,  offset: 0, index: 6)
         }
         
         return f
@@ -100,13 +100,13 @@ public class IMPHoughLinesDetector: IMPHoughSpaceDetector {
         let f = IMPFunction(context: self.context, kernelName: "kernel_houghSpaceLocalMaximums")
         f.optionsHandler = { (function, command, input, output) in
             
-            command.setBuffer(self.accumBuffer,         offset: 0, at: 0)
-            command.setBuffer(self.maximumsBuffer,      offset: 0, at: 1)
-            command.setBuffer(self.maximumsCountBuffer, offset: 0, at: 2)
+            command.setBuffer(self.accumBuffer,         offset: 0, index: 0)
+            command.setBuffer(self.maximumsBuffer,      offset: 0, index: 1)
+            command.setBuffer(self.maximumsCountBuffer, offset: 0, index: 2)
             
-            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   at: 3)
-            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), at: 4)
-            command.setBytes(&self.threshold, length: MemoryLayout.size(ofValue: self.threshold), at: 5)
+            command.setBytes(&self.numrho,    length: MemoryLayout.size(ofValue: self.numrho),   index: 3)
+            command.setBytes(&self.numangle,  length: MemoryLayout.size(ofValue: self.numangle), index: 4)
+            command.setBytes(&self.threshold, length: MemoryLayout.size(ofValue: self.threshold), index: 5)
         }
         
         return f

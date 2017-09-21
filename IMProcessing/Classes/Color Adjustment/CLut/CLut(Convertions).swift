@@ -86,11 +86,11 @@ public extension IMPCLut {
 
         context.execute(.sync, wait: true){ (commandBuffer) in
             let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
-            commandEncoder.setTexture(text, at:0)
-            commandEncoder.setTexture(newtext, at:1)
-            commandEncoder.setTexture(newtext, at:2)
+            commandEncoder.setTexture(text, index:0)
+            commandEncoder.setTexture(newtext, index:1)
+            commandEncoder.setTexture(newtext, index:2)
             if var l = level {
-                commandEncoder.setBytes(&l,  length:MemoryLayout.stride(ofValue: l),  at:0)
+                commandEncoder.setBytes(&l,  length:MemoryLayout.stride(ofValue: l),  index:0)
             }
             commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threads)
             commandEncoder.endEncoding()

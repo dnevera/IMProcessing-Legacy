@@ -96,12 +96,12 @@ public class IMPCLutFilter: IMPFilter {
                         
             guard let lut = self.clut else { return }
             
-            command.setTexture(lut.texture, at:2)
+            command.setTexture(lut.texture, index:2)
                         
-            command.setBytes(&self.adjustment, length:MemoryLayout.stride(ofValue: self.adjustment),at:0)
+            command.setBytes(&self.adjustment, length:MemoryLayout.stride(ofValue: self.adjustment),index:0)
             if lut.type == .lut_2d {
                 var level = lut.level 
-                command.setBytes(&level,              length:MemoryLayout.stride(ofValue: level),       at:1)
+                command.setBytes(&level,              length:MemoryLayout.stride(ofValue: level),       index:1)
             }
         }
         

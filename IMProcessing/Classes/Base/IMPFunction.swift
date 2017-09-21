@@ -37,8 +37,8 @@ public class IMPFunction: IMPContextProvider, IMPDestinationSizeProvider, Equata
     
     public func commandEncoder(from buffer: MTLCommandBuffer) -> MTLComputeCommandEncoder {
         let encoder = buffer.makeComputeCommandEncoder()
-        encoder.setComputePipelineState(pipeline)
-        return encoder
+        encoder?.setComputePipelineState(pipeline)
+        return encoder!
     }
     
     public var maxThreads:Int {

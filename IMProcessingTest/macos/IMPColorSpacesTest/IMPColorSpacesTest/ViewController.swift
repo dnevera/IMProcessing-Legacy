@@ -51,7 +51,7 @@ class FloatFormatter: NumberFormatter {
         if partialString.isFloat(range) {
             return true
         } else {
-            NSBeep()
+            __NSBeep()
             return false
         }
     }

@@ -21,8 +21,8 @@ public extension MTLDevice {
         weightsDescription.usage = [.shaderRead,.pixelFormatView,.renderTarget]
 
         let texture = self.makeTexture(descriptor: weightsDescription)
-        texture.update(buffer)
-        return texture
+        texture?.update(buffer)
+        return texture!
     }
     
     public func texture1D(buffer:[UInt8]) -> MTLTexture {
@@ -35,8 +35,8 @@ public extension MTLDevice {
         weightsDescription.depth       = 1
         weightsDescription.usage = [.shaderRead,.pixelFormatView,.renderTarget]
         let texture = self.makeTexture(descriptor: weightsDescription)
-        texture.update(buffer)
-        return texture
+        texture?.update(buffer)
+        return texture!
     }
     
     public func texture2D(buffer:[[UInt8]]) -> MTLTexture {
@@ -44,8 +44,8 @@ public extension MTLDevice {
         let weightsDescription = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: width, height: buffer.count, mipmapped: false)
         weightsDescription.usage = [.shaderRead,.shaderWrite,.pixelFormatView,.renderTarget]
         let texture = self.makeTexture(descriptor: weightsDescription)
-        texture.update(buffer)
-        return texture
+        texture?.update(buffer)
+        return texture!
     }
     
     public func texture1DArray(buffers:[[UInt8]]) -> MTLTexture {
@@ -71,9 +71,9 @@ public extension MTLDevice {
 
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
-        texture.update1DArray(buffers)
+        texture?.update1DArray(buffers)
         
-        return texture
+        return texture!
     }
     
     public func texture1DArray(buffers:[[Float]]) -> MTLTexture {
@@ -98,9 +98,9 @@ public extension MTLDevice {
         textureDescriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
-        texture.update(buffers)
+        texture?.update(buffers)
         
-        return texture
+        return texture!
     }
     
     public func make2DTexture(width:Int, height:Int,
@@ -123,7 +123,7 @@ public extension MTLDevice {
             d.storageMode = .private
             d.usage = [.shaderRead,.shaderWrite,.pixelFormatView]
         }
-        return makeTexture(descriptor:d)
+        return makeTexture(descriptor:d)!
     }
  
     public func make2DTexture(size: MTLSize,
@@ -146,7 +146,7 @@ public extension MTLDevice {
             d.storageMode = .private
             d.usage = [.shaderRead,.shaderWrite,.pixelFormatView,.renderTarget]
         }
-        return makeTexture(descriptor:d)
+        return makeTexture(descriptor:d)!
     }
     
     public func make2DTexture(size: NSSize,
@@ -170,6 +170,6 @@ public extension MTLDevice {
             d.usage = [.shaderRead,.shaderWrite,.pixelFormatView,.renderTarget]
         }
 
-        return makeTexture(descriptor:d)
+        return makeTexture(descriptor:d)!
     }
 }

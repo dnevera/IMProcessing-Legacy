@@ -40,11 +40,11 @@ public class IMPHarrisCorner: IMPFilter{
         let s = IMPShader(context: self.context,
                           fragmentName: self.functionName)        
         s.optionsHandler = { (shader, commandEncoder, input, output) in
-            commandEncoder.setFragmentBuffer(self.sensitivityBuffer, offset: 0, at: 0)
+            commandEncoder.setFragmentBuffer(self.sensitivityBuffer, offset: 0, index: 0)
         }
         return s
     }()
     
-    private lazy var sensitivityBuffer:MTLBuffer =  self.context.makeBuffer(from:defaultSensitivity)
+    private lazy var sensitivityBuffer:MTLBuffer =  self.context.makeBuffer(from:IMPHarrisCorner.defaultSensitivity)
     
 }
