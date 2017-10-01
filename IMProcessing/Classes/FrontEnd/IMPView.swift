@@ -202,15 +202,15 @@ public class IMPView: MTKView {
         
         context.wait()
         
-        var drawable:CAMetalDrawable!
-        
-        DispatchQueue.main.sync {
-            guard let d = self.currentDrawable else {
-                self.context.resume()
-                return
-            }
-            drawable = d
-        }
+//        var drawable:CAMetalDrawable!
+//        
+//        //DispatchQueue.main.sync {
+//            guard let d = self.currentDrawable else {
+//                self.context.resume()
+//                return
+//            }
+//            drawable = d
+//        //}
                                         
         guard let sourceTexture = frameImage.texture else {
             context.resume()
@@ -228,8 +228,16 @@ public class IMPView: MTKView {
             }
         }
         
-        let targetTexture = drawable.texture
+        guard let targetTexture = currentDrawable?.texture else { 
+            context.resume()
+            return            
+        }
+
+        commandBuffer.addCompletedHandler{ (commandBuffer) in
+            self.context.resume()
+        }
         
+
         if  let sourceTexture = frameImage.texture  {
             if renderingEnabled == false &&
                 sourceTexture.cgsize == drawableSize  &&
@@ -267,21 +275,17 @@ public class IMPView: MTKView {
             }
         }
         
-        commandBuffer.present(drawable)
-        
-        commandBuffer.addCompletedHandler{ (commandBuffer) in
-            self.context.resume()
-        }
-        
+        commandBuffer.present(currentDrawable!)
+                
         commandBuffer.commit()
         
         //
         // https://forums.developer.apple.com/thread/64889
         //
         
-        DispatchQueue.main.sync {
-            self.draw()
-        }
+        //DispatchQueue.main.sync {
+           // self.draw()
+        //}
         
         if self.frameCounter > 0  && self.isFirstFrame {
             self.isFirstFrame = false
@@ -515,11 +519,9 @@ extension IMPView: MTKViewDelegate {
         
         lastUpdatesTimesCounter += 1
         
-        //context.runOperation(.async) { [unowned self] in
-        operation.cancelAllOperations()
-        operation.addOperation { 
+        //operation.cancelAllOperations()
+        //operation.addOperation { 
             self.refresh(rect: view.bounds)
-        }
         //}
     }
 }
