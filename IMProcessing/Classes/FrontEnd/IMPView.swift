@@ -26,21 +26,21 @@ import MetalKit
     public typealias IMPViewBase = NSView
     public typealias IMPDragOperationHandler = ((_ files:[String]) -> Bool)
       
-    public extension NSView {
-        open var _backgroundColor:NSColor? {
-            set{
-                wantsLayer = true
-                layer?.backgroundColor = newValue?.cgColor
-            }
-            get{
-                if let c = layer?.backgroundColor {
-                    return NSColor(cgColor: c)
-                }
-                return nil
-            }
-        }
-    }
-    
+//    public extension NSView {
+//        open var _backgroundColor:NSColor? {
+//            set{
+//                wantsLayer = true
+//                layer?.backgroundColor = newValue?.cgColor
+//            }
+//            get{
+//                if let c = layer?.backgroundColor {
+//                    return NSColor(cgColor: c)
+//                }
+//                return nil
+//            }
+//        }
+//    }
+//    
     
 #endif
 
@@ -202,16 +202,6 @@ public class IMPView: MTKView {
         
         context.wait()
         
-//        var drawable:CAMetalDrawable!
-//        
-//        //DispatchQueue.main.sync {
-//            guard let d = self.currentDrawable else {
-//                self.context.resume()
-//                return
-//            }
-//            drawable = d
-//        //}
-                                        
         guard let sourceTexture = frameImage.texture else {
             context.resume()
             return
@@ -280,11 +270,12 @@ public class IMPView: MTKView {
         commandBuffer.commit()
         
         //
-        // https://forums.developer.apple.com/thread/64889
+        // ??? 
         //
-        
+        // https://forums.developer.apple.com/thread/64889
+        //        
         //DispatchQueue.main.sync {
-           // self.draw()
+        // self.draw()
         //}
         
         if self.frameCounter > 0  && self.isFirstFrame {
@@ -503,7 +494,7 @@ public class IMPView: MTKView {
 
 
 extension IMPView: MTKViewDelegate {
-    
+                  
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     
     public func draw(in view: MTKView) {
@@ -519,9 +510,6 @@ extension IMPView: MTKViewDelegate {
         
         lastUpdatesTimesCounter += 1
         
-        //operation.cancelAllOperations()
-        //operation.addOperation { 
-            self.refresh(rect: view.bounds)
-        //}
+        self.refresh(rect: view.bounds)
     }
 }
