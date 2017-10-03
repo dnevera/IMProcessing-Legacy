@@ -138,7 +138,9 @@ public class IMPView: MTKView {
     override public init(frame frameRect: CGRect, device: MTLDevice? = nil) {
         context = IMPContext(device:device, lazy: true)
         super.init(frame: frameRect, device: self.context.device)
-        _init_()
+        defer {
+            _init_()            
+        }
     }
     
     required public init(coder: NSCoder) {
@@ -148,7 +150,9 @@ public class IMPView: MTKView {
         guard device != nil else {
             fatalError("The system does not support any MTL devices...")
         }
-        _init_()
+        defer {
+            _init_()
+        }
     }
     
     public let context:IMPContext
@@ -168,13 +172,15 @@ public class IMPView: MTKView {
     
     lazy var frameImage:IMPImageProvider = IMPImage(context: self.context)
     
-    public let operation:OperationQueue = {
+    private static let __operation:OperationQueue = {
         let o = OperationQueue()
-        o.maxConcurrentOperationCount = 1
+        o.qualityOfService = .utility
+        o.maxConcurrentOperationCount = 8
         o.name = "com.improcessing.IMPView"
         return o
     }()
     
+    public var operation:OperationQueue { return  IMPView.__operation }
     
     func processing(size: NSSize)  {
         operation.cancelAllOperations()
@@ -285,16 +291,19 @@ public class IMPView: MTKView {
             }
         }
     }
-    
-    fileprivate lazy var processingLink:IMPDisplayLink = IMPDisplayLink { (timev) in
-        self.context.runOperation(.async){
-            let go = self.needProcessing
-            self.needProcessing = false
-            if go {
-                self.processing(size: self.drawableSize)
-            }
-        }
-    }
+
+    //fileprivate var processingLink:IMPDisplayLink  { return  IMPView.__processingLink }    
+    fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()
+
+//    fileprivate lazy var processingLink:IMPDisplayLink = IMPDisplayLink { (timev) in
+//        self.context.runOperation(.async){
+//            let go = self.needProcessing
+//            self.needProcessing = false
+//            if go {
+//                self.processing(size: self.drawableSize)
+//            }
+//        }
+//    }
     
     fileprivate var needUpdateDisplay = false
     #if os(iOS)
@@ -323,10 +332,19 @@ public class IMPView: MTKView {
             //addObserver(self, forKeyPath: NSViewFrameDidChange.name, options: [.new], context: nil)
         #endif
         enableSetNeedsDisplay = false
-        isPaused = false
         colorPixelFormat = .bgra8Unorm
         delegate = self
-        processingLink.isPaused = false
+        processingLink.addObserver { (timev) in
+            self.context.runOperation(.async){
+                let go = self.needProcessing
+                self.needProcessing = false
+                if go {
+                    self.processing(size: self.drawableSize)
+                }
+            }            
+        }
+        isPaused = false
+        //processingLink.isPaused = false
     }
     
     public override var isPaused: Bool {

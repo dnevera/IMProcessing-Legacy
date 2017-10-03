@@ -90,9 +90,15 @@ import CoreVideo
         }
         
         required public init(execute:@escaping ((CFTimeInterval)->Void)){
+            addObserver(execute)
+        }
+             
+        public init(){}
+
+        public func addObserver(_ execute: @escaping ((CFTimeInterval)->Void)) {
             guard let link = displayLink else { return }
             context = Context(prefered: preferredFramesPerSecond, system: systemFramesPersecond, handler:execute)
-            CVDisplayLinkSetOutputCallback(link, displayLinkOutputCallback, &context)
+            CVDisplayLinkSetOutputCallback(link, displayLinkOutputCallback, &context)        
         }
         
         //
@@ -109,14 +115,12 @@ import CoreVideo
             let t = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(link)
             return Int(round(Double(t.timeScale)/Double(t.timeValue)))
         }()
-        
-        
-        private lazy var displayLink:CVDisplayLink? = {
+                
+        private let displayLink:CVDisplayLink? = {
             var link:CVDisplayLink?
             CVDisplayLinkCreateWithActiveCGDisplays(&link)
             return link
         } ()
-        
         
         private struct Context{
             
