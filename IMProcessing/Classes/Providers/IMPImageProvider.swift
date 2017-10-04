@@ -122,7 +122,6 @@ public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
     init(context:IMPContext, storageMode:IMPImageStorageMode?)
 }
 
-
 // MARK: - construcutors
 public extension IMPImageProvider {
     

@@ -45,7 +45,9 @@ import MetalKit
 #endif
 
 
-public class IMPView: MTKView {
+open class IMPView: MTKView {
+    
+    open func configure(){}
     
     public static var scaleFactor:Float{
         get {
@@ -122,7 +124,7 @@ public class IMPView: MTKView {
         updateDrawbleSize()
     }
     
-    public override var frame: NSRect {
+    open override var frame: NSRect {
         didSet{
             invalidateSizeTimer?.invalidate()
             invalidateSizeTimer = Timer.scheduledTimer(timeInterval: 1/TimeInterval(preferredFramesPerSecond),
@@ -198,7 +200,7 @@ public class IMPView: MTKView {
 
     lazy var viewPort:MTLViewport = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
     
-    public override var drawableSize: CGSize {
+    open override var drawableSize: CGSize {
         didSet{
             viewPort = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
         }
@@ -276,8 +278,6 @@ public class IMPView: MTKView {
         commandBuffer.commit()
         
         //
-        // ??? 
-        //
         // https://forums.developer.apple.com/thread/64889
         //        
         //DispatchQueue.main.sync {
@@ -292,18 +292,8 @@ public class IMPView: MTKView {
         }
     }
 
-    //fileprivate var processingLink:IMPDisplayLink  { return  IMPView.__processingLink }    
     fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()
 
-//    fileprivate lazy var processingLink:IMPDisplayLink = IMPDisplayLink { (timev) in
-//        self.context.runOperation(.async){
-//            let go = self.needProcessing
-//            self.needProcessing = false
-//            if go {
-//                self.processing(size: self.drawableSize)
-//            }
-//        }
-//    }
     
     fileprivate var needUpdateDisplay = false
     #if os(iOS)
@@ -343,17 +333,17 @@ public class IMPView: MTKView {
                 }
             }            
         }
-        isPaused = false
-        //processingLink.isPaused = false
+        isPaused = false        
+        configure()
     }
     
-    public override var isPaused: Bool {
+    open override var isPaused: Bool {
         didSet{
             processingLink.isPaused = isPaused
         }
     }
     
-    public override var preferredFramesPerSecond: Int {
+    open override var preferredFramesPerSecond: Int {
         didSet{
             processingLink.preferredFramesPerSecond = preferredFramesPerSecond
         }
@@ -411,7 +401,7 @@ public class IMPView: MTKView {
     
     #if os(OSX)
 
-    public override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+    open override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         
         let sourceDragMask = sender.draggingSourceOperationMask()
         let pboard = sender.draggingPasteboard()
@@ -429,7 +419,7 @@ public class IMPView: MTKView {
     
     public var dragOperation:IMPDragOperationHandler?
     
-    public override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+    open override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         let draggedType = NSPasteboard.PasteboardType(kUTTypeURL as String)
         if let files  = sender.draggingPasteboard().propertyList(forType: draggedType) {
             if let o = dragOperation {
@@ -441,7 +431,7 @@ public class IMPView: MTKView {
     
     lazy var trackingArea:NSTrackingArea? = nil
     
-    override public func updateTrackingAreas() {
+    override open func updateTrackingAreas() {
         if mouseEventEnabled {
             super.updateTrackingAreas()
             if let t = trackingArea{
@@ -454,27 +444,27 @@ public class IMPView: MTKView {
         }
     }
     
-    override public func mouseEntered(with event:NSEvent) {
+    override open func mouseEntered(with event:NSEvent) {
         lounchMouseObservers(event: event)
     }
     
-    override public func mouseExited(with event:NSEvent) {
+    override open func mouseExited(with event:NSEvent) {
         lounchMouseObservers(event: event)
     }
     
-    override public func mouseMoved(with event:NSEvent) {
+    override open func mouseMoved(with event:NSEvent) {
         lounchMouseObservers(event: event)
     }
     
-    override public func mouseDown(with event:NSEvent) {
+    override open func mouseDown(with event:NSEvent) {
         lounchMouseObservers(event: event)
     }
     
-    override public func mouseUp(with event:NSEvent) {
+    override open func mouseUp(with event:NSEvent) {
         lounchMouseObservers(event: event)
     }
     
-    override public func mouseDragged(with event: NSEvent) {
+    override open func mouseDragged(with event: NSEvent) {
         lounchMouseObservers(event: event)
     }
     
