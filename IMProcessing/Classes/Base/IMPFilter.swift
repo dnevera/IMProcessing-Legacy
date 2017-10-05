@@ -69,14 +69,11 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     open var source: IMPImageProvider? = nil {
         didSet{
-            if source == nil {
-               //oldValue?.texture?.setPurgeableState(.volatile)
-            }
-            //autoreleasepool {
-                //_destination.texture?.setPurgeableState(.empty)
-                _destination.texture = nil
-                executeNewSourceObservers(source: source)                
-            //}
+            _destination.texture = nil
+            executeNewSourceObservers(source: source)
+            source?.addObserver(optionsChanged: { (provider) in
+                self.dirty = true                
+            })
         }
     }
     

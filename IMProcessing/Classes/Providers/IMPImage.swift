@@ -19,12 +19,14 @@ import AVFoundation
 import ImageIO
 
 open class IMPImage: IMPImageProvider {
+    
+    open func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void)) {}
 
     public let storageMode: IMPImageStorageMode
     
     public var orientation = IMPImageOrientation.up
 
-    public var context: IMPContext
+    public let context: IMPContext
     
     public var texture: MTLTexture? {
         set{
@@ -39,7 +41,7 @@ open class IMPImage: IMPImageProvider {
         }
     }
     
-    public var image: CIImage? {
+    open var image: CIImage? {
         set{
             _texture?.setPurgeableState(.empty)
             _texture = nil

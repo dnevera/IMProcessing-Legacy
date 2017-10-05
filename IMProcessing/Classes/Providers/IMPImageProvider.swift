@@ -80,28 +80,36 @@ public extension IMPImageOrientation {
             self.init(rawValue: IMPImageOrientation.up.rawValue)
         }
     }
+    
+    var exifValue:Int {
+        return Int(IMPExifOrientation(imageOrientation: self)!.rawValue)
+    }
 }
 
 public extension IMPExifOrientation {
-    init?(imageOrientationValue: IMPImageOrientation) {
-        switch imageOrientationValue {
+    init?(imageOrientation: IMPImageOrientation) {
+        switch imageOrientation {
         case .up:
-            self.init(rawValue: IMPExifOrientationUp.rawValue)
+            self.init(rawValue: IMPExifOrientation.up.rawValue)
         case .upMirrored:
-            self.init(rawValue: IMPExifOrientationHorizontalFlipped.rawValue)
+            self.init(rawValue: IMPExifOrientation.horizontalFlipped.rawValue)
         case .down:
-            self.init(rawValue: IMPExifOrientationLeft180.rawValue)
+            self.init(rawValue: IMPExifOrientation.left180.rawValue)
         case .downMirrored:
-            self.init(rawValue: IMPExifOrientationVerticalFlipped.rawValue)
+            self.init(rawValue: IMPExifOrientation.verticalFlipped.rawValue)
         case .leftMirrored:
-            self.init(rawValue: IMPExifOrientationLeft90VertcalFlipped.rawValue)
+            self.init(rawValue: IMPExifOrientation.left90VertcalFlipped.rawValue)
         case .right:
-            self.init(rawValue: IMPExifOrientationLeft90.rawValue)
+            self.init(rawValue: IMPExifOrientation.left90.rawValue)
         case .rightMirrored:
-            self.init(rawValue: IMPExifOrientationLeft90HorizontalFlipped.rawValue)
+            self.init(rawValue: IMPExifOrientation.left90HorizontalFlipped.rawValue)
         case .left:
-            self.init(rawValue: IMPExifOrientationRight90.rawValue)
+            self.init(rawValue: IMPExifOrientation.right90.rawValue)
         }
+    }
+    
+    var imageOrientation:IMPImageOrientation {
+        return IMPImageOrientation(exifValue: Int(self.rawValue))!
     }
 }
 
@@ -120,6 +128,7 @@ public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
     var videoCache:IMPVideoTextureCache {get}
     var storageMode:IMPImageStorageMode {get}
     init(context:IMPContext, storageMode:IMPImageStorageMode?)
+    func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void))
 }
 
 // MARK: - construcutors
@@ -480,9 +489,12 @@ public extension IMPImageProvider {
 // MARK: - render
 public extension IMPImageProvider {
     
-    public func render(to texture: inout MTLTexture?) {
+    public func render(to texture: inout MTLTexture?, comlete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)?=nil) {
         
-        guard  let image = image else { return }
+        guard  let image = image else {
+            comlete?(nil,nil)            
+            return             
+        }
         
         texture = checkTexture(texture: texture)
         
@@ -494,13 +506,22 @@ public extension IMPImageProvider {
                                                commandBuffer: commandBuffer,
                                                bounds: image.extent,
                                                colorSpace: self.colorSpace)
+                comlete?(t,commandBuffer)
             }
+        }
+        else {
+            comlete?(nil,nil)            
         }
     }
     
-    public func render(to texture: inout MTLTexture?, with commandBuffer: MTLCommandBuffer) {
+    public func render(to texture: inout MTLTexture?,
+                       with commandBuffer: MTLCommandBuffer,
+                       comlete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)? = nil) {
         
-        guard  let image = image else {  return }
+        guard  let image = image else {
+            comlete?(nil,nil)
+            return             
+        }
         
         texture = checkTexture(texture: texture)
         
@@ -510,6 +531,10 @@ public extension IMPImageProvider {
                                            commandBuffer: commandBuffer,
                                            bounds: image.extent,
                                            colorSpace: self.colorSpace)
+            comlete?(t,commandBuffer)
+        }
+        else {
+            comlete?(nil,nil)
         }
     }
     

@@ -76,8 +76,8 @@ open class IMPView: MTKView {
             
             self.needProcessing = true
             
-            filter?.addObserver(newSource: { (source) in                
-                self.updateDrawbleSize()                
+            filter?.addObserver(newSource: { (source) in
+                self.updateDrawbleSize()                   
             })
             
             filter?.addObserver(dirty: { (filter, source, destintion) in
