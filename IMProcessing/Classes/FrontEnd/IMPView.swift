@@ -194,7 +194,10 @@ open class IMPView: MTKView {
             self.frameImage = filter.destination
                         
             self.needProcessing = false
-            self.setNeedsDisplay()
+            
+            DispatchQueue.main.async {
+                self.setNeedsDisplay()                
+            }
         }
     }
 
@@ -208,73 +211,56 @@ open class IMPView: MTKView {
     
     func refresh(rect: CGRect){
         
+        guard 
+            let commandBuffer = context.commandBuffer,
+            let sourceTexture = frameImage.texture,
+            let targetTexture = currentDrawable?.texture else { return }
+
         context.wait()
-        
-        guard let sourceTexture = frameImage.texture else {
-            context.resume()
-            return
-        }
-        
-        guard let commandBuffer = context.commandBuffer else {
-            context.resume()
-            return
-        }
-        
-        if isFirstFrame  {
-            commandBuffer.addCompletedHandler{ (commandBuffer) in
+                                   
+        commandBuffer.addCompletedHandler{ (commandBuffer) in
+            if self.isFirstFrame  {
                 self.frameCounter += 1
             }
-        }
-        
-        guard let targetTexture = currentDrawable?.texture else { 
-            context.resume()
-            return            
-        }
-
-        commandBuffer.addCompletedHandler{ (commandBuffer) in
             self.context.resume()
-        }
+        }        
         
-
-        if  let sourceTexture = frameImage.texture  {
-            if renderingEnabled == false &&
-                sourceTexture.cgsize == drawableSize  &&
-                sourceTexture.pixelFormat == targetTexture.pixelFormat{
-                guard let encoder = commandBuffer.makeBlitCommandEncoder() else {return }
-                encoder.copy(
-                    from: sourceTexture,
-                    sourceSlice: 0,
-                    sourceLevel: 0,
-                    sourceOrigin: MTLOrigin(x:0,y:0,z:0),
-                    sourceSize: sourceTexture.size,
-                    to: targetTexture,
-                    destinationSlice: 0,
-                    destinationLevel: 0,
-                    destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+        if renderingEnabled == false &&
+            sourceTexture.cgsize == drawableSize  &&
+            sourceTexture.pixelFormat == targetTexture.pixelFormat{
+            guard let encoder = commandBuffer.makeBlitCommandEncoder() else {return }
+            encoder.copy(
+                from: sourceTexture,
+                sourceSlice: 0,
+                sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                sourceSize: sourceTexture.size,
+                to: targetTexture,
+                destinationSlice: 0,
+                destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+            
+            encoder.endEncoding()
+        }
+        else {
+            renderPassDescriptor.colorAttachments[0].texture     = targetTexture
+            
+            guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else { return }
+            
+            if let pipeline = renderPipeline {
                 
+                encoder.setRenderPipelineState(pipeline)
+                
+                encoder.setVertexBuffer(vertexBuffer, offset:0, index:0)
+                encoder.setFragmentTexture(sourceTexture, index:0)
+                encoder.setViewport(viewPort)
+                
+                encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
                 encoder.endEncoding()
             }
-            else {
-                renderPassDescriptor.colorAttachments[0].texture     = targetTexture
-                
-                guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else { return }
-                
-                if let pipeline = renderPipeline {
-                    
-                    encoder.setRenderPipelineState(pipeline)
-                                        
-                    encoder.setVertexBuffer(vertexBuffer, offset:0, index:0)
-                    encoder.setFragmentTexture(sourceTexture, index:0)
-                    encoder.setViewport(viewPort)
-                    
-                    encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
-                    encoder.endEncoding()
-                }
-            }
         }
-        
-        commandBuffer.present(currentDrawable!)
                 
+        commandBuffer.present(currentDrawable!)        
         commandBuffer.commit()
         
         //
@@ -296,6 +282,7 @@ open class IMPView: MTKView {
 
     
     fileprivate var needUpdateDisplay = false
+    
     #if os(iOS)
     public override func setNeedsDisplay() {
         needUpdateDisplay = true
@@ -313,6 +300,7 @@ open class IMPView: MTKView {
     #endif
     
     private func _init_() {
+        clearColor = MTLClearColorMake(1, 1, 1, 0)
         framebufferOnly = false
         autoResizeDrawable = false
         #if os(iOS)
@@ -333,7 +321,7 @@ open class IMPView: MTKView {
                 }
             }            
         }
-        isPaused = false        
+        isPaused = false   
         configure()
     }
     
