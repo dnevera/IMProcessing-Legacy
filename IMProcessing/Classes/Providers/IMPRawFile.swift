@@ -223,8 +223,10 @@ open class IMPRawFile: IMPImageProvider {
         rawFilter?.setValue(enableSharpening, forKey: kCIInputEnableSharpeningKey)
         rawFilter?.setValue(factor, forKey: kCIInputScaleFactorKey)
         rawFilter?.setValue(mode, forKey: kCIInputAllowDraftModeKey)
+        
         rawFilter?.setValue(false, forKey: kCIInputIgnoreImageOrientationKey)
         rawFilter?.setValue(Int(IMPExifOrientation.verticalFlipped.rawValue), forKey: kCIInputImageOrientationKey)        
+        
         _image = renderOutput()        
     }
     

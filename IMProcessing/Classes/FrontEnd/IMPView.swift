@@ -181,15 +181,15 @@ open class IMPView: MTKView {
     
     lazy var frameImage:IMPImageProvider = IMPImage(context: self.context)
     
-    private static let __operation:OperationQueue = {
+    private let __operation:OperationQueue = {
         let o = OperationQueue()
-        o.qualityOfService = .utility
-        o.maxConcurrentOperationCount = 8
+        o.qualityOfService = .default
+        o.maxConcurrentOperationCount = 1
         o.name = "com.improcessing.IMPView"
         return o
     }()
     
-    public var operation:OperationQueue { return  IMPView.__operation }
+    public var operation:OperationQueue { return  self.__operation }
     
     func processing(size: NSSize)  {
         operation.cancelAllOperations()
@@ -487,11 +487,9 @@ open class IMPView: MTKView {
         }
     }
     
-
-    
     #endif
     
-    fileprivate var lastUpdatesTimes = 8
+    fileprivate var lastUpdatesTimes = 1
     fileprivate var lastUpdatesTimesCounter = 0
 }
 
