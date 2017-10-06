@@ -76,13 +76,20 @@ open class IMPView: MTKView {
             
             self.needProcessing = true
             
-            filter?.addObserver(newSource: { (source) in
-                self.updateDrawbleSize()                   
-            })
+//            filter?.addObserver(destinationUpdated: { (destination) in
+//                //self.updateDrawbleSize()
+//            })
+//            
+//            filter?.addObserver(newSource: { (source) in
+//                //self.updateDrawbleSize()                   
+//            })
             
             filter?.addObserver(dirty: { (filter, source, destintion) in
                 if !self.needProcessing{
-                    self.needProcessing = true
+                    DispatchQueue.main.async {
+                        self.updateDrawbleSize()                        
+                    }
+                    //self.needProcessing = true
                 }
             })
         }
