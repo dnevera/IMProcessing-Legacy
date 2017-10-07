@@ -20,8 +20,9 @@ import ImageIO
 
 open class IMPImage: IMPImageProvider {
     
-    open func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void)) {}
-
+    public func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void)) {
+        filterObservers.append(observer)
+    }
     public let storageMode: IMPImageStorageMode
     
     public var orientation = IMPImageOrientation.up
@@ -35,7 +36,11 @@ open class IMPImage: IMPImageProvider {
         }
         get{
             if _texture == nil && _image != nil {
-                self.render(to: &_texture)
+                render(to: &_texture) { (texture,command) in
+                    for o in self.filterObservers {
+                        o(self)
+                    }
+                }                   
             }
             return _texture
         }
@@ -50,6 +55,9 @@ open class IMPImage: IMPImageProvider {
         get {
             if _image == nil && _texture != nil {
                 _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+                for o in self.filterObservers {
+                    o(self)
+                }
                 //if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){
                     //
                     // convert back to MTL texture coordinates system
@@ -100,4 +108,6 @@ open class IMPImage: IMPImageProvider {
             self.storageMode = .shared
         }
     }
+    
+    private var filterObservers = [((IMPImageProvider) -> Void)]()
 }
