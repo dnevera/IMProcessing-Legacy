@@ -176,7 +176,7 @@ public class IMPBaseBlur: IMPFilter {
                           fragmentName: "fragment_blendSource", name:"Blur Upscale Stage #4")
         s.optionsHandler = { (shader,commandEncoder, input, output) in
             commandEncoder.setFragmentBuffer(self.adjustmentBuffer, offset: 0, index: 0)
-            commandEncoder.setFragmentTexture((self.source?.texture)!, index:1)
+            commandEncoder.setFragmentTexture(self.source?.texture, index:1)
         }
         return s
     }()

@@ -76,26 +76,34 @@ open class IMPView: MTKView {
             
             self.needProcessing = true
             
-//            filter?.addObserver(destinationUpdated: { (destination) in
-//                //self.updateDrawbleSize()
-//            })
-//            
-//            filter?.addObserver(newSource: { (source) in
-//                //self.updateDrawbleSize()                   
-//            })
+            filter?.addObserver(newSource: { (source) in
+                if source == nil { 
+                    DispatchQueue.main.async {
+                        self.layer?.opacity = 0
+                    }
+                    return 
+                }
+                else {
+                    DispatchQueue.main.async {
+                        self.layer?.opacity = 1
+                    }
+                }
+                DispatchQueue.main.async {
+                    self.updateDrawbleSize()
+                }
+            })
             
             filter?.addObserver(dirty: { (filter, source, destintion) in
                 if !self.needProcessing{
                     DispatchQueue.main.async {
                         self.updateDrawbleSize()                        
                     }
-                    //self.needProcessing = true
                 }
             })
         }
     }
     
-    private func updateDrawbleSize()  {
+    private func updateDrawbleSize(need processing:Bool = true)  {
         if let size = self.filter?.source?.size {
             if exactResolutionEnabled {
                 drawableSize = size
@@ -108,7 +116,7 @@ open class IMPView: MTKView {
                 let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
             }
-            if !needProcessing{
+            if !needProcessing && processing{
                 needProcessing = true
             }
         }
@@ -118,7 +126,7 @@ open class IMPView: MTKView {
 
             drawableSize = NSSize(width: newSize.width, height: newSize.height)
 
-            if !needProcessing{
+            if !needProcessing && processing{
                 needProcessing = true
             }
         }
@@ -128,7 +136,7 @@ open class IMPView: MTKView {
     var invalidateSizeTimer:Timer?
     
     @objc func invalidateSizeTimerHandler(timer:Timer?)  {
-        updateDrawbleSize()
+        updateDrawbleSize(need: false)
     }
     
     open override var frame: NSRect {
@@ -143,6 +151,7 @@ open class IMPView: MTKView {
     #endif
     
     public var viewReadyHandler:(()->Void)?
+    public var viewBufferCompleteHandler:(()->Void)?
     
     override public init(frame frameRect: CGRect, device: MTLDevice? = nil) {
         context = IMPContext(device:device, lazy: true)
@@ -230,6 +239,7 @@ open class IMPView: MTKView {
                 self.frameCounter += 1
             }
             self.context.resume()
+            self.viewBufferCompleteHandler?()
         }        
         
         if renderingEnabled == false &&
@@ -489,7 +499,7 @@ open class IMPView: MTKView {
     
     #endif
     
-    fileprivate var lastUpdatesTimes = 1
+    fileprivate var lastUpdatesTimes = 8
     fileprivate var lastUpdatesTimesCounter = 0
 }
 
