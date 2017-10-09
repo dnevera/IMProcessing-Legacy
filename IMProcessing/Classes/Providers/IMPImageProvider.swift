@@ -585,10 +585,13 @@ public extension IMPImageProvider {
         get {
             guard let image = image else { return nil }
             let colorSpace = CGColorSpaceCreateDeviceRGB()
-            return context.coreImage?.createCGImage(image, from: image.extent,
+            var t = CGAffineTransform.identity
+            t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+            let im = image.transformed(by: t)
+            return context.coreImage?.createCGImage(im, from: image.extent,
                                                     format: kCIFormatARGB8,
                                                     colorSpace: colorSpace,
-                                                    deferred:true)
+                                                    deferred:true)            
         }
         set {
             if let im = newValue {
@@ -611,8 +614,14 @@ public extension IMPImageProvider {
     public var nsImage:NSImage? {
         get {
             if let image = self.image {
-                let rep: NSCIImageRep = NSCIImageRep(ciImage: image)
-                let nsImage: NSImage = NSImage(size: rep.size)
+
+                var t = CGAffineTransform.identity
+                t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+                let im = image.transformed(by: t)
+                
+                let rep: NSCIImageRep = NSCIImageRep(ciImage: im)
+                
+                let nsImage: NSImage = NSImage(size: rep.size)                
                 nsImage.addRepresentation(rep)
                 return nsImage
             }
