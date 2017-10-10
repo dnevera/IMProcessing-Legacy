@@ -449,28 +449,35 @@ open class IMPView: MTKView {
         }
     }
     
-    override open func mouseEntered(with event:NSEvent) {
+    override open func mouseEntered(with event:NSEvent) {        
         lounchMouseObservers(event: event)
+        super.mouseEntered(with:event)
     }
     
     override open func mouseExited(with event:NSEvent) {
         lounchMouseObservers(event: event)
+        super.mouseExited(with:event)
     }
     
     override open func mouseMoved(with event:NSEvent) {
         lounchMouseObservers(event: event)
+        super.mouseMoved(with:event)
     }
     
     override open func mouseDown(with event:NSEvent) {
         lounchMouseObservers(event: event)
+        super.mouseDown(with:event)
     }
     
     override open func mouseUp(with event:NSEvent) {
         lounchMouseObservers(event: event)
+        super.mouseUp(with:event)
     }
     
     override open func mouseDragged(with event: NSEvent) {
         lounchMouseObservers(event: event)
+        super.mouseDragged(with:event)
+
     }
     
     var mouseEventHandlers = [MouseEventHandler]()
