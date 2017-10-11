@@ -23,6 +23,13 @@ open class IMPRawFile: IMPImageProvider {
             return (rawFilter?.value(forKey: kCIInputBaselineExposureKey) as? NSNumber)?.floatValue ?? 0 
         }
     }
+
+    public var ev:Float = 0 {
+        didSet{
+            rawFilter?.setValue(ev, forKey: kCIInputEVKey)
+            renderTexture()
+        }
+    }
     
     public var bias:Float = 0 {
         didSet{
