@@ -323,7 +323,7 @@ open class IMPView: MTKView {
         #if os(iOS)
             contentMode = .scaleAspectFit
         #elseif os(OSX)
-            postsFrameChangedNotifications = false
+            postsFrameChangedNotifications = true
             //addObserver(self, forKeyPath: NSViewFrameDidChange.name, options: [.new], context: nil)
         #endif
         enableSetNeedsDisplay = false
