@@ -66,7 +66,7 @@ open class IMPView: MTKView {
         public var renderingEnabled = false
     #else
         public typealias MouseEventHandler = ((_ event:NSEvent, _ location:NSPoint, _ view:NSView)->Void)
-        public let renderingEnabled = true
+        public let renderingEnabled = false
     #endif
     
     public var exactResolutionEnabled = false
@@ -77,17 +77,17 @@ open class IMPView: MTKView {
             self.needProcessing = true
             
             filter?.addObserver(newSource: { (source) in
-                if source == nil { 
-                    DispatchQueue.main.async {
-                        self.layer?.opacity = 0
-                    }
-                    return 
-                }
-                else {
-                    DispatchQueue.main.async {
-                        self.layer?.opacity = 1
-                    }
-                }
+//                if source == nil { 
+//                    DispatchQueue.main.async {
+//                        self.layer?.opacity = 0
+//                    }
+//                    return 
+//                }
+//                else {
+//                    DispatchQueue.main.async {
+//                        self.layer?.opacity = 1
+//                    }
+//                }
                 DispatchQueue.main.async {
                     self.updateDrawbleSize()
                 }
@@ -103,9 +103,19 @@ open class IMPView: MTKView {
         }
     }
     
+
+    
+    open override var bounds: NSRect {
+        didSet{
+            
+        }
+    }
+    
     private func updateDrawbleSize(need processing:Bool = true)  {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         if let size = self.filter?.source?.size {
-            if exactResolutionEnabled {
+            if exactResolutionEnabled || self.bounds.size == NSZeroSize {
                 drawableSize = size
             }
             else {
@@ -130,6 +140,7 @@ open class IMPView: MTKView {
                 needProcessing = true
             }
         }
+        CATransaction.commit()
     }
     
     #if os(OSX)
@@ -192,7 +203,7 @@ open class IMPView: MTKView {
     
     private let __operation:OperationQueue = {
         let o = OperationQueue()
-        o.qualityOfService = .default
+        o.qualityOfService = .userInteractive
         o.maxConcurrentOperationCount = 1
         o.name = "com.improcessing.IMPView"
         return o
@@ -226,13 +237,16 @@ open class IMPView: MTKView {
     }
     
     func refresh(rect: CGRect){
-        
+
+        context.wait()
+
         guard 
             let commandBuffer = context.commandBuffer,
             let sourceTexture = frameImage.texture,
-            let targetTexture = currentDrawable?.texture else { return }
-
-        context.wait()
+            let targetTexture = currentDrawable?.texture else {
+                self.context.resume()
+                return                 
+        }
                                    
         commandBuffer.addCompletedHandler{ (commandBuffer) in
             if self.isFirstFrame  {
@@ -296,9 +310,18 @@ open class IMPView: MTKView {
     }
 
     fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()
-
     
-    fileprivate var needUpdateDisplay = false
+    fileprivate var needUpdateDisplay:Bool = false 
+//    {
+//        didSet{
+//            if needUpdateDisplay {
+//                processingLink.isPaused = false
+//            }
+//            else {
+//                processingLink.isPaused = true
+//            }
+//        }
+//    }
     
     #if os(iOS)
     public override func setNeedsDisplay() {
@@ -323,20 +346,20 @@ open class IMPView: MTKView {
         #if os(iOS)
             contentMode = .scaleAspectFit
         #elseif os(OSX)
-            postsFrameChangedNotifications = true
+            postsFrameChangedNotifications = false
             //addObserver(self, forKeyPath: NSViewFrameDidChange.name, options: [.new], context: nil)
         #endif
-        enableSetNeedsDisplay = false
+        enableSetNeedsDisplay = true
         colorPixelFormat = .bgra8Unorm
         delegate = self
         processingLink.addObserver { (timev) in
-            self.context.runOperation(.async){
-                let go = self.needProcessing
-                self.needProcessing = false
-                if go {
+            let go = self.needProcessing
+            self.needProcessing = false
+            if go {
+                self.context.runOperation(.async){
                     self.processing(size: self.drawableSize)
-                }
-            }            
+                }            
+            }
         }
         isPaused = false   
         configure()
