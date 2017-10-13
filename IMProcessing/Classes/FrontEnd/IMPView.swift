@@ -144,21 +144,21 @@ open class IMPView: MTKView {
     }
     
     #if os(OSX)
-    var invalidateSizeTimer:Timer?
-    
-    @objc func invalidateSizeTimerHandler(timer:Timer?)  {
-        updateDrawbleSize(need: false)
-    }
-    
-    open override var frame: NSRect {
-        didSet{
-            invalidateSizeTimer?.invalidate()
-            invalidateSizeTimer = Timer.scheduledTimer(timeInterval: 1/TimeInterval(preferredFramesPerSecond),
-                                                       target: self, 
-                                                       selector: #selector(invalidateSizeTimerHandler(timer:)),
-                                                       userInfo: nil, repeats: false)
-        }
-    }
+//    var invalidateSizeTimer:Timer?
+//    
+//    @objc func invalidateSizeTimerHandler(timer:Timer?)  {
+//        updateDrawbleSize(need: false)
+//    }
+//    
+//    open override var frame: NSRect {
+//        didSet{
+//            invalidateSizeTimer?.invalidate()
+//            invalidateSizeTimer = Timer.scheduledTimer(timeInterval: 1/TimeInterval(preferredFramesPerSecond),
+//                                                       target: self, 
+//                                                       selector: #selector(invalidateSizeTimerHandler(timer:)),
+//                                                       userInfo: nil, repeats: false)
+//        }
+//    }
     #endif
     
     public var viewReadyHandler:(()->Void)?
@@ -529,7 +529,7 @@ open class IMPView: MTKView {
     
     #endif
     
-    fileprivate var lastUpdatesTimes = 8
+    fileprivate var lastUpdatesTimes = 1
     fileprivate var lastUpdatesTimesCounter = 0
 }
 
