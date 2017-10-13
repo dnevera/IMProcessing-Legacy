@@ -77,17 +77,19 @@ open class IMPView: MTKView {
             self.needProcessing = true
             
             filter?.addObserver(newSource: { (source) in
-//                if source == nil { 
-//                    DispatchQueue.main.async {
-//                        self.layer?.opacity = 0
-//                    }
-//                    return 
-//                }
-//                else {
-//                    DispatchQueue.main.async {
-//                        self.layer?.opacity = 1
-//                    }
-//                }
+                if source == nil { 
+                    DispatchQueue.main.async {
+                        self.layer?.opacity = 0
+                    }
+                    self.operation.cancelAllOperations()
+                    self.needProcessing = false
+                    return 
+                }
+                else {
+                    DispatchQueue.main.async {
+                        self.layer?.opacity = 1
+                    }
+                }
                 DispatchQueue.main.async {
                     self.updateDrawbleSize()
                 }
@@ -203,7 +205,7 @@ open class IMPView: MTKView {
     
     private let __operation:OperationQueue = {
         let o = OperationQueue()
-        o.qualityOfService = .userInteractive
+        o.qualityOfService = .utility
         o.maxConcurrentOperationCount = 1
         o.name = "com.improcessing.IMPView"
         return o
