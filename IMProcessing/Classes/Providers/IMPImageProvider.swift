@@ -58,7 +58,7 @@ public extension IMPImageOrientation {
     //    case LeftMirrored   // 6, < - (5), UIImage, vertical flip
     //    case RightMirrored  // 7, < - (7), UIImage, vertical flip
     
-    init?(exifValue: IMPImageOrientation.RawValue) {
+    public init?(exifValue: IMPImageOrientation.RawValue) {
         switch exifValue {
         case 1:
             self.init(rawValue: IMPImageOrientation.up.rawValue)            // IMPExifOrientationUp
@@ -81,13 +81,17 @@ public extension IMPImageOrientation {
         }
     }
     
-    var exifValue:Int {
+    public init?(exifValue: IMPImageOrientation) {
+        self.init(rawValue: Int(exifValue.rawValue))
+    }
+    
+    public var exifValue:Int {
         return Int(IMPExifOrientation(imageOrientation: self)!.rawValue)
     }
 }
 
 public extension IMPExifOrientation {
-    init?(imageOrientation: IMPImageOrientation) {
+    public init?(imageOrientation: IMPImageOrientation) {
         switch imageOrientation {
         case .up:
             self.init(rawValue: IMPExifOrientation.up.rawValue)
@@ -108,7 +112,7 @@ public extension IMPExifOrientation {
         }
     }
     
-    var imageOrientation:IMPImageOrientation {
+    public var imageOrientation:IMPImageOrientation {
         return IMPImageOrientation(exifValue: Int(self.rawValue))!
     }
 }
@@ -293,8 +297,8 @@ public extension IMPImageProvider {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
         }
     }
-    
-    mutating private func prepareImage(image originImage: CIImage?, maxSize: CGFloat, orientation:IMPImageOrientation? = nil)  -> CIImage? {
+     
+    internal mutating func prepareImage(image originImage: CIImage?, maxSize: CGFloat, orientation:IMPImageOrientation? = nil)  -> CIImage? {
         
         guard let image = originImage else { return originImage }
         
@@ -489,40 +493,48 @@ public extension IMPImageProvider {
 // MARK: - render
 public extension IMPImageProvider {
     
-    public func render(to texture: inout MTLTexture?, comlete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)?=nil) {
+    public func render(to texture: inout MTLTexture?,
+                       flipVertical:Bool = false,
+                       complete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)?=nil) {
         
-        guard  let image = image else {
-            comlete?(nil,nil)            
+        guard  var image = self.image else {
+            complete?(nil,nil)            
             return             
         }
+
+        let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+        image = !flipVertical ? image : image.transformed(by: transform)
         
         texture = checkTexture(texture: texture)
         
         if let t = texture {
             context.execute(wait: true) { (commandBuffer) in
-                
                 self.context.coreImage?.render(image,
                                                to: t,
                                                commandBuffer: commandBuffer,
                                                bounds: image.extent,
                                                colorSpace: self.colorSpace)
-                comlete?(t,commandBuffer)
+                complete?(t,commandBuffer)
             }
         }
         else {
-            comlete?(nil,nil)            
+            complete?(nil,nil)            
         }
     }
     
     public func render(to texture: inout MTLTexture?,
                        with commandBuffer: MTLCommandBuffer,
+                       flipVertical:Bool = false,
                        comlete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)? = nil) {
         
-        guard  let image = image else {
+        guard  var image = self.image else {
             comlete?(nil,nil)
             return             
         }
         
+        let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+        image = !flipVertical ? image : image.transformed(by: transform)
+
         texture = checkTexture(texture: texture)
         
         if let t = texture {

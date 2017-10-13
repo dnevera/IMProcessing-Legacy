@@ -21,6 +21,7 @@ typedef NS_ENUM(int, IMPExifOrientation) {
     // 8888      8888    8888  8888    88          8888888888  8888888888          88
     // 88          88      88  88
     // 88          88  888888  888888
+    IMPExifOrientationNone                    = 0,
     IMPExifOrientationUp                      = 1,
     IMPExifOrientationHorizontalFlipped       = 2,
     IMPExifOrientationLeft180                 = 3,

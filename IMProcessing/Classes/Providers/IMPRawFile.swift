@@ -79,10 +79,32 @@ open class IMPRawFile: IMPImageProvider {
         }
     }
     
-    public var orientation = IMPImageOrientation.up {
-        didSet{
-            rawFilter?.setValue(false, forKey: kCIInputIgnoreImageOrientationKey)
-            rawFilter?.setValue(orientation.exifValue, forKey: kCIInputImageOrientationKey)        
+    public var orientation:IMPImageOrientation {
+        set{
+            inputOrientation = IMPExifOrientation(imageOrientation: newValue) ?? .up
+        }
+        get {
+            return IMPImageOrientation(exifValue: Int(inputOrientation.rawValue)) ?? .up
+        }
+    }
+
+    public var inputOrientation:IMPExifOrientation {
+        set{
+//            if newValue == .none {                
+//                rawFilter?.setValue(false, forKey: kCIInputIgnoreImageOrientationKey)
+//                return
+//            }
+            rawFilter?.setValue(true, forKey: kCIInputIgnoreImageOrientationKey)
+            rawFilter?.setValue(newValue.rawValue, forKey: kCIInputImageOrientationKey)
+            renderTexture()            
+        }
+        get {
+//            let ignoring = (rawFilter?.value(forKeyPath: kCIInputImageOrientationKey) as? NSNumber)?.boolValue ?? false
+//            if ignoring == false {
+//                return .none
+//            }
+            let o = (rawFilter?.value(forKeyPath: kCIInputImageOrientationKey) as? NSNumber)?.int32Value ?? IMPExifOrientation.up.rawValue
+            return IMPExifOrientation(rawValue: o) ?? IMPExifOrientation.up
         }
     }
     
@@ -164,7 +186,7 @@ open class IMPRawFile: IMPImageProvider {
         }
         get{
             if _texture == nil && _image != nil {
-                self.render(to: &_texture)
+                self.render(to: &_texture, flipVertical:true)
             }
             return _texture
         }
@@ -189,35 +211,39 @@ open class IMPRawFile: IMPImageProvider {
                             rawImage data: Data, 
                             scale factor: Float = 1,
                             draft mode: Bool = false,
+                            orientation:IMPImageOrientation? = nil,                            
                             rawOptions:  [String : CFString]?=nil, 
                             storageMode: IMPImageStorageMode?=nil) {
         self.init(context: context, storageMode: storageMode)
         rawFilter =  CIFilter(imageData: data, options: rawOptions) 
-        intitFilter(scale: factor, draft: mode)
+        intitFilter(scale: factor, draft: mode, orientation: orientation)
     }
     
     public convenience init(context: IMPContext, 
                             rawFile url: URL, 
                             scale factor: Float = 1,
                             draft mode: Bool = false,
+                            orientation:IMPImageOrientation? = nil,                            
                             rawOptions:  [String : CFString]?=nil, 
                             storageMode: IMPImageStorageMode?=nil) {
         self.init(context: context, storageMode: storageMode)
         rawFilter = CIFilter(imageURL: url, options: rawOptions)
-        intitFilter(scale: factor, draft: mode)
+        intitFilter(scale: factor, draft: mode, orientation: orientation)
     }
     
     public convenience init(context: IMPContext, 
                             rawFile path: String,
                             scale factor: Float = 1,
                             draft mode: Bool = false,
+                            orientation:IMPImageOrientation? = nil,
                             rawOptions:  [String : CFString]?=nil, 
                             storageMode: IMPImageStorageMode?=nil) {
-        self.init(context: context, rawFile: URL(fileURLWithPath: path), scale: factor, draft: mode, rawOptions:rawOptions, storageMode: storageMode)
+        self.init(context: context, rawFile: URL(fileURLWithPath: path), scale: factor, draft: mode, orientation:orientation, rawOptions:rawOptions, storageMode: storageMode)
     }
     
-    private func intitFilter(scale factor: Float = 1,
-                             draft mode: Bool = false) {
+    private  func intitFilter(scale factor: Float = 1,
+                             draft mode: Bool = false,
+                             orientation:IMPImageOrientation? = nil) {
                 
         rawFilter?.setValue(boost, forKey: kCIInputBoostKey)
         rawFilter?.setValue(boostShadow, forKey: kCIInputBoostShadowAmountKey)
@@ -231,11 +257,17 @@ open class IMPRawFile: IMPImageProvider {
         rawFilter?.setValue(factor, forKey: kCIInputScaleFactorKey)
         rawFilter?.setValue(mode, forKey: kCIInputAllowDraftModeKey)
         
-        rawFilter?.setValue(false, forKey: kCIInputIgnoreImageOrientationKey)
-        rawFilter?.setValue(Int(IMPExifOrientation.verticalFlipped.rawValue), forKey: kCIInputImageOrientationKey)        
+        //if 
         
-        _image = renderOutput()        
+        //rawFilter?.setValue(true, forKey: kCIInputIgnoreImageOrientationKey)
+        //rawFilter?.setValue(Int(IMPExifOrientation.verticalFlipped.rawValue), forKey: kCIInputImageOrientationKey)        
+        _image = renderOutput()
+        
+        if let o = orientation {
+            self.orientation = o
+        }
     }
+    
     
     private func renderOutput() -> CIImage? {
         _image = rawFilter?.outputImage
@@ -244,7 +276,7 @@ open class IMPRawFile: IMPImageProvider {
     
     private func renderTexture() {
         if renderOutput() != nil {
-            render(to: &_texture) { (texture,command) in
+            render(to: &_texture, flipVertical:true) { (texture,command) in
                 for o in self.filterObservers {
                     o(self)
                 }
@@ -282,7 +314,6 @@ open class IMPRawFile: IMPImageProvider {
         }
     }
     
-    private var filterObservers = [((IMPImageProvider) -> Void)]()
-    
+    private var filterObservers = [((IMPImageProvider) -> Void)]()            
 }
 
