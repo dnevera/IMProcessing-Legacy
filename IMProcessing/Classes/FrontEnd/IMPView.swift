@@ -351,7 +351,7 @@ open class IMPView: MTKView {
             postsFrameChangedNotifications = false
             //addObserver(self, forKeyPath: NSViewFrameDidChange.name, options: [.new], context: nil)
         #endif
-        enableSetNeedsDisplay = true
+        enableSetNeedsDisplay = false
         colorPixelFormat = .bgra8Unorm
         delegate = self
         processingLink.addObserver { (timev) in
