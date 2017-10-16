@@ -23,6 +23,11 @@ open class IMPImage: IMPImageProvider {
     public func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void)) {
         filterObservers.append(observer)
     }
+    
+    public func removeObservers() {
+        filterObservers.removeAll()
+    }
+    
     public let storageMode: IMPImageStorageMode
     
     public var orientation = IMPImageOrientation.up

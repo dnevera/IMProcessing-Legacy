@@ -68,7 +68,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     public var observersEnabled: Bool = true
     
     open var source: IMPImageProvider? = nil {
-        didSet{
+        didSet{                                           
+            
             _destination.texture = nil
             executeNewSourceObservers(source: source)
             source?.addObserver(optionsChanged: { (provider) in

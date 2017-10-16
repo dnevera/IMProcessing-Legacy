@@ -203,6 +203,7 @@ public extension IMPCLut {
     }
     
     public func removeAllObservers() {
+        removeObservers()
         observers.removeAll()
     }
     

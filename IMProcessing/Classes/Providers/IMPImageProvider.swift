@@ -133,6 +133,7 @@ public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
     var storageMode:IMPImageStorageMode {get}
     init(context:IMPContext, storageMode:IMPImageStorageMode?)
     func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void))
+    func removeObservers()
 }
 
 // MARK: - construcutors

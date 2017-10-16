@@ -14,6 +14,10 @@ open class IMPRawFile: IMPImageProvider {
         filterObservers.append(observer)
     }
     
+    public func removeObservers() {
+        filterObservers.removeAll()
+    }
+
     public var baselineExposure:Float {
         set {
             rawFilter?.setValue(baselineExposure,  forKey: kCIInputBaselineExposureKey)
