@@ -15,6 +15,23 @@
 
 import Metal
 
+private func IMPPeekFunc<A, R>(_ f: (A) -> R) -> (fp: Int, ctx: Int) {
+    typealias IntInt = (Int, Int)
+    let (_, lo) = unsafeBitCast(f, to: IntInt.self)
+    let offset = MemoryLayout<Int>.size == 8 ? 16 : 12
+    let ptr = UnsafePointer<Int>(bitPattern: lo + offset)!
+    return (ptr.pointee, ptr.successor().pointee)
+}
+
+public func === <A, R>(lhs: (A) -> R, rhs: (A) -> R) -> Bool {
+    let (tl, tr) = (IMPPeekFunc(lhs), IMPPeekFunc(rhs))
+    return tl.0 == tr.0 && tl.1 == tr.1
+}
+
+public func IMPClosuresEqual<A>(_ lhs: (A), _ rhs: (A)) -> Bool {
+    return  unsafeBitCast(lhs, to: AnyObject.self) === unsafeBitCast(rhs, to: AnyObject.self)
+}
+
 ///
 ///  @brief Context provider protocol.
 ///  All filter classes should conform to the protocol to get access current filter context.
