@@ -14,9 +14,7 @@ import simd
 extension String {
     
     func isFloat(_ range:float2) -> Bool {
-    
-        //Swift.print("range = \(range)")
-        
+            
         if let floatValue = Float(self){
             if floatValue.isFinite {
                 if floatValue >= range.x && floatValue <= range.y {

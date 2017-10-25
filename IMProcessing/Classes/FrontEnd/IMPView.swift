@@ -60,7 +60,6 @@ open class IMPView: MTKView {
             #endif
         }
     }
-
     
     #if os(iOS)
         public var renderingEnabled = false
@@ -72,40 +71,49 @@ open class IMPView: MTKView {
     public var exactResolutionEnabled = false
     
     public var filter:IMPFilter? = nil {
-        didSet {
-            
-            self.needProcessing = true
-            
-            filter?.addObserver(newSource: { (source) in
-                if source == nil { 
-                    DispatchQueue.main.async {
-                        self.layer?.opacity = 0
-                    }
-                    self.operation.cancelAllOperations()
-                    self.needProcessing = false
-                    return 
-                }
-                else {
-                    DispatchQueue.main.async {
-                        self.layer?.opacity = 1
-                    }
-                }
-                DispatchQueue.main.async {
-                    self.updateDrawbleSize()
-                }
-            })
-            
-            filter?.addObserver(dirty: { (filter, source, destintion) in
-                if !self.needProcessing{
-                    DispatchQueue.main.async {
-                        self.updateDrawbleSize()                        
-                    }
-                }
-            })
+        willSet{
+            filter?.removeObserver(newSource: sourceObserver)
+            filter?.removeObserver(dirty: dirtyObserver)
+        }
+        didSet {            
+            self.needProcessing = true            
+            filter?.addObserver(newSource: sourceObserver)            
+            filter?.addObserver(dirty: dirtyObserver)
         }
     }
+        
+    private lazy var sourceObserver:IMPFilter.SourceUpdateHandler = {
+        let handler:IMPFilter.SourceUpdateHandler = { (source) in
+            if source == nil { 
+                DispatchQueue.main.async {
+                    self.layer?.opacity = 0
+                }
+                self.operation.cancelAllOperations()
+                self.needProcessing = false
+                return 
+            }
+            else {
+                DispatchQueue.main.async {
+                    self.layer?.opacity = 1
+                }
+            }
+            DispatchQueue.main.async {
+                self.updateDrawbleSize()
+            }
+        }
+        return handler
+    }()
     
-
+    private lazy var dirtyObserver:IMPFilter.FilterHandler = {
+        let handler:IMPFilter.FilterHandler = { (filter, source, destintion) in
+            if !self.needProcessing{
+                DispatchQueue.main.async {
+                    self.updateDrawbleSize()                        
+                }
+            }
+        } 
+        return handler
+    }()
     
     open override var bounds: NSRect {
         didSet{

@@ -45,11 +45,11 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         case OutOfRangeInsertion
     }
     
-    public typealias FailHandler     = ((_ error:RegisteringError)->Void)
-    public typealias CompleteHandler = ((_ image:IMPImageProvider)->Void)
-    public typealias UpdateHandler   = ((_ image:IMPImageProvider) -> Void)
-    public typealias NulableUpdateHandler   = ((_ image:IMPImageProvider?) -> Void)
-    public typealias FilterHandler   = ((_ filter:IMPFilter, _ source:IMPImageProvider?, _ destination:IMPImageProvider) -> Void)
+    public typealias FailHandler          = (_ error:RegisteringError)->Void
+    public typealias CompleteHandler      = (_ image:IMPImageProvider)->Void
+    public typealias UpdateHandler        = (_ image:IMPImageProvider) -> Void
+    public typealias SourceUpdateHandler  = (_ image:IMPImageProvider?) -> Void
+    public typealias FilterHandler        = (_ filter:IMPFilter, _ source:IMPImageProvider?, _ destination:IMPImageProvider) -> Void
     
     // MARK: - public
     
@@ -353,18 +353,75 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     //
     // MARK: - observers
     //
-    public func addObserver(newSource observer:@escaping NulableUpdateHandler){
-        newSourceObservers.append(observer)
+    
+    private func peekObserverKey<A, R>(_ f: (A) -> R) -> String {
+        let addr = IMPPeekFunc(f)
+        return "\(addr.fp):\(addr.ctx)"
     }
-    public func addObserver(destinationUpdated observer:@escaping UpdateHandler){
-        destinationObservers.append(observer)
+    
+    public func addObserver(newSource observer:@escaping SourceUpdateHandler, key aKey:String? = nil){
+        let key = aKey ?? peekObserverKey(observer) 
+        removeObserver(newSource: observer, key: key)
+        newSourceObservers.append(ObserverHash<SourceUpdateHandler>(key:key,observer: observer))
     }
-    public func addObserver(dirty observer:@escaping FilterHandler){
-        root?.dirtyObservers.append(observer)
-        dirtyObservers.append(observer)
+    
+    public func removeObserver(newSource observer:@escaping SourceUpdateHandler, key aKey:String? = nil) {
+        let key = aKey ?? peekObserverKey(observer)
+        if let index = newSourceObservers.index(where: { return $0.key == key }) {
+            //Swift.print("removeObserver newSource \(key) for \(unsafeBitCast(self, to: Int.self))")
+            newSourceObservers.remove(at: index)
+        }    
+    }    
+    
+    public func addObserver(destinationUpdated observer:@escaping UpdateHandler, key aKey:String? = nil){
+        let key = aKey ?? peekObserverKey(observer)
+        destinationObservers.append(ObserverHash<UpdateHandler>(key:key, observer:observer))
     }
-    public func addObserver(enabling observer:@escaping FilterHandler){
-        enablingObservers.append(observer)
+    
+    public func removeObserver(destinationUpdated observer:@escaping UpdateHandler, key aKey:String? = nil) {
+        let key = aKey ?? peekObserverKey(observer)
+        if let index = destinationObservers.index(where: { return $0.key == key }) {
+            destinationObservers.remove(at: index)
+        }
+    }
+    
+    public func addObserver(dirty observer:@escaping FilterHandler, key aKey:String? = nil){
+        let key = aKey ?? peekObserverKey(observer)
+        removeObserver(dirty: observer, key: key)
+        root?.dirtyObservers.append(ObserverHash<FilterHandler>(key:key, observer:observer))
+        dirtyObservers.append(ObserverHash<FilterHandler>(key:key, observer:observer))
+    }
+    
+    public func removeObserver(dirty observer:@escaping FilterHandler, key aKey:String? = nil) {
+        let key = aKey ?? peekObserverKey(observer)
+        root?.removeObserver(dirty: observer, key: key)
+        if let index = dirtyObservers.index(where: { return $0.key == key }) {
+            //Swift.print("removeObserver dirty     \(key) for \(unsafeBitCast(self, to: Int.self))")
+            dirtyObservers.remove(at: index)
+        }
+    }
+        
+    public func addObserver(enabling observer:@escaping FilterHandler, key aKey:String? = nil){
+        let key = aKey ?? peekObserverKey(observer)
+        removeObserver(enabling: observer, key: key)
+        enablingObservers.append(ObserverHash<FilterHandler>(key:key, observer:observer))
+    }
+    
+    public func removeObserver(enabling observer:@escaping FilterHandler, key aKey:String? = nil) {
+        let key = aKey ?? peekObserverKey(observer)
+        if let index = enablingObservers.index(where: { return $0.key == key }) {
+            enablingObservers.remove(at: index)
+        }
+    }
+    
+    
+    public func removeAllObservers(){
+        newSourceObservers.removeAll()
+        destinationObservers.removeAll()
+        
+        root?.removeAllObservers()
+        dirtyObservers.removeAll()
+        enablingObservers.removeAll()
     }
     
     //
@@ -762,16 +819,16 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     // MARK: - internal
     //
     internal func executeNewSourceObservers(source:IMPImageProvider?){
-        for o in newSourceObservers {
-            o(source)
+        for hash in newSourceObservers {
+            hash.observer(source)
         }
     }
     
     internal func executeDestinationObservers(destination:IMPImageProvider?){
         if observersEnabled {
             if let d = destination {
-                for o in destinationObservers {
-                    o(d)
+                for hash in destinationObservers {
+                    hash.observer(d)
                 }
             }
         }
@@ -780,16 +837,16 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     internal func executeDirtyObservers(filter:IMPFilter){
         if observersEnabled {
             root?.executeDirtyObservers(filter: self)
-            for o in dirtyObservers {
-                o(filter,filter.source,filter._destination)
+            for hash in dirtyObservers {
+                hash.observer(filter,filter.source,filter._destination)
             }
         }
     }
     
     internal func executeEnablingObservers(filter:IMPFilter){
         if observersEnabled {
-            for o in enablingObservers {
-                o(filter,filter.source,filter._destination)
+            for hash in enablingObservers {
+                hash.observer(filter,filter.source,filter._destination)
             }
         }
     }
@@ -801,11 +858,26 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     private var root:IMPFilter?
     
+    private struct ObserverHash<A>:Hashable {
+        
+        static func ==(lhs: IMPFilter.ObserverHash<A>, rhs: IMPFilter.ObserverHash<A>) -> Bool {
+            return lhs.key == rhs.key
+        }
+        
+        let key:String
+        let observer:A       
+        var hashValue: Int {
+            return key.hashValue
+        }        
+    }
+    
     private lazy var _destination:IMPImageProvider   = IMPImage(context: self.context)
-    private var newSourceObservers:[NulableUpdateHandler]   = [NulableUpdateHandler]()
-    private var destinationObservers:[UpdateHandler] = [UpdateHandler]()
-    private var dirtyObservers:[FilterHandler]       = [FilterHandler]()
-    private var enablingObservers:[FilterHandler]    = [FilterHandler]()
+    
+    private var newSourceObservers   = [ObserverHash<SourceUpdateHandler>]()
+    private var destinationObservers = [ObserverHash<UpdateHandler>]()
+
+    private var dirtyObservers       = [ObserverHash<FilterHandler>]()
+    private var enablingObservers    = [ObserverHash<FilterHandler>]()
     
     private var coreImageFilterList:[FilterContainer] = [FilterContainer]()
     

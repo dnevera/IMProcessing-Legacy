@@ -15,7 +15,7 @@
 
 import Metal
 
-private func IMPPeekFunc<A, R>(_ f: (A) -> R) -> (fp: Int, ctx: Int) {
+public func IMPPeekFunc<A, R>(_ f: (A) -> R) -> (fp: Int, ctx: Int) {
     typealias IntInt = (Int, Int)
     let (_, lo) = unsafeBitCast(f, to: IntInt.self)
     let offset = MemoryLayout<Int>.size == 8 ? 16 : 12
