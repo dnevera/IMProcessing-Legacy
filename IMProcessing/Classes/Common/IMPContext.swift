@@ -32,6 +32,24 @@ public func IMPClosuresEqual<A>(_ lhs: (A), _ rhs: (A)) -> Bool {
     return  unsafeBitCast(lhs, to: AnyObject.self) === unsafeBitCast(rhs, to: AnyObject.self)
 }
 
+public struct IMPObserverHash<A>:Hashable {
+    
+    public static func == (lhs: IMPObserverHash<A>, rhs: IMPObserverHash<A>) -> Bool {
+        return lhs.key == rhs.key
+    }
+    
+    let key:String
+    let observer:A       
+    public var hashValue: Int {
+        return key.hashValue
+    }   
+    
+    public static func observerKey<T, R>(_ f: (T) -> R) -> String {
+        let addr = IMPPeekFunc(f)
+        return "\(addr.fp):\(addr.ctx)"
+    }    
+}
+
 ///
 ///  @brief Context provider protocol.
 ///  All filter classes should conform to the protocol to get access current filter context.

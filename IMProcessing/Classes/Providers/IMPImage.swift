@@ -20,8 +20,20 @@ import ImageIO
 
 open class IMPImage: IMPImageProvider {
     
-    public func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void)) {
-        filterObservers.append(observer)
+    public func removeObserver(optionsChanged observer: @escaping ObserverType) {
+        let key = IMPObserverHash<ObserverType>.observerKey(observer)
+        if let index = filterObservers.index(where: { return $0.key == key }) {
+            filterObservers.remove(at: index)
+        }    
+
+    }
+                
+    public func addObserver(optionsChanged observer: @escaping ObserverType) {
+        let key = IMPObserverHash<ObserverType>.observerKey(observer)
+        if let index = filterObservers.index(where: { return $0.key == key }) {
+            filterObservers.remove(at: index)
+        }  
+        filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
     }
     
     public func removeObservers() {
@@ -42,8 +54,8 @@ open class IMPImage: IMPImageProvider {
         get{
             if _texture == nil && _image != nil {
                 render(to: &_texture) { (texture,command) in
-                    for o in self.filterObservers {
-                        o(self)
+                    for hash in self.filterObservers {
+                        hash.observer(self)
                     }
                 }                   
             }
@@ -60,8 +72,8 @@ open class IMPImage: IMPImageProvider {
         get {
             if _image == nil && _texture != nil {
                 _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
-                for o in self.filterObservers {
-                    o(self)
+                for hash in self.filterObservers {
+                    hash.observer(self)
                 }
                 //if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){
                     //
@@ -114,5 +126,5 @@ open class IMPImage: IMPImageProvider {
         }
     }
     
-    private var filterObservers = [((IMPImageProvider) -> Void)]()
+    private var filterObservers = [IMPObserverHash<ObserverType>]() //[((IMPImageProvider) -> Void)]()
 }
