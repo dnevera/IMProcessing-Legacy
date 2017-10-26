@@ -11,23 +11,28 @@ import CoreImage
 open class IMPRawFile: IMPImageProvider {
    
     public func removeObserver(optionsChanged observer: @escaping ObserverType) {
-        let key = IMPObserverHash<ObserverType>.observerKey(observer)
-        if let index = filterObservers.index(where: { return $0.key == key }) {
-            filterObservers.remove(at: index)
-        }    
-        
+        context.runOperation(.sync) { 
+            let key = IMPObserverHash<ObserverType>.observerKey(observer)
+            if let index = self.filterObservers.index(where: { return $0.key == key }) {
+                self.filterObservers.remove(at: index)
+            }                
+        }        
     }
     
     public func addObserver(optionsChanged observer: @escaping ObserverType) {
-        let key = IMPObserverHash<ObserverType>.observerKey(observer)
-        if let index = filterObservers.index(where: { return $0.key == key }) {
-            filterObservers.remove(at: index)
-        }  
-        filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
+        context.runOperation(.sync) {
+            let key = IMPObserverHash<ObserverType>.observerKey(observer)
+            if let index = self.filterObservers.index(where: { return $0.key == key }) {
+                self.filterObservers.remove(at: index)
+            }    
+            self.filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
+        }
     }
     
     public func removeObservers() {
-        filterObservers.removeAll()
+        context.runOperation(.sync) { 
+            self.filterObservers.removeAll()
+        }
     }
     
     public var baselineExposure:Float {
