@@ -124,7 +124,10 @@ public enum IMPImageStorageMode {
 
 
 /// Image provider base protocol
-public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{    
+public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
+    
+    typealias ObserverType = (_ :IMPImageProvider) -> Void
+    
     var image:CIImage?{ get set }
     var size:NSSize? {get}
     var colorSpace:CGColorSpace {get set}
@@ -132,7 +135,8 @@ public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
     var videoCache:IMPVideoTextureCache {get}
     var storageMode:IMPImageStorageMode {get}
     init(context:IMPContext, storageMode:IMPImageStorageMode?)
-    func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void))
+    func addObserver(optionsChanged observer: @escaping ObserverType)
+    func removeObserver(optionsChanged observer: @escaping ObserverType)
     func removeObservers()
 }
 

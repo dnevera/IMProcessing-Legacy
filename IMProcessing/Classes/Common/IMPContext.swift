@@ -15,7 +15,7 @@
 
 import Metal
 
-private func IMPPeekFunc<A, R>(_ f: (A) -> R) -> (fp: Int, ctx: Int) {
+public func IMPPeekFunc<A, R>(_ f: (A) -> R) -> (fp: Int, ctx: Int) {
     typealias IntInt = (Int, Int)
     let (_, lo) = unsafeBitCast(f, to: IntInt.self)
     let offset = MemoryLayout<Int>.size == 8 ? 16 : 12
@@ -30,6 +30,24 @@ public func === <A, R>(lhs: (A) -> R, rhs: (A) -> R) -> Bool {
 
 public func IMPClosuresEqual<A>(_ lhs: (A), _ rhs: (A)) -> Bool {
     return  unsafeBitCast(lhs, to: AnyObject.self) === unsafeBitCast(rhs, to: AnyObject.self)
+}
+
+public struct IMPObserverHash<A>:Hashable {
+    
+    public static func == (lhs: IMPObserverHash<A>, rhs: IMPObserverHash<A>) -> Bool {
+        return lhs.key == rhs.key
+    }
+    
+    let key:String
+    let observer:A       
+    public var hashValue: Int {
+        return key.hashValue
+    }   
+    
+    public static func observerKey<T, R>(_ f: (T) -> R) -> String {
+        let addr = IMPPeekFunc(f)
+        return "\(addr.fp):\(addr.ctx)"
+    }    
 }
 
 ///

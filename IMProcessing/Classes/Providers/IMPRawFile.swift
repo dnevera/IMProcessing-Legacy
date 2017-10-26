@@ -9,15 +9,32 @@
 import CoreImage
 
 open class IMPRawFile: IMPImageProvider {
+   
+    public func removeObserver(optionsChanged observer: @escaping ObserverType) {
+        context.runOperation(.sync) { 
+            let key = IMPObserverHash<ObserverType>.observerKey(observer)
+            if let index = self.filterObservers.index(where: { return $0.key == key }) {
+                self.filterObservers.remove(at: index)
+            }                
+        }        
+    }
     
-    public func addObserver(optionsChanged observer: @escaping ((IMPImageProvider) -> Void)) {
-        filterObservers.append(observer)
+    public func addObserver(optionsChanged observer: @escaping ObserverType) {
+        context.runOperation(.sync) {
+            let key = IMPObserverHash<ObserverType>.observerKey(observer)
+            if let index = self.filterObservers.index(where: { return $0.key == key }) {
+                self.filterObservers.remove(at: index)
+            }    
+            self.filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
+        }
     }
     
     public func removeObservers() {
-        filterObservers.removeAll()
+        context.runOperation(.sync) { 
+            self.filterObservers.removeAll()
+        }
     }
-
+    
     public var baselineExposure:Float {
         set {
             rawFilter?.setValue(baselineExposure,  forKey: kCIInputBaselineExposureKey)
@@ -281,8 +298,8 @@ open class IMPRawFile: IMPImageProvider {
     private func renderTexture() {
         if renderOutput() != nil {
             render(to: &_texture, flipVertical:true) { (texture,command) in
-                for o in self.filterObservers {
-                    o(self)
+                for hash in self.filterObservers {
+                    hash.observer(self)
                 }
             }            
         }
@@ -318,6 +335,8 @@ open class IMPRawFile: IMPImageProvider {
         }
     }
     
-    private var filterObservers = [((IMPImageProvider) -> Void)]()            
+   // private var filterObservers = [((IMPImageProvider) -> Void)]()
+    private var filterObservers = [IMPObserverHash<ObserverType>]() //[((IMPImageProvider) -> Void)]()
+
 }
 
