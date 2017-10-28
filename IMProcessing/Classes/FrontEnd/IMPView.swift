@@ -47,6 +47,10 @@ import MetalKit
 
 open class IMPView: MTKView {
     
+    public var viewReadyHandler:(()->Void)?
+    public var viewBufferCompleteHandler:((_ image:IMPImageProvider)->Void)?
+    public var viewUpdateDrawbleHandler:((_ size:NSSize)->Void)?
+
     open func configure(){}
     
     public static var scaleFactor:Float{
@@ -70,35 +74,41 @@ open class IMPView: MTKView {
     
     public var exactResolutionEnabled = false
     
-    public var filter:IMPFilter? = nil {
+    open var filter:IMPFilter? = nil {
         willSet{
             filter?.removeObserver(newSource: sourceObserver)
+            filter?.removeObserver(destinationUpdated: destinationObserver)
             filter?.removeObserver(dirty: dirtyObserver)
         }
         didSet {            
-            self.needProcessing = true            
             filter?.addObserver(newSource: sourceObserver)            
+            filter?.addObserver(destinationUpdated: destinationObserver)            
             filter?.addObserver(dirty: dirtyObserver)
+            operation.cancelAllOperations()
+            needProcessing = true            
         }
-    }
-        
+    }        
+    //private var layerIsTransparance = false
     private lazy var sourceObserver:IMPFilter.SourceUpdateHandler = {
         let handler:IMPFilter.SourceUpdateHandler = { (source) in
             if source == nil { 
-                DispatchQueue.main.async {
-                    self.layer?.opacity = 0
-                }
-                self.operation.cancelAllOperations()
-                self.needProcessing = false
-                return 
+                //if !self.layerIsTransparance {
+                    self.operation.cancelAllOperations()
+                    //self.layerIsTransparance = true
+                    //DispatchQueue.main.async {
+                        //self.layer?.opacity = 0
+                   // }
+                    self.needProcessing = true
+                //}
             }
-            else {
-                DispatchQueue.main.async {
-                    self.layer?.opacity = 1
-                }
-            }
+        }
+        return handler
+    }()
+    
+    private lazy var destinationObserver:IMPFilter.UpdateHandler = {
+        let handler:IMPFilter.UpdateHandler = { (destination) in
             DispatchQueue.main.async {
-                self.updateDrawbleSize()
+                self.updateDrawble(size: destination.size)
             }
         }
         return handler
@@ -107,9 +117,7 @@ open class IMPView: MTKView {
     private lazy var dirtyObserver:IMPFilter.FilterHandler = {
         let handler:IMPFilter.FilterHandler = { (filter, source, destintion) in
             if !self.needProcessing{
-                DispatchQueue.main.async {
-                    self.updateDrawbleSize()                        
-                }
+                self.needProcessing = true
             }
         } 
         return handler
@@ -121,10 +129,11 @@ open class IMPView: MTKView {
         }
     }
     
-    private func updateDrawbleSize(need processing:Bool = true)  {
+    private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
         CATransaction.begin()
         CATransaction.setDisableActions(true)
-        if let size = self.filter?.source?.size {
+        if let size = size {
+            
             if exactResolutionEnabled || self.bounds.size == NSZeroSize {
                 drawableSize = size
             }
@@ -137,8 +146,9 @@ open class IMPView: MTKView {
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
             }
             if !needProcessing && processing{
-                needProcessing = true
+                //needProcessing = true
             }
+            viewUpdateDrawbleHandler?(size)
         }
         else if filter?.source == nil {
             let newSize = NSSize(width: self.bounds.size.width * screenScale,
@@ -147,8 +157,10 @@ open class IMPView: MTKView {
             drawableSize = NSSize(width: newSize.width, height: newSize.height)
 
             if !needProcessing && processing{
-                needProcessing = true
+                //needProcessing = true
             }
+            
+            viewUpdateDrawbleHandler?(newSize)
         }
         CATransaction.commit()
     }
@@ -170,10 +182,7 @@ open class IMPView: MTKView {
 //        }
 //    }
     #endif
-    
-    public var viewReadyHandler:(()->Void)?
-    public var viewBufferCompleteHandler:(()->Void)?
-    
+        
     override public init(frame frameRect: CGRect, device: MTLDevice? = nil) {
         context = IMPContext(device:device, lazy: true)
         super.init(frame: frameRect, device: self.context.device)
@@ -263,7 +272,16 @@ open class IMPView: MTKView {
                 self.frameCounter += 1
             }
             self.context.resume()
-            self.viewBufferCompleteHandler?()
+//            if self.layerIsTransparance {
+//                self.layerIsTransparance = false
+//                DispatchQueue.main.async {
+//                    CATransaction.begin()
+//                    CATransaction.setAnimationDuration(1)
+//                    self.layer?.opacity = 1
+//                    CATransaction.commit()
+//                }
+//            }
+            self.viewBufferCompleteHandler?(self.frameImage)
         }        
         
         if renderingEnabled == false &&
@@ -513,13 +531,24 @@ open class IMPView: MTKView {
 
     }
     
-    var mouseEventHandlers = [MouseEventHandler]()
+    var mouseEventHandlers = [IMPObserverHash<MouseEventHandler>]()
     
     var mouseEventEnabled = false
     public func addMouseEventObserver(observer:@escaping MouseEventHandler){
-        mouseEventHandlers.append(observer)
+        let key = IMPObserverHash<MouseEventHandler>.observerKey(observer)
+        if let index = mouseEventHandlers.index(where: { return $0.key == key }) {
+            mouseEventHandlers.remove(at: index)
+        }    
+        mouseEventHandlers.append(IMPObserverHash<MouseEventHandler>(key:key,observer: observer))
         mouseEventEnabled = true
     }
+    
+    public func removeObserver(observer:@escaping MouseEventHandler) {
+        let key = IMPObserverHash<MouseEventHandler>.observerKey(observer)
+        if let index = mouseEventHandlers.index(where: { return $0.key == key }) {
+            mouseEventHandlers.remove(at: index)
+        }    
+    }    
     
     public func removeMouseEventObservers(){
         mouseEventEnabled = false
@@ -532,8 +561,8 @@ open class IMPView: MTKView {
     func lounchMouseObservers(event:NSEvent){
         let location = event.locationInWindow
         let point  = self.convert(location,from:nil)
-        for o in mouseEventHandlers {
-            o(event, point, self)
+        for hash in mouseEventHandlers {
+            hash.observer(event, point, self)
         }
     }
     
