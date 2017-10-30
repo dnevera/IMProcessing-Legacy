@@ -25,22 +25,6 @@ import MetalKit
     import AppKit
     public typealias IMPViewBase = NSView
     public typealias IMPDragOperationHandler = ((_ files:[String]) -> Bool)
-      
-//    public extension NSView {
-//        open var _backgroundColor:NSColor? {
-//            set{
-//                wantsLayer = true
-//                layer?.backgroundColor = newValue?.cgColor
-//            }
-//            get{
-//                if let c = layer?.backgroundColor {
-//                    return NSColor(cgColor: c)
-//                }
-//                return nil
-//            }
-//        }
-//    }
-//    
     
 #endif
 
@@ -69,10 +53,10 @@ open class IMPView: MTKView {
         public var renderingEnabled = false
     #else
         public typealias MouseEventHandler = ((_ event:NSEvent, _ location:NSPoint, _ view:NSView)->Void)
-        public let renderingEnabled = false
+        public let renderingEnabled = true
     #endif
     
-    public var exactResolutionEnabled = false
+    public var exactResolutionEnabled = false 
     
     open var filter:IMPFilter? = nil {
         willSet{
@@ -88,25 +72,21 @@ open class IMPView: MTKView {
             needProcessing = true            
         }
     }        
-    //private var layerIsTransparance = false
+
     private lazy var sourceObserver:IMPFilter.SourceUpdateHandler = {
         let handler:IMPFilter.SourceUpdateHandler = { (source) in
             if source == nil { 
-                //if !self.layerIsTransparance {
-                    self.operation.cancelAllOperations()
-                    //self.layerIsTransparance = true
-                    //DispatchQueue.main.async {
-                        //self.layer?.opacity = 0
-                   // }
-                    self.needProcessing = true
-                //}
+                self.operation.cancelAllOperations()
+                self.needProcessing = true
             }
         }
         return handler
     }()
     
+    private var currentDestination:IMPImageProvider?
     private lazy var destinationObserver:IMPFilter.UpdateHandler = {
         let handler:IMPFilter.UpdateHandler = { (destination) in
+            self.currentDestination = destination
             DispatchQueue.main.async {
                 self.updateDrawble(size: destination.size)
             }
@@ -123,11 +103,6 @@ open class IMPView: MTKView {
         return handler
     }()
     
-    open override var bounds: NSRect {
-        didSet{
-            
-        }
-    }
     
     private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
         CATransaction.begin()
@@ -145,9 +120,7 @@ open class IMPView: MTKView {
                 let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
             }
-            if !needProcessing && processing{
-                //needProcessing = true
-            }
+           
             viewUpdateDrawbleHandler?(size)
         }
         else if filter?.source == nil {
@@ -156,32 +129,11 @@ open class IMPView: MTKView {
 
             drawableSize = NSSize(width: newSize.width, height: newSize.height)
 
-            if !needProcessing && processing{
-                //needProcessing = true
-            }
-            
             viewUpdateDrawbleHandler?(newSize)
         }
         CATransaction.commit()
     }
     
-    #if os(OSX)
-//    var invalidateSizeTimer:Timer?
-//    
-//    @objc func invalidateSizeTimerHandler(timer:Timer?)  {
-//        updateDrawbleSize(need: false)
-//    }
-//    
-//    open override var frame: NSRect {
-//        didSet{
-//            invalidateSizeTimer?.invalidate()
-//            invalidateSizeTimer = Timer.scheduledTimer(timeInterval: 1/TimeInterval(preferredFramesPerSecond),
-//                                                       target: self, 
-//                                                       selector: #selector(invalidateSizeTimerHandler(timer:)),
-//                                                       userInfo: nil, repeats: false)
-//        }
-//    }
-    #endif
         
     override public init(frame frameRect: CGRect, device: MTLDevice? = nil) {
         context = IMPContext(device:device, lazy: true)
@@ -272,15 +224,6 @@ open class IMPView: MTKView {
                 self.frameCounter += 1
             }
             self.context.resume()
-//            if self.layerIsTransparance {
-//                self.layerIsTransparance = false
-//                DispatchQueue.main.async {
-//                    CATransaction.begin()
-//                    CATransaction.setAnimationDuration(1)
-//                    self.layer?.opacity = 1
-//                    CATransaction.commit()
-//                }
-//            }
             self.viewBufferCompleteHandler?(self.frameImage)
         }        
         
@@ -337,19 +280,8 @@ open class IMPView: MTKView {
         }
     }
 
-    fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()
-    
+    fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()    
     fileprivate var needUpdateDisplay:Bool = false 
-//    {
-//        didSet{
-//            if needUpdateDisplay {
-//                processingLink.isPaused = false
-//            }
-//            else {
-//                processingLink.isPaused = true
-//            }
-//        }
-//    }
     
     #if os(iOS)
     public override func setNeedsDisplay() {
@@ -375,7 +307,6 @@ open class IMPView: MTKView {
             contentMode = .scaleAspectFit
         #elseif os(OSX)
             postsFrameChangedNotifications = false
-            //addObserver(self, forKeyPath: NSViewFrameDidChange.name, options: [.new], context: nil)
         #endif
         enableSetNeedsDisplay = false
         colorPixelFormat = .bgra8Unorm
