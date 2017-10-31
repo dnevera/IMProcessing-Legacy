@@ -97,9 +97,9 @@ open class IMPView: MTKView {
     
     private lazy var dirtyObserver:IMPFilter.FilterHandler = {
         let handler:IMPFilter.FilterHandler = { (filter, source, destintion) in
-            if !self.needProcessing{
+            //if !self.needProcessing{
                 self.needProcessing = true
-            }
+           // }
         } 
         return handler
     }()
@@ -159,9 +159,11 @@ open class IMPView: MTKView {
     var needProcessing = true {
         didSet{
             if needProcessing {
-                operation.cancelAllOperations()
                 if isPaused{
                     processing(size: drawableSize)
+                }
+                else {
+                    operation.cancelAllOperations()                    
                 }
             }
         }
@@ -184,17 +186,19 @@ open class IMPView: MTKView {
     func processing(size: NSSize)  {
         operation.cancelAllOperations()
         operation.addOperation {
-            
+
+            self.needProcessing = false
+
             guard let filter = self.filter else { return }
             
             filter.destinationSize = size
             self.frameImage = filter.destination
                         
-            self.needProcessing = false
-            
-            DispatchQueue.main.async {
-                self.setNeedsDisplay()                
-            }
+            self.needUpdateDisplay = true
+
+//            DispatchQueue.main.async {
+//                self.setNeedsDisplay()                
+//            }
         }
     }
 
@@ -307,18 +311,18 @@ open class IMPView: MTKView {
         #if os(iOS)
             contentMode = .scaleAspectFit
         #elseif os(OSX)
-            postsFrameChangedNotifications = false
+            postsFrameChangedNotifications = true
         #endif
         enableSetNeedsDisplay = false
         colorPixelFormat = .bgra8Unorm
         delegate = self
         processingLink.addObserver { (timev) in
-            let go = self.needProcessing
-            self.needProcessing = false
-            if go {
-                self.context?.runOperation(.async){
-                    self.processing(size: self.drawableSize)
-                }            
+            //let go = self.needProcessing
+            //self.needProcessing = false
+            if self.needProcessing {
+                //self.context?.runOperation(.async){
+                self.processing(size: self.drawableSize)
+                //}            
             }
         }
         isPaused = false   
@@ -500,8 +504,8 @@ open class IMPView: MTKView {
     
     #endif
     
-    fileprivate var lastUpdatesTimes = 1
-    fileprivate var lastUpdatesTimesCounter = 0
+    //fileprivate var lastUpdatesTimes = 1
+    //fileprivate var lastUpdatesTimesCounter = 0
 }
 
 
@@ -517,12 +521,12 @@ extension IMPView: MTKViewDelegate {
             return
         }
         
-        if impview.lastUpdatesTimesCounter > impview.lastUpdatesTimes {
-            impview.lastUpdatesTimesCounter = 0
+        //if impview.lastUpdatesTimesCounter > impview.lastUpdatesTimes {
+        //    impview.lastUpdatesTimesCounter = 0
             impview.needUpdateDisplay = false
-        }
+       // }
         
-        impview.lastUpdatesTimesCounter += 1
+        //impview.lastUpdatesTimesCounter += 1
         
         impview.refresh(rect: view.bounds)
     }
