@@ -58,17 +58,18 @@ open class IMPView: MTKView {
     
     public var exactResolutionEnabled = false 
     
-    open var filter:IMPFilter? = nil {
+    open weak var filter:IMPFilter? = nil {
         willSet{
+            operation.cancelAllOperations()
             filter?.removeObserver(newSource: sourceObserver)
             filter?.removeObserver(destinationUpdated: destinationObserver)
             filter?.removeObserver(dirty: dirtyObserver)
         }
-        didSet {            
+        didSet {         
+            device = filter?.context.device 
             filter?.addObserver(newSource: sourceObserver)            
             filter?.addObserver(destinationUpdated: destinationObserver)            
             filter?.addObserver(dirty: dirtyObserver)
-            operation.cancelAllOperations()
             needProcessing = true            
         }
     }        
@@ -133,20 +134,16 @@ open class IMPView: MTKView {
         }
         CATransaction.commit()
     }
-    
-        
-    override public init(frame frameRect: CGRect, device: MTLDevice? = nil) {
-        context = IMPContext(device:device, lazy: true)
-        super.init(frame: frameRect, device: self.context.device)
+            
+    public init(frame frameRect: CGRect) {
+        super.init(frame: frameRect, device: nil)
         defer {
             _init_()            
         }
     }
     
     required public init(coder: NSCoder) {
-        context = IMPContext(lazy: true)
         super.init(coder: coder)
-        device = self.context.device
         guard device != nil else {
             fatalError("The system does not support any MTL devices...")
         }
@@ -155,7 +152,9 @@ open class IMPView: MTKView {
         }
     }
     
-    public let context:IMPContext
+    public var context:IMPContext? {
+        return filter?.context
+    }
     
     var needProcessing = true {
         didSet{
@@ -170,7 +169,7 @@ open class IMPView: MTKView {
     
     var frameCounter = 0
     
-    lazy var frameImage:IMPImageProvider = IMPImage(context: self.context)
+    var frameImage:IMPImageProvider? // = IMPImage(context: self.context)
     
     private let __operation:OperationQueue = {
         let o = OperationQueue()
@@ -209,13 +208,15 @@ open class IMPView: MTKView {
     
     func refresh(rect: CGRect){
 
+        guard let context = self.context else { return }
+        
         context.wait()
 
         guard 
             let commandBuffer = context.commandBuffer,
-            let sourceTexture = frameImage.texture,
+            let sourceTexture = frameImage?.texture,
             let targetTexture = currentDrawable?.texture else {
-                self.context.resume()
+                context.resume()
                 return                 
         }
                                    
@@ -223,8 +224,8 @@ open class IMPView: MTKView {
             if self.isFirstFrame  {
                 self.frameCounter += 1
             }
-            self.context.resume()
-            self.viewBufferCompleteHandler?(self.frameImage)
+            context.resume()
+            self.viewBufferCompleteHandler?(self.frameImage!)
         }        
         
         if renderingEnabled == false &&
@@ -315,7 +316,7 @@ open class IMPView: MTKView {
             let go = self.needProcessing
             self.needProcessing = false
             if go {
-                self.context.runOperation(.async){
+                self.context?.runOperation(.async){
                     self.processing(size: self.drawableSize)
                 }            
             }
@@ -347,12 +348,12 @@ open class IMPView: MTKView {
     }()
     
     lazy var vertexBuffer:MTLBuffer? = {
-        let v = self.context.device.makeBuffer(bytes: IMPView.viewVertexData, length: MemoryLayout<Float>.size*IMPView.viewVertexData.count, options: [])
+        let v = self.context?.device.makeBuffer(bytes: IMPView.viewVertexData, length: MemoryLayout<Float>.size*IMPView.viewVertexData.count, options: [])
         v?.label = "Vertices"
         return v
     }()
     
-    lazy var fragmentfunction:MTLFunction? = self.context.defaultLibrary.makeFunction(name: "fragment_passview")
+    lazy var fragmentfunction:MTLFunction? = self.context?.defaultLibrary.makeFunction(name: "fragment_passview")
     
     lazy var renderPipeline:MTLRenderPipelineState? = {
         do {
@@ -360,18 +361,18 @@ open class IMPView: MTKView {
             
             descriptor.colorAttachments[0].pixelFormat = self.colorPixelFormat
             
-            guard let vertex = self.context.defaultLibrary.makeFunction(name: "vertex_passview") else {
-                fatalError("IMPView error: vertex function 'vertex_passview' is not found in: \(self.context.defaultLibrary.functionNames)")
+            guard let vertex = self.context?.defaultLibrary.makeFunction(name: "vertex_passview") else {
+                fatalError("IMPView error: vertex function 'vertex_passview' is not found in: \(self.context?.defaultLibrary.functionNames)")
             }
             
-            guard let fragment = self.context.defaultLibrary.makeFunction(name: "fragment_passview") else {
-                fatalError("IMPView error: vertex function 'fragment_passview' is not found in: \(self.context.defaultLibrary.functionNames)")
+            guard let fragment = self.context?.defaultLibrary.makeFunction(name: "fragment_passview") else {
+                fatalError("IMPView error: vertex function 'fragment_passview' is not found in: \(self.context?.defaultLibrary.functionNames)")
             }
             
             descriptor.vertexFunction   = vertex
             descriptor.fragmentFunction = fragment
             
-            return try self.context.device.makeRenderPipelineState(descriptor: descriptor)
+            return try self.context?.device.makeRenderPipelineState(descriptor: descriptor)
         }
         catch let error as NSError {
             NSLog("IMPView error: \(error)")
@@ -505,22 +506,25 @@ open class IMPView: MTKView {
 
 
 extension IMPView: MTKViewDelegate {
-                  
+    
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     
     public func draw(in view: MTKView) {
         
-        if !needUpdateDisplay {
+        guard let impview = (view as? IMPView) else { return }
+        
+        if !impview.needUpdateDisplay {
             return
         }
         
-        if lastUpdatesTimesCounter > lastUpdatesTimes {
-            lastUpdatesTimesCounter = 0
-            needUpdateDisplay = false
+        if impview.lastUpdatesTimesCounter > impview.lastUpdatesTimes {
+            impview.lastUpdatesTimesCounter = 0
+            impview.needUpdateDisplay = false
         }
         
-        lastUpdatesTimesCounter += 1
+        impview.lastUpdatesTimesCounter += 1
         
-        self.refresh(rect: view.bounds)
+        impview.refresh(rect: view.bounds)
     }
 }
+
