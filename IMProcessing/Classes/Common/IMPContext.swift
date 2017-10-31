@@ -38,16 +38,22 @@ public struct IMPObserverHash<A>:Hashable {
         return lhs.key == rhs.key
     }
     
-    let key:String
-    let observer:A       
+    public let key:String
+    public let observer:A       
     public var hashValue: Int {
         return key.hashValue
     }   
     
     public static func observerKey<T, R>(_ f: (T) -> R) -> String {
         let addr = IMPPeekFunc(f)
-        return "\(addr.fp):\(addr.ctx)"
-    }    
+        //return "\(addr.fp):\(addr.ctx)"
+        return "IMPObserverHash:observer:\(addr.fp)"
+    }  
+    
+    public init(key:String, observer:A){
+        self.key = key
+        self.observer = observer
+    }
 }
 
 ///
