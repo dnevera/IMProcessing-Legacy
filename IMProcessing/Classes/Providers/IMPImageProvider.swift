@@ -598,17 +598,25 @@ public extension IMPImageProvider {
         return texture
     }
     
+    public func scaledImage(with scale:CGFloat) -> CIImage? {
+        guard let image = image else { return nil }
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        var t = CGAffineTransform.identity
+        t = t.scaledBy(x: scale, y: scale).scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+        return image.transformed(by: t)        
+    }
+    
+    public func cgiImage(scale:CGFloat) -> CGImage? {
+        guard let image = scaledImage(with: scale) else { return nil }
+        return context.coreImage?.createCGImage(image, from: image.extent,
+                                                format: kCIFormatARGB8,
+                                                colorSpace: colorSpace,
+                                                deferred:true)                    
+    }
+    
     public var cgiImage:CGImage? {
         get {
-            guard let image = image else { return nil }
-            let colorSpace = CGColorSpaceCreateDeviceRGB()
-            var t = CGAffineTransform.identity
-            t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
-            let im = image.transformed(by: t)
-            return context.coreImage?.createCGImage(im, from: image.extent,
-                                                    format: kCIFormatARGB8,
-                                                    colorSpace: colorSpace,
-                                                    deferred:true)            
+            return cgiImage(scale:1)
         }
         set {
             if let im = newValue {
@@ -628,21 +636,24 @@ public extension IMPImageProvider {
         }
     }
     #else
+    public func nsImage(scale:CGFloat) -> NSImage? {
+        if let image = self.image {
+            
+            var t = CGAffineTransform.identity
+            t = t.scaledBy(x: scale, y: scale)
+
+            let rep: NSCIImageRep = NSCIImageRep(ciImage: image.transformed(by: t))
+            
+            let nsImage: NSImage = NSImage(size: rep.size)                
+            nsImage.addRepresentation(rep)
+            return nsImage
+        }
+        return nil
+    }
+
     public var nsImage:NSImage? {
         get {
-            if let image = self.image {
-
-                var t = CGAffineTransform.identity
-                t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
-                let im = image.transformed(by: t)
-                
-                let rep: NSCIImageRep = NSCIImageRep(ciImage: im)
-                
-                let nsImage: NSImage = NSImage(size: rep.size)                
-                nsImage.addRepresentation(rep)
-                return nsImage
-            }
-            return nil
+            return nsImage(scale:1)
         }
         set{
             guard let data = newValue?.tiffRepresentation else { return }

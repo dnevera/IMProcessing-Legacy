@@ -111,19 +111,11 @@ open class IMPRawFile: IMPImageProvider {
 
     public var inputOrientation:IMPExifOrientation {
         set{
-//            if newValue == .none {                
-//                rawFilter?.setValue(false, forKey: kCIInputIgnoreImageOrientationKey)
-//                return
-//            }
             rawFilter?.setValue(true, forKey: kCIInputIgnoreImageOrientationKey)
             rawFilter?.setValue(newValue.rawValue, forKey: kCIInputImageOrientationKey)
             renderTexture()            
         }
         get {
-//            let ignoring = (rawFilter?.value(forKeyPath: kCIInputImageOrientationKey) as? NSNumber)?.boolValue ?? false
-//            if ignoring == false {
-//                return .none
-//            }
             let o = (rawFilter?.value(forKeyPath: kCIInputImageOrientationKey) as? NSNumber)?.int32Value ?? IMPExifOrientation.up.rawValue
             return IMPExifOrientation(rawValue: o) ?? IMPExifOrientation.up
         }
@@ -278,10 +270,6 @@ open class IMPRawFile: IMPImageProvider {
         rawFilter?.setValue(factor, forKey: kCIInputScaleFactorKey)
         rawFilter?.setValue(mode, forKey: kCIInputAllowDraftModeKey)
         
-        //if 
-        
-        //rawFilter?.setValue(true, forKey: kCIInputIgnoreImageOrientationKey)
-        //rawFilter?.setValue(Int(IMPExifOrientation.verticalFlipped.rawValue), forKey: kCIInputImageOrientationKey)        
         _image = renderOutput()
         
         if let o = orientation {
@@ -335,7 +323,6 @@ open class IMPRawFile: IMPImageProvider {
         }
     }
     
-   // private var filterObservers = [((IMPImageProvider) -> Void)]()
     private var filterObservers = [IMPObserverHash<ObserverType>]() //[((IMPImageProvider) -> Void)]()
 
 }
