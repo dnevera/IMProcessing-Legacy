@@ -28,6 +28,36 @@ import MetalKit
     
 #endif
 
+fileprivate class IMPExecuteOperation: Operation {
+    fileprivate var mainBlock: ((_ this:IMPExecuteOperation)->Void)? 
+    
+    fileprivate init(mainBlock: @escaping ((_ this:IMPExecuteOperation)->Void)) {
+        self.mainBlock = mainBlock
+        super.init()
+    }
+    
+    fileprivate override func main() {
+        if self.isCancelled { return }
+        mainBlock?(self)
+    }       
+}
+
+
+fileprivate extension OperationQueue {
+       
+    fileprivate func addBackgroundContext(_ context:IMPContext, background:@escaping (()->Void)) -> Operation {
+        let operation = IMPExecuteOperation { this in                                    
+            if this.isCancelled { return }            
+            context.runOperation(.async){
+                background()
+            }
+            if this.isCancelled { return }            
+        }
+        
+        addOperation(operation)        
+        return operation
+    }
+}
 
 open class IMPView: MTKView {
     
@@ -53,10 +83,14 @@ open class IMPView: MTKView {
         public var renderingEnabled = false
     #else
         public typealias MouseEventHandler = ((_ event:NSEvent, _ location:NSPoint, _ view:NSView)->Void)
-        public let renderingEnabled = true
+        public let renderingEnabled = false
     #endif
     
-    public var exactResolutionEnabled = false 
+    public var exactResolutionEnabled = false {
+        didSet{
+            filter?.dirty = true
+        }
+    }
     
     open weak var filter:IMPFilter? = nil {
         willSet{
@@ -77,7 +111,6 @@ open class IMPView: MTKView {
     private lazy var sourceObserver:IMPFilter.SourceUpdateHandler = {
         let handler:IMPFilter.SourceUpdateHandler = { (source) in
             if source == nil { 
-                self.operation.cancelAllOperations()
                 self.needProcessing = true
             }
         }
@@ -97,18 +130,25 @@ open class IMPView: MTKView {
     
     private lazy var dirtyObserver:IMPFilter.FilterHandler = {
         let handler:IMPFilter.FilterHandler = { (filter, source, destintion) in
-            //if !self.needProcessing{
-                self.needProcessing = true
-           // }
+            self.needProcessing = true
         } 
         return handler
     }()
     
     
     private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
+        
+        if isPaused {
+            return 
+        } 
+                
+        var needReprocess = false
+        
         if let size = size {
+                     
+            if drawableSize.width != size.width || drawableSize.height != size.height {
+                needReprocess = true
+            }
             
             if exactResolutionEnabled || self.bounds.size == NSZeroSize {
                 drawableSize = size
@@ -121,7 +161,7 @@ open class IMPView: MTKView {
                 let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
             }
-           
+
             viewUpdateDrawbleHandler?(size)
         }
         else if filter?.source == nil {
@@ -129,10 +169,14 @@ open class IMPView: MTKView {
                                  height: self.bounds.size.height * screenScale)
 
             drawableSize = NSSize(width: newSize.width, height: newSize.height)
-
             viewUpdateDrawbleHandler?(newSize)
-        }
-        CATransaction.commit()
+        }        
+
+
+        if needReprocess {
+            self.processing(size: drawableSize, observersEnabled: false)
+            needUpdateDisplay = true
+        }            
     }
             
     public init(frame frameRect: CGRect) {
@@ -156,49 +200,61 @@ open class IMPView: MTKView {
         return filter?.context
     }
     
-    var needProcessing = true {
+    var needProcessing = false {
         didSet{
-            if needProcessing {
-                if isPaused{
+            if isPaused{
+                if needProcessing {
                     processing(size: drawableSize)
                 }
-                else {
-                    operation.cancelAllOperations()                    
-                }
             }
+            else {
+                operation.cancelAllOperations()                    
+            }            
         }
     }
     
     var frameCounter = 0
     
-    var frameImage:IMPImageProvider? // = IMPImage(context: self.context)
+    var frameImage:IMPImageProvider? 
     
     private let __operation:OperationQueue = {
         let o = OperationQueue()
         o.qualityOfService = .utility
         o.maxConcurrentOperationCount = 1
-        o.name = "com.improcessing.IMPView"
+        o.name = String(format: "com.improcessing.IMPView-%08x%08x", arc4random(), arc4random())
         return o
     }()
     
-    public var operation:OperationQueue { return  self.__operation }
+    public var operation:OperationQueue { 
+        return  self.__operation         
+    }
     
-    func processing(size: NSSize)  {
-        operation.cancelAllOperations()
-        operation.addOperation {
+    deinit {
+        filter = nil
+        processingPhase?.cancel()
+    }
+    
+    private var processingPhase:Operation?
+    private func processing(size: NSSize, observersEnabled:Bool = true)  {
+        guard let context = filter?.context else {
+            return
+        }
+        processingPhase?.cancel()
+        processingPhase = operation.addBackgroundContext(context){
 
             self.needProcessing = false
 
             guard let filter = self.filter else { return }
             
+            let oe = filter.observersEnabled 
+            filter.observersEnabled = observersEnabled
             filter.destinationSize = size
             self.frameImage = filter.destination
-                        
-            self.needUpdateDisplay = true
-
-//            DispatchQueue.main.async {
-//                self.setNeedsDisplay()                
-//            }
+            filter.observersEnabled = oe
+            
+            OperationQueue.main.addOperation {
+                self.needUpdateDisplay = true                
+            }
         }
     }
 
@@ -232,9 +288,12 @@ open class IMPView: MTKView {
             self.viewBufferCompleteHandler?(self.frameImage!)
         }        
         
-        if renderingEnabled == false &&
-            sourceTexture.cgsize == drawableSize  &&
-            sourceTexture.pixelFormat == targetTexture.pixelFormat{
+        if renderingEnabled == false 
+            &&
+            sourceTexture.cgsize == drawableSize  
+            &&
+            sourceTexture.pixelFormat == targetTexture.pixelFormat
+        {
             guard let encoder = commandBuffer.makeBlitCommandEncoder() else {return }
             encoder.copy(
                 from: sourceTexture,
@@ -247,7 +306,7 @@ open class IMPView: MTKView {
                 destinationLevel: 0,
                 destinationOrigin: MTLOrigin(x:0,y:0,z:0))
             
-            encoder.endEncoding()
+            encoder.endEncoding()        
         }
         else {
             renderPassDescriptor.colorAttachments[0].texture     = targetTexture
@@ -266,7 +325,7 @@ open class IMPView: MTKView {
                 encoder.endEncoding()
             }
         }
-                
+        
         commandBuffer.present(currentDrawable!)        
         commandBuffer.commit()
         
@@ -315,14 +374,11 @@ open class IMPView: MTKView {
         #endif
         enableSetNeedsDisplay = false
         colorPixelFormat = .bgra8Unorm
-        delegate = self
+        delegate = self    
         processingLink.addObserver { (timev) in
-            //let go = self.needProcessing
-            //self.needProcessing = false
             if self.needProcessing {
-                //self.context?.runOperation(.async){
+                guard self.filter?.source != nil else { return }
                 self.processing(size: self.drawableSize)
-                //}            
             }
         }
         isPaused = false   
@@ -503,9 +559,6 @@ open class IMPView: MTKView {
     }
     
     #endif
-    
-    //fileprivate var lastUpdatesTimes = 1
-    //fileprivate var lastUpdatesTimesCounter = 0
 }
 
 
@@ -521,13 +574,8 @@ extension IMPView: MTKViewDelegate {
             return
         }
         
-        //if impview.lastUpdatesTimesCounter > impview.lastUpdatesTimes {
-        //    impview.lastUpdatesTimesCounter = 0
-            impview.needUpdateDisplay = false
-       // }
-        
-        //impview.lastUpdatesTimesCounter += 1
-        
+        impview.needUpdateDisplay = false
+                
         impview.refresh(rect: view.bounds)
     }
 }

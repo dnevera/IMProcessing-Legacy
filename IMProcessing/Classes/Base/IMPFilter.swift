@@ -106,7 +106,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         }
     }
     
-    public var dirty: Bool = false {
+    public var dirty: Bool = true {
         didSet{
             if dirty {
                 executeDirtyObservers(filter: self)
@@ -169,9 +169,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
             dirty = false
             return result
         }
-        
+
         var result = result
-        
+                                
         if fmax(size.width, size.height) <= IMPContext.maximumTextureSize.cgfloat {
             
             if enabled == false {
@@ -185,17 +185,6 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
 
             let newSize = destinationSize ?? size
             
-//            context.execute(.sync, complete: {
-//                
-//                self.executeDestinationObservers(destination: result)
-//                self.dirty = false
-//
-//            }, action: { (commandBuffer) in
-//                
-//                result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: commandBuffer)
-//                
-//            })
-
             result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: nil)
             
             self.executeDestinationObservers(destination: result)
@@ -397,7 +386,6 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         let key = aKey ?? IMPObserverHash<FilterHandler>.observerKey(observer)
         root?.removeObserver(dirty: observer, key: key)
         if let index = dirtyObservers.index(where: { return $0.key == key }) {
-            //Swift.print("removeObserver dirty     \(key) for \(unsafeBitCast(self, to: Int.self))")
             dirtyObservers.remove(at: index)
         }
     }
