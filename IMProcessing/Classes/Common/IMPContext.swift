@@ -56,6 +56,16 @@ public struct IMPObserverHash<A>:Hashable {
     }
 }
 
+public struct IMPSemaphore {
+    private let s = DispatchSemaphore(value: 1)
+    public init() {}
+    public func sync<R>(execute: () throws -> R) rethrows -> R {
+        _ = s.wait(timeout: DispatchTime.distantFuture)
+        defer { s.signal() }
+        return try execute()
+    }
+}
+
 ///
 ///  @brief Context provider protocol.
 ///  All filter classes should conform to the protocol to get access current filter context.

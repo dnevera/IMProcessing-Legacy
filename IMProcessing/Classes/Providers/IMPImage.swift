@@ -20,27 +20,34 @@ import ImageIO
 
 open class IMPImage: IMPImageProvider {
     
+    public var mutex = IMPSemaphore()
+    
     public func removeObserver(optionsChanged observer: @escaping ObserverType) {
-        context.runOperation(.sync) { 
-            let key = IMPObserverHash<ObserverType>.observerKey(observer)
-            if let index = self.filterObservers.index(where: { return $0.key == key }) {
-                self.filterObservers.remove(at: index)
-            }
+        //context.runOperation(.sync) {
+        mutex.sync { () -> Void in
+            unsafeRemoveObserver(optionsChanged: observer)
         }
     }
                 
     public func addObserver(optionsChanged observer: @escaping ObserverType) {
-        context.runOperation(.sync) { 
-            let key = IMPObserverHash<ObserverType>.observerKey(observer)
-            if let index = self.filterObservers.index(where: { return $0.key == key }) {
-                self.filterObservers.remove(at: index)
-            }
+        //context.runOperation(.sync) {
+        mutex.sync { () -> Void in
+            let key = unsafeRemoveObserver(optionsChanged: observer)
             self.filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
         }
     }
     
+    public func unsafeRemoveObserver(optionsChanged observer: @escaping ObserverType) -> String {
+        let key = IMPObserverHash<ObserverType>.observerKey(observer)
+        if let index = self.filterObservers.index(where: { return $0.key == key }) {
+            self.filterObservers.remove(at: index)
+        } 
+        return key
+    }
+    
     public func removeObservers() {
-        context.runOperation(.sync) { 
+        //context.runOperation(.sync) {
+        mutex.sync { () -> Void in
             self.filterObservers.removeAll()
         }
     }

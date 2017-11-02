@@ -402,8 +402,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
             enablingObservers.remove(at: index)
         }
     }
-    
-    
+        
     public func removeAllObservers(){
         newSourceObservers.removeAll()
         destinationObservers.removeAll()
