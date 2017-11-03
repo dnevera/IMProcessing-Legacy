@@ -602,7 +602,7 @@ public extension IMPImageProvider {
         guard let image = image else { return nil }
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         var t = CGAffineTransform.identity
-        t = t.scaledBy(x: scale, y: scale).scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+        t = t.scaledBy(x: scale, y: scale).scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height*scale)
         return image.transformed(by: t)        
     }
     
@@ -636,12 +636,16 @@ public extension IMPImageProvider {
         }
     }
     #else
-    public func nsImage(scale:CGFloat) -> NSImage? {
+    public func nsImage(scale:CGFloat, reflect:Bool = false) -> NSImage? {
         if let image = self.image {
             
             var t = CGAffineTransform.identity
             t = t.scaledBy(x: scale, y: scale)
 
+            if reflect {
+                t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height*scale)
+            }
+            
             let rep: NSCIImageRep = NSCIImageRep(ciImage: image.transformed(by: t))
             
             let nsImage: NSImage = NSImage(size: rep.size)                
