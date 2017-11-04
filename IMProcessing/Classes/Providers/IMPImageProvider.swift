@@ -498,6 +498,40 @@ public extension IMPImageProvider {
 // MARK: - render
 public extension IMPImageProvider {
     
+    public func render(from image:CIImage?, 
+                       to texture: inout MTLTexture?,
+                       flipVertical:Bool = false,
+                       complete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)?=nil) {
+                
+        var texture = texture
+        
+        context.execute(.sync, wait: true) { (commandBuffer) in
+        
+            guard  var image = image else {
+                complete?(nil,nil)            
+                return             
+            }
+            
+            let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+            image = !flipVertical ? image : image.transformed(by: transform)
+            
+            texture = self.checkTexture(texture: texture)
+
+            if let t = texture {
+                self.context.coreImage?.render(image,
+                                               to: t,
+                                               commandBuffer: commandBuffer,
+                                               bounds: image.extent,
+                                               colorSpace: self.colorSpace)
+                complete?(t,commandBuffer)
+            }
+            else {
+                complete?(nil,nil)            
+            }
+        }
+    }
+    
+    
     public func render(to texture: inout MTLTexture?,
                        flipVertical:Bool = false,
                        complete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)?=nil) {
@@ -506,14 +540,15 @@ public extension IMPImageProvider {
             complete?(nil,nil)            
             return             
         }
-
-        let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
-        image = !flipVertical ? image : image.transformed(by: transform)
         
         texture = checkTexture(texture: texture)
         
         if let t = texture {
-            context.execute(wait: true) { (commandBuffer) in
+            context.execute(.sync, wait: true) { (commandBuffer) in
+
+                let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+                image = !flipVertical ? image : image.transformed(by: transform)
+
                 self.context.coreImage?.render(image,
                                                to: t,
                                                commandBuffer: commandBuffer,

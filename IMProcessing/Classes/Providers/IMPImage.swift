@@ -66,7 +66,8 @@ open class IMPImage: IMPImageProvider {
         get{
             if _texture == nil && _image != nil {
                 render(to: &_texture) { (texture,command) in
-                    for hash in self.filterObservers {
+                    let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
+                    for hash in observers {
                         hash.observer(self)
                     }
                 }                   
@@ -84,7 +85,10 @@ open class IMPImage: IMPImageProvider {
         get {
             if _image == nil && _texture != nil {
                 _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
-                for hash in self.filterObservers {
+
+                let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
+
+                for hash in observers {
                     hash.observer(self)
                 }
                 //if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){

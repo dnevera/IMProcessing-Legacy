@@ -13,18 +13,20 @@ open class IMPRawFile: IMPImageProvider {
     public var mutex = IMPSemaphore()
 
     public func removeObserver(optionsChanged observer: @escaping ObserverType) {
-        //context.runOperation(.sync) {
-        mutex.sync { () -> Void in
-            unsafeRemoveObserver(optionsChanged: observer)
-        }        
+        //context.runOperation(.async) {
+            self.mutex.sync { () -> Void in
+                self.unsafeRemoveObserver(optionsChanged: observer)
+            }        
+        //}
     }
     
     public func addObserver(optionsChanged observer: @escaping ObserverType) {
-        //context.runOperation(.sync) {
-        mutex.sync { () -> Void in
-            let key = unsafeRemoveObserver(optionsChanged: observer)
-            self.filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
-        }
+        //context.runOperation(.async) {
+            self.mutex.sync { () -> Void in
+                let key = self.unsafeRemoveObserver(optionsChanged: observer)
+                self.filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
+            }
+        //}
     }
     
     public func unsafeRemoveObserver(optionsChanged observer: @escaping ObserverType) -> String {
@@ -36,10 +38,11 @@ open class IMPRawFile: IMPImageProvider {
     }
     
     public func removeObservers() {
-        //context.runOperation(.sync) {
-        mutex.sync { () -> Void in
-            self.filterObservers.removeAll()
-        }
+        //context.runOperation(.async) {
+            self.mutex.sync { () -> Void in
+                self.filterObservers.removeAll()
+            }
+        //}
     }
     
     public var baselineExposure:Float {
@@ -54,8 +57,8 @@ open class IMPRawFile: IMPImageProvider {
 
     public var ev:Float = 0 {
         didSet{
-            rawFilter?.setValue(ev, forKey: kCIInputEVKey)
-            renderTexture()
+            self.rawFilter?.setValue(self.ev, forKey: kCIInputEVKey)
+            self.renderTexture()                
         }
     }
     
@@ -291,13 +294,26 @@ open class IMPRawFile: IMPImageProvider {
     }
     
     private func renderTexture() {
-        if renderOutput() != nil {
-            render(to: &_texture, flipVertical:true) { (texture,command) in
-                for hash in self.filterObservers {
+        self.render(from: self.renderOutput(), to: &self._texture, flipVertical: true) { (texture, command) in            
+            let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
+            self.context.runOperation(.async) {
+                for hash in observers {
                     hash.observer(self)
                 }
-            }            
+            }
         }
+//        //context.runOperation(.sync) {
+//        if self.renderOutput() != nil {            
+//            self.render(to: &self._texture, flipVertical:true) { (texture,command) in
+//                let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
+//                self.context.runOperation(.async) {
+//                    for hash in observers {
+//                        hash.observer(self)
+//                    }
+//                }
+//            }            
+//        }                                    
+//        //}
     }
     
     public lazy var videoCache:IMPVideoTextureCache = {
