@@ -13,23 +13,19 @@ open class IMPRawFile: IMPImageProvider {
     public var mutex = IMPSemaphore()
 
     public func removeObserver(optionsChanged observer: @escaping ObserverType) {
-        //context.runOperation(.async) {
-            self.mutex.sync { () -> Void in
-                self.unsafeRemoveObserver(optionsChanged: observer)
-            }        
-        //}
+        self.mutex.sync { () -> Void in
+            self.unsafeRemoveObserver(optionsChanged: observer)
+        }        
     }
     
     public func addObserver(optionsChanged observer: @escaping ObserverType) {
-        //context.runOperation(.async) {
-            self.mutex.sync { () -> Void in
-                let key = self.unsafeRemoveObserver(optionsChanged: observer)
-                self.filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
-            }
-        //}
+        self.mutex.sync { () -> Void in
+            let key = self.unsafeRemoveObserver(optionsChanged: observer)
+            self.filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
+        }
     }
     
-    public func unsafeRemoveObserver(optionsChanged observer: @escaping ObserverType) -> String {
+    private func unsafeRemoveObserver(optionsChanged observer: @escaping ObserverType) -> String {
         let key = IMPObserverHash<ObserverType>.observerKey(observer)
         if let index = self.filterObservers.index(where: { return $0.key == key }) {
             self.filterObservers.remove(at: index)
@@ -38,11 +34,9 @@ open class IMPRawFile: IMPImageProvider {
     }
     
     public func removeObservers() {
-        //context.runOperation(.async) {
-            self.mutex.sync { () -> Void in
-                self.filterObservers.removeAll()
-            }
-        //}
+        self.mutex.sync { () -> Void in
+            self.filterObservers.removeAll()
+        }
     }
     
     public var baselineExposure:Float {
@@ -294,26 +288,16 @@ open class IMPRawFile: IMPImageProvider {
     }
     
     private func renderTexture() {
-        self.render(from: self.renderOutput(), to: &self._texture, flipVertical: true) { (texture, command) in            
-            let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
-            self.context.runOperation(.async) {
+        if self.renderOutput() != nil {            
+            self.render(to: &self._texture, flipVertical:true) { (texture,command) in
+                let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
                 for hash in observers {
-                    hash.observer(self)
+                    self.context.runOperation(.async) {
+                        hash.observer(self)
+                    }
                 }
-            }
-        }
-//        //context.runOperation(.sync) {
-//        if self.renderOutput() != nil {            
-//            self.render(to: &self._texture, flipVertical:true) { (texture,command) in
-//                let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
-//                self.context.runOperation(.async) {
-//                    for hash in observers {
-//                        hash.observer(self)
-//                    }
-//                }
-//            }            
-//        }                                    
-//        //}
+            }            
+        }                                                
     }
     
     public lazy var videoCache:IMPVideoTextureCache = {

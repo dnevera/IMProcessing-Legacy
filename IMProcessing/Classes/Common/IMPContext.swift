@@ -150,7 +150,7 @@ open class IMPContext {
         semaphore.signal()
     }
     
-    private let dispatchQueue = DispatchQueue (label: "ccom.improcessing.context", qos : .background)
+    private let dispatchQueue = DispatchQueue (label: "ccom.improcessing.context", qos : .userInteractive)
     //, attributes: .concurrent)
     //DispatchQueue(label: "com.improcessing.context", attr: .concurrent)
     private var dispatchQueueKey:DispatchSpecificKey<Int> =  DispatchSpecificKey<Int>()
