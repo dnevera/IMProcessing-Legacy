@@ -46,8 +46,8 @@ public struct IMPObserverHash<A>:Hashable {
     
     public static func observerKey<T, R>(_ f: (T) -> R) -> String {
         let addr = IMPPeekFunc(f)
-        //return "\(addr.fp):\(addr.ctx)"
-        return "IMPObserverHash:observer:\(addr.fp)"
+        return "\(addr.fp):\(addr.ctx)"
+        //return "IMPObserverHash:observer:\(addr.fp)"
     }  
     
     public init(key:String, observer:A){
