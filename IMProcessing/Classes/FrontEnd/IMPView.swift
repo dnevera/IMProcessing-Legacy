@@ -95,6 +95,7 @@ open class IMPView: MTKView {
     open weak var filter:IMPFilter? = nil {
         willSet{
             operation.cancelAllOperations()
+            needProcessing = false
             filter?.removeObserver(newSource: sourceObserver)
             filter?.removeObserver(destinationUpdated: destinationObserver)
             filter?.removeObserver(dirty: dirtyObserver)
@@ -113,6 +114,9 @@ open class IMPView: MTKView {
             if source == nil { 
                 self.needProcessing = true
             }
+            else if let size = source?.size {
+                self.updateDrawble(size: size)
+            }
         }
         return handler
     }()
@@ -121,9 +125,7 @@ open class IMPView: MTKView {
     private lazy var destinationObserver:IMPFilter.UpdateHandler = {
         let handler:IMPFilter.UpdateHandler = { (destination) in
             self.currentDestination = destination
-            DispatchQueue.main.async {
-                self.updateDrawble(size: destination.size)
-            }
+            self.updateDrawble(size: destination.size)
         }
         return handler
     }()
@@ -134,14 +136,16 @@ open class IMPView: MTKView {
         } 
         return handler
     }()
-    
+            
+    private var isolatedFrame = NSZeroRect
+    open override var frame: NSRect {
+        didSet{
+            isolatedFrame = frame
+        }
+    }
     
     private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
-        
-        if isPaused {
-            return 
-        } 
-                
+                     
         var needReprocess = false
         
         if let size = size {
@@ -150,13 +154,13 @@ open class IMPView: MTKView {
                 needReprocess = true
             }
             
-            if exactResolutionEnabled || self.bounds.size == NSZeroSize {
+            if exactResolutionEnabled || isolatedFrame.size == NSZeroSize {
                 drawableSize = size
             }
             else {
                 // down scale targetTexture
-                let newSize = NSSize(width: self.bounds.size.width * screenScale,
-                                     height: self.bounds.size.height * screenScale
+                let newSize = NSSize(width: isolatedFrame.size.width * screenScale,
+                                     height: isolatedFrame.size.height * screenScale
                 )
                 let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
@@ -165,8 +169,8 @@ open class IMPView: MTKView {
             viewUpdateDrawbleHandler?(size)
         }
         else if filter?.source == nil {
-            let newSize = NSSize(width: self.bounds.size.width * screenScale,
-                                 height: self.bounds.size.height * screenScale)
+            let newSize = NSSize(width: isolatedFrame.size.width * screenScale,
+                                 height: isolatedFrame.size.height * screenScale)
 
             drawableSize = NSSize(width: newSize.width, height: newSize.height)
             viewUpdateDrawbleHandler?(newSize)
@@ -252,9 +256,7 @@ open class IMPView: MTKView {
             self.frameImage = filter.destination
             filter.observersEnabled = oe
             
-            OperationQueue.main.addOperation {
-                self.needUpdateDisplay = true                
-            }
+            self.needUpdateDisplay = true                
         }
     }
 
@@ -328,14 +330,7 @@ open class IMPView: MTKView {
         
         commandBuffer.present(currentDrawable!)        
         commandBuffer.commit()
-        
-        //
-        // https://forums.developer.apple.com/thread/64889
-        //        
-        //DispatchQueue.main.sync {
-        // self.draw()
-        //}
-        
+                
         if self.frameCounter > 0  && self.isFirstFrame {
             self.isFirstFrame = false
             if self.viewReadyHandler !=  nil {
@@ -345,7 +340,20 @@ open class IMPView: MTKView {
     }
 
     fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()    
-    fileprivate var needUpdateDisplay:Bool = false 
+    fileprivate var needUpdateDisplay:Bool = false {
+        didSet{
+            guard needUpdateDisplay != oldValue else {
+                return
+            }
+            DispatchQueue.main.async {
+                if self.isPaused {
+                    if self.needUpdateDisplay {
+                        self.draw()
+                    }
+                }                
+            }
+        }
+    }
     
     #if os(iOS)
     public override func setNeedsDisplay() {
@@ -377,17 +385,17 @@ open class IMPView: MTKView {
         delegate = self    
         processingLink.addObserver { (timev) in
             if self.needProcessing {
-                guard self.filter?.source != nil else { return }
+                //guard self.filter?.source != nil else { return }
                 self.processing(size: self.drawableSize)
             }
         }
-        isPaused = false   
+        isPaused = true   
         configure()
     }
     
     open override var isPaused: Bool {
         didSet{
-            processingLink.isPaused = isPaused
+           processingLink.isPaused = isPaused
         }
     }
     
