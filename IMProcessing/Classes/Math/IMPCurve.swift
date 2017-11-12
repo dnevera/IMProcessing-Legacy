@@ -332,7 +332,8 @@ public class IMPCurve: Hashable {
     }
     
     public var closeDistance:Float {
-        return precision ?? 1/Float(_interpolator.resolution/2)
+        //return precision ?? 1/Float(_interpolator.resolution/2) //(precision ?? 1)/Float(_interpolator.resolution/2)
+        return  precision ?? 2/Float(_interpolator.resolution)
     }
         
     private var _interpolator:IMPInterpolator

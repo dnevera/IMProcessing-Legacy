@@ -92,13 +92,9 @@ public class IMPHistogramAnalyzer: IMPDetector, IMPHistogramAnalyzerProtocol{
         })
         
         add(function: partialHistogramKernel)
-        
-        //var time = Date()
-        //var size:Float = 0
-        
+                
         add(function: accumHistogramKernel) { (result) in
             self.histogram.update(data: self.completeBuffer.contents())
-            //NSLog("Bandwidth  = \(size/(-time.timeIntervalSinceNow.float)/1024/1024/1024)Gb/s")
             self.executeSolverObservers()
             complete?(result)
         }

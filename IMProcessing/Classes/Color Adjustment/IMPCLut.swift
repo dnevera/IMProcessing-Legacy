@@ -181,13 +181,13 @@ public extension IMPCLut {
             throw FormatError(file: "", line: 0, kind: .wrangRange)
         }
         
-        context.execute(.sync, wait: true, complete: {
-            
+        context.execute(.async, wait: false, complete: {
+        
             for o in self.observers {
                 o(self)
             }
-            
-        }){ (commandBuffer) in            
+        
+        }){ (commandBuffer) in
             let blt = commandBuffer.makeBlitCommandEncoder()
             blt?.copy(from: txt, 
                      sourceSlice: 0, 

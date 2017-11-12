@@ -153,6 +153,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public func process(with resampleSize:NSSize? = nil){
         destinationSize = resampleSize
+       // guard dirty else {return}
         _destination =  apply(result: _destination)
     }
     
@@ -187,8 +188,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
             
             result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: nil)
             
-            self.executeDestinationObservers(destination: result)
             self.dirty = false
+            self.executeDestinationObservers(destination: result)
             return result
         }
         
