@@ -88,7 +88,10 @@ open class IMPView: MTKView {
     
     public var exactResolutionEnabled = false {
         didSet{
-            filter?.dirty = true
+            //filter?.dirty = true
+            Swift.print("exactResolutionEnabled --> \(exactResolutionEnabled)")
+            //updateDrawble(size: filter?.source?.size)
+            //needProcessing = true
         }
     }
     
@@ -141,6 +144,7 @@ open class IMPView: MTKView {
     open override var frame: NSRect {
         didSet{
             isolatedFrame = frame
+            Swift.print(" @@@ IMPView frame \(isolatedFrame, frame, exactResolutionEnabled)")
         }
     }
     
@@ -154,6 +158,10 @@ open class IMPView: MTKView {
                 needReprocess = true
             }
             
+//            OperationQueue.main.addOperation {
+//                Swift.print("1 !!! IMPView.updateDrawble \(size, self.isolatedFrame, self.frame, self.exactResolutionEnabled, needReprocess)")                
+//            }
+            
             if exactResolutionEnabled || isolatedFrame.size == NSZeroSize {
                 drawableSize = size
             }
@@ -164,23 +172,33 @@ open class IMPView: MTKView {
                 )
                 let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
+                //Swift.print("2 !!! IMPView.updateDrawble \(size, self.drawableSize, self.needUpdateDisplay, needReprocess, scale)")                
             }
+
 
             viewUpdateDrawbleHandler?(size)
         }
-        else if filter?.source == nil {
-            let newSize = NSSize(width: isolatedFrame.size.width * screenScale,
-                                 height: isolatedFrame.size.height * screenScale)
+//        else if filter?.source == nil {
+//            let newSize = NSSize(width: isolatedFrame.size.width * screenScale,
+//                                 height: isolatedFrame.size.height * screenScale)
+//
+//            drawableSize = NSSize(width: newSize.width, height: newSize.height)
+//            
+//            Swift.print("3 !!! IMPView.updateDrawble \(size, self.drawableSize, self.needUpdateDisplay, needReprocess)")                
+//
+//            if drawableSize != NSZeroSize {
+//                viewUpdateDrawbleHandler?(newSize)
+//            }
+//        }        
 
-            drawableSize = NSSize(width: newSize.width, height: newSize.height)
-            viewUpdateDrawbleHandler?(newSize)
-        }        
 
+        //Swift.print("4 !!! IMPView.updateDrawble \(size, self.drawableSize, self.needUpdateDisplay, needReprocess)")                
 
         if needReprocess {
             self.processing(size: drawableSize, observersEnabled: false)
-            needUpdateDisplay = true
+            //needUpdateDisplay = true
         }            
+        
     }
             
     public init(frame frameRect: CGRect) {
@@ -250,13 +268,19 @@ open class IMPView: MTKView {
 
             guard let filter = self.filter else { return }
             
+            //Swift.print("\n >>>> *************************** IMPView **********************************")
+
             let oe = filter.observersEnabled 
             filter.observersEnabled = observersEnabled
-            filter.destinationSize = size
-            self.frameImage = filter.destination
+            //filter.destinationSize = size
+            //self.frameImage = filter.destination
+            //Swift.print(" *** IMPView drawableSize \(self.drawableSize, size)")
+            self.frameImage = filter.resample(with: size)
             filter.observersEnabled = oe
             
-            self.needUpdateDisplay = true                
+            self.needUpdateDisplay = true 
+            
+           // Swift.print(" <<< *************************** IMPView **********************************\n")
         }
     }
 
@@ -389,7 +413,8 @@ open class IMPView: MTKView {
                 self.processing(size: self.drawableSize)
             }
         }
-        isPaused = true   
+        isPaused = true 
+        isolatedFrame = frame
         configure()
     }
     

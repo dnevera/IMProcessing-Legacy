@@ -99,12 +99,13 @@ public class IMPHistogramAnalyzer: IMPDetector, IMPHistogramAnalyzerProtocol{
             complete?(result)
         }
         
-        /*addObserver(newSource: { (source) in
-            if let w = source?.texture?.size {
-                size = Float(w.width*w.height*MemoryLayout<uint>.size * 4)
-            }
-            time = Date()
-        })*/
+//        addObserver(newSource: { (source) in
+//            if let w = source?.texture?.size {
+//                Swift.print(" ---- IMPHistogramAnalizer source size = \(w)")
+//                //size = Float(w.width*w.height*MemoryLayout<uint>.size * 4)
+//            }
+//            //time = Date()
+//        })
     }
 
     ///
@@ -133,6 +134,7 @@ public class IMPHistogramAnalyzer: IMPDetector, IMPHistogramAnalyzerProtocol{
         let f = IMPFunction(context: self.context, kernelName: "kernel_partialHistogram")
         
         f.optionsHandler = { (function, command, input, output) in
+                        
             command.setBuffer(self.partialBuffer,       offset: 0, index: 0)
             command.setBytes(&self.region, length: MemoryLayout.size(ofValue: self.region),   index: 1)
             var np = self.channelsToCompute;

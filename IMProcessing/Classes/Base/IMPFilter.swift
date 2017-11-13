@@ -30,7 +30,8 @@ public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider
     
     func configure(complete:CompleteHandler?)
     
-    func process(with resampleSize:NSSize?)
+    //func process(with resampleSize:NSSize?)
+    func process()
 }
 
 open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
@@ -71,7 +72,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         willSet{
             source?.removeObserver(optionsChanged: optionChangedObserver)
         }
-        didSet{                                                       
+        didSet{    
             _destination.texture = nil
             executeNewSourceObservers(source: source)
             source?.addObserver(optionsChanged: optionChangedObserver)
@@ -86,14 +87,17 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     }() 
     
     public var destination: IMPImageProvider {
-        return apply(result: _destination)
+        guard dirty || (_destination.texture == nil) else {
+            return _destination
+        }
+        return apply(result: _destination, resampleSize: nil)
     }
     
     public var destinationSize: NSSize?
     
     public required init(context:IMPContext, name: String? = nil) {
         self.context = context
-        _name = name ?? String.uniqString()
+        _name = name ?? String(describing: type(of: self)) + ":" + String.uniqString()
         defer {
             configure()
         }
@@ -108,13 +112,24 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public var dirty: Bool = true {
         didSet{
+//            if dirty {
+//                //executeDirtyObservers(filter: self)
+//            }
+            //root?.dirty = dirty
+            root?.resetDirty(dirty)
             if dirty {
-                executeDirtyObservers(filter: self)
+                if root == nil {
+                    executeDirtyObservers(filter: self)
+                }
             }
             for c in self.coreImageFilterList {
                 c.filter?.dirty = dirty
             }
         }
+    }
+    
+    private func resetDirty(_ dirty:Bool){
+        self.dirty = dirty
     }
     
     public var chain:[FilterContainer] {
@@ -151,13 +166,30 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         }
     }
     
-    public func process(with resampleSize:NSSize? = nil){
-        destinationSize = resampleSize
-       // guard dirty else {return}
-        _destination =  apply(result: _destination)
+    //public func process(with resampleSize:NSSize? = nil){
+    public func process(){
+        //destinationSize = resampleSize
+        guard dirty || (_destination.texture == nil) else {
+            executeDestinationObservers(destination: _destination)
+            return            
+        }
+        //_destination =  
+            apply(result: _destination, resampleSize: nil)
     }
     
-    private func apply(result:IMPImageProvider) -> IMPImageProvider {
+    //private var prevSize:NSSize = NSZeroSize 
+    public func resample(with resampleSize:NSSize? = nil) -> IMPImageProvider {
+        guard dirty || (_destination.texture == nil) else {
+            executeDestinationObservers(destination: _destination)
+            return _destination        
+        }
+        //_destination =  apply(result: _destination, resampleSize: resampleSize)
+        return apply(result: _destination, resampleSize: resampleSize)
+    }
+
+    public var mutex = IMPSemaphore()
+
+    private func apply(result:IMPImageProvider, resampleSize:NSSize?) -> IMPImageProvider {
         
         guard let source = self.source else {
             executeDestinationObservers(destination: result)
@@ -175,22 +207,31 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                                 
         if fmax(size.width, size.height) <= IMPContext.maximumTextureSize.cgfloat {
             
-            if enabled == false {
-                result.texture = source.texture
-                executeDestinationObservers(destination: result)
-                dirty = false
+            return mutex.sync(execute: { () -> IMPImageProvider in            
+                if enabled == false {
+                    result.texture = source.texture
+                    executeDestinationObservers(destination: result)
+                    dirty = false
+                    return result
+                }
+                
+                //let pixelFormat = result.texture?.pixelFormat ?? source.texture?.pixelFormat ?? IMProcessing.colors.pixelFormat
+                
+                let destSize = resampleSize ?? destinationSize ?? size
+                
+                Swift.print(" --- IMPFilter.\(self.name) resample size = \(resampleSize)")
+                
+                //result.texture = self.apply(size:destSize, pixelFormat:pixelFormat, commandBuffer: nil)
+                //let t = self.apply(size:destSize, commandBuffer: nil)
+                result.texture = self.apply(size:destSize, commandBuffer: nil)
+                
+                //result.texture = t
+                
+                self.dirty = false
+                self.executeDestinationObservers(destination: result)
                 return result
-            }
-            
-            let pixelFormat = result.texture?.pixelFormat ?? source.texture?.pixelFormat ?? IMProcessing.colors.pixelFormat
-
-            let newSize = destinationSize ?? size
-            
-            result.texture = self.apply(size:newSize, pixelFormat:pixelFormat, commandBuffer: nil)
-            
-            self.dirty = false
-            self.executeDestinationObservers(destination: result)
-            return result
+            })
+                       
         }
         
         var scaledImage = source.image
@@ -245,7 +286,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     //
     // optimize processing when image < GPU SIZE
     //
-    private func apply(size:NSSize?, pixelFormat:MTLPixelFormat, commandBuffer: MTLCommandBuffer? = nil) -> MTLTexture? {
+    //private func apply(size:NSSize?, pixelFormat:MTLPixelFormat, commandBuffer: MTLCommandBuffer? = nil) -> MTLTexture? {
+    private func apply(size:NSSize?, commandBuffer: MTLCommandBuffer? = nil) -> MTLTexture? {
         
         guard let input = self.source?.texture else { return nil}
         
@@ -277,9 +319,14 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                             return
                         }
                         
-                        let dsize = f.destinationSize ?? currentResult.cgsize
+                        let dsize = (f.destinationSize ?? size) ?? currentResult.cgsize
                         
+                        //Swift.print("1 === IMPFilter.\(self.name) apply size = \(size) f.destinationSize = \(f.destinationSize), currentResult.cgsize = \(currentResult.cgsize) dsize = \(dsize)")
+                        
+                        let pixelFormat = currentResult.pixelFormat
                         let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
+                        
+                        //let tmp:MTLTexture = self._destination.texture?.reuse(size: dsize) ?? self.context.make2DTexture(size: dsize, pixelFormat: pixelFormat)
                         
                         if f.source == nil {
                             f.source = IMPImage(context: self.context)
@@ -292,6 +339,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                     }
                     else {
                         let dsize = currentResult.cgsize
+                        let pixelFormat = currentResult.pixelFormat //?? source.texture?.pixelFormat ?? IMProcessing.colors.pixelFormat
                         let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
                         
                         filter.setValue(CIImage(mtlTexture: currentResult,
@@ -319,9 +367,11 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                         filter.source = IMPImage(context: self.context)
                     }
                     
+                     //Swift.print("2 === IMPFilter.\(self.name) apply size = \(size) f.destinationSize = \(filter.destinationSize), currentResult.cgsize = \(currentResult.cgsize)")
+                    
                     filter.source?.texture = currentResult
-                    if let t = filter.apply(size: nil,
-                                            pixelFormat: pixelFormat,
+                    if let t = filter.apply(size: filter.destinationSize ?? size ?? currentResult.cgsize,
+                                           // pixelFormat: pixelFormat,
                                             commandBuffer: commandBuffer){
                         currentResult = t
                     }
@@ -825,7 +875,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     internal func executeDirtyObservers(filter:IMPFilter){
         if observersEnabled {
-            root?.executeDirtyObservers(filter: self)
+            //root?.executeDirtyObservers(filter: self)
             for hash in dirtyObservers {
                 hash.observer(filter,filter.source,filter._destination)
             }

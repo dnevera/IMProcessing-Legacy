@@ -23,14 +23,12 @@ open class IMPImage: IMPImageProvider {
     public var mutex = IMPSemaphore()
     
     public func removeObserver(optionsChanged observer: @escaping ObserverType) {
-        //context.runOperation(.sync) {
         mutex.sync { () -> Void in
             unsafeRemoveObserver(optionsChanged: observer)
         }
     }
                 
     public func addObserver(optionsChanged observer: @escaping ObserverType) {
-        //context.runOperation(.sync) {
         mutex.sync { () -> Void in
             let key = unsafeRemoveObserver(optionsChanged: observer)
             self.filterObservers.append(IMPObserverHash<ObserverType>(key:key,observer: observer))
@@ -46,7 +44,6 @@ open class IMPImage: IMPImageProvider {
     }
     
     public func removeObservers() {
-        //context.runOperation(.sync) {
         mutex.sync { () -> Void in
             self.filterObservers.removeAll()
         }
@@ -60,47 +57,55 @@ open class IMPImage: IMPImageProvider {
     
     public var texture: MTLTexture? {
         set{
-            _texture = newValue
-            _image = nil
+            //mutexTexture.sync { () -> Void in
+                _texture = newValue
+                _image = nil
+            //}
         }
         get{
-            if _texture == nil && _image != nil {
-                render(to: &_texture) { (texture,command) in
-                    let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
-                    for hash in observers {
-                        hash.observer(self)
-                    }
-                }                   
-            }
-            return _texture
+            //return mutexTexture.sync { () -> MTLTexture? in
+                if _texture == nil && _image != nil {
+                    render(to: &_texture) { (texture,command) in
+                        let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
+                        for hash in observers {
+                            hash.observer(self)
+                        }
+                    }                   
+                }
+                return _texture                
+            //}
         }
     }
     
     open var image: CIImage? {
         set{
-            _texture?.setPurgeableState(.empty)
-            _texture = nil
-            _image = newValue
+            //mutexTexture.sync { () -> Void in
+                _texture?.setPurgeableState(.empty)
+                _texture = nil
+                _image = newValue
+            //}
         }
         get {
-            if _image == nil && _texture != nil {
-                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
-
-                let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
-
-                for hash in observers {
-                    hash.observer(self)
-                }
-                //if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){
+            //return mutexTexture.sync { () -> CIImage? in
+                if _image == nil && _texture != nil {
+                    _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+                    
+                    let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
+                    
+                    for hash in observers {
+                        hash.observer(self)
+                    }
+                    //if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){
                     //
                     // convert back to MTL texture coordinates system
                     //
                     //let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: im.extent.height)
                     //_image = im.applying(transform)
                     //_image = im
-                //}
-            }
-            return _image
+                    //}
+                }
+                return _image
+            //}
         }
     }
     
