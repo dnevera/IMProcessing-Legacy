@@ -181,7 +181,7 @@ public extension IMPCLut {
             throw FormatError(file: "", line: 0, kind: .wrangRange)
         }
         
-        context.execute(.async, wait: false, complete: {
+        context.execute(.async, wait: true, complete: {
         
             for o in self.observers {
                 o(self)

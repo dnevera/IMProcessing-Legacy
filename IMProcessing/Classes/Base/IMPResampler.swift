@@ -42,14 +42,6 @@ open class IMPResampler: IMPFilter{
         }
     }
     
-//    public override var source: IMPImageProvider? {
-//        didSet{
-//            updateResampler()
-//            super.source = source
-//        }
-//    }
-    
-    //var complete:CompleteHandler? = nil
     
     open override func configure(complete:CompleteHandler?=nil) {
         //self.complete = complete
@@ -60,7 +52,7 @@ open class IMPResampler: IMPFilter{
         
         addObserver(newSource: { (source) in
             self.updateResampler()
-        })
+        })        
     }
     
     private lazy var resampleShader:IMPShader = IMPShader(context: self.context)
