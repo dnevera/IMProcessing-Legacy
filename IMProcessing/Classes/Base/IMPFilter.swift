@@ -88,6 +88,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public var destination: IMPImageProvider {
         guard dirty || (_destination.texture == nil) else {
+            self.executeDestinationObservers(destination: _destination)
             return _destination
         }
         return apply(result: _destination, resampleSize: nil)
@@ -112,18 +113,14 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public var dirty: Bool = true {
         didSet{
-//            if dirty {
-//                //executeDirtyObservers(filter: self)
-//            }
-            //root?.dirty = dirty
+            for c in self.coreImageFilterList {
+                c.filter?.dirty = dirty
+            }
             root?.resetDirty(dirty)
             if dirty {
                 if root == nil {
                     executeDirtyObservers(filter: self)
                 }
-            }
-            for c in self.coreImageFilterList {
-                c.filter?.dirty = dirty
             }
         }
     }
@@ -166,28 +163,19 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         }
     }
     
-    //public func process(with resampleSize:NSSize? = nil){
     public func process(){
-        //destinationSize = resampleSize
         guard dirty || (_destination.texture == nil) else {
-            executeDestinationObservers(destination: _destination)
             return            
         }
-        //_destination =  
-            apply(result: _destination, resampleSize: nil)
+        apply(result: _destination, resampleSize: nil)
     }
     
-    //private var prevSize:NSSize = NSZeroSize 
     public func resample(with resampleSize:NSSize? = nil) -> IMPImageProvider {
         guard dirty || (_destination.texture == nil) else {
-            executeDestinationObservers(destination: _destination)
             return _destination        
         }
-        //_destination =  apply(result: _destination, resampleSize: resampleSize)
         return apply(result: _destination, resampleSize: resampleSize)
     }
-
-    public var mutex = IMPSemaphore()
 
     private func apply(result:IMPImageProvider, resampleSize:NSSize?) -> IMPImageProvider {
         
@@ -206,32 +194,21 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         var result = result
                                 
         if fmax(size.width, size.height) <= IMPContext.maximumTextureSize.cgfloat {
-            
-            return mutex.sync(execute: { () -> IMPImageProvider in            
+                        
                 if enabled == false {
                     result.texture = source.texture
                     executeDestinationObservers(destination: result)
                     dirty = false
                     return result
                 }
-                
-                //let pixelFormat = result.texture?.pixelFormat ?? source.texture?.pixelFormat ?? IMProcessing.colors.pixelFormat
-                
+                                
                 let destSize = resampleSize ?? destinationSize ?? size
                 
-                Swift.print(" --- IMPFilter.\(self.name) resample size = \(resampleSize)")
-                
-                //result.texture = self.apply(size:destSize, pixelFormat:pixelFormat, commandBuffer: nil)
-                //let t = self.apply(size:destSize, commandBuffer: nil)
                 result.texture = self.apply(size:destSize, commandBuffer: nil)
-                
-                //result.texture = t
-                
-                self.dirty = false
+                                
                 self.executeDestinationObservers(destination: result)
-                return result
-            })
-                       
+                self.dirty = false
+                return result                       
         }
         
         var scaledImage = source.image
@@ -320,14 +297,10 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                         }
                         
                         let dsize = (f.destinationSize ?? size) ?? currentResult.cgsize
-                        
-                        //Swift.print("1 === IMPFilter.\(self.name) apply size = \(size) f.destinationSize = \(f.destinationSize), currentResult.cgsize = \(currentResult.cgsize) dsize = \(dsize)")
-                        
+                                                
                         let pixelFormat = currentResult.pixelFormat
                         let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
-                        
-                        //let tmp:MTLTexture = self._destination.texture?.reuse(size: dsize) ?? self.context.make2DTexture(size: dsize, pixelFormat: pixelFormat)
-                        
+                                                
                         if f.source == nil {
                             f.source = IMPImage(context: self.context)
                         }
@@ -339,7 +312,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                     }
                     else {
                         let dsize = currentResult.cgsize
-                        let pixelFormat = currentResult.pixelFormat //?? source.texture?.pixelFormat ?? IMProcessing.colors.pixelFormat
+                        let pixelFormat = currentResult.pixelFormat 
                         let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
                         
                         filter.setValue(CIImage(mtlTexture: currentResult,
@@ -366,12 +339,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                     if filter.source == nil {
                         filter.source = IMPImage(context: self.context)
                     }
-                    
-                     //Swift.print("2 === IMPFilter.\(self.name) apply size = \(size) f.destinationSize = \(filter.destinationSize), currentResult.cgsize = \(currentResult.cgsize)")
-                    
+                                        
                     filter.source?.texture = currentResult
                     if let t = filter.apply(size: filter.destinationSize ?? size ?? currentResult.cgsize,
-                                           // pixelFormat: pixelFormat,
                                             commandBuffer: commandBuffer){
                         currentResult = t
                     }
@@ -858,35 +828,43 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     // MARK: - internal
     //
     internal func executeNewSourceObservers(source:IMPImageProvider?){
-        for hash in newSourceObservers {
-            hash.observer(source)
+        context.runOperation(.async) { 
+            for hash in self.newSourceObservers {
+                hash.observer(source)
+            }            
         }
     }
     
     internal func executeDestinationObservers(destination:IMPImageProvider?){
         if observersEnabled {
-            if let d = destination {
-                for hash in destinationObservers {
-                    hash.observer(d)
-                }
-            }
+            context.runOperation(.async, { 
+                if let d = destination {
+                    for hash in self.destinationObservers {
+                        hash.observer(d)
+                    }
+                }                
+            })
         }
     }
     
     internal func executeDirtyObservers(filter:IMPFilter){
         if observersEnabled {
-            //root?.executeDirtyObservers(filter: self)
-            for hash in dirtyObservers {
-                hash.observer(filter,filter.source,filter._destination)
-            }
+            root?.executeDirtyObservers(filter: self)
+            context.runOperation(.async, { 
+                for hash in self.dirtyObservers {
+                    hash.observer(filter,filter.source,filter._destination)
+                }                
+            })
         }
     }
     
     internal func executeEnablingObservers(filter:IMPFilter){
         if observersEnabled {
-            for hash in enablingObservers {
-                hash.observer(filter,filter.source,filter._destination)
-            }
+            context.runOperation(.async, { 
+                for hash in self.enablingObservers {
+                    hash.observer(filter,filter.source,filter._destination)
+                }                
+            })
         }
     }
     

@@ -86,7 +86,7 @@ open class IMPView: MTKView {
         public let renderingEnabled = false
     #endif
     
-    public var exactResolutionEnabled = false {
+    public var exactResolutionEnabled = true {
         didSet{
             //filter?.dirty = true
             Swift.print("exactResolutionEnabled --> \(exactResolutionEnabled)")
@@ -144,8 +144,16 @@ open class IMPView: MTKView {
     open override var frame: NSRect {
         didSet{
             isolatedFrame = frame
-            Swift.print(" @@@ IMPView frame \(isolatedFrame, frame, exactResolutionEnabled)")
+            //Swift.print(" @@@ IMPView frame \(isolatedFrame)")
         }
+    }
+    
+    open override func setNeedsDisplay(_ invalidRect: NSRect) {
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
+        super.setNeedsDisplay(invalidRect)
+        CATransaction.commit()
+        //Swift.print(" @@@ IMPView setNeedsDisplay \(invalidRect, frame, isolatedFrame)")
     }
     
     private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
@@ -196,7 +204,6 @@ open class IMPView: MTKView {
 
         if needReprocess {
             self.processing(size: drawableSize, observersEnabled: false)
-            //needUpdateDisplay = true
         }            
         
     }
@@ -273,9 +280,9 @@ open class IMPView: MTKView {
             let oe = filter.observersEnabled 
             filter.observersEnabled = observersEnabled
             //filter.destinationSize = size
-            //self.frameImage = filter.destination
+            self.frameImage = filter.destination
             //Swift.print(" *** IMPView drawableSize \(self.drawableSize, size)")
-            self.frameImage = filter.resample(with: size)
+            //self.frameImage = filter.resample(with: size)
             filter.observersEnabled = oe
             
             self.needUpdateDisplay = true 

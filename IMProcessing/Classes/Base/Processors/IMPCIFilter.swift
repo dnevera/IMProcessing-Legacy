@@ -181,8 +181,6 @@ extension IMPCIFilter {
         
         let size =  destinationTexture.cgsize
         
-        Swift.print(" ### IMPCIFilter reuse size = \(size, destinationSize, source?.size, destination.texture?.size)")
-
         var threadgroups:MTLSize
         
         let width = threadsPerThreadgroup.width

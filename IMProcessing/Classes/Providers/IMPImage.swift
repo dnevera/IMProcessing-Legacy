@@ -57,55 +57,39 @@ open class IMPImage: IMPImageProvider {
     
     public var texture: MTLTexture? {
         set{
-            //mutexTexture.sync { () -> Void in
-                _texture = newValue
-                _image = nil
-            //}
+            _texture = newValue
+            _image = nil
         }
         get{
-            //return mutexTexture.sync { () -> MTLTexture? in
-                if _texture == nil && _image != nil {
-                    render(to: &_texture) { (texture,command) in
-                        let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
-                        for hash in observers {
-                            hash.observer(self)
-                        }
-                    }                   
-                }
-                return _texture                
-            //}
+            if _texture == nil && _image != nil {
+                render(to: &_texture) { (texture,command) in
+                    let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
+                    for hash in observers {
+                        hash.observer(self)
+                    }
+                }                   
+            }
+            return _texture                
         }
     }
     
     open var image: CIImage? {
         set{
-            //mutexTexture.sync { () -> Void in
-                _texture?.setPurgeableState(.empty)
-                _texture = nil
-                _image = newValue
-            //}
+            _texture?.setPurgeableState(.empty)
+            _texture = nil
+            _image = newValue
         }
         get {
-            //return mutexTexture.sync { () -> CIImage? in
-                if _image == nil && _texture != nil {
-                    _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
-                    
-                    let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
-                    
-                    for hash in observers {
-                        hash.observer(self)
-                    }
-                    //if let im = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace]){
-                    //
-                    // convert back to MTL texture coordinates system
-                    //
-                    //let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: im.extent.height)
-                    //_image = im.applying(transform)
-                    //_image = im
-                    //}
+            if _image == nil && _texture != nil {
+                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+                
+                let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
+                
+                for hash in observers {
+                    hash.observer(self)
                 }
-                return _image
-            //}
+            }
+            return _image
         }
     }
     
