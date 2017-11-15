@@ -36,6 +36,8 @@ public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider
 
 open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
     
+    public var mutex = IMPSemaphore()
+
     public static let filterType = IMPFilter.self
     
     // MARK: - Type aliases
@@ -369,68 +371,77 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     //
     // MARK: - observers
-    //
+    //    
+    private func unsafeRemoveObserver<T>(from list: inout [IMPObserverHash<T>], _ observer:T, key aKey:String? = nil) -> String {
+        let key = aKey ?? IMPObserverHash<T>.observerKey(observer)
+        if let index = list.index(where: { return $0.key == key }) {
+            list.remove(at: index)
+        }                
+        return key
+    }    
         
+    private func unsafeAddObserver<T>(to list:inout [IMPObserverHash<T>], _ observer:T, key aKey:String? = nil){
+        let key = unsafeRemoveObserver(from: &list, observer, key: aKey)
+        list.append(IMPObserverHash<T>(key:key, observer:observer))
+    }
+    
     public func addObserver(newSource observer:@escaping SourceUpdateHandler, key aKey:String? = nil){
-        let key = aKey ?? IMPObserverHash<SourceUpdateHandler>.observerKey(observer) 
-        removeObserver(newSource: observer, key: key)
-        newSourceObservers.append(IMPObserverHash<SourceUpdateHandler>(key:key,observer: observer))
+        mutex.sync {             
+            unsafeAddObserver(to: &newSourceObservers, observer, key: aKey)
+        }
     }
     
     public func removeObserver(newSource observer:@escaping SourceUpdateHandler, key aKey:String? = nil) {
-        let key = aKey ?? IMPObserverHash<SourceUpdateHandler>.observerKey(observer)
-        if let index = newSourceObservers.index(where: { return $0.key == key }) {
-            newSourceObservers.remove(at: index)
-        }    
+        mutex.sync { 
+            unsafeRemoveObserver(from: &newSourceObservers, observer, key: aKey)
+        }
     }    
     
-    public func addObserver(destinationUpdated observer:@escaping UpdateHandler, key aKey:String? = nil){
-        let key = aKey ?? IMPObserverHash<UpdateHandler>.observerKey(observer)
-        destinationObservers.append(IMPObserverHash<UpdateHandler>(key:key, observer:observer))
+    public func addObserver(destinationUpdated observer:@escaping UpdateHandler, key aKey:String? = nil){        
+        mutex.sync {             
+            unsafeAddObserver(to: &destinationObservers, observer, key: aKey)
+        }
     }
     
     public func removeObserver(destinationUpdated observer:@escaping UpdateHandler, key aKey:String? = nil) {
-        let key = aKey ?? IMPObserverHash<UpdateHandler>.observerKey(observer)
-        if let index = destinationObservers.index(where: { return $0.key == key }) {
-            destinationObservers.remove(at: index)
+        mutex.sync { 
+            unsafeRemoveObserver(from: &destinationObservers, observer, key: aKey)
         }
     }
     
     public func addObserver(dirty observer:@escaping FilterHandler, key aKey:String? = nil){
-        let key = aKey ?? IMPObserverHash<FilterHandler>.observerKey(observer)
-        removeObserver(dirty: observer, key: key)
-        root?.dirtyObservers.append(IMPObserverHash<FilterHandler>(key:key, observer:observer))
-        dirtyObservers.append(IMPObserverHash<FilterHandler>(key:key, observer:observer))
+        mutex.sync {             
+            unsafeAddObserver(to: &dirtyObservers, observer, key: aKey)
+        }
     }
     
     public func removeObserver(dirty observer:@escaping FilterHandler, key aKey:String? = nil) {
-        let key = aKey ?? IMPObserverHash<FilterHandler>.observerKey(observer)
-        root?.removeObserver(dirty: observer, key: key)
-        if let index = dirtyObservers.index(where: { return $0.key == key }) {
-            dirtyObservers.remove(at: index)
+        mutex.sync {
+            unsafeRemoveObserver(from: &dirtyObservers, observer, key: aKey)
         }
     }
         
     public func addObserver(enabling observer:@escaping FilterHandler, key aKey:String? = nil){
-        let key = aKey ?? IMPObserverHash<FilterHandler>.observerKey(observer)
-        removeObserver(enabling: observer, key: key)
-        enablingObservers.append(IMPObserverHash<FilterHandler>(key:key, observer:observer))
+        mutex.sync {            
+            unsafeAddObserver(to: &enablingObservers, observer, key: aKey)
+        }
     }
     
     public func removeObserver(enabling observer:@escaping FilterHandler, key aKey:String? = nil) {
-        let key = aKey ?? IMPObserverHash<FilterHandler>.observerKey(observer)
-        if let index = enablingObservers.index(where: { return $0.key == key }) {
-            enablingObservers.remove(at: index)
+        mutex.sync { 
+            unsafeRemoveObserver(from: &enablingObservers, observer, key: aKey)
         }
     }
         
     public func removeAllObservers(){
-        newSourceObservers.removeAll()
-        destinationObservers.removeAll()
-        
-        root?.removeAllObservers()
-        dirtyObservers.removeAll()
-        enablingObservers.removeAll()
+        mutex.sync {
+            newSourceObservers.removeAll()
+            destinationObservers.removeAll()
+            
+            root?.removeAllObservers()
+            dirtyObservers.removeAll()
+            enablingObservers.removeAll()
+        }
     }
     
     //
