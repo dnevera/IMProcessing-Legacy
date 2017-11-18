@@ -25,13 +25,14 @@ extension Array where Element: Equatable {
 }
 
 public class IMPCurve: Hashable {
+        
     public /// The hash value.
     ///
     /// Hash values are not guaranteed to be equal across different executions of
     /// your program. Do not save hash values to use during a future execution.
     let hashValue: Int = UUID().hashValue
     
-    public static func ==(lhs: IMPCurve, rhs: IMPCurve) -> Bool {
+    public static func == (lhs: IMPCurve, rhs: IMPCurve) -> Bool {
         return lhs.hashValue == rhs.hashValue
     }
 
@@ -42,15 +43,18 @@ public class IMPCurve: Hashable {
     
     public typealias UpdateHandlerType = ((_ curve:IMPCurve)->Void)
     
-    public var values:[Float] { return _curve }
+    public var values:[Float] { return _curve  }
 
-    public var interpolator:IMPInterpolator  {return _interpolator }
+    public var interpolator:IMPInterpolator  { return _interpolator }
     
     public var bounds:IMPInterpolator.Bounds {
         set{
-            _interpolator.bounds = newValue; updateCurve() 
+            synchronizationQueue.sync  {
+                self._interpolator.bounds = newValue; 
+                self.updateCurve() 
+            }
         }
-        get{  return _interpolator.bounds }
+        get{  return _interpolator.bounds  }
     }
     
     public let maxControlPoints:Int
@@ -106,21 +110,33 @@ public class IMPCurve: Hashable {
     }
     
     public func update()  {
-        updateCurve()
+        synchronizationQueue.async(flags: [.barrier]) {
+            self.updateCurve()
+        }
     }
     
     public func addUpdateObserver(observer:@escaping UpdateHandlerType){
-        observers.append(observer)
+        synchronizationQueue.async(flags: [.barrier]) {
+            self.observers.append(observer)
+        }
     }
     
     public func removeAllUpdateObservers(){
-        observers.removeAll()
+        synchronizationQueue.async(flags: [.barrier]) {
+            self.observers.removeAll()
+        }
     }
-    
-    public func add(points: [float2]) {
+
+    private func _add(points: [float2]) {
         let sorted = points.sorted { return $0.x<$1.x }
         for p in sorted { _ = add(point: p) }
         updateCurve()
+    }
+
+    public func add(points: [float2]) {
+        synchronizationQueue.async(flags: [.barrier]) {
+            self._add(points: points)
+        }
     }
     
     private func add(point p: float2) -> Int? {
@@ -129,7 +145,7 @@ public class IMPCurve: Hashable {
             return nil
         }
             
-        if let i = indexOf(point: p) {
+        if let i = _indexOf(point: p) {
             _controlPoints[i] = p
             return i
         }
@@ -144,8 +160,10 @@ public class IMPCurve: Hashable {
         _controlPoints.append(p)
         
         if _controlPoints.count >= 2{ 
-            _controlPoints[0] = bounds.left
-            _controlPoints[1] = bounds.right
+            //_controlPoints[0] = bounds.left
+            //_controlPoints.insert(bounds.left, at: 0)
+            //_controlPoints.append(bounds.right)
+            //_controlPoints[1] = bounds.right
         }
 
         if maxControlPoints >= 2 {
@@ -163,17 +181,20 @@ public class IMPCurve: Hashable {
     }
     
     public func remove(points: [float2], complete:((_ flag:Bool)->Void)? = nil){
-        var f = false
-        
-        for p in points {
-            if let i = indexOf(point: p) {
-                _controlPoints.remove(at: i)
-                f = true
+        synchronizationQueue.async(flags: [.barrier]) {
+            var f = false
+            
+            for p in points {
+                if let i = self._indexOf(point: p) {
+                    self._controlPoints.remove(at: i)
+                    f = true
+                }
             }
+            
+            self.updateCurve()
+            
+            complete?(f)        
         }
-        
-        updateCurve()
-        complete?(f)
     }
     
     private func _set(point: float2, at atIndex:Int) -> float2? {
@@ -196,16 +217,21 @@ public class IMPCurve: Hashable {
         return result
     }
 
-    public func set(point: float2, at atIndex:Int) -> float2? {
-        let r = _set(point:point, at: atIndex)
-        updateCurve()
+    public func set(point: float2, at atIndex:Int) -> float2? {        
+        var r:float2?
+        synchronizationQueue.sync {
+            r = _set(point:point, at: atIndex)
+            updateCurve()
+        }
         return r
     }
     
-    public func set(points: [float2]){
-        _controlPoints.removeAll()
-        add(points: points)
-        updateCurve()
+    public func set(points: [float2], with bounds:IMPInterpolator.Bounds){
+        synchronizationQueue.sync {
+            self._controlPoints.removeAll()
+            self._interpolator.bounds = bounds
+            self._add(points: points)
+        }
     }
 
     private func clearControlPoints(){
@@ -214,71 +240,74 @@ public class IMPCurve: Hashable {
     } 
 
     public func reset(){
-        bounds = _initialBounds
-        clearControlPoints()        
-        updateCurve()
+        synchronizationQueue.async(flags: [.barrier]) {
+            self.bounds = self._initialBounds
+            self.clearControlPoints()        
+            self.updateCurve()
+        }
     }
     
     public func addCloseTo(_ xy:float2, complete:((_ flag:Bool, _ point:float2?, _ index:Int?)->Void)? = nil) {
         
         var isNew = false
-        
-        func location(_ i:Int, spline:IMPCurve) -> float2 {
-            let x = i.float/spline._curve.count.float
-            let y = spline._curve[i]
-            return float2(x,y)
-        }
-        
         var currentPoint:float2? = nil
         var currentIndex:Int? = nil
         
-        if maxControlPoints <= controlPoints.count {
-            currentIndex = indexOf(point: xy)
-            if let index = currentIndex {
-                currentPoint = _controlPoints[index]
+        synchronizationQueue.sync {
+            
+            func location(_ i:Int, spline:IMPCurve) -> float2 {
+                let x = i.float/spline._curve.count.float
+                let y = spline._curve[i]
+                return float2(x,y)
             }
-            complete?(isNew, currentPoint, currentIndex)
-            return
-        }
-        
-        if maxControlPoints <= controlPoints.count {
-            for i in 0..<controlPoints.count {
-                let p = controlPoints[i]
-                if distance(p, xy) < closeDistance {
-                    currentPoint = set(point: xy, at: i)
-                    currentIndex = i
-                    break
+                        
+            if maxControlPoints <= controlPoints.count {
+                currentIndex = _indexOf(point: xy)
+                if let index = currentIndex {
+                    currentPoint = _controlPoints[index]
+                }
+                complete?(isNew, currentPoint, currentIndex)
+                return
+            }
+            
+            if maxControlPoints <= controlPoints.count {
+                for i in 0..<controlPoints.count {
+                    let p = controlPoints[i]
+                    if distance(p, xy) < closeDistance {
+                        currentPoint = set(point: xy, at: i)
+                        currentIndex = i
+                        break
+                    }
                 }
             }
-        }
-        else {
-            if type == .smooth {
-                if let index = indexOf(point: xy) {
-                    currentIndex = index
-                    _controlPoints[index] = xy
-                    complete?(isNew, currentPoint, currentIndex)
-                    return
-                }
-            }
-            for i in 0..<_curve.count {
-                if distance(location(i, spline: self), xy) < closeDistance {
-                    currentPoint = xy
-                    if let index = indexOf(point: xy) {
+            else {
+                if type == .smooth {
+                    if let index = _indexOf(point: xy) {
                         currentIndex = index
                         _controlPoints[index] = xy
+                        complete?(isNew, currentPoint, currentIndex)
+                        return
                     }
-                    else if xy.x - _controlPoints[0].x > closeDistance &&
-                         _controlPoints[_controlPoints.count-1].x - xy.x > closeDistance
-                    {
-                        currentIndex = add(point: xy)
-                        isNew = true
-                    }
-                    updateCurve()
-                    break
                 }
-            }
+                for i in 0..<_curve.count {
+                    if distance(location(i, spline: self), xy) < closeDistance {
+                        currentPoint = xy
+                        if let index = _indexOf(point: xy) {
+                            currentIndex = index
+                            _controlPoints[index] = xy
+                        }
+                        else if xy.x - _controlPoints[0].x > closeDistance &&
+                            _controlPoints[_controlPoints.count-1].x - xy.x > closeDistance
+                        {
+                            currentIndex = add(point: xy)
+                            isNew = true
+                        }
+                        updateCurve()
+                        break
+                    }
+                }
+            }            
         }
-        
         complete?(isNew, currentPoint, currentIndex)
     }
     
@@ -286,36 +315,37 @@ public class IMPCurve: Hashable {
         var dist = MAXFLOAT
         var closestPoint = point
         
-        for i in 0..<_curve.count {
-            let x = Float(i)/Float(_curve.count) //* bounds.last.x
-            let y = _curve[i]
-            let p = float2(x,y)
-            let ndist = simd.distance(p, point)
-            if  ndist < dist {
-                dist = ndist
-                closestPoint = p
+            for i in 0..<_curve.count {
+                let x = Float(i)/Float(_curve.count) //* bounds.last.x
+                let y = _curve[i]
+                let p = float2(x,y)
+                let ndist = simd.distance(p, point)
+                if  ndist < dist {
+                    dist = ndist
+                    closestPoint = p
+                }
             }
-        }
+            
+            return closestPoint
         
-        return closestPoint
     }
     
     public func closeToCurve(point: float2, distance:Float?=nil) -> float2? {
-
-        let d = distance ?? closeDistance
-        
-        for i in 0..<_curve.count {
-            let x = Float(i)/Float(_curve.count) //* bounds.last.x
-            let y = _curve[i]
-            let p = float2(x,y)
-            if simd.distance(float2(x,y), point) <= d {
-                return p
+            let d = distance ?? closeDistance
+            
+            for i in 0..<_curve.count {
+                let x = Float(i)/Float(_curve.count) //* bounds.last.x
+                let y = _curve[i]
+                let p = float2(x,y)
+                if simd.distance(float2(x,y), point) <= d {
+                    return p
+                }
             }
-        }
-        return nil
+            return nil
+        
     }
     
-    public func indexOf(point:float2?, distance:Float?=nil) -> Int? {
+    private func _indexOf(point:float2?, distance:Float?=nil) -> Int? {
         
         guard let p = point else { return  nil}
         
@@ -326,13 +356,16 @@ public class IMPCurve: Hashable {
         }
         return nil
     }
-    
+
+    public func indexOf(point:float2?, distance:Float?=nil) -> Int? {
+        return _indexOf(point: point, distance: distance) 
+    }
+
     public func closeness(one: float2, two: float2, distance:Float?=nil) -> Bool {
         return simd.distance(one, two) <= distance ?? closeDistance
     }
     
     public var closeDistance:Float {
-        //return precision ?? 1/Float(_interpolator.resolution/2) //(precision ?? 1)/Float(_interpolator.resolution/2)
         return  precision ?? 2/Float(_interpolator.resolution)
     }
         
@@ -344,29 +377,34 @@ public class IMPCurve: Hashable {
     
     private var _controlPoints:[float2] = [float2]()
     
-    private func updateCurve()  {
-        _curve.removeAll()
-        _interpolator.controls = _controlPoints
-        _interpolator.controls.insert(contentsOf: _edges.0, at: 0)
-        _interpolator.controls.append(contentsOf: _edges.1)
-        for x in segments {
-            _curve.append(_interpolator.value(at: x))
+    private func updateCurve()  {        
+        self._interpolator.controls = self._controlPoints
+        self._interpolator.controls.insert(contentsOf: self._edges.0, at: 0)
+        self._interpolator.controls.append(contentsOf: self._edges.1)
+        var crv = [Float]()
+        for x in self.segments {
+            crv.append(self._interpolator.value(at: x))
         }
-        executeObservers()
+        self._curve = crv
+        self.executeObservers() 
     }
     
     private func executeObservers()  {
-        for o in observers {
+        for o in self.observers {
             o(self)
         }
     }
+    
+    lazy var synchronizationQueue:DispatchQueue = {
+        return DispatchQueue(label:  String(format: "com.improcessing.curve-%08x%08x", arc4random(), arc4random()))
+    }()
     
     private func findXPoint(point:float2?) -> Int? {
         
         guard let p = point else { return  nil}
         
-        for i in 0..<controlPoints.count {
-            if abs(controlPoints[i].x - p.x) < closeDistance {
+        for i in 0..<_controlPoints.count {
+            if abs(_controlPoints[i].x - p.x) < closeDistance {
                 return i
             }
         }

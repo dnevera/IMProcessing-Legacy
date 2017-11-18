@@ -61,16 +61,16 @@ extern "C" {
 #ifndef __METAL_VERSION__
     
     typedef NS_ENUM(uint, IMPBlendingMode) {
-        IMPLuminosity = 0,
-        IMPNormal     = 1,
+        IMPNormal     = 0,
+        IMPLuminosity = 1,
         IMPColor      = 2
     };
     
 #else
     
     typedef enum : uint {
-        IMPLuminosity = 0,
-        IMPNormal     = 1,
+        IMPNormal     = 0,
+        IMPLuminosity = 1,
         IMPColor      = 2
     }IMPBlendingMode;
     

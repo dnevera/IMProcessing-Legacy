@@ -11,6 +11,8 @@ import CoreImage
 
 public class IMPCoreImageMTLKernel: IMPCIFilter{
     
+    private static var mutex = IMPSemaphore()
+    
     override public var destinationSize: NSSize? {
         set{
             function?.destinationSize = newValue
@@ -38,8 +40,8 @@ public class IMPCoreImageMTLKernel: IMPCIFilter{
         }
     }
     
-    static var registeredFunctionList:[IMPFunction] = [IMPFunction]()
-    static var registeredFilterList:[String:IMPCoreImageMTLKernel] = [String:IMPCoreImageMTLKernel]()
+    private static var registeredFunctionList:[IMPFunction] = [IMPFunction]()
+    private static var registeredFilterList:[String:IMPCoreImageMTLKernel] = [String:IMPCoreImageMTLKernel]()
     
     //    static func register(name: String) {
     //        CIFilter.registerName(name, constructor: IMPCIFilterConstructor() as CIFilterConstructor,
@@ -49,22 +51,24 @@ public class IMPCoreImageMTLKernel: IMPCIFilter{
     //    }
     
     static func register(function:IMPFunction) -> IMPCoreImageMTLKernel {
-        if let filter = registeredFilterList[function.name] {
-            return filter
-        }
-        else {
-            let filter = IMPCoreImageMTLKernel()
-            if #available(iOS 10.0, *) {
-                filter.name = function.name
-            } else {
-                // Fallback on earlier versions
-                fatalError("IMPCoreImageMPSUnaryKernel: ios >10.0 supports only")
+        return mutex.sync {
+            if let filter = registeredFilterList[function.name] {
+                return filter
             }
-            filter.function = function
-            filter.context = function.context
-            filter.threadsPerThreadgroup = function.threadsPerThreadgroup
-            registeredFilterList[function.name] = filter
-            return filter
+            else {
+                let filter = IMPCoreImageMTLKernel()
+                if #available(iOS 10.0, *) {
+                    filter.name = function.name
+                } else {
+                    // Fallback on earlier versions
+                    fatalError("IMPCoreImageMPSUnaryKernel: ios >10.0 supports only")
+                }
+                filter.function = function
+                filter.context = function.context
+                filter.threadsPerThreadgroup = function.threadsPerThreadgroup
+                registeredFilterList[function.name] = filter
+                return filter
+            }
         }
     }
     
@@ -72,7 +76,7 @@ public class IMPCoreImageMTLKernel: IMPCIFilter{
         return self.function?.name == (object as? IMPCoreImageMTLKernel)?.function?.name
     }
         
-    var function: IMPFunction? {
+    private var function: IMPFunction? {
         didSet{
             guard let f = function else {
                 return

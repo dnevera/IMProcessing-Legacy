@@ -276,7 +276,7 @@ open class IMPContext {
             }
         }
         else {
-            //dispatchQueue.async(group: nil, qos: .background, flags: .noQoS)  {
+            //dispatchQueue.async(group: nil, qos: .background, flags: .barrier)  {
             dispatchQueue.async{
                 execute()
             }
