@@ -240,8 +240,10 @@ public class IMPCurve: Hashable {
     } 
 
     public func reset(){
+        //
+        //self.bounds = self._initialBounds
         synchronizationQueue.async(flags: [.barrier]) {
-            self.bounds = self._initialBounds
+            self._interpolator.bounds = self._initialBounds; 
             self.clearControlPoints()        
             self.updateCurve()
         }
