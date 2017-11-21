@@ -755,7 +755,8 @@ public extension IMPImageProvider {
         ///   - factor: compression factor (.JPEG only)
         /// - Returns: representation Data?
         public func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data?{
-            return NSImage(ciimage:image)?.representation(using: type, compression: factor)
+            //return NSImage(ciimage:image)?.representation(using: type, compression: factor)
+            return nsImage(scale: 1, reflect: true)?.representation(using: type, compression: factor)
         }
         
         

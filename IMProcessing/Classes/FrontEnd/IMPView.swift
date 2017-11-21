@@ -59,6 +59,20 @@ fileprivate extension OperationQueue {
     }
 }
 
+extension DispatchQueue {
+    // This method will dispatch the `block` to self.
+    // If `self` is the main queue, and current thread is main thread, the block
+    // will be invoked immediately instead of being dispatched.
+    func safeAsync(_ block: @escaping ()->()) {
+        if self === DispatchQueue.main && Thread.isMainThread {
+            NSLog(" @@@ IMPView safeAsync \(Thread.isMainThread, self)")
+            block()
+        } else {
+            async { block() }
+        }
+    }
+}
+
 open class IMPView: MTKView {
     
     public var viewReadyHandler:(()->Void)?
@@ -303,13 +317,13 @@ open class IMPView: MTKView {
 
         guard let context = self.context else { return }
         
-        context.wait()
+        //context.wait()
 
         guard 
             let commandBuffer = context.commandBuffer,
             let sourceTexture = frameImage?.texture,
             let targetTexture = currentDrawable?.texture else {
-                context.resume()
+                //context.resume()
                 return                 
         }
                                    
@@ -317,7 +331,7 @@ open class IMPView: MTKView {
             if self.isFirstFrame  {
                 self.frameCounter += 1
             }
-            context.resume()
+            //context.resume()
             self.viewBufferCompleteHandler?(self.frameImage!)
         }        
         
@@ -376,9 +390,9 @@ open class IMPView: MTKView {
             guard needUpdateDisplay != oldValue else {
                 return
             }
-            DispatchQueue.main.async {
-                if self.isPaused {
-                    if self.needUpdateDisplay {
+            if self.isPaused {
+                if self.needUpdateDisplay {
+                    DispatchQueue.main.safeAsync {
                         self.draw()
                     }
                 }                

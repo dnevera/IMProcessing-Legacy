@@ -839,8 +839,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     // MARK: - internal
     //
     internal func executeNewSourceObservers(source:IMPImageProvider?){
-        context.runOperation(.async) { 
-            for hash in self.newSourceObservers {
+        let observers = self.mutex.sync { Array(self.newSourceObservers) } 
+        for hash in observers {
+            context.runOperation(.async) {            
                 hash.observer(source)
             }            
         }
@@ -848,34 +849,37 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     internal func executeDestinationObservers(destination:IMPImageProvider?){
         if observersEnabled {
-            context.runOperation(.async, { 
-                if let d = destination {
-                    for hash in self.destinationObservers {
+            if let d = destination {
+                let observers = self.mutex.sync { Array(self.destinationObservers) }                     
+                for hash in observers {
+                    context.runOperation(.async) {
                         hash.observer(d)
                     }
-                }                
-            })
+                }
+            }                            
         }
     }
     
     internal func executeDirtyObservers(filter:IMPFilter){
         if observersEnabled {
             root?.executeDirtyObservers(filter: self)
-            context.runOperation(.async, { 
-                for hash in self.dirtyObservers {
+            let observers = self.mutex.sync { Array(self.dirtyObservers) }
+            for hash in observers {
+                context.runOperation(.async) {
                     hash.observer(filter,filter.source,filter._destination)
-                }                
-            })
+                }
+            }                
         }
     }
     
     internal func executeEnablingObservers(filter:IMPFilter){
         if observersEnabled {
-            context.runOperation(.async, { 
-                for hash in self.enablingObservers {
+            let observers = self.mutex.sync { Array(self.enablingObservers) }
+            for hash in observers {
+                context.runOperation(.async) {
                     hash.observer(filter,filter.source,filter._destination)
-                }                
-            })
+                }
+            }                
         }
     }
     
