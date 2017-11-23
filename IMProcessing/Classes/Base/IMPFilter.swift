@@ -34,6 +34,7 @@ public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider
     func process()
 }
 
+
 open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
     
     public var mutex = IMPSemaphore()
@@ -72,7 +73,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     open var source: IMPImageProvider? = nil {
         willSet{
-            source?.removeObserver(optionsChanged: optionChangedObserver)
+            //source?.removeObserver(optionsChanged: optionChangedObserver)
         }
         didSet{    
             _destination.texture = nil

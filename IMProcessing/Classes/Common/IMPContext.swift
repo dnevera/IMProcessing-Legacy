@@ -158,9 +158,7 @@ open class IMPContext {
         semaphore.signal()
     }
     
-    private let dispatchQueue = DispatchQueue (label: "ccom.improcessing.context", qos : .userInteractive)
-    //, attributes: .concurrent)
-    //DispatchQueue(label: "com.improcessing.context", attr: .concurrent)
+    private let dispatchQueue = DispatchQueue (label: "ccom.improcessing.context", qos : .utility)
     private var dispatchQueueKey:DispatchSpecificKey<Int> =  DispatchSpecificKey<Int>()
     private  let queueKey: Int = 1837264
     
@@ -264,22 +262,34 @@ open class IMPContext {
         }
     }
     
-    public final func runOperation(_ sync:OperationType = .sync, _ execute:@escaping () -> ()) {
+    @discardableResult public final func runOperation(_ sync:OperationType = .sync, _ execute:@escaping () -> ()) -> DispatchWorkItem? {
+                
         if sync == .sync {
             if (DispatchQueue.getSpecific(key:dispatchQueueKey) == queueKey) {
                 execute()
+                return nil
             }
             else {
-                dispatchQueue.sync{
+                let block = DispatchWorkItem { 
                     execute()
                 }
+                dispatchQueue.sync(execute: block)
+                
+                return block
+                //dispatchQueue.sync{
+                //    execute()
+                //}
             }
         }
         else {
-            //dispatchQueue.async(group: nil, qos: .background, flags: .barrier)  {
-            dispatchQueue.async{
+            let block = DispatchWorkItem { 
                 execute()
             }
+            //dispatchQueue.async{
+            //    execute()
+            //}
+            dispatchQueue.async(execute: block)
+            return block
         }
     }
     

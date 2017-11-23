@@ -754,9 +754,8 @@ public extension IMPImageProvider {
         ///   - type: representation type: `IMPImageFileType`
         ///   - factor: compression factor (.JPEG only)
         /// - Returns: representation Data?
-        public func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data?{
-            //return NSImage(ciimage:image)?.representation(using: type, compression: factor)
-            return nsImage(scale: 1, reflect: true)?.representation(using: type, compression: factor)
+        public func representation(using type: IMPImageFileType, compression factor:Float? = nil, reflect:Bool = false) -> Data?{
+            return nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
         }
         
         
@@ -767,12 +766,12 @@ public extension IMPImageProvider {
         ///   - type: image type
         ///   - factor: compression factor (.JPEG only)
         /// - Throws: `Error`
-        public func write(to url: URL, using type: IMPImageFileType, compression factor:Float? = nil) throws {
-            try representation(using: type, compression: factor)?.write(to: url, options: .atomic)
+        public func write(to url: URL, using type: IMPImageFileType, compression factor:Float? = nil, reflect:Bool = false) throws {
+            try representation(using: type, compression: factor, reflect:reflect)?.write(to: url, options: .atomic)
         }
         
-        public func write(to path: String, using type: IMPImageFileType, compression factor:Float? = nil) throws {
-            try representation(using: type, compression: factor)?.write(to: URL(fileURLWithPath: path), options: .atomic)
+        public func write(to path: String, using type: IMPImageFileType, compression factor:Float? = nil, reflect:Bool = false) throws {
+            try representation(using: type, compression: factor, reflect:reflect)?.write(to: URL(fileURLWithPath: path), options: .atomic)
         }        
     }
     
