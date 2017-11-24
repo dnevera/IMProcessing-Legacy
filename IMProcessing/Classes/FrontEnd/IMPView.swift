@@ -102,10 +102,7 @@ open class IMPView: MTKView {
     
     public var exactResolutionEnabled = true {
         didSet{
-            //filter?.dirty = true
-            Swift.print("exactResolutionEnabled --> \(exactResolutionEnabled)")
             //updateDrawble(size: filter?.source?.size)
-            //needProcessing = true
         }
     }
     
@@ -128,12 +125,12 @@ open class IMPView: MTKView {
 
     private lazy var sourceObserver:IMPFilter.SourceUpdateHandler = {
         let handler:IMPFilter.SourceUpdateHandler = { (source) in
-            if source == nil { 
-                self.needProcessing = false
-            }
-            else if let size = source?.size {
-                self.updateDrawble(size: size)
-            }
+            //if source == nil { 
+                self.needProcessing = true
+            //}
+            //else if let size = source?.size {
+            //    self.updateDrawble(size: size)
+            //}
         }
         return handler
     }()
@@ -142,16 +139,16 @@ open class IMPView: MTKView {
     private lazy var destinationObserver:IMPFilter.UpdateHandler = {
         let handler:IMPFilter.UpdateHandler = { (destination) in
             self.currentDestination = destination
-            self.updateDrawble(size: destination.size)
+            //self.updateDrawble(size: destination.size)
+            self.needUpdateDisplay = true 
+            self.processingLink.isPaused = false
         }
         return handler
     }()
     
     private lazy var dirtyObserver:IMPFilter.FilterHandler = {
         let handler:IMPFilter.FilterHandler = { (filter, source, destintion) in
-            if source != nil {
-                self.needProcessing = true
-            }
+            self.needProcessing = true
         } 
         return handler
     }()
@@ -160,18 +157,11 @@ open class IMPView: MTKView {
     open override var frame: NSRect {
         didSet{
             isolatedFrame = frame
-            //Swift.print(" @@@ IMPView frame \(isolatedFrame)")
+            needUpdateDisplay = true 
+            processingLink.isPaused = false
         }
     }
-    
-//    open override func setNeedsDisplay(_ invalidRect: NSRect) {
-//        CATransaction.begin()
-//        CATransaction.setDisableActions(true)
-//        super.setNeedsDisplay(invalidRect)
-//        CATransaction.commit()
-//        //Swift.print(" @@@ IMPView setNeedsDisplay \(invalidRect, frame, isolatedFrame)")
-//    }
-    
+        
     private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
                      
         var needReprocess = false
@@ -181,11 +171,7 @@ open class IMPView: MTKView {
             if drawableSize.width != size.width || drawableSize.height != size.height {
                 needReprocess = true
             }
-            
-//            OperationQueue.main.addOperation {
-//                Swift.print("1 !!! IMPView.updateDrawble \(size, self.isolatedFrame, self.frame, self.exactResolutionEnabled, needReprocess)")                
-//            }
-            
+                        
             if exactResolutionEnabled || isolatedFrame.size == NSZeroSize {
                 drawableSize = size
             }
@@ -196,7 +182,6 @@ open class IMPView: MTKView {
                 )
                 let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
-                //Swift.print("2 !!! IMPView.updateDrawble \(size, self.drawableSize, self.needUpdateDisplay, needReprocess, scale)")                
             }
 
 
@@ -215,8 +200,6 @@ open class IMPView: MTKView {
 //            }
 //        }        
 
-
-        //Swift.print("4 !!! IMPView.updateDrawble \(size, self.drawableSize, self.needUpdateDisplay, needReprocess)")                
 
         if needReprocess {
             self.processing(size: drawableSize, observersEnabled: false)
@@ -274,30 +257,11 @@ open class IMPView: MTKView {
         return  __operation         
     }
 
-//    private static let __operation:OperationQueue = {
-//        let o = OperationQueue()
-//        o.qualityOfService = .utility
-//        o.maxConcurrentOperationCount = 8
-//        o.name = String(format: "com.improcessing.IMPView-%08x%08x", arc4random(), arc4random())
-//        return o
-//    }()
-//    
-//    public var operation:OperationQueue { 
-//        return  IMPView.__operation         
-//    }
-    
     deinit {
         filter = nil
         processingPhase?.cancel()
     }
         
-//    private var __processingTaskQueue:DispatchQueue = DispatchQueue(label: "org.improcessing.impview", qos: .utility)
-//        
-//    private var processingTaskQueue:DispatchQueue {
-//        return __processingTaskQueue
-//    }
-    
-//    private var processingPhase:Operation?
     private var processingPhase:DispatchWorkItem?
     private func processing(size: NSSize, observersEnabled:Bool = true)  {
         
@@ -308,31 +272,22 @@ open class IMPView: MTKView {
         }
         
         func proc(){            
-            self.needProcessing = false
+            needProcessing = false
             
             guard let filter = self.filter else { return }
             
             let oe = filter.observersEnabled 
             filter.observersEnabled = observersEnabled
-            self.frameImage = filter.destination
+            frameImage = filter.destination
             filter.observersEnabled = oe                                
             
+            needUpdateDisplay = true                         
             processingLink.isPaused = false
-            self.needUpdateDisplay = true                         
         }
         
         processingPhase = filter?.context.runOperation(.async, { 
             proc()
-        })
-        
-//        processingPhase = DispatchWorkItem(flags: [.enforceQoS]) { 
-//            proc()            
-//        }        
-//        processingTaskQueue.async(execute: processingPhase!)
-        
-//        processingPhase = operation.addBackgroundContext(context){
-//            proc()
-//        }
+        })        
     }
 
     lazy var viewPort:MTLViewport = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
@@ -347,30 +302,28 @@ open class IMPView: MTKView {
 
         guard let context = self.context else { return }
         
-        //context.wait()
+        context.wait()
 
         guard 
             let commandBuffer = context.commandBuffer,
             let sourceTexture = frameImage?.texture,
             let targetTexture = currentDrawable?.texture else {
-                //processingLink.isPaused = true
-                //context.resume()
+                context.resume()
                 return                 
         }
                                    
         commandBuffer.addCompletedHandler{ (commandBuffer) in
-            //self.processingLink.isPaused = true
             if self.isFirstFrame  {
                 self.frameCounter += 1
             }
-            //context.resume()
+            context.resume()
             self.viewBufferCompleteHandler?(self.frameImage!)
         }        
         
         if renderingEnabled == false 
             &&
-            sourceTexture.cgsize == drawableSize  
-            &&
+            /*sourceTexture.cgsize == drawableSize  
+            &&*/
             sourceTexture.pixelFormat == targetTexture.pixelFormat
         {
             guard let encoder = commandBuffer.makeBlitCommandEncoder() else {return }
@@ -398,7 +351,7 @@ open class IMPView: MTKView {
                 
                 encoder.setVertexBuffer(vertexBuffer, offset:0, index:0)
                 encoder.setFragmentTexture(sourceTexture, index:0)
-                encoder.setViewport(viewPort)
+                //encoder.setViewport(viewPort)
                 
                 encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
                 encoder.endEncoding()
@@ -422,13 +375,6 @@ open class IMPView: MTKView {
             guard needUpdateDisplay != oldValue else {
                 return
             }
-            if self.isPaused {
-//                if self.needUpdateDisplay {
-//                    DispatchQueue.main.safeAsync {
-//                        self.draw()
-//                    }
-//                }                
-            }
         }
     }
     
@@ -442,14 +388,11 @@ open class IMPView: MTKView {
     #else
     public func setNeedsDisplay() {
         needUpdateDisplay = true
-        if isPaused {
-            //display()
-        }
     }
     
     open override var needsDisplay: Bool {
         didSet{
-            //needProcessing = true
+            needProcessing = true
         }
     }
     
@@ -466,30 +409,23 @@ open class IMPView: MTKView {
         #endif
         enableSetNeedsDisplay = false
         colorPixelFormat = .bgra8Unorm
-        delegate = self    
+        delegate = self  
+        
         processingLink.addObserver { (timev) in
-            //if self.needUpdateDisplay {
-                //DispatchQueue.main.safeAsync {
-                    self.draw()
+            self.draw()
             self.processingLink.isPaused = true
-                //}
-            //}                
-
-            //if self.needProcessing {
-                //guard self.filter?.source != nil else { return }
-                //self.processing(size: self.drawableSize)
-            //}
         }
         isPaused = true 
         isolatedFrame = frame
         configure()
     }
     
-    open override var isPaused: Bool {
+        
+    /*open override var isPaused: Bool {
         didSet{
            //processingLink.isPaused = isPaused
         }
-    }
+    }*/
     
     open override var preferredFramesPerSecond: Int {
         didSet{
@@ -659,6 +595,8 @@ open class IMPView: MTKView {
     }
     
     #endif
+    
+//    var __count = 0
 }
 
 
@@ -673,9 +611,15 @@ extension IMPView: MTKViewDelegate {
         if !impview.needUpdateDisplay {
             return
         }
-        
-        impview.needUpdateDisplay = false
                 
+//        if impview.__count > 3 {
+            impview.needUpdateDisplay = false
+//            impview.__count = 0
+////            //impview.processingLink.isPaused = true
+//        }
+//        
+//        impview.__count += 1
+        
         impview.refresh(rect: view.bounds)
     }
 }
