@@ -73,7 +73,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     open var source: IMPImageProvider? = nil {
         willSet{
-            //source?.removeObserver(optionsChanged: optionChangedObserver)
+            source?.removeObserver(optionsChanged: optionChangedObserver)
         }
         didSet{    
             _destination.texture = nil

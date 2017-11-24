@@ -277,7 +277,7 @@ open class IMPView: MTKView {
 //    private static let __operation:OperationQueue = {
 //        let o = OperationQueue()
 //        o.qualityOfService = .utility
-//        o.maxConcurrentOperationCount = 4
+//        o.maxConcurrentOperationCount = 8
 //        o.name = String(format: "com.improcessing.IMPView-%08x%08x", arc4random(), arc4random())
 //        return o
 //    }()
@@ -291,14 +291,14 @@ open class IMPView: MTKView {
         processingPhase?.cancel()
     }
         
-//    private var __processingTaskQueue:DispatchQueue = DispatchQueue(label: "org.improcessing.impview", qos: .userInitiated)
+//    private var __processingTaskQueue:DispatchQueue = DispatchQueue(label: "org.improcessing.impview", qos: .utility)
 //        
 //    private var processingTaskQueue:DispatchQueue {
 //        return __processingTaskQueue
 //    }
     
-    private var processingPhase:Operation?
-    //private var processingPhase:DispatchWorkItem?
+//    private var processingPhase:Operation?
+    private var processingPhase:DispatchWorkItem?
     private func processing(size: NSSize, observersEnabled:Bool = true)  {
         
         processingPhase?.cancel()
@@ -317,21 +317,22 @@ open class IMPView: MTKView {
             self.frameImage = filter.destination
             filter.observersEnabled = oe                                
             
+            processingLink.isPaused = false
             self.needUpdateDisplay = true                         
         }
         
-//        processingPhase = filter?.context.runOperation(.async, { 
-//            proc()
-//        })
+        processingPhase = filter?.context.runOperation(.async, { 
+            proc()
+        })
         
-//        processingTask = DispatchWorkItem(flags: [.enforceQoS]) { 
+//        processingPhase = DispatchWorkItem(flags: [.enforceQoS]) { 
 //            proc()            
 //        }        
-//        processingTaskQueue.async(execute: processingTask!)
+//        processingTaskQueue.async(execute: processingPhase!)
         
-        processingPhase = operation.addBackgroundContext(context){
-            proc()
-        }
+//        processingPhase = operation.addBackgroundContext(context){
+//            proc()
+//        }
     }
 
     lazy var viewPort:MTLViewport = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
@@ -346,21 +347,23 @@ open class IMPView: MTKView {
 
         guard let context = self.context else { return }
         
-        context.wait()
+        //context.wait()
 
         guard 
             let commandBuffer = context.commandBuffer,
             let sourceTexture = frameImage?.texture,
             let targetTexture = currentDrawable?.texture else {
-                context.resume()
+                //processingLink.isPaused = true
+                //context.resume()
                 return                 
         }
                                    
         commandBuffer.addCompletedHandler{ (commandBuffer) in
+            //self.processingLink.isPaused = true
             if self.isFirstFrame  {
                 self.frameCounter += 1
             }
-            context.resume()
+            //context.resume()
             self.viewBufferCompleteHandler?(self.frameImage!)
         }        
         
@@ -420,11 +423,11 @@ open class IMPView: MTKView {
                 return
             }
             if self.isPaused {
-                if self.needUpdateDisplay {
-                    DispatchQueue.main.safeAsync {
-                        self.draw()
-                    }
-                }                
+//                if self.needUpdateDisplay {
+//                    DispatchQueue.main.safeAsync {
+//                        self.draw()
+//                    }
+//                }                
             }
         }
     }
@@ -465,10 +468,17 @@ open class IMPView: MTKView {
         colorPixelFormat = .bgra8Unorm
         delegate = self    
         processingLink.addObserver { (timev) in
-            if self.needProcessing {
+            //if self.needUpdateDisplay {
+                //DispatchQueue.main.safeAsync {
+                    self.draw()
+            self.processingLink.isPaused = true
+                //}
+            //}                
+
+            //if self.needProcessing {
                 //guard self.filter?.source != nil else { return }
-                self.processing(size: self.drawableSize)
-            }
+                //self.processing(size: self.drawableSize)
+            //}
         }
         isPaused = true 
         isolatedFrame = frame
@@ -477,7 +487,7 @@ open class IMPView: MTKView {
     
     open override var isPaused: Bool {
         didSet{
-           processingLink.isPaused = isPaused
+           //processingLink.isPaused = isPaused
         }
     }
     
