@@ -141,7 +141,7 @@ open class IMPView: MTKView {
             self.currentDestination = destination
             //self.updateDrawble(size: destination.size)
             self.needUpdateDisplay = true 
-            self.processingLink.isPaused = false
+            //self.processingLink.isPaused = false
         }
         return handler
     }()
@@ -158,7 +158,7 @@ open class IMPView: MTKView {
         didSet{
             isolatedFrame = frame
             needUpdateDisplay = true 
-            processingLink.isPaused = false
+            //processingLink.isPaused = false
         }
     }
         
@@ -282,7 +282,7 @@ open class IMPView: MTKView {
             filter.observersEnabled = oe                                
             
             needUpdateDisplay = true                         
-            processingLink.isPaused = false
+            //processingLink.isPaused = false
         }
         
         processingPhase = filter?.context.runOperation(.async, { 
@@ -370,10 +370,14 @@ open class IMPView: MTKView {
     }
 
     fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()    
+   
     fileprivate var needUpdateDisplay:Bool = false {
         didSet{
-            guard needUpdateDisplay != oldValue else {
-                return
+            //guard needUpdateDisplay != oldValue || !processingLink.isPaused else {
+            //    return
+           // }
+            if needUpdateDisplay {
+                processingLink.isPaused = false
             }
         }
     }
@@ -415,6 +419,7 @@ open class IMPView: MTKView {
             self.draw()
             self.processingLink.isPaused = true
         }
+        
         isPaused = true 
         isolatedFrame = frame
         configure()
@@ -596,7 +601,6 @@ open class IMPView: MTKView {
     
     #endif
     
-//    var __count = 0
 }
 
 
@@ -612,13 +616,7 @@ extension IMPView: MTKViewDelegate {
             return
         }
                 
-//        if impview.__count > 3 {
-            impview.needUpdateDisplay = false
-//            impview.__count = 0
-////            //impview.processingLink.isPaused = true
-//        }
-//        
-//        impview.__count += 1
+        impview.needUpdateDisplay = false
         
         impview.refresh(rect: view.bounds)
     }
