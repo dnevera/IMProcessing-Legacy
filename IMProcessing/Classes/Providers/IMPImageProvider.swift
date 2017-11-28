@@ -536,7 +536,7 @@ public extension IMPImageProvider {
                        flipVertical:Bool = false,
                        complete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)?=nil) {
         
-        guard  var image = self.image else {
+        guard  var image:CIImage = self.image  else {
             complete?(nil,nil)            
             return             
         }
@@ -545,7 +545,7 @@ public extension IMPImageProvider {
         
         if let t = texture {
             context.execute(.sync, wait: true) { (commandBuffer) in
-
+                
                 let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
                 image = !flipVertical ? image : image.transformed(by: transform)
 
@@ -553,7 +553,8 @@ public extension IMPImageProvider {
                                                to: t,
                                                commandBuffer: commandBuffer,
                                                bounds: image.extent,
-                                               colorSpace: self.colorSpace)
+                                               colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+                                               //colorSpace: self.colorSpace)
                 complete?(t,commandBuffer)
             }
         }
@@ -598,8 +599,8 @@ public extension IMPImageProvider {
         let width = Int(image.extent.size.width)
         let height = Int(image.extent.size.height)
         
-        if texture?.width != width  || texture?.height != height
-        {
+       // if texture?.width != width  || texture?.height != height
+       // {
             let descriptor = MTLTextureDescriptor.texture2DDescriptor(
                 pixelFormat: IMProcessing.colors.pixelFormat,
                 width: width, height: height, mipmapped: false)
@@ -624,25 +625,29 @@ public extension IMPImageProvider {
             }
 
             return self.context.device.makeTexture(descriptor: descriptor)
-        }
+        //}
         
-        if texture != nil {
-            texture?.setPurgeableState(.keepCurrent)
-        }
+        //if texture != nil {
+        //    texture?.setPurgeableState(.keepCurrent)
+        //}
 
-        return texture
+        //return texture
     }
     
-    public func scaledImage(with scale:CGFloat) -> CIImage? {
+    public func scaledImage(with scale:CGFloat, reflect:Bool = false) -> CIImage? {
         guard let image = image else { return nil }
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        //let colorSpace = CGColorSpaceCreateDeviceRGB()
         var t = CGAffineTransform.identity
-        t = t.scaledBy(x: scale, y: scale).scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height*scale)
+        t = t.scaledBy(x: scale, y: scale)
+        if reflect {
+            t = t.scaledBy(x: 1, y: -1)
+        }        
+        t = t.translatedBy(x: 0, y: image.extent.size.height*scale)
         return image.transformed(by: t)        
     }
     
-    public func cgiImage(scale:CGFloat) -> CGImage? {
-        guard let image = scaledImage(with: scale) else { return nil }
+    public func cgiImage(scale:CGFloat, reflect:Bool = false) -> CGImage? {
+        guard let image = scaledImage(with: scale, reflect:reflect) else { return nil }
         return context.coreImage?.createCGImage(image, from: image.extent,
                                                 format: kCIFormatARGB8,
                                                 colorSpace: colorSpace,
@@ -686,6 +691,12 @@ public extension IMPImageProvider {
             let nsImage: NSImage = NSImage(size: rep.size)                
             nsImage.addRepresentation(rep)
             return nsImage
+            
+//            image = image.transformed(by: t)
+//            if let cgim = self.context.coreImage?.createCGImage(image, from: image.extent) {                
+//                return NSImage(cgImage: cgim, size: image.extent.size)                
+//            }         
+
         }
         return nil
     }
@@ -740,8 +751,7 @@ public extension IMPImageProvider {
             self.init(size: image.extent.size)
             let rep = NSCIImageRep(ciImage: image)
             addRepresentation(rep)
-        }
-        
+        }        
     }
     
     // MARK: - export to files
@@ -755,7 +765,37 @@ public extension IMPImageProvider {
         ///   - factor: compression factor (.JPEG only)
         /// - Returns: representation Data?
         public func representation(using type: IMPImageFileType, compression factor:Float? = nil, reflect:Bool = false) -> Data?{
-            return nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
+            //return nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
+            
+            var properties:[NSBitmapImageRep.PropertyKey : Any] = [:]            
+            if type == .jpeg {
+                properties = [NSBitmapImageRep.PropertyKey.compressionFactor: factor ?? 1.0]
+            }
+                        
+            if let image = self.image { 
+
+                var t = CGAffineTransform.identity
+                
+                if reflect {
+                    t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+                }
+
+                switch type {
+                case .jpeg:
+                    return context.coreImage?.jpegRepresentation(of: image.transformed(by: t), colorSpace: colorSpace, options: properties)
+                case .tiff:
+                    return context.coreImage?.tiffRepresentation(of: image.transformed(by: t), format: kCIFormatRGBAf, colorSpace: colorSpace, options:properties)
+                case .png:
+                    if #available(OSX 10.13, *) {
+                        return context.coreImage?.pngRepresentation(of: image.transformed(by: t), format: kCIFormatRGBA16, colorSpace: colorSpace, options: properties)
+                    } else {
+                        nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
+                    }
+                default:
+                    nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
+                }
+            }
+            return nil
         }
         
         

@@ -75,10 +75,12 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         willSet{
             source?.removeObserver(optionsChanged: optionChangedObserver)
         }
-        didSet{    
-            _destination.texture = nil
-            executeNewSourceObservers(source: source)
-            source?.addObserver(optionsChanged: optionChangedObserver)
+        didSet{   
+            context.runOperation(.sync) {
+                self._destination.texture = nil
+                self.executeNewSourceObservers(source: self.source)
+                self.source?.addObserver(optionsChanged: self.optionChangedObserver)
+            }
         }
     }
     
@@ -841,8 +843,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     //
     internal func executeNewSourceObservers(source:IMPImageProvider?){
         let observers = self.mutex.sync { Array(self.newSourceObservers) } 
-        for hash in observers {
-            context.runOperation(.async) {            
+        context.runOperation(.async) {            
+            for hash in observers {
                 hash.observer(source)
             }            
         }
@@ -852,8 +854,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         if observersEnabled {
             if let d = destination {
                 let observers = self.mutex.sync { Array(self.destinationObservers) }                     
-                for hash in observers {
-                    context.runOperation(.async) {
+                context.runOperation(.async) {
+                    for hash in observers {
                         hash.observer(d)
                     }
                 }
@@ -865,8 +867,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         if observersEnabled {
             root?.executeDirtyObservers(filter: self)
             let observers = self.mutex.sync { Array(self.dirtyObservers) }
-            for hash in observers {
-                context.runOperation(.async) {
+            context.runOperation(.async) {
+                for hash in observers {
                     hash.observer(filter,filter.source,filter._destination)
                 }
             }                
@@ -876,8 +878,8 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     internal func executeEnablingObservers(filter:IMPFilter){
         if observersEnabled {
             let observers = self.mutex.sync { Array(self.enablingObservers) }
-            for hash in observers {
-                context.runOperation(.async) {
+            context.runOperation(.async) {
+                for hash in observers {
                     hash.observer(filter,filter.source,filter._destination)
                 }
             }                

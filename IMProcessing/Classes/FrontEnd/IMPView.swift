@@ -159,10 +159,7 @@ open class IMPView: MTKView {
                              
         if let size = size {
                      
-            if drawableSize.width != size.width || drawableSize.height != size.height {
-                needReprocess = true
-            }
-                        
+                  
             if exactResolutionEnabled || isolatedFrame.size == NSZeroSize {
                 drawableSize = size
             }

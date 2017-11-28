@@ -142,8 +142,9 @@ public extension IMPCLut {
         let kernel = IMPFunction(context: context, kernelName:
             _type == .lut_1d ? "kernel_make1DLut" :  _type == .lut_2d ?  "kernel_make2DLut" :  "kernel_make3DLut")
 
-        let threadsPerThreadgroup = MTLSizeMake(4, 4, 4)
         let threadgroups  = MTLSizeMake(text.width/4, text.height == 1 ? 1 : text.height/4, text.depth == 1 ? 1 : text.depth/4)
+        let threadsPerThreadgroup = MTLSizeMake(4, 4, 4)
+        //let threadsPerThreadgroup = MTLSizeMake(128, 1, 1)
         
         context.execute(.sync, wait: true){ (commandBuffer) in
             let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
