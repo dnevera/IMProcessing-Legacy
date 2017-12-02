@@ -123,7 +123,10 @@ open class IMPContext {
     open let uid = String.uniqString()
     
     /// Current command queue uses the current device
-    open let commandQueue:MTLCommandQueue?
+    open var commandQueue:MTLCommandQueue? 
+    //{
+    //    return _device?.makeCommandQueue()
+    //}
     
     /// Default library associated with current context
     open let defaultLibrary:MTLLibrary
@@ -185,7 +188,7 @@ open class IMPContext {
         
         isLazy = lazy
         
-        if let commandQ = _device?.makeCommandQueue() {
+        if let commandQ = _device?.makeCommandQueue(maxCommandBufferCount: 128) {
             commandQueue = commandQ
         }
         else {

@@ -115,7 +115,8 @@ open class IMPView: MTKView {
             filter?.removeObserver(dirty: dirtyObserver)
         }
         didSet {         
-            device = filter?.context.device 
+            guard let context = self.filter?.context else { return } 
+            device = context.device 
             filter?.addObserver(newSource: sourceObserver)            
             filter?.addObserver(destinationUpdated: destinationObserver)            
             filter?.addObserver(dirty: dirtyObserver)
@@ -194,19 +195,14 @@ open class IMPView: MTKView {
     }
     
     public var context:IMPContext? {
-        return filter?.context
+        return IMPView.__context //filter?.context
     }
     
     var needProcessing = false {
         didSet{
-            if isPaused{
-                if needProcessing {
-                    processing(size: drawableSize)
-                }
+            if needProcessing {
+                processing(size: drawableSize)
             }
-            else {
-                processingPhase?.cancel()
-            }            
         }
     }
     
@@ -231,12 +227,14 @@ open class IMPView: MTKView {
         processingPhase?.cancel()
     }
         
+    private static let __context = IMPContext()
+    
     private var processingPhase:DispatchWorkItem?
     private func processing(size: NSSize, observersEnabled:Bool = true)  {
         
         processingPhase?.cancel()
 
-        guard let context = filter?.context else {
+        guard let context = self.context else {
             return
         }
         
@@ -253,7 +251,7 @@ open class IMPView: MTKView {
             needUpdateDisplay = true                         
         }
         
-        processingPhase = filter?.context.runOperation(.async, { 
+        processingPhase = context.runOperation(.async, { 
             proc()
         })        
     }
@@ -268,8 +266,8 @@ open class IMPView: MTKView {
     
     func refresh(rect: CGRect){
 
-        guard let context = self.context else { return }
-        
+        guard let context = self.filter?.context else { return }
+                
         context.wait()
 
         guard 
@@ -408,7 +406,8 @@ open class IMPView: MTKView {
     }()
     
     lazy var vertexBuffer:MTLBuffer? = {
-        let v = self.context?.device.makeBuffer(bytes: IMPView.viewVertexData, length: MemoryLayout<Float>.size*IMPView.viewVertexData.count, options: [])
+        guard let context =  self.context else { return nil }
+        let v = context.device.makeBuffer(bytes: IMPView.viewVertexData, length: MemoryLayout<Float>.size*IMPView.viewVertexData.count, options: [])
         v?.label = "Vertices"
         return v
     }()
@@ -417,22 +416,23 @@ open class IMPView: MTKView {
     
     lazy var renderPipeline:MTLRenderPipelineState? = {
         do {
+            guard let context = self.context else { return nil }
             let descriptor = MTLRenderPipelineDescriptor()
             
             descriptor.colorAttachments[0].pixelFormat = self.colorPixelFormat
             
-            guard let vertex = self.context?.defaultLibrary.makeFunction(name: "vertex_passview") else {
+            guard let vertex = context.defaultLibrary.makeFunction(name: "vertex_passview") else {
                 fatalError("IMPView error: vertex function 'vertex_passview' is not found in: \(self.context?.defaultLibrary.functionNames)")
             }
             
-            guard let fragment = self.context?.defaultLibrary.makeFunction(name: "fragment_passview") else {
+            guard let fragment = context.defaultLibrary.makeFunction(name: "fragment_passview") else {
                 fatalError("IMPView error: vertex function 'fragment_passview' is not found in: \(self.context?.defaultLibrary.functionNames)")
             }
             
             descriptor.vertexFunction   = vertex
             descriptor.fragmentFunction = fragment
             
-            return try self.context?.device.makeRenderPipelineState(descriptor: descriptor)
+            return try context.device.makeRenderPipelineState(descriptor: descriptor)
         }
         catch let error as NSError {
             NSLog("IMPView error: \(error)")

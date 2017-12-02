@@ -220,7 +220,7 @@ public class IMPCCheckerDetector: IMPDetector {
     //fileprivate lazy var centersBuffer:MTLBuffer = self.makeCentersBuffer()
     //fileprivate lazy var colorsBuffer:MTLBuffer = self.makeColorsBuffer()
     
-    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  IMPContext())
+    private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  self.context)
     private lazy var opening:IMPErosion = IMPOpening(context: self.context)
     
     private lazy var patchDetectorKernel:IMPFunction = {

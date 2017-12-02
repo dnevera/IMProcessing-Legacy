@@ -621,7 +621,7 @@ public extension IMPImageProvider {
             }
             
             if texture != nil {
-                texture?.setPurgeableState(.volatile)
+                //texture?.setPurgeableState(.volatile)
             }
 
             return self.context.device.makeTexture(descriptor: descriptor)
@@ -677,7 +677,7 @@ public extension IMPImageProvider {
     }
     #else
     public func nsImage(scale:CGFloat, reflect:Bool = false) -> NSImage? {
-        if let image = self.image {
+/*        if let image = self.image {
             
             var t = CGAffineTransform.identity
             t = t.scaledBy(x: scale, y: scale)
@@ -697,6 +697,9 @@ public extension IMPImageProvider {
 //                return NSImage(cgImage: cgim, size: image.extent.size)                
 //            }         
 
+        }*/
+        if let cgi =  cgiImage(scale: scale, reflect: reflect){
+            return NSImage(cgImage: cgi, size: NSZeroSize)
         }
         return nil
     }
@@ -719,9 +722,9 @@ public extension IMPImageProvider {
 
     public typealias IMPImageFileType = NSBitmapImageRep.FileType
     
-    extension NSImage {
+    public extension NSImage {
                       
-        func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data? {
+        public func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data? {
                                     
             guard let tiffRepresentation = tiffRepresentation(using: .none, factor: factor ?? 1.0), 
                 let bitmapImage = NSBitmapImageRep(data: tiffRepresentation) 
@@ -736,7 +739,7 @@ public extension IMPImageProvider {
             return bitmapImage.representation(using: type, properties: properties)            
         }
                 
-        convenience init?(ciimage:CIImage?){
+        public convenience init?(ciimage:CIImage?){
             
             guard var image = ciimage else {
                 return nil

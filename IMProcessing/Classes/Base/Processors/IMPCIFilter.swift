@@ -51,7 +51,7 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
     public var preferedDimension:MTLSize?
     
-    private lazy var _context:IMPContext = IMPContext()
+    private var _context:IMPContext!// = IMPContext()
     
     public var source:IMPImageProvider?
     fileprivate lazy var destination:IMPImageProvider = IMPImage(context: self.context)
