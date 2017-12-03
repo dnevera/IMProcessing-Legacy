@@ -23,7 +23,9 @@ open class IMProcessingView: MTKView {
         didSet{
             syncQueue.async(flags: [.barrier]) { [weak self] in
                 _ = self?.mutex.wait(timeout: DispatchTime.distantFuture)
-                self?.__source = self?.source
+               // self?.refreshQueue.sync { 
+                    self?.__source = self?.source
+                //}
                 if self?.isPaused ?? true {
                     DispatchQueue.main.async {
                         self?.needsDisplay = true
@@ -178,9 +180,9 @@ extension IMProcessingView: MTKViewDelegate {
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     
     public func draw(in view: MTKView) {
-        refreshQueue.async(flags: [.barrier]) { [weak self] in
-            self?.refresh()            
-        }
+        //refreshQueue.async(flags: [.barrier]) { [weak self] in
+            self.refresh()            
+        //}
     }    
     
 }
