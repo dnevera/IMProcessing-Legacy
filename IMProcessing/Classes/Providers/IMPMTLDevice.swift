@@ -18,7 +18,7 @@ public extension MTLDevice {
         weightsDescription.width       = buffer.count
         weightsDescription.height      = 1
         weightsDescription.depth       = 1
-        weightsDescription.usage = [.shaderRead,.pixelFormatView,.renderTarget]
+        weightsDescription.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
 
         let texture = self.makeTexture(descriptor: weightsDescription)
         texture?.update(buffer)
@@ -33,7 +33,7 @@ public extension MTLDevice {
         weightsDescription.width       = buffer.count
         weightsDescription.height      = 1
         weightsDescription.depth       = 1
-        weightsDescription.usage = [.shaderRead,.pixelFormatView,.renderTarget]
+        weightsDescription.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
         let texture = self.makeTexture(descriptor: weightsDescription)
         texture?.update(buffer)
         return texture!
@@ -67,7 +67,7 @@ public extension MTLDevice {
         
         textureDescriptor.arrayLength = buffers.count
         textureDescriptor.mipmapLevelCount = 1
-        textureDescriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
+        textureDescriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
 
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
@@ -95,7 +95,7 @@ public extension MTLDevice {
         
         textureDescriptor.arrayLength = buffers.count
         textureDescriptor.mipmapLevelCount = 1
-        textureDescriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
+        textureDescriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
         texture?.update(buffers)

@@ -143,8 +143,7 @@ public extension IMPCLut {
             _type == .lut_1d ? "kernel_make1DLut" :  _type == .lut_2d ?  "kernel_make2DLut" :  "kernel_make3DLut")
 
         let threadgroups  = MTLSizeMake(text.width/4, text.height == 1 ? 1 : text.height/4, text.depth == 1 ? 1 : text.depth/4)
-        let threadsPerThreadgroup = MTLSizeMake(4, 4, 4)
-        //let threadsPerThreadgroup = MTLSizeMake(128, 1, 1)
+        let threadsPerThreadgroup = MTLSizeMake(4, 4, text.depth == 1 ? 1 : 4)
         
         context.execute(.sync, wait: true){ (commandBuffer) in
             let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
@@ -282,6 +281,7 @@ internal extension IMPCLut {
         textureDescriptor.width  = width
         textureDescriptor.height = height
         textureDescriptor.depth  = depth
+        textureDescriptor.usage  = [.shaderWrite, .shaderRead]
         
         if (nFormat != .float) {
             textureDescriptor.pixelFormat = .rgba8Snorm

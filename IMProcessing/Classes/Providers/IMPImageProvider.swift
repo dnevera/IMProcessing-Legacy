@@ -591,6 +591,34 @@ public extension IMPImageProvider {
         }
     }
     
+    public func makeCopy() -> MTLTexture? {
+        var newTexture:MTLTexture? = nil
+        
+        context.execute { (commandBuffer) in
+            
+            if let txt = self.texture {
+                
+                newTexture = self.context.device.make2DTexture(size: txt.cgsize, pixelFormat: txt.pixelFormat)
+                
+                let blit = commandBuffer.makeBlitCommandEncoder()
+                
+                blit?.copy(
+                    from: txt,
+                    sourceSlice: 0,
+                    sourceLevel: 0,
+                    sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                    sourceSize: txt.size,
+                    to: newTexture!,
+                    destinationSlice: 0,
+                    destinationLevel: 0,
+                    destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                
+                blit?.endEncoding()
+            }
+        }
+        
+        return newTexture
+    }
     
     private func checkTexture(texture:MTLTexture?) -> MTLTexture? {
         
@@ -612,12 +640,12 @@ public extension IMPImageProvider {
                     descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
                 #elseif os(OSX)
                     descriptor.storageMode = .managed
-                    descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
+                    descriptor.usage = [.shaderRead, .shaderWrite, .pixelFormatView, .renderTarget]
                 #endif
             }
             else {
                 descriptor.storageMode = .private
-                descriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
+                descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
             }
             
             if texture != nil {

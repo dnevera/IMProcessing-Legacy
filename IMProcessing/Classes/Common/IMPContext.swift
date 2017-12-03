@@ -188,14 +188,14 @@ open class IMPContext {
         
         isLazy = lazy
         
-        if let commandQ = _device?.makeCommandQueue(maxCommandBufferCount: 128) {
+        if let commandQ = _device?.makeCommandQueue() {
             commandQueue = commandQ
         }
         else {
             fatalError("Default Metal command queue could not be created...")
         }
         
-        if let library = _device?.makeDefaultLibrary(){
+        if let library = IMPContext.__library {
             defaultLibrary = library
         }
         else{
@@ -203,10 +203,15 @@ open class IMPContext {
         }
     }
     
+    private static let __sharedDevice = MTLCreateSystemDefaultDevice()
+    private static var __library = IMPContext.__sharedDevice?.makeDefaultLibrary()
+    
     var _device:MTLDevice?
     
     @available(iOS 9.0, *)
-    lazy var _ciContext:CIContext = CIContext(mtlDevice: self.device)
+    private static let __sharedCIContext = CIContext(mtlDevice: __sharedDevice!)
+
+    lazy var _ciContext:CIContext = IMPContext.__sharedCIContext //CIContext(mtlDevice: self.device)
     
     open lazy var supportsGPUv2:Bool = {
         #if os(iOS)
