@@ -32,6 +32,7 @@
 import CoreImage
 import simd
 import Metal
+import MetalKit
 import AVFoundation
 import ImageIO
 
@@ -125,6 +126,8 @@ public enum IMPImageStorageMode {
 
 /// Image provider base protocol
 public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
+    
+    var mutex:IMPSemaphore {get}
     
     typealias ObserverType = (_ :IMPImageProvider) -> Void
     
@@ -553,8 +556,8 @@ public extension IMPImageProvider {
                                                to: t,
                                                commandBuffer: commandBuffer,
                                                bounds: image.extent,
-                                               colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
-                                               //colorSpace: self.colorSpace)
+                                               //colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
+                                               colorSpace: self.colorSpace)
                 complete?(t,commandBuffer)
             }
         }
@@ -562,6 +565,100 @@ public extension IMPImageProvider {
             complete?(nil,nil)            
         }
     }
+    
+    public func asyncRender(to texture: MTLTexture,
+                       execute:((_ command:MTLCommandBuffer?)->Void)?=nil,
+                       complete:((_ command:MTLCommandBuffer?)->Void)?=nil) {
+                        
+        context.runOperation(.async) { 
+            
+            if let commandBuffer = self.context.commandBuffer {
+                
+                commandBuffer.addCompletedHandler{ commandBuffer in            
+                    complete?(commandBuffer)                
+                    return
+                }                
+                
+                if let txt = self.texture {
+                    
+                    let blit = commandBuffer.makeBlitCommandEncoder()
+                    
+                    blit?.copy(
+                        from: txt,
+                        sourceSlice: 0,
+                        sourceLevel: 0,
+                        sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                        sourceSize: txt.size,
+                        to: texture,
+                        destinationSlice: 0,
+                        destinationLevel: 0,
+                        destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                    
+                    blit?.endEncoding()                    
+                }      
+                
+                execute?(commandBuffer) 
+                                
+                commandBuffer.commit()                
+                commandBuffer.waitUntilCompleted()                
+            }
+        }
+    }
+    
+    public func asyncRender(to view: MTKView,
+                            execute:((_ command:MTLCommandBuffer?)->Void)?=nil,
+                            complete:((_ command:MTLCommandBuffer?)->Void)?=nil) {
+        
+        context.runOperation(.async) { 
+            if let txt = self.texture {
+
+                DispatchQueue.main.async {
+                    view.drawableSize = txt.cgsize                    
+                }
+                
+                if let currentDrawable = view.currentDrawable, let commandBuffer = self.context.commandBuffer {
+                    
+                    let texture = currentDrawable.texture
+                    
+                    commandBuffer.addCompletedHandler{ commandBuffer in            
+                        complete?(commandBuffer)                
+                        return
+                    }                
+                    
+                    
+                    let blit = commandBuffer.makeBlitCommandEncoder()
+                    
+                    blit?.copy(
+                        from: txt,
+                        sourceSlice: 0,
+                        sourceLevel: 0,
+                        sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                        sourceSize: txt.size,
+                        to: texture,
+                        destinationSlice: 0,
+                        destinationLevel: 0,
+                        destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                    
+                    blit?.endEncoding()                    
+                                        
+                    execute?(commandBuffer) 
+                    
+                    commandBuffer.present(currentDrawable)
+                    commandBuffer.commit()            
+                    
+                    commandBuffer.waitUntilCompleted()   
+                }
+                else {
+                    complete?(nil)
+                }
+            }
+            else {
+                complete?(nil)                
+
+            }
+        }
+    }
+    
     
     public func render(to texture: inout MTLTexture?,
                        with commandBuffer: MTLCommandBuffer,
@@ -619,6 +716,41 @@ public extension IMPImageProvider {
         
         return newTexture
     }
+    
+    public func makeTextureCopyAsync(copy: @escaping (_ texture:MTLTexture?)->Void){
+        
+        context.runOperation(.async) {             
+            
+            if let txt = self.texture, let commandBuffer = self.context.commandBuffer {
+                
+                var newTexture = self.context.device.make2DTexture(size: txt.cgsize, pixelFormat: txt.pixelFormat)
+                
+                let blit = commandBuffer.makeBlitCommandEncoder()
+                
+                blit?.copy(
+                    from: txt,
+                    sourceSlice: 0,
+                    sourceLevel: 0,
+                    sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                    sourceSize: txt.size,
+                    to: newTexture,
+                    destinationSlice: 0,
+                    destinationLevel: 0,
+                    destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                
+                blit?.endEncoding()  
+                
+                commandBuffer.commit()
+                commandBuffer.waitUntilCompleted()
+                
+                copy(newTexture)
+            }
+            else {
+                copy(nil)
+            }
+        }                 
+    }
+    
     
     private func checkTexture(texture:MTLTexture?) -> MTLTexture? {
         

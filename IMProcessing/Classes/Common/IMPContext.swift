@@ -209,9 +209,9 @@ open class IMPContext {
     var _device:MTLDevice?
     
     @available(iOS 9.0, *)
-    private static let __sharedCIContext = CIContext(mtlDevice: __sharedDevice!)
-
-    lazy var _ciContext:CIContext = IMPContext.__sharedCIContext //CIContext(mtlDevice: self.device)
+    //private static let __sharedCIContext = CIContext(mtlDevice: __sharedDevice!)
+    //lazy var _ciContext:CIContext = IMPContext.__sharedCIContext //CIContext(mtlDevice: self.device)
+    lazy var _ciContext:CIContext = CIContext(mtlDevice: self.device)
     
     open lazy var supportsGPUv2:Bool = {
         #if os(iOS)
@@ -284,18 +284,12 @@ open class IMPContext {
                 dispatchQueue.sync(execute: block)
                 
                 return block
-                //dispatchQueue.sync{
-                //    execute()
-                //}
             }
         }
         else {
             let block = DispatchWorkItem { 
                 execute()
             }
-            //dispatchQueue.async{
-            //    execute()
-            //}
             dispatchQueue.async(execute: block)
             return block
         }

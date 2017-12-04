@@ -19,16 +19,24 @@ import MetalKit
 
 open class IMProcessingView: MTKView {
         
-    public var source:IMPImageProvider? {
+    public var placeHolderColor:NSColor? {
         didSet{
-            syncQueue.async(flags: [.barrier]) { [weak self] in
-                _ = self?.mutex.wait(timeout: DispatchTime.distantFuture)
-               // self?.refreshQueue.sync { 
-                    self?.__source = self?.source
-                //}
-                if self?.isPaused ?? true {
+            if let color = placeHolderColor{
+                __placeHolderColor = color.rgba
+            }
+            else {
+                __placeHolderColor = float4(1)
+            }
+        }
+    }
+    
+    public var image:IMPImageProvider? {
+        didSet{
+            refreshQueue.async(flags: [.barrier]) {                
+                self.__source = self.image
+                if self.isPaused  {
                     DispatchQueue.main.async {
-                        self?.needsDisplay = true
+                        self.needsDisplay = true
                     }
                 }
             }
@@ -36,7 +44,8 @@ open class IMProcessingView: MTKView {
     }
     
     private var __source:IMPImageProvider? 
-    
+    private var __placeHolderColor = float4(1)  
+
     public override init(frame frameRect: CGRect, device: MTLDevice?=nil) {
         super.init(frame: frameRect, device: device ?? MTLCreateSystemDefaultDevice())
         configure()
@@ -49,25 +58,22 @@ open class IMProcessingView: MTKView {
     }
     
     deinit {
-        //isPaused = true
+        isPaused = true
     }
     
     open func configure() {
         delegate = self
         isPaused = true
         enableSetNeedsDisplay = true
+        framebufferOnly = true
+        clearColor = MTLClearColorMake(0, 0, 0, 0)
     }
-    
-    //private static var __commandQueue = __device.makeCommandQueue(maxCommandBufferCount: IMProcessingView.maxFrames)!
-    
+        
     private lazy var commandQueue:MTLCommandQueue = self.device!.makeCommandQueue(maxCommandBufferCount: IMProcessingView.maxFrames)!
-    //{    return IMProcessingView.__commandQueue
-   // }
     
-    private static let maxFrames = 3  
+    private static let maxFrames = 1  
     
-    private let mutex = DispatchSemaphore(value: IMProcessingView.maxFrames)
-    
+    private let mutex = DispatchSemaphore(value: IMProcessingView.maxFrames)    
     
     private var framesCount = 0
     
@@ -81,21 +87,20 @@ open class IMProcessingView: MTKView {
         }
     }
     
-    
     fileprivate func refresh(){
-
+        
         guard
-            let pipeline = self.pipeline, 
-            let texture =  self.source?.texture, //self.source?.makeCopy(), 
+            let pipeline = ((self.__source?.texture == nil)  ? self.placeHolderPipeline : self.pipeline), 
             let commandBuffer = commandQueue.makeCommandBuffer() else {
                 framesUpdated()
-                mutex.signal()
                 return             
         }
         
-        self.render(commandBuffer: commandBuffer, texture: texture, with: pipeline){ [weak self] in
-            self?.framesUpdated()
-            self?.mutex.signal()
+        _ = self.mutex.wait(timeout: DispatchTime.distantFuture)
+
+        self.render(commandBuffer: commandBuffer, texture: self.__source?.texture, with: pipeline){
+            self.framesUpdated()
+            self.mutex.signal()
         }
     }
     
@@ -105,7 +110,7 @@ open class IMProcessingView: MTKView {
                 
         commandBuffer.label = "Frame command buffer"
         
-        commandBuffer.addCompletedHandler{ [weak self] commandBuffer in            
+        commandBuffer.addCompletedHandler{ commandBuffer in            
             complete()            
             return
         }
@@ -113,32 +118,34 @@ open class IMProcessingView: MTKView {
         if  let renderPassDescriptor = currentRenderPassDescriptor,               
             let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor){
             
-            renderEncoder.label = "render encoder"
+            renderEncoder.label = "IMPProcessingView"
             
-            renderEncoder.pushDebugGroup("draw image")
             renderEncoder.setRenderPipelineState(pipeline)
             
             renderEncoder.setVertexBuffer(vertexBuffer, offset:0, index:0)
-            renderEncoder.setFragmentTexture(texture, index:0)            
-            
+            if let texture = texture {
+                renderEncoder.setFragmentTexture(texture, index:0)
+            }
+            else {
+                renderEncoder.setFragmentBytes(&__placeHolderColor, length: MemoryLayout.size(ofValue: __placeHolderColor), index: 0)
+            }
+                        
             renderEncoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
             
-            renderEncoder.popDebugGroup()
             renderEncoder.endEncoding()
             
             commandBuffer.present(currentDrawable!)
-            commandBuffer.commit()
+            commandBuffer.commit()            
         }
         else {
             complete()            
         }
     }
     
-    //private lazy var library = self.device!.makeDefaultLibrary()
-    
     private static var library = MTLCreateSystemDefaultDevice()!.makeDefaultLibrary()!    
     
     private lazy var fragment = IMProcessingView.library.makeFunction(name: "fragment_passview")
+    private lazy var fragmentPlaceHolder = IMProcessingView.library.makeFunction(name: "fragment_placeHolderView")
     private lazy var vertex   = IMProcessingView.library.makeFunction(name: "vertex_passview")    
     
     private lazy var pipeline:MTLRenderPipelineState? = {
@@ -149,6 +156,23 @@ open class IMProcessingView: MTKView {
             
             descriptor.vertexFunction   = self.vertex
             descriptor.fragmentFunction = self.fragment
+            
+            return try self.device!.makeRenderPipelineState(descriptor: descriptor)
+        }
+        catch let error as NSError {
+            NSLog("IMPView error: \(error)")
+            return nil
+        }
+    }()
+    
+    private lazy var placeHolderPipeline:MTLRenderPipelineState? = {
+        do {
+            let descriptor = MTLRenderPipelineDescriptor()
+            
+            descriptor.colorAttachments[0].pixelFormat = self.colorPixelFormat
+            
+            descriptor.vertexFunction   = self.vertex
+            descriptor.fragmentFunction = self.fragmentPlaceHolder
             
             return try self.device!.makeRenderPipelineState(descriptor: descriptor)
         }
@@ -180,9 +204,9 @@ extension IMProcessingView: MTKViewDelegate {
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     
     public func draw(in view: MTKView) {
-        //refreshQueue.async(flags: [.barrier]) { [weak self] in
+        refreshQueue.async(flags: [.barrier]) {
             self.refresh()            
-        //}
+        }
     }    
     
 }

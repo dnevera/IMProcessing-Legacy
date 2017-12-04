@@ -45,11 +45,16 @@ fragment float4 fragment_passview(
                                   VertexOut in [[ stage_in ]],
                                   texture2d<float, access::sample> texture [[ texture(0) ]]
                                   ) {
-    //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
     float3 rgb = texture.sample(IMProcessing::baseSampler, in.texcoord).rgb;
     return float4(rgb, 1.0);
 }
 
+fragment float4 fragment_placeHolderView(
+                                  VertexOut in [[ stage_in ]],
+                                  constant float4 &color [[ buffer(0) ]]
+                                  ) {
+    return color;
+}
 
 kernel void kernel_view(metal::texture2d<float, metal::access::sample> inTexture [[texture(0)]],
                         metal::texture2d<float, metal::access::write> outTexture [[texture(1)]],

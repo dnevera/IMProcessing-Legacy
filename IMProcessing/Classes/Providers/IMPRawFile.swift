@@ -10,7 +10,7 @@ import CoreImage
 
 open class IMPRawFile: IMPImageProvider {
     
-    public var mutex = IMPSemaphore()
+    public let mutex = IMPSemaphore()
 
     public func removeObserver(optionsChanged observer: @escaping ObserverType) {
         self.mutex.sync { () -> Void in
