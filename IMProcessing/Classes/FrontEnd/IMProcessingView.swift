@@ -76,6 +76,7 @@ open class IMProcessingView: MTKView {
     private let mutex = DispatchSemaphore(value: IMProcessingView.maxFrames)    
     
     private var framesCount = 0
+    private var framesTimeout:UInt64 = 5
     
     private func framesUpdated(){
         if framesCount > IMProcessingView.maxFrames {
@@ -91,12 +92,16 @@ open class IMProcessingView: MTKView {
         
         guard
             let pipeline = ((self.__source?.texture == nil)  ? self.placeHolderPipeline : self.pipeline), 
-            let commandBuffer = commandQueue.makeCommandBuffer() else {
+            let commandBuffer = self.__source?.context.commandBuffer ?? commandQueue.makeCommandBuffer() else {
                 framesUpdated()
                 return             
         }
         
-        _ = self.mutex.wait(timeout: DispatchTime.distantFuture)
+        guard self.mutex.wait(timeout: DispatchTime(uptimeNanoseconds: 1000000000 * framesTimeout)) == .success else {
+            framesUpdated()
+            isPaused = false
+            return                         
+        } 
 
         self.render(commandBuffer: commandBuffer, texture: self.__source?.texture, with: pipeline){
             self.framesUpdated()
@@ -115,7 +120,8 @@ open class IMProcessingView: MTKView {
             return
         }
         
-        if  let renderPassDescriptor = currentRenderPassDescriptor,               
+        if  let currentDrawable = self.currentDrawable,
+            let renderPassDescriptor = currentRenderPassDescriptor,               
             let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor){
             
             renderEncoder.label = "IMPProcessingView"
@@ -134,8 +140,9 @@ open class IMProcessingView: MTKView {
             
             renderEncoder.endEncoding()
             
-            commandBuffer.present(currentDrawable!)
-            commandBuffer.commit()            
+            commandBuffer.present(currentDrawable)
+            commandBuffer.commit()  
+            commandBuffer.waitUntilCompleted()
         }
         else {
             complete()            
