@@ -23,7 +23,7 @@ public protocol IMPContextProvider{
 }
 
 /// Context execution closure
-public typealias IMPContextExecution = ((commandBuffer:MTLCommandBuffer) -> Void)
+public typealias IMPContextExecution = ((_ commandBuffer:MTLCommandBuffer) -> Void)
 
 ///
 /// The IMProcessing framework supports GPU-accelerated advanced data-parallel computation workloads.
@@ -33,16 +33,14 @@ public typealias IMPContextExecution = ((commandBuffer:MTLCommandBuffer) -> Void
 /// IMPContext is a container bring together GPU-device, current command queue and default kernel functions library
 /// which export functions to the context.
 ///
-public class IMPContext {
+open class IMPContext {
     
-    private struct sharedContainerType {
+    fileprivate struct sharedContainerType {
         
-        var currentMaximumTextureSize:Int?
-        func deviceMaximumTextureSize()->Int{
-            dispatch_once(&sharedContainerType.pred) {
+        private static var __once: () = {
                 #if os(iOS)
-                    let glContext =  EAGLContext(API: .OpenGLES2)
-                    EAGLContext.setCurrentContext(glContext)
+                    let glContext =  EAGLContext(api: .openGLES2)
+                    EAGLContext.setCurrent(glContext)
                     glGetIntegerv(GLenum(GL_MAX_TEXTURE_SIZE), &sharedContainerType.maxTextureSize);
                 #else
                     var pixelAttributes:[NSOpenGLPixelFormatAttribute] = [UInt32(NSOpenGLPFADoubleBuffer), UInt32(NSOpenGLPFAAccelerated), 0]
@@ -51,20 +49,24 @@ public class IMPContext {
                     context?.makeCurrentContext()
                     glGetIntegerv(GLenum(GL_MAX_TEXTURE_SIZE), &sharedContainerType.maxTextureSize)
                 #endif
-            }
+            }()
+        
+        var currentMaximumTextureSize:Int?
+        func deviceMaximumTextureSize()->Int{
+            _ = sharedContainerType.__once
             return Int(sharedContainerType.maxTextureSize)
         }
         
-        private static var pred:dispatch_once_t = 0;
-        private static var maxTextureSize:GLint = 0;
+        fileprivate static var pred:Int = 0;
+        fileprivate static var maxTextureSize:GLint = 0;
     }
     
-    private static var sharedContainer = sharedContainerType()
+    fileprivate static var sharedContainer = sharedContainerType()
     
     /// Current device is used in the current context
-    public let device:MTLDevice! = MTLCreateSystemDefaultDevice()
+    open let device:MTLDevice! = MTLCreateSystemDefaultDevice()
     
-    public var coreImage:CIContext? {
+    open var coreImage:CIContext? {
         if #available(iOS 9.0, *) {
             return _ciContext
         } else {
@@ -73,16 +75,16 @@ public class IMPContext {
     }
     
     /// Current command queue uses the current device
-    public let commandQueue:MTLCommandQueue?
+    open let commandQueue:MTLCommandQueue?
     
     /// Default library associated with current context
-    public let defaultLibrary:MTLLibrary
+    open let defaultLibrary:MTLLibrary
     
     /// How context execution is processed
-    public let isLazy:Bool
+    open let isLazy:Bool
     
     /// check whether the MTL device is supported
-    public static var supportsSystemDevice:Bool{
+    open static var supportsSystemDevice:Bool{
         get{
             let device = MTLCreateSystemDefaultDevice()
             if device == nil {
@@ -92,16 +94,16 @@ public class IMPContext {
         }
     }
     
-    private let semaphore = dispatch_semaphore_create(3)
+    fileprivate let semaphore = DispatchSemaphore(value: 3)
     
-    public func wait() {
-        dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER)
+    open func wait() {
+        semaphore.wait(timeout: DispatchTime.distantFuture)
     }
-    public func resume(){
-        dispatch_semaphore_signal(semaphore)
+    open func resume(){
+        semaphore.signal()
     }
     
-    public var dispatchQueue = dispatch_queue_create("com.improcessing.context", DISPATCH_QUEUE_SERIAL)
+    open var dispatchQueue = DispatchQueue(label: "com.improcessing.context", attributes: [])
     
     ///  Initialize current context
     ///
@@ -112,7 +114,7 @@ public class IMPContext {
     required public init(lazy:Bool = false) {
         isLazy = lazy
         if let device = self.device{
-            commandQueue = device.newCommandQueue()
+            commandQueue = device.makeCommandQueue()
             if let library = device.newDefaultLibrary(){
                 defaultLibrary = library
             }
@@ -126,9 +128,9 @@ public class IMPContext {
     }
     
     @available(iOS 9.0, *)
-    lazy var _ciContext:CIContext = CIContext(MTLDevice: self.device)
+    lazy var _ciContext:CIContext = CIContext(mtlDevice: self.device)
     
-    public lazy var supportsGPUv2:Bool = {
+    open lazy var supportsGPUv2:Bool = {
         #if os(iOS)
             return self.device.supportsFeatureSet(.iOS_GPUFamily2_v1)
         #else
@@ -137,7 +139,7 @@ public class IMPContext {
     }()
     
     var commandBuffer:MTLCommandBuffer?  {
-        return self.commandQueue?.commandBuffer()
+        return self.commandQueue?.makeCommandBuffer()
 //        return (self.supportsGPUv2 ?
 //            (self.isLazy ? self.commandQueue?.commandBufferWithUnretainedReferences() : self.commandQueue?.commandBuffer()) :
 //            self.commandQueue?.commandBuffer())
@@ -147,11 +149,11 @@ public class IMPContext {
     ///
     ///  - parameter closure: execution context
     ///
-    public final func execute(complete complete :Bool = false, closure: IMPContextExecution) {
+    public final func execute(complete :Bool = false, closure: IMPContextExecution) {
        //dispatch_sync(dispatchQueue) { () -> Void in
             if let commandBuffer = self.commandBuffer {
                 autoreleasepool { () -> () in
-                    closure(commandBuffer: commandBuffer)
+                    closure(commandBuffer)
                     commandBuffer.commit()
                     
                     if !self.isLazy || complete {
@@ -163,7 +165,7 @@ public class IMPContext {
     }
     
     /// Get the maximum supported devices texture size.
-    public static var maximumTextureSize:Int{
+    open static var maximumTextureSize:Int{
         
         set(newMaximumTextureSize){
             IMPContext.sharedContainer.currentMaximumTextureSize = 0
@@ -191,7 +193,7 @@ public class IMPContext {
     ///
     ///  - returns: maximum size
     ///
-    public static func sizeAdjustTo(size inputSize:CGSize, maxSize:Float = Float(IMPContext.maximumTextureSize)) -> CGSize
+    open static func sizeAdjustTo(size inputSize:CGSize, maxSize:Float = Float(IMPContext.maximumTextureSize)) -> CGSize
     {
         if (inputSize.width < CGFloat(maxSize)) && (inputSize.height < CGFloat(maxSize))  {
             return inputSize

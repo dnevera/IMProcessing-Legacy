@@ -11,33 +11,26 @@ import Metal
 import AVFoundation
 import CoreMedia
 
-public class IMPVideoTextureCache {
+open class IMPVideoTextureCache {
     
     var reference:CVMetalTextureCache? {
-        return videoTextureCache?.takeUnretainedValue()
+        return videoTextureCache.pointee
     }
     
     init(context:IMPContext) {
-        let textureCacheError = CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, context.device, nil, &videoTextureCache)
+        let textureCacheError = CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, context.device, nil, videoTextureCache)
         if textureCacheError != kCVReturnSuccess {
             fatalError("IMPVideoTextureCache error: couldn't create a texture cache...");
         }
     }
     
     func flush(){
-        if let cache =  videoTextureCache?.takeUnretainedValue() {
+        if let cache =  videoTextureCache.pointee {
             CVMetalTextureCacheFlush(cache, 0);
         }
     }
     
-    var videoTextureCache: Unmanaged<CVMetalTextureCache>? = nil
-    
-    deinit {
-        if videoTextureCache != nil {
-            videoTextureCache?.release()
-            videoTextureCache = nil
-        }
-    }
+    var videoTextureCache: UnsafeMutablePointer<CVMetalTextureCache?> = UnsafeMutablePointer.allocate(capacity: 1)
 }
 
 

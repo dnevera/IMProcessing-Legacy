@@ -9,7 +9,7 @@
 import Foundation
 import Metal
 
-public class IMPFilmGrainFilter:IMPFilter,IMPAdjustmentProtocol{
+open class IMPFilmGrainFilter:IMPFilter,IMPAdjustmentProtocol{
     
 //    public static let defaultAdjustment = IMPFilmGrainAdjustment(
 //        isColored: true,
@@ -17,27 +17,27 @@ public class IMPFilmGrainFilter:IMPFilter,IMPAdjustmentProtocol{
 //        amount: IMPFilmGrainColor(total: 1, color: 0.3, luma: 1.0),
 //        blending: IMPBlending(mode: NORMAL, opacity: 1))
     
-    public var adjustment:IMPFilmGrainAdjustment!{
+    open var adjustment:IMPFilmGrainAdjustment!{
         didSet{
 
-            var times = [Float](count: 4, repeatedValue: 0)
+            var times = [Float](repeating: 0, count: 4)
             
-            let timer  = UInt32(modf(NSDate.timeIntervalSinceReferenceDate()).0)
+            let timer  = UInt32(modf(Date.timeIntervalSinceReferenceDate).0)
             for i in 0 ..< times.count {
                 times[i] = Float(arc4random_uniform(timer))/Float(timer)
             }
             
-            let size = sizeof(Float)*times.count
-            timerBuffer = timerBuffer ?? context.device.newBufferWithLength(size, options: .CPUCacheModeDefaultCache)
+            let size = MemoryLayout<Float>.size*times.count
+            timerBuffer = timerBuffer ?? context.device.makeBuffer(length: size, options: MTLResourceOptions())
             memcpy(timerBuffer.contents(), &times, size)
 
-            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:sizeofValue(adjustment))
+            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:MemoryLayout.size(ofValue: adjustment))
             self.dirty = true
         }
     }
     
-    public var adjustmentBuffer:MTLBuffer?
-    public var kernel:IMPFunction!
+    open var adjustmentBuffer:MTLBuffer?
+    open var kernel:IMPFunction!
     
     public required init(context: IMPContext) {
         super.init(context: context)
@@ -54,11 +54,11 @@ public class IMPFilmGrainFilter:IMPFilter,IMPAdjustmentProtocol{
     
     var timerBuffer:MTLBuffer!
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
             
-            command.setBuffer(timerBuffer, offset: 0, atIndex: 1)
+            command.setBuffer(timerBuffer, offset: 0, at: 1)
         }
     }
 }

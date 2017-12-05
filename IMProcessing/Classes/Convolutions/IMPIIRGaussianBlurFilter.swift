@@ -9,9 +9,9 @@
 import Accelerate
 import simd
 
-public class IMPIIRGaussianBlurFilter: IMPFilter {
+open class IMPIIRGaussianBlurFilter: IMPFilter {
     
-    public var radius:Int!{
+    open var radius:Int!{
         didSet{
             update()
             dirty = true
@@ -27,7 +27,7 @@ public class IMPIIRGaussianBlurFilter: IMPFilter {
         }
     }
     
-    override public func apply() -> IMPImageProvider {
+    override open func apply() -> IMPImageProvider {
         
         if radius <= 1 {
             return super.apply()
@@ -48,26 +48,26 @@ public class IMPIIRGaussianBlurFilter: IMPFilter {
                 let threadgroupsY = MTLSizeMake(t.width,1,1);
 
                 if self._destination.texture?.width != width || self._destination.texture?.height != height {
-                    let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                        inputTexture.pixelFormat,
+                    let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                        pixelFormat: inputTexture.pixelFormat,
                         width: width, height: height, mipmapped: false)
                     
-                    self._destination.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                    self._destination.texture = self.context.device.makeTexture(descriptor: descriptor)
                 }
 
                 let forwardWidth  = width+radius*3
                 let forwardHeight = height+radius*3
-                let length = forwardWidth * forwardHeight * 4 * sizeof(Float)
+                let length = forwardWidth * forwardHeight * 4 * MemoryLayout<Float>.size
 
                 if self.inoutBuffer?.length != length {
-                    self.inoutBuffer = context.device.newBufferWithLength(length, options: .CPUCacheModeDefaultCache)
+                    self.inoutBuffer = context.device.makeBuffer(length: length, options: MTLResourceOptions())
                 }
 
                 if self.inoutBuffer2?.length != length {
-                    self.inoutBuffer2 = context.device.newBufferWithLength(length, options: .CPUCacheModeDefaultCache)
+                    self.inoutBuffer2 = context.device.makeBuffer(length: length, options: MTLResourceOptions())
                 }
 
-                self.bsizeBuffer = self.bsizeBuffer ?? self.context.device.newBufferWithLength(sizeof(int2), options: .CPUCacheModeDefaultCache)
+                self.bsizeBuffer = self.bsizeBuffer ?? self.context.device.makeBuffer(length: MemoryLayout<int2>.size, options: MTLResourceOptions())
                 var bsize:int2 = int2(Int32(forwardWidth),Int32(forwardHeight))
                 memcpy(self.bsizeBuffer!.contents(), &bsize, self.bsizeBuffer!.length)
 
@@ -76,23 +76,23 @@ public class IMPIIRGaussianBlurFilter: IMPFilter {
                     //
                     // horizontal stage
                     //
-                    var blitEncoder = commandBuffer.blitCommandEncoder()
-                    blitEncoder.fillBuffer(self.inoutBuffer!, range: NSRange(location: 0, length: self.inoutBuffer!.length), value: 0)
-                    blitEncoder.fillBuffer(self.inoutBuffer2!,range: NSRange(location: 0, length:self.inoutBuffer2!.length), value: 0)
+                    var blitEncoder = commandBuffer.makeBlitCommandEncoder()
+                    blitEncoder.fill(buffer: self.inoutBuffer!, range: NSRange(location: 0, length: self.inoutBuffer!.length), value: 0)
+                    blitEncoder.fill(buffer: self.inoutBuffer2!,range: NSRange(location: 0, length:self.inoutBuffer2!.length), value: 0)
                     blitEncoder.endEncoding()
 
-                    var commandEncoder = commandBuffer.computeCommandEncoder()
+                    var commandEncoder = commandBuffer.makeComputeCommandEncoder()
                     
                     commandEncoder.setComputePipelineState(self.kernel_iirFilterHorizontal.pipeline!)
                     
-                    commandEncoder.setTexture(inputTexture,    atIndex: 0)
-                    commandEncoder.setTexture(self._destination.texture,    atIndex: 1)
-                    commandEncoder.setTexture(self.bTexture,   atIndex: 2)
-                    commandEncoder.setTexture(self.aTexture,   atIndex: 3)
-                    commandEncoder.setBuffer(self.inoutBuffer,  offset: 0, atIndex: 0)
-                    commandEncoder.setBuffer(self.inoutBuffer2, offset: 0, atIndex: 1)
-                    commandEncoder.setBuffer(self.bsizeBuffer,  offset: 0, atIndex: 2)
-                    commandEncoder.setBuffer(self.radiusBuffer, offset: 0, atIndex: 3)
+                    commandEncoder.setTexture(inputTexture,    at: 0)
+                    commandEncoder.setTexture(self._destination.texture,    at: 1)
+                    commandEncoder.setTexture(self.bTexture,   at: 2)
+                    commandEncoder.setTexture(self.aTexture,   at: 3)
+                    commandEncoder.setBuffer(self.inoutBuffer,  offset: 0, at: 0)
+                    commandEncoder.setBuffer(self.inoutBuffer2, offset: 0, at: 1)
+                    commandEncoder.setBuffer(self.bsizeBuffer,  offset: 0, at: 2)
+                    commandEncoder.setBuffer(self.radiusBuffer, offset: 0, at: 3)
 
                     commandEncoder.dispatchThreadgroups(threadgroupsX, threadsPerThreadgroup:threadgroupCounts)
                     commandEncoder.endEncoding()
@@ -101,23 +101,23 @@ public class IMPIIRGaussianBlurFilter: IMPFilter {
                     //
                     // vertical stage
                     //
-                    blitEncoder = commandBuffer.blitCommandEncoder()
-                    blitEncoder.fillBuffer(self.inoutBuffer!, range: NSRange(location: 0, length: self.inoutBuffer!.length), value: 0)
-                    blitEncoder.fillBuffer(self.inoutBuffer2!,range: NSRange(location: 0, length:self.inoutBuffer2!.length), value: 0)
+                    blitEncoder = commandBuffer.makeBlitCommandEncoder()
+                    blitEncoder.fill(buffer: self.inoutBuffer!, range: NSRange(location: 0, length: self.inoutBuffer!.length), value: 0)
+                    blitEncoder.fill(buffer: self.inoutBuffer2!,range: NSRange(location: 0, length:self.inoutBuffer2!.length), value: 0)
                     blitEncoder.endEncoding()
                     
-                    commandEncoder = commandBuffer.computeCommandEncoder()
+                    commandEncoder = commandBuffer.makeComputeCommandEncoder()
                     
                     commandEncoder.setComputePipelineState(self.kernel_iirFilterVertical.pipeline!)
                     
-                    commandEncoder.setTexture(self._destination.texture,    atIndex: 0)
-                    commandEncoder.setTexture(self._destination.texture,    atIndex: 1)
-                    commandEncoder.setTexture(self.bTexture,   atIndex: 2)
-                    commandEncoder.setTexture(self.aTexture,   atIndex: 3)
-                    commandEncoder.setBuffer(self.inoutBuffer,  offset: 0, atIndex: 0)
-                    commandEncoder.setBuffer(self.inoutBuffer2, offset: 0, atIndex: 1)
-                    commandEncoder.setBuffer(self.bsizeBuffer,  offset: 0, atIndex: 2)
-                    commandEncoder.setBuffer(self.radiusBuffer, offset: 0, atIndex: 3)
+                    commandEncoder.setTexture(self._destination.texture,    at: 0)
+                    commandEncoder.setTexture(self._destination.texture,    at: 1)
+                    commandEncoder.setTexture(self.bTexture,   at: 2)
+                    commandEncoder.setTexture(self.aTexture,   at: 3)
+                    commandEncoder.setBuffer(self.inoutBuffer,  offset: 0, at: 0)
+                    commandEncoder.setBuffer(self.inoutBuffer2, offset: 0, at: 1)
+                    commandEncoder.setBuffer(self.bsizeBuffer,  offset: 0, at: 2)
+                    commandEncoder.setBuffer(self.radiusBuffer, offset: 0, at: 3)
                     
                     commandEncoder.dispatchThreadgroups(threadgroupsY, threadsPerThreadgroup:threadgroupCounts)
                     commandEncoder.endEncoding()
@@ -154,7 +154,7 @@ public class IMPIIRGaussianBlurFilter: IMPFilter {
     
     func update(){
         if radius>1{
-            radiusBuffer = radiusBuffer ?? context.device.newBufferWithLength(sizeofValue(radius), options: .CPUCacheModeDefaultCache)
+            radiusBuffer = radiusBuffer ?? context.device.makeBuffer(length: MemoryLayout.size(ofValue: radius), options: MTLResourceOptions())
             memcpy(radiusBuffer.contents(), &radius, radiusBuffer.length)
             let (b,a) = radius.float.iirGaussianCoefficients
             bTexture = context.device.texture1D(b)
@@ -162,14 +162,14 @@ public class IMPIIRGaussianBlurFilter: IMPFilter {
         }
     }
     
-    private var kernel_iirFilterHorizontal:IMPFunction!
-    private var kernel_iirFilterVertical:IMPFunction!
+    fileprivate var kernel_iirFilterHorizontal:IMPFunction!
+    fileprivate var kernel_iirFilterVertical:IMPFunction!
     
-    private var radiusBuffer:MTLBuffer!
-    private var inoutBuffer :MTLBuffer?
-    private var inoutBuffer2:MTLBuffer?
+    fileprivate var radiusBuffer:MTLBuffer!
+    fileprivate var inoutBuffer :MTLBuffer?
+    fileprivate var inoutBuffer2:MTLBuffer?
     //private var texture     :MTLTexture?
-    private var bsizeBuffer:MTLBuffer?
+    fileprivate var bsizeBuffer:MTLBuffer?
     
 
     var bTexture:MTLTexture!
@@ -237,14 +237,14 @@ public extension Float {
 }
 
 public func / (left:[Float],right:Float) -> [Float] {
-    var ret   = [Float](count: left.count, repeatedValue: 0)
+    var ret   = [Float](repeating: 0, count: left.count)
     var denom = right
     vDSP_vsdiv(left, 1, &denom, &ret, 1, vDSP_Length(ret.count))
     return ret
 }
 
 public func * (left:[Float],right:Float) -> [Float] {
-    var ret   = [Float](count: left.count, repeatedValue: 0)
+    var ret   = [Float](repeating: 0, count: left.count)
     var denom = right
     vDSP_vsmul(left, 1, &denom, &ret, 1, vDSP_Length(ret.count))
     return ret

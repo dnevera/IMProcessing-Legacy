@@ -25,7 +25,7 @@ public extension IMProcessing{
         /// Overlap factor
         public static var hueOverlapFactor:Float  = 1.4
         /// Hue range of the HSV color wheel
-        private static let hueRange = Range<Int>(0..<360)
+        fileprivate static let hueRange = CountableRange<Int>(0..<360)
     }
 }
 
@@ -34,15 +34,15 @@ public extension Float32{
     //
     // Get HSV weight which uses to define how two close colors interfer between ech others
     //
-    func overlapWeight(ramp ramp:float4, overlap:Float = IMProcessing.hsv.hueOverlapFactor) -> Float32 {
+    func overlapWeight(ramp:float4, overlap:Float = IMProcessing.hsv.hueOverlapFactor) -> Float32 {
         
         var sigma = (ramp.z-ramp.y)
         var mu    = (ramp.w+ramp.x)/2.0
         
         if ramp.y>ramp.z {
-            sigma = (IMProcessing.hsv.hueRange.endIndex.float-ramp.y+ramp.z)
-            if (self >= 0.float) && (self <= IMProcessing.hsv.hueRange.endIndex.float/2.0) {
-                mu    = (IMProcessing.hsv.hueRange.endIndex.float-ramp.y-ramp.z) / 2.0
+            sigma = (IMProcessing.hsv.hueRange.upperBound.float-ramp.y+ramp.z)
+            if (self >= 0.float) && (self <= IMProcessing.hsv.hueRange.upperBound.float/2.0) {
+                mu    = (IMProcessing.hsv.hueRange.upperBound.float-ramp.y-ramp.z) / 2.0
             }else{
                 mu    = (ramp.y+ramp.z)
             }
@@ -52,9 +52,9 @@ public extension Float32{
     }
 }
 
-public extension SequenceType where Generator.Element == Float32 {
+public extension Sequence where Iterator.Element == Float32 {
     
-    public func overlapWeightsDistribution(ramp ramp:float4, overlap:Float = IMProcessing.hsv.hueOverlapFactor) -> [Float32]{
+    public func overlapWeightsDistribution(ramp:float4, overlap:Float = IMProcessing.hsv.hueOverlapFactor) -> [Float32]{
         var a = [Float32]()
         for i in self{
             a.append(i.overlapWeight(ramp: ramp, overlap: overlap))
@@ -62,9 +62,9 @@ public extension SequenceType where Generator.Element == Float32 {
         return a
     }
     
-    public func overlapWeightsDistribution(ramp ramp:float4, overlap:Float = IMProcessing.hsv.hueOverlapFactor) -> NSData {
+    public func overlapWeightsDistribution(ramp:float4, overlap:Float = IMProcessing.hsv.hueOverlapFactor) -> Data {
         let f:[Float32] = overlapWeightsDistribution(ramp: ramp, overlap: overlap) as [Float32]
-        return NSData(bytes: f, length: f.count)
+        return Data(bytes: UnsafeRawPointer(UnsafePointer<Float32>(f)), count: f.count)
     }
     
 }
@@ -101,7 +101,7 @@ public extension IMPHSVAdjustment{
         }
     }
     
-    public mutating func hue(index index:Int, value newValue:Float){
+    public mutating func hue(index:Int, value newValue:Float){
         switch(index){
         case 0:
             levels.0.hue = newValue
@@ -120,7 +120,7 @@ public extension IMPHSVAdjustment{
         }
     }
     
-    public mutating func saturation(index index:Int, value newValue:Float){
+    public mutating func saturation(index:Int, value newValue:Float){
         switch(index){
         case 0:
             levels.0.saturation = newValue
@@ -139,7 +139,7 @@ public extension IMPHSVAdjustment{
         }
     }
     
-    public mutating func value(index index:Int, value newValue:Float){
+    public mutating func value(index:Int, value newValue:Float){
         switch(index){
         case 0:
             levels.0.value = newValue
@@ -162,7 +162,7 @@ public extension IMPHSVAdjustment{
 ///
 /// HSV adjustment filter
 ///
-public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
+open class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
    
     public typealias Adjustment = IMPHSVAdjustment
     
@@ -171,30 +171,30 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     ///  - HIGH:   default optimization uses when you need to accelerate hsv adjustment
     ///  - NORMAL: hsv adjustments application without interpolation
     public enum Optimization{
-        case HIGH
-        case NORMAL
+        case high
+        case normal
     }
     
     ///
     /// Default HSV adjustment
     ///
-    public static let defaultAdjustment = Adjustment(
+    open static let defaultAdjustment = Adjustment(
         master:   IMPHSVFilter.level,
         levels:  (IMPHSVFilter.level,IMPHSVFilter.level,IMPHSVFilter.level,IMPHSVFilter.level,IMPHSVFilter.level,IMPHSVFilter.level),
         blending: IMPBlending(mode: IMPBlendingMode.NORMAL, opacity: 1)
     )
     
     /// HSV adjustment levels
-    public var adjustment:Adjustment!{
+    open var adjustment:Adjustment!{
         didSet{
-            if self.optimization == .HIGH {
+            if self.optimization == .high {
                 adjustmentLut.blending = adjustment.blending
-                updateBuffer(&adjustmentLutBuffer, context:context, adjustment:&adjustmentLut, size:sizeof(IMPAdjustment))
-                updateBuffer(&adjustmentBuffer, context:context_hsv3DLut, adjustment:&adjustment, size:sizeof(IMPHSVAdjustment))
+                updateBuffer(&adjustmentLutBuffer, context:context, adjustment:&adjustmentLut, size:MemoryLayout<IMPAdjustment>.size)
+                updateBuffer(&adjustmentBuffer, context:context_hsv3DLut, adjustment:&adjustment, size:MemoryLayout<IMPHSVAdjustment>.size)
                 applyHsv3DLut()
             }
             else {
-                updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:sizeof(IMPHSVAdjustment))
+                updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:MemoryLayout<IMPHSVAdjustment>.size)
             }
             
             dirty = true
@@ -204,10 +204,10 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     ///
     /// Overlap colors in the HSV color wheel. Define the width of color overlaping.
     ///
-    public var overlap:Float = IMProcessing.hsv.hueOverlapFactor {
+    open var overlap:Float = IMProcessing.hsv.hueOverlapFactor {
         didSet{
             hueWeights = IMPHSVFilter.defaultHueWeights(self.context, overlap: overlap)
-            if self.optimization == .HIGH {
+            if self.optimization == .high {
                 applyHsv3DLut()
             }
             dirty = true
@@ -232,7 +232,7 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
         
         self.optimization = optimization
         
-        if self.optimization == .HIGH {
+        if self.optimization == .high {
             hsv3DlutTexture = hsv3DLut(self.rgbCubeSize)
             kernel_hsv3DLut = IMPFunction(context: self.context_hsv3DLut, name: "kernel_adjustHSV3DLut")
             kernel = IMPFunction(context: self.context, name: "kernel_adjustLutD3D")
@@ -255,18 +255,18 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     ///  - parameter context: device execution context
     ///
     public convenience required init(context: IMPContext) {
-        self.init(context: context, optimization:context.isLazy ? .HIGH : .NORMAL)
+        self.init(context: context, optimization:context.isLazy ? .high : .normal)
     }
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            if self.optimization == .HIGH {
-                command.setTexture(hsv3DlutTexture, atIndex: 2)
-                command.setBuffer(adjustmentLutBuffer, offset: 0, atIndex: 0)
+            if self.optimization == .high {
+                command.setTexture(hsv3DlutTexture, at: 2)
+                command.setBuffer(adjustmentLutBuffer, offset: 0, at: 0)
             }
             else{
-                command.setTexture(hueWeights, atIndex: 2)
-                command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+                command.setTexture(hueWeights, at: 2)
+                command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
             }
         }
     }
@@ -277,49 +277,49 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     ///  - parameter context: device execution context
     ///
     ///  - returns: new overlaping weights
-    public static func defaultHueWeights(context:IMPContext, overlap:Float) -> MTLTexture {
-        let width  = IMProcessing.hsv.hueRange.endIndex
+    open static func defaultHueWeights(_ context:IMPContext, overlap:Float) -> MTLTexture {
+        let width  = IMProcessing.hsv.hueRange.upperBound
         
         let textureDescriptor = MTLTextureDescriptor()
         
-        textureDescriptor.textureType = .Type1DArray;
+        textureDescriptor.textureType = .type1DArray;
         textureDescriptor.width       = width;
         textureDescriptor.height      = 1;
         textureDescriptor.depth       = 1;
-        textureDescriptor.pixelFormat = .R32Float;
+        textureDescriptor.pixelFormat = .r32Float;
         
         textureDescriptor.arrayLength = IMProcessing.hsv.hueRamps.count;
         textureDescriptor.mipmapLevelCount = 1;
         
         let region = MTLRegionMake2D(0, 0, width, 1);
         
-        let hueWeights = context.device.newTextureWithDescriptor(textureDescriptor)
+        let hueWeights = context.device.makeTexture(descriptor: textureDescriptor)
         
         let hues = Float.range(0..<width)
         for i in 0..<IMProcessing.hsv.hueRamps.count{
             let ramp = IMProcessing.hsv.hueRamps[i]
             var data = hues.overlapWeightsDistribution(ramp: ramp, overlap: overlap) as [Float32]
-            hueWeights.replaceRegion(region, mipmapLevel:0, slice:i, withBytes:&data, bytesPerRow:sizeof(Float32) * width, bytesPerImage:0)
+            hueWeights.replace(region: region, mipmapLevel:0, slice:i, withBytes:&data, bytesPerRow:MemoryLayout<Float32>.size * width, bytesPerImage:0)
         }
         
         return hueWeights;
     }
     
     
-    public var adjustmentBuffer:MTLBuffer?
-    public var kernel:IMPFunction!
+    open var adjustmentBuffer:MTLBuffer?
+    open var kernel:IMPFunction!
     
-    public var rgbCube:MTLTexture? {
+    open var rgbCube:MTLTexture? {
         return hsv3DlutTexture
     }
     
-    public var rgbCubeSize = 64 {
+    open var rgbCubeSize = 64 {
         didSet{
-            if self.optimization == .HIGH {
+            if self.optimization == .high {
                 
                 adjustmentLut.blending = adjustment.blending
-                updateBuffer(&adjustmentLutBuffer, context:context, adjustment:&adjustmentLut, size:sizeof(IMPAdjustment))
-                updateBuffer(&adjustmentBuffer, context:context_hsv3DLut, adjustment:&adjustment, size:sizeof(Adjustment))
+                updateBuffer(&adjustmentLutBuffer, context:context, adjustment:&adjustmentLut, size:MemoryLayout<IMPAdjustment>.size)
+                updateBuffer(&adjustmentBuffer, context:context_hsv3DLut, adjustment:&adjustment, size:MemoryLayout<Adjustment>.size)
                 
                 applyHsv3DLut()
                 
@@ -333,19 +333,19 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
         return IMPHSVFilter.defaultHueWeights(self.context, overlap: IMProcessing.hsv.hueOverlapFactor)
     }()
     
-    private  var adjustmentLut = IMPAdjustment(blending: IMPBlending(mode: IMPBlendingMode.NORMAL, opacity: 1))
+    fileprivate  var adjustmentLut = IMPAdjustment(blending: IMPBlending(mode: IMPBlendingMode.NORMAL, opacity: 1))
     internal var adjustmentLutBuffer:MTLBuffer?
     
-    private var optimization:Optimization!
+    fileprivate var optimization:Optimization!
 
     //
     // Convert HSV transformation to 3D-rgb lut-cube
     //
     //
-    private var kernel_hsv3DLut:IMPFunction!
-    private lazy var context_hsv3DLut:IMPContext = {return self.context }()
+    fileprivate var kernel_hsv3DLut:IMPFunction!
+    fileprivate lazy var context_hsv3DLut:IMPContext = {return self.context }()
     
-    private func applyHsv3DLut(){
+    fileprivate func applyHsv3DLut(){
         
         context_hsv3DLut.execute{ (commandBuffer) -> Void in
             
@@ -356,13 +356,13 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
             let threadgroupCounts = MTLSizeMake(4, 4, 4)
             let threadgroups = MTLSizeMake(width/4, height/4, depth/4)
             
-            let commandEncoder = commandBuffer.computeCommandEncoder()
+            let commandEncoder = commandBuffer.makeComputeCommandEncoder()
             
             commandEncoder.setComputePipelineState(self.kernel_hsv3DLut.pipeline!)
             
-            commandEncoder.setTexture(self.hsv3DlutTexture, atIndex:0)
-            commandEncoder.setTexture(self.hueWeights, atIndex:1)
-            commandEncoder.setBuffer(self.adjustmentBuffer, offset: 0, atIndex: 0)
+            commandEncoder.setTexture(self.hsv3DlutTexture, at:0)
+            commandEncoder.setTexture(self.hueWeights, at:1)
+            commandEncoder.setBuffer(self.adjustmentBuffer, offset: 0, at: 0)
 
             commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts)
             commandEncoder.endEncoding()
@@ -374,22 +374,22 @@ public class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
         }
     }
 
-    private var hsv3DlutTexture:MTLTexture?
+    fileprivate var hsv3DlutTexture:MTLTexture?
     
-    private func hsv3DLut(dimention:Int) -> MTLTexture {
+    fileprivate func hsv3DLut(_ dimention:Int) -> MTLTexture {
         let textureDescriptor = MTLTextureDescriptor()
         
-        textureDescriptor.textureType = .Type3D
+        textureDescriptor.textureType = .type3D
         textureDescriptor.width  = dimention
         textureDescriptor.height = dimention
         textureDescriptor.depth  = dimention
         
-        textureDescriptor.pixelFormat = .RGBA8Unorm
+        textureDescriptor.pixelFormat = .rgba8Unorm
         
         textureDescriptor.arrayLength = 1;
         textureDescriptor.mipmapLevelCount = 1;
         
-        let texture = context_hsv3DLut.device.newTextureWithDescriptor(textureDescriptor)
+        let texture = context_hsv3DLut.device.makeTexture(descriptor: textureDescriptor)
         
         return texture
     }

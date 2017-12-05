@@ -13,20 +13,20 @@
 #endif
 
 /// Palette layer representasion in IMPFilter context
-public class IMPPaletteLayerSolver: IMPFilter, IMPHistogramCubeSolver {
+open class IMPPaletteLayerSolver: IMPFilter, IMPHistogramCubeSolver {
 
     /// Layer preferences
-    public var layer = IMPPaletteLayerBuffer(backgroundColor: float4([0,0,0,1]), backgroundSource: false) {
+    open var layer = IMPPaletteLayerBuffer(backgroundColor: float4([0,0,0,1]), backgroundSource: false) {
         didSet{
             memcpy(layerBuffer.contents(), &layer, layerBuffer.length)
         }
     }
     
     /// Palette color number represents on layer.
-    public var colorNumber:Int = 8
+    open var colorNumber:Int = 8
     
     /// Palette representaion handler
-    public var paletteHandler:((cube:IMPHistogramCube.Cube, count:Int)->[float3])?
+    open var paletteHandler:((_ cube:IMPHistogramCube.Cube, _ count:Int)->[float3])?
     
     ///  Create palette layer object
     ///
@@ -35,12 +35,12 @@ public class IMPPaletteLayerSolver: IMPFilter, IMPHistogramCubeSolver {
     public required init(context: IMPContext) {
         super.init(context: context)
         
-        layerBuffer = context.device.newBufferWithBytes(&layer, length: sizeof(IMPPaletteLayerBuffer), options: .CPUCacheModeDefaultCache)
+        layerBuffer = context.device.makeBuffer(bytes: &layer, length: MemoryLayout<IMPPaletteLayerBuffer>.size, options: MTLResourceOptions())
         
-        palleteBuffer =  context.device.newBufferWithLength(sizeof(IMPPaletteBuffer), options: .CPUCacheModeDefaultCache)
+        palleteBuffer =  context.device.makeBuffer(length: MemoryLayout<IMPPaletteBuffer>.size, options: MTLResourceOptions())
         memset(palleteBuffer.contents(), 0, palleteBuffer.length)
 
-        palleteCountBuffer = context.device.newBufferWithLength(sizeof(uint), options: .CPUCacheModeDefaultCache)
+        palleteCountBuffer = context.device.makeBuffer(length: MemoryLayout<uint>.size, options: MTLResourceOptions())
         memset(palleteCountBuffer.contents(), 0, palleteCountBuffer.length)
         
         kernel = IMPFunction(context: self.context, name: "kernel_paletteLayer")
@@ -53,22 +53,22 @@ public class IMPPaletteLayerSolver: IMPFilter, IMPHistogramCubeSolver {
     ///  - parameter analizer:  analizer object
     ///  - parameter histogram: cube histogram object
     ///  - parameter imageSize: current image size
-    public func analizerDidUpdate(analizer: IMPHistogramCubeAnalyzer, histogram: IMPHistogramCube, imageSize: CGSize) {
+    open func analizerDidUpdate(_ analizer: IMPHistogramCubeAnalyzer, histogram: IMPHistogramCube, imageSize: CGSize) {
         
         var palette:[float3]
         if let handler = paletteHandler{
-            palette = handler(cube: histogram.cube,count: colorNumber)
+            palette = handler(histogram.cube,colorNumber)
         }
         else{
             palette      = histogram.cube.palette(count: colorNumber)
         }
-        var paletteLayer = [IMPPaletteBuffer](count: palette.count, repeatedValue: IMPPaletteBuffer(color: vector_float4()))
+        var paletteLayer = [IMPPaletteBuffer](repeating: IMPPaletteBuffer(color: vector_float4()), count: palette.count)
         
         for i in 0..<palette.count {
             paletteLayer[i].color = float4(rgb: palette[i], a: 1)
         }
         
-        let length = palette.count * sizeof(IMPPaletteBuffer)
+        let length = palette.count * MemoryLayout<IMPPaletteBuffer>.size
         var count = palette.count
         
         memcpy(palleteCountBuffer.contents(), &count, palleteCountBuffer.length)
@@ -76,21 +76,21 @@ public class IMPPaletteLayerSolver: IMPFilter, IMPHistogramCubeSolver {
         if palleteBuffer?.length != length {
             palleteBuffer = nil
         }
-        palleteBuffer =  palleteBuffer ?? context.device.newBufferWithLength(length, options: .CPUCacheModeDefaultCache)
+        palleteBuffer =  palleteBuffer ?? context.device.makeBuffer(length: length, options: MTLResourceOptions())
         memcpy(palleteBuffer.contents(), &paletteLayer, palleteBuffer.length)
     }
     
-    override public func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    override open func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if (kernel == function){
-            command.setBuffer(palleteBuffer, offset: 0, atIndex: 0)
-            command.setBuffer(palleteCountBuffer,  offset: 0, atIndex: 1)
-            command.setBuffer(layerBuffer,     offset: 0, atIndex: 2)
+            command.setBuffer(palleteBuffer, offset: 0, at: 0)
+            command.setBuffer(palleteCountBuffer,  offset: 0, at: 1)
+            command.setBuffer(layerBuffer,     offset: 0, at: 2)
         }
     }
     
-    private var kernel:IMPFunction!
-    private var palleteBuffer:MTLBuffer!
-    private var palleteCountBuffer:MTLBuffer!
-    private var layerBuffer:MTLBuffer!
+    fileprivate var kernel:IMPFunction!
+    fileprivate var palleteBuffer:MTLBuffer!
+    fileprivate var palleteCountBuffer:MTLBuffer!
+    fileprivate var layerBuffer:MTLBuffer!
 
 }

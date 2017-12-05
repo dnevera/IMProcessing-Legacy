@@ -55,23 +55,23 @@ public extension IMPImageOrientation {
     init?(exifValue: IMPImageOrientation.RawValue) {
         switch exifValue {
         case 1:
-            self.init(rawValue: IMPImageOrientation.Up.rawValue)            // IMPExifOrientationUp
+            self.init(rawValue: IMPImageOrientation.up.rawValue)            // IMPExifOrientationUp
         case 2:
-            self.init(rawValue: IMPImageOrientation.UpMirrored.rawValue)    // IMPExifOrientationHorizontalFlipped
+            self.init(rawValue: IMPImageOrientation.upMirrored.rawValue)    // IMPExifOrientationHorizontalFlipped
         case 3:
-            self.init(rawValue: IMPImageOrientation.Down.rawValue)          // IMPExifOrientationLeft180
+            self.init(rawValue: IMPImageOrientation.down.rawValue)          // IMPExifOrientationLeft180
         case 4:
-            self.init(rawValue: IMPImageOrientation.DownMirrored.rawValue)  // IMPExifOrientationVerticalFlipped
+            self.init(rawValue: IMPImageOrientation.downMirrored.rawValue)  // IMPExifOrientationVerticalFlipped
         case 5:
-            self.init(rawValue: IMPImageOrientation.LeftMirrored.rawValue)  // IMPExifOrientationLeft90VertcalFlipped
+            self.init(rawValue: IMPImageOrientation.leftMirrored.rawValue)  // IMPExifOrientationLeft90VertcalFlipped
         case 6:
-            self.init(rawValue: IMPImageOrientation.Right.rawValue)         // IMPExifOrientationLeft90
+            self.init(rawValue: IMPImageOrientation.right.rawValue)         // IMPExifOrientationLeft90
         case 7:
-            self.init(rawValue: IMPImageOrientation.RightMirrored.rawValue) // IMPExifOrientationLeft90HorizontalFlipped
+            self.init(rawValue: IMPImageOrientation.rightMirrored.rawValue) // IMPExifOrientationLeft90HorizontalFlipped
         case 8:
-            self.init(rawValue: IMPImageOrientation.Left.rawValue)          // IMPExifOrientationRight90
+            self.init(rawValue: IMPImageOrientation.left.rawValue)          // IMPExifOrientationRight90
         default:
-            self.init(rawValue: IMPImageOrientation.Up.rawValue)
+            self.init(rawValue: IMPImageOrientation.up.rawValue)
         }
     }
 }
@@ -79,21 +79,21 @@ public extension IMPImageOrientation {
 public extension IMPExifOrientation {
     init?(imageOrientationValue: IMPImageOrientation) {
         switch imageOrientationValue {
-        case .Up:
+        case .up:
             self.init(rawValue: IMPExifOrientationUp.rawValue)
-        case .UpMirrored:
+        case .upMirrored:
             self.init(rawValue: IMPExifOrientationHorizontalFlipped.rawValue)
-        case .Down:
+        case .down:
             self.init(rawValue: IMPExifOrientationLeft180.rawValue)
-        case .DownMirrored:
+        case .downMirrored:
             self.init(rawValue: IMPExifOrientationVerticalFlipped.rawValue)
-        case .LeftMirrored:
+        case .leftMirrored:
             self.init(rawValue: IMPExifOrientationLeft90VertcalFlipped.rawValue)
-        case .Right:
+        case .right:
             self.init(rawValue: IMPExifOrientationLeft90.rawValue)
-        case .RightMirrored:
+        case .rightMirrored:
             self.init(rawValue: IMPExifOrientationLeft90HorizontalFlipped.rawValue)
-        case .Left:
+        case .left:
             self.init(rawValue: IMPExifOrientationRight90.rawValue)
         default:
             self.init(rawValue: IMPExifOrientationUp.rawValue)
@@ -101,28 +101,28 @@ public extension IMPExifOrientation {
     }
 }
 
-public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
+open class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
 
-    public var orientation = IMPImageOrientation.Up
+    open var orientation = IMPImageOrientation.up
     
-    public var context:IMPContext!
-    public var texture:MTLTexture?
+    open var context:IMPContext!
+    open var texture:MTLTexture?
     
-    public var width:Float {
+    open var width:Float {
         get {
             guard texture != nil else { return 0 }
             return texture!.width.float
         }
     }
    
-    public var height:Float {
+    open var height:Float {
         get {
             guard texture != nil else { return 0 }
             return texture!.height.float
         }
     }
     
-    public lazy var videoCache:IMPVideoTextureCache = {
+    open lazy var videoCache:IMPVideoTextureCache = {
         return IMPVideoTextureCache(context: self.context)
     }()
     
@@ -135,20 +135,20 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         self.orientation = orientation
     }
 
-    public convenience init(context: IMPContext, texture:MTLTexture, orientation:IMPImageOrientation = .Up){
+    public convenience init(context: IMPContext, texture:MTLTexture, orientation:IMPImageOrientation = .up){
         self.init(context: context)
         self.texture = texture
         self.orientation = orientation
     }
     
-    public weak var filter:IMPFilter?
+    open weak var filter:IMPFilter?
     
-    public func completeUpdate(){
+    open func completeUpdate(){
         filter?.executeNewSourceObservers(self)
         filter?.dirty = true
     }
     
-    public func rotate(degrees degrees:float3){
+    open func rotate(degrees:float3){
         
         if degrees == float3(0) {
             return
@@ -169,42 +169,42 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
             
             transformation(source, width: w, height: h,
                            angle: degrees,
-                           reflectMode: (horizontal: .None, vertical: .None)
+                           reflectMode: (horizontal: .none, vertical: .none)
             )
         }
     }
     
-    public func rotateLeft() {
+    open func rotateLeft() {
         rotate(degrees: IMPTransfromModel.left)
     }
 
-    public func rotateRight() {
+    open func rotateRight() {
         rotate(degrees: IMPTransfromModel.right)
     }
 
-    public func rotate180() {
+    open func rotate180() {
         rotate(degrees: IMPTransfromModel.degrees180)
     }
 
-    public func reflectHorizontal() {
+    open func reflectHorizontal() {
         if let source = copyTexture() {
             transformation(source, width: source.width, height: source.height,
                            angle: IMPTransfromModel.flat,
-                           reflectMode: (horizontal: .Mirroring, vertical: .None)
+                           reflectMode: (horizontal: .mirroring, vertical: .none)
             )
         }
     }
 
-    public func reflectVertical() {
+    open func reflectVertical() {
         if let source = copyTexture() {
             transformation(source, width: source.width, height: source.height,
                            angle: IMPTransfromModel.flat,
-                           reflectMode: (horizontal: .None, vertical: .Mirroring)
+                           reflectMode: (horizontal: .none, vertical: .mirroring)
             )
         }
     }
 
-    public var scale:Float = 1 {
+    open var scale:Float = 1 {
         didSet{
             if let source = copyTexture() {
                 
@@ -223,7 +223,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         }
     }
     
-    func transformation(source:MTLTexture, width:Int, height:Int, angle:float3, reflectMode: (horizontal:IMPRenderNode.ReflectMode, vertical:IMPRenderNode.ReflectMode)) {
+    func transformation(_ source:MTLTexture, width:Int, height:Int, angle:float3, reflectMode: (horizontal:IMPRenderNode.ReflectMode, vertical:IMPRenderNode.ReflectMode)) {
 
         guard let pipeline = graphics.pipeline else {return}
 
@@ -241,23 +241,23 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         completeUpdate()
     }
     
-    func newTexture(source:MTLTexture, width:Int, height:Int){
+    func newTexture(_ source:MTLTexture, width:Int, height:Int){
         
         if texture != nil {
-            texture?.setPurgeableState(.Volatile)
+            texture?.setPurgeableState(.volatile)
         }
         
-        let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-            source.pixelFormat,
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: source.pixelFormat,
             width: width, height: height,
             mipmapped: false)
         
-        texture = self.context.device.newTextureWithDescriptor(descriptor)
+        texture = self.context.device.makeTexture(descriptor: descriptor)
     }
     
     deinit {
         if texture != nil {
-            texture?.setPurgeableState(.Volatile)
+            texture?.setPurgeableState(.volatile)
         }
         texture = nil
         videoCache.flush()
@@ -271,7 +271,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
             
             context.execute(complete: true) { (commandBuffer) in
                 
-                let blitEncoder = commandBuffer.blitCommandEncoder()
+                let blitEncoder = commandBuffer.makeBlitCommandEncoder()
                 
                 
                 let w = texture.width
@@ -283,25 +283,25 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                 let destinationSize = MTLSize(width:  w, height: h, depth: d)
                 
                 
-                let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                    texture.pixelFormat,
+                let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                    pixelFormat: texture.pixelFormat,
                     width: destinationSize.width, height: destinationSize.height,
                     mipmapped: false)
                 
-                source = self.context.device.newTextureWithDescriptor(descriptor)
+                source = self.context.device.makeTexture(descriptor: descriptor)
                 
                 
                 #if os(OSX)
                     blitEncoder.synchronizeResource(texture)
                 #endif
 
-                blitEncoder.copyFromTexture(
-                    texture,
+                blitEncoder.copy(
+                    from: texture,
                     sourceSlice:      0,
                     sourceLevel:      0,
                     sourceOrigin:     originSource,
                     sourceSize:       destinationSize,
-                    toTexture:        source!,
+                    to:        source!,
                     destinationSlice: 0,
                     destinationLevel: 0,
                     destinationOrigin: MTLOrigin(x:0,y:0,z:0))
@@ -318,7 +318,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         return source
     }
     
-    internal func transform(source:MTLTexture, orientation:IMPExifOrientation) -> MTLTexture? {
+    internal func transform(_ source:MTLTexture, orientation:IMPExifOrientation) -> MTLTexture? {
         
         guard let pipeline = graphics.pipeline else {return nil}
         
@@ -334,18 +334,18 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         switch orientation {
             
         case IMPExifOrientationHorizontalFlipped:
-            transformer.reflectMode = (horizontal:.Mirroring, vertical:.None)
+            transformer.reflectMode = (horizontal:.mirroring, vertical:.none)
             
         case IMPExifOrientationLeft180:
             transformer.angle = IMPTransfromModel.degrees180
             
         case IMPExifOrientationVerticalFlipped:
-            transformer.reflectMode = (horizontal:.None, vertical:.Mirroring)
+            transformer.reflectMode = (horizontal:.none, vertical:.mirroring)
             
         case IMPExifOrientationLeft90VertcalFlipped:
             swapSize()
             transformer.angle = IMPTransfromModel.left
-            transformer.reflectMode = (horizontal:.Mirroring, vertical:.None)
+            transformer.reflectMode = (horizontal:.mirroring, vertical:.none)
             
         case IMPExifOrientationLeft90:
             swapSize()
@@ -354,7 +354,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         case IMPExifOrientationLeft90HorizontalFlipped:
             swapSize()
             transformer.angle = IMPTransfromModel.right
-            transformer.reflectMode = (horizontal:.Mirroring, vertical:.None)
+            transformer.reflectMode = (horizontal:.mirroring, vertical:.none)
             
         case IMPExifOrientationRight90:
             swapSize()
@@ -366,16 +366,16 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         
         
         if width != texture?.width || height != texture?.height{
-            let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                source.pixelFormat,
+            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                pixelFormat: source.pixelFormat,
                 width: width, height: height,
                 mipmapped: false)
             
             if texture != nil {
-                texture?.setPurgeableState(.Volatile)
+                texture?.setPurgeableState(.volatile)
             }
             
-            texture = self.context.device.newTextureWithDescriptor(descriptor)
+            texture = self.context.device.makeTexture(descriptor: descriptor)
         }
         
         guard let destination = texture else { return nil}
@@ -387,7 +387,7 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         return texture
     }
     
-    internal func transform(source:MTLTexture, orientation:IMPImageOrientation) -> MTLTexture? {
+    internal func transform(_ source:MTLTexture, orientation:IMPImageOrientation) -> MTLTexture? {
         
         guard let pipeline = graphics.pipeline else {return nil}
         
@@ -402,29 +402,29 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         
         switch orientation {
             
-        case .UpMirrored:
-            transformer.reflectMode = (horizontal:.None, vertical:.Mirroring)
+        case .upMirrored:
+            transformer.reflectMode = (horizontal:.none, vertical:.mirroring)
             
-        case .Down:
+        case .down:
             transformer.angle = IMPTransfromModel.degrees180
 
-        case .DownMirrored:
+        case .downMirrored:
             transformer.angle = IMPTransfromModel.degrees180
-            transformer.reflectMode = (horizontal:.Mirroring, vertical:.None)
+            transformer.reflectMode = (horizontal:.mirroring, vertical:.none)
 
-        case .Left:
+        case .left:
             transformer.angle = IMPTransfromModel.left
 
-        case .LeftMirrored:
+        case .leftMirrored:
             transformer.angle = IMPTransfromModel.left
-            transformer.reflectMode = (horizontal:.None, vertical:.Mirroring)
+            transformer.reflectMode = (horizontal:.none, vertical:.mirroring)
 
-        case .Right:
+        case .right:
             transformer.angle = IMPTransfromModel.right
 
-        case .RightMirrored:
+        case .rightMirrored:
             transformer.angle = IMPTransfromModel.right
-            transformer.reflectMode = (horizontal:.None, vertical:.Mirroring)
+            transformer.reflectMode = (horizontal:.none, vertical:.mirroring)
             
         default:
             return source
@@ -432,16 +432,16 @@ public class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         
         
         if width != texture?.width || height != texture?.height{
-            let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                source.pixelFormat,
+            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                pixelFormat: source.pixelFormat,
                 width: width, height: height,
                 mipmapped: false)
             
             if texture != nil {
-                texture?.setPurgeableState(.Volatile)
+                texture?.setPurgeableState(.volatile)
             }
             
-            texture = self.context.device.newTextureWithDescriptor(descriptor)
+            texture = self.context.device.makeTexture(descriptor: descriptor)
         }
         
         guard let destination = texture else { return nil}

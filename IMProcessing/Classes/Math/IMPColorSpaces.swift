@@ -14,7 +14,7 @@
 
 import simd
 
-func IMPstep(edge:Float, _ x:Float) -> Float {
+func IMPstep(_ edge:Float, _ x:Float) -> Float {
     return step(x, edge: edge)
 }
 

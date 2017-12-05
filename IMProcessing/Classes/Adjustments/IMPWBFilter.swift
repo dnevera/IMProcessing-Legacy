@@ -10,10 +10,10 @@ import Foundation
 import Metal
 
 /// White balance correction filter
-public class IMPWBFilter:IMPFilter,IMPAdjustmentProtocol{
+open class IMPWBFilter:IMPFilter,IMPAdjustmentProtocol{
     
     /// Default WB adjustment
-    public static let defaultAdjustment = IMPWBAdjustment(
+    open static let defaultAdjustment = IMPWBAdjustment(
         ///  @brief default dominant color of the image
         ///
         dominantColor: float4([0.5, 0.5, 0.5, 0.5]),
@@ -23,15 +23,15 @@ public class IMPWBFilter:IMPFilter,IMPAdjustmentProtocol{
     )
     
     /// Adjust filter
-    public var adjustment:IMPWBAdjustment!{
+    open var adjustment:IMPWBAdjustment!{
         didSet{
-            updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:sizeof(IMPWBAdjustment))
+            updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:MemoryLayout<IMPWBAdjustment>.size)
             dirty = true
         }
     }
     
-    public var adjustmentBuffer:MTLBuffer?
-    public var kernel:IMPFunction!
+    open var adjustmentBuffer:MTLBuffer?
+    open var kernel:IMPFunction!
     
     ///  Create WB filter.
     ///
@@ -46,9 +46,9 @@ public class IMPWBFilter:IMPFilter,IMPAdjustmentProtocol{
         }
     }
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
         }
     }
 }

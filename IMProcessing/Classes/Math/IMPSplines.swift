@@ -12,7 +12,7 @@ import Accelerate
 // MARK: - Bezier cubic splines 
 public extension Float {
     
-    func cubicBesierFunction(c1 c1:float2, c2:float2) -> Float{
+    func cubicBesierFunction(c1:float2, c2:float2) -> Float{
         
         let x = self
         
@@ -49,18 +49,18 @@ public extension Float {
         return (y.isInfinite) ? 1 : (y.isFinite) ? y : 0
     }
     
-    func slopeFromT (t:Float, A:Float, B:Float, C:Float) -> Float {
+    func slopeFromT (_ t:Float, A:Float, B:Float, C:Float) -> Float {
         return 1.0/(3.0*A*t*t + 2.0*B*t + C)
     }
     
-    func valueFromT (t:Float, A:Float, B:Float, C:Float, D:Float) -> Float {
+    func valueFromT (_ t:Float, A:Float, B:Float, C:Float, D:Float) -> Float {
         return  A*(t*t*t) + B*(t*t) + C*t + D
     }
 }
 
-public extension CollectionType where Generator.Element == Float {
+public extension Collection where Iterator.Element == Float {
    
-    public func cubicBezierSpline(controls:[float2])-> [Float]{
+    public func cubicBezierSpline(_ controls:[float2])-> [Float]{
         var curve = [Float]()
         for x in self {
             curve.append(x.cubicBesierFunction(c1: controls[0], c2: controls[1]))
@@ -68,7 +68,7 @@ public extension CollectionType where Generator.Element == Float {
         return curve
     }
     
-    public func cubicBezierSpline(c1 c1:float2, c2:float2)-> [Float]{
+    public func cubicBezierSpline(c1:float2, c2:float2)-> [Float]{
         var curve = [Float]()
         for x in self {
             curve.append(x.cubicBesierFunction(c1: c1, c2: c2))
@@ -79,16 +79,16 @@ public extension CollectionType where Generator.Element == Float {
 
 
 // MARK: - Cubic Splines
-public extension CollectionType where Generator.Element == Float {
+public extension Collection where Iterator.Element == Float {
     
     ///  Create 1D piecewise cubic spline curve from linear collection of x-Float points with certain control points
     ///
     ///  - parameter controls: list of (x,y) control points
     ///
     ///  - returns: interpolated list of (y) points
-    public func cubicSpline(controls:[float2], scale:Float=0)-> [Float]{
+    public func cubicSpline(_ controls:[float2], scale:Float=0)-> [Float]{
         var curve = [Float]()
-        let max   = self.maxElement()!
+        let max   = self.max()!
         let S = splineSlopes(controls)
         for i in self{
             let x = Float(i)
@@ -108,9 +108,9 @@ public extension CollectionType where Generator.Element == Float {
     ///  - parameter controls: list of (x,y) control points
     ///
     ///  - returns: interpolated list of (x,y) points
-    public func cubicSpline(controls:[float2], scale:Float=0)-> [float2]{
+    public func cubicSpline(_ controls:[float2], scale:Float=0)-> [float2]{
         var curve = [float2]()
-        let max   = self.maxElement()!
+        let max   = self.max()!
         let S = splineSlopes(controls)
         for i in self{
             let x = Float(i)
@@ -126,7 +126,7 @@ public extension CollectionType where Generator.Element == Float {
     }
 
     
-    func splineSlopes(points:[float2]) -> [Float] {
+    func splineSlopes(_ points:[float2]) -> [Float] {
         
         // This code computes the unique curve such that:
         //		It is C0, C1, and C2 continuous
@@ -134,13 +134,13 @@ public extension CollectionType where Generator.Element == Float {
         
         let count = points.count
         
-        var Y = [Float](count: count, repeatedValue: 0)
-        var X = [Float](count: count, repeatedValue: 0)
+        var Y = [Float](repeating: 0, count: count)
+        var X = [Float](repeating: 0, count: count)
         
-        var S = [Float](count: count, repeatedValue: 0)
-        var E = [Float](count: count, repeatedValue: 0)
-        var F = [Float](count: count, repeatedValue: 0)
-        var G = [Float](count: count, repeatedValue: 0)
+        var S = [Float](repeating: 0, count: count)
+        var E = [Float](repeating: 0, count: count)
+        var F = [Float](repeating: 0, count: count)
+        var G = [Float](repeating: 0, count: count)
         
         for i in 0 ..< count {
             X[i]=points[i].x
@@ -200,7 +200,7 @@ public extension CollectionType where Generator.Element == Float {
                 
             }
             
-            for j in (end - 2).stride(through: start, by: -1){
+            for j in stride(from: (end - 2), through: start, by: -1){
                 G [j] = G [j] - F [j] * G [j+1]
             }
             
@@ -212,7 +212,7 @@ public extension CollectionType where Generator.Element == Float {
         return S
     }
     
-    func evaluateSpline(x:Float, points:[float2], slopes S:[Float]) -> Float {
+    func evaluateSpline(_ x:Float, points:[float2], slopes S:[Float]) -> Float {
         
         let count = points.count
         
@@ -265,7 +265,7 @@ public extension CollectionType where Generator.Element == Float {
             S1)
     }
     
-    func evaluateSplineSegment (x:Float,
+    func evaluateSplineSegment (_ x:Float,
         _ x0:Float,
         _ y0:Float,
         _ s0:Float,
@@ -288,14 +288,14 @@ public extension CollectionType where Generator.Element == Float {
 }
 
 // MARK: - Catmull-Rom piecewise splines
-public extension CollectionType where Generator.Element == Float {
+public extension Collection where Iterator.Element == Float {
     
     ///  Create 1D piecewise Catmull-Rom spline curve from linear collection of x-Float points with certain control points
     ///
     ///  - parameter controls: list of (x,y) control points
     ///
     ///  - returns: interpolated list of (y) points
-    public func catmullRomSpline(points:[float2], scale:Float=0) -> [Float]{
+    public func catmullRomSpline(_ points:[float2], scale:Float=0) -> [Float]{
         var curve = [Float]()
         for x in self {
             curve.append(catmullRomSplinePoint(x, points: points).y)
@@ -314,14 +314,14 @@ public extension CollectionType where Generator.Element == Float {
     ///  - parameter controls: list of (x,y) control points
     ///
     ///  - returns: interpolated list of (x,y) points
-    public func catmullRomSpline(points:[float2], scale:Float=0) -> [float2]{
+    public func catmullRomSpline(_ points:[float2], scale:Float=0) -> [float2]{
         var curve = [float2]()
         for x in self {
             curve.append(catmullRomSplinePoint(x, points: points))
         }
         if scale>0 {
             var max:Float = 0
-            let address = UnsafeMutablePointer<Float>(curve)
+            let address = UnsafeMutablePointer<Float>(mutating: UnsafeRawPointer(curve).assumingMemoryBound(to: Float.self))
             vDSP_maxv(address+1, 2, &max, vDSP_Length(curve.count))
             max = scale/max
             vDSP_vsmul(address, 1, &max, address, 1, vDSP_Length(curve.count*2))
@@ -329,7 +329,7 @@ public extension CollectionType where Generator.Element == Float {
         return curve
     }
     
-    func catmullRomSplinePoint(x:Float,points:[float2]) -> float2 {
+    func catmullRomSplinePoint(_ x:Float,points:[float2]) -> float2 {
         let Xi = x
         
         let k  = find(points, Xi: Xi)
@@ -353,7 +353,7 @@ public extension CollectionType where Generator.Element == Float {
         )
     }
     
-    func find(points:[float2], Xi:Float)->(Int,Int){
+    func find(_ points:[float2], Xi:Float)->(Int,Int){
         let n = points.count
         
         var k1:Int = 0
@@ -372,7 +372,7 @@ public extension CollectionType where Generator.Element == Float {
     }
     
     
-    func catmullRomSplineCoeff(k:(Int,Int), points:[float2]) -> (a:Float,b:Float,h:Float) {
+    func catmullRomSplineCoeff(_ k:(Int,Int), points:[float2]) -> (a:Float,b:Float,h:Float) {
         
         let P1 = points[k.0]
         let P2 = points[k.1]
@@ -407,7 +407,7 @@ public struct IMPMatrix3D{
     public var columns:[Float]
     public var rows:   [(y:Float,z:[Float])]
     
-    public func column(index:Int) -> [Float] {
+    public func column(_ index:Int) -> [Float] {
         var c = [Float]()
         for i in rows {
             c.append(i.z[index])
@@ -415,7 +415,7 @@ public struct IMPMatrix3D{
         return c
     }
     
-    public func row(index:Int) -> [Float] {
+    public func row(_ index:Int) -> [Float] {
         return rows[index].z
     }
     
@@ -443,15 +443,12 @@ public struct IMPMatrix3D{
     
     public var description:String{
         get{
-            var s = String("[")
+            var s = "["
             var i=0
             for yi in 0 ..< rows.count {
                 let row = rows[yi]
                 var ci = 0
                 for obj in row.z {
-                    if i>0 {
-                        s += ""
-                    }
                     i += 1
                     s += String(format: "%2.4f", obj)
                     if i<rows.count*columns.count {
@@ -475,9 +472,9 @@ public struct IMPMatrix3D{
 }
 
 // MARK: - 3D Catmull-Rom piecewise splines
-public extension CollectionType where Generator.Element == [Float] {
+public extension Collection where Iterator.Element == [Float] {
     
-    public func catmullRomSpline(controlPoints:IMPMatrix3D, scale:Float=0)  -> [Float]{
+    public func catmullRomSpline(_ controlPoints:IMPMatrix3D, scale:Float=0)  -> [Float]{
         
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
@@ -503,7 +500,7 @@ public extension CollectionType where Generator.Element == [Float] {
             }
             
             let spline = yPoints.catmullRomSpline(points, scale: 0) as [Float]
-            ysplines.appendContentsOf(spline)
+            ysplines.append(contentsOf: spline)
         }
         
         let z = IMPMatrix3D(xy: [yPoints,controlPoints.columns], zMatrix: ysplines)
@@ -521,7 +518,7 @@ public extension CollectionType where Generator.Element == [Float] {
                 points.append(float2(x,y))
             }
             let spline = xPoints.catmullRomSpline(points, scale: 0) as [Float]
-            curve.appendContentsOf(spline)
+            curve.append(contentsOf: spline)
         }
         
         if scale>0 {

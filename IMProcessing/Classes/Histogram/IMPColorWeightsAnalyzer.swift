@@ -14,7 +14,7 @@
 
 import Accelerate
 
-public class  IMPColorWeightsSolver: NSObject, IMPHistogramSolver {
+open class  IMPColorWeightsSolver: NSObject, IMPHistogramSolver {
     
     public struct ColorWeights{
         
@@ -47,7 +47,7 @@ public class  IMPColorWeightsSolver: NSObject, IMPHistogramSolver {
             self.weights = weights
         }
         
-        private var weights:[Float]
+        fileprivate var weights:[Float]
     }
     
     public struct NeutralWeights{
@@ -65,22 +65,22 @@ public class  IMPColorWeightsSolver: NSObject, IMPHistogramSolver {
         }
     }
 
-    private var _colorWeights   = ColorWeights(weights: [Float](count: 6, repeatedValue: 0))
-    private var _neutralWeights = NeutralWeights(weights: [Float](count: 4, repeatedValue: 0))
+    fileprivate var _colorWeights   = ColorWeights(weights: [Float](repeating: 0, count: 6))
+    fileprivate var _neutralWeights = NeutralWeights(weights: [Float](repeating: 0, count: 4))
 
-    public var colorWeights:ColorWeights{
+    open var colorWeights:ColorWeights{
         get{
             return _colorWeights
         }
     }
     
-    public var neutralWeights:NeutralWeights{
+    open var neutralWeights:NeutralWeights{
         get{
             return _neutralWeights
         }
     }
     
-    private func normalize(inout A A:[Float]){
+    fileprivate func normalize(A:inout [Float]){
         var n:Float = 0
         let sz = vDSP_Length(A.count)
         vDSP_sve(&A, 1, &n, sz);
@@ -89,11 +89,11 @@ public class  IMPColorWeightsSolver: NSObject, IMPHistogramSolver {
         }
     }
     
-    public func analizerDidUpdate(analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
+    open func analizerDidUpdate(_ analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
         //
         // hues placed at start of channel W
         //
-        var huesCircle = [Float](histogram[.W][0...5])
+        var huesCircle = [Float](histogram[.w][0...5])
 
         //
         // normalize hues
@@ -104,7 +104,7 @@ public class  IMPColorWeightsSolver: NSObject, IMPHistogramSolver {
         //
         // weights of diferrent classes (neutral) brightness is placed at the and of channel W
         //
-        var weights    = [Float](histogram[analizer.hardware == .GPU ? .W : .Z][252...255])
+        var weights    = [Float](histogram[analizer.hardware == .gpu ? .w : .z][252...255])
         
         //
         // normalize neutral weights
@@ -114,13 +114,13 @@ public class  IMPColorWeightsSolver: NSObject, IMPHistogramSolver {
     }
 }
 
-public class IMPColorWeightsAnalyzer: IMPHistogramAnalyzer {
+open class IMPColorWeightsAnalyzer: IMPHistogramAnalyzer {
 
-    public static var defaultClipping = IMPColorWeightsClipping(white: 0.1, black: 0.1, saturation: 0.1)
+    open static var defaultClipping = IMPColorWeightsClipping(white: 0.1, black: 0.1, saturation: 0.1)
     
-    public var clipping:IMPColorWeightsClipping!{
+    open var clipping:IMPColorWeightsClipping!{
         didSet{
-            clippingBuffer = clippingBuffer ?? context.device.newBufferWithLength(sizeof(IMPColorWeightsClipping), options: .CPUCacheModeDefaultCache)
+            clippingBuffer = clippingBuffer ?? context.device.makeBuffer(length: MemoryLayout<IMPColorWeightsClipping>.size, options: MTLResourceOptions())
             if let b = clippingBuffer {
                 memcpy(b.contents(), &clipping, b.length)
             }
@@ -128,15 +128,15 @@ public class IMPColorWeightsAnalyzer: IMPHistogramAnalyzer {
         }
     }
     
-    public let solver = IMPColorWeightsSolver()
+    open let solver = IMPColorWeightsSolver()
     
-    private var clippingBuffer:MTLBuffer?
+    fileprivate var clippingBuffer:MTLBuffer?
     
     public required init(context: IMPContext, hardware:IMPHistogramAnalyzer.Hardware) {
         
         var function = "kernel_impColorWeightsPartial"
 
-        if hardware == .DSP {
+        if hardware == .dsp {
             function = "kernel_impColorWeightsVImage"
         }
         else if context.hasFastAtomic() {
@@ -153,14 +153,14 @@ public class IMPColorWeightsAnalyzer: IMPHistogramAnalyzer {
     }
     
     convenience required public init(context: IMPContext) {
-        self.init(context: context, hardware: .GPU)
+        self.init(context: context, hardware: .gpu)
     }
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
-        command.setBuffer(self.clippingBuffer, offset: 0, atIndex: 4)
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
+        command.setBuffer(self.clippingBuffer, offset: 0, at: 4)
     }
     
-    override public func addSolver(solver: IMPHistogramSolver) {
+    override open func addSolver(_ solver: IMPHistogramSolver) {
         fatalError("IMPColorWeightsAnalyzer can't add new solver but internal")
     }
 }

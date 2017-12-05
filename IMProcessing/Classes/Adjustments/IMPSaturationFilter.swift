@@ -10,20 +10,20 @@ import Foundation
 import Metal
 
 /// Image saturation filter
-public class IMPSaturationFilter:IMPFilter,IMPAdjustmentProtocol{
+open class IMPSaturationFilter:IMPFilter,IMPAdjustmentProtocol{
     
     /// Saturation adjustment.
     /// Default level is 0.5. Level values must be within interval [0,1].
     ///
-    public var adjustment:IMPLevelAdjustment!{
+    open var adjustment:IMPLevelAdjustment!{
         didSet{
-            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:sizeof(IMPLevelAdjustment))
+            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:MemoryLayout<IMPLevelAdjustment>.size)
             self.dirty = true
         }
     }
     
-    public var adjustmentBuffer:MTLBuffer?
-    public var kernel:IMPFunction!
+    open var adjustmentBuffer:MTLBuffer?
+    open var kernel:IMPFunction!
     
     ///  Create image saturation filter.
     ///
@@ -41,9 +41,9 @@ public class IMPSaturationFilter:IMPFilter,IMPAdjustmentProtocol{
         }
     }
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
         }
     }
 }

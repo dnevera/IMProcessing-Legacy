@@ -77,7 +77,7 @@ public func >= (lhs: IMPHistogramCubeCell, rhs: IMPHistogramCubeCell) -> Bool{
 }
 
 
-extension SequenceType where Generator.Element == IMPHistogramCube.LocalMaximum {
+extension Sequence where Iterator.Element == IMPHistogramCube.LocalMaximum {
     var colors:[float3]{
         get{
             var v = [float3]()
@@ -90,7 +90,7 @@ extension SequenceType where Generator.Element == IMPHistogramCube.LocalMaximum 
 }
 
 /// Cube RGB-Histogram presentation
-public class IMPHistogramCube{
+open class IMPHistogramCube{
     
     ///  @brief Cube Histogram cell uses in median-cut
     internal struct Cell{
@@ -130,8 +130,8 @@ public class IMPHistogramCube{
             dimensions = [Int(kIMP_HistogramCubeResolution),Int(kIMP_HistogramCubeResolution),Int(kIMP_HistogramCubeResolution)]
             let size = Int(dimensions[0]*dimensions[1]*dimensions[2])
             cells = [IMPHistogramCubeCell](
-                count: size,
-                repeatedValue: IMPHistogramCubeCell()
+                repeating: IMPHistogramCubeCell(),
+                count: size
             )
         }
         
@@ -147,12 +147,12 @@ public class IMPHistogramCube{
             
             let size = Int(dimensions[0]*dimensions[1]*dimensions[2])
             cells = [IMPHistogramCubeCell](
-                count: size,
-                repeatedValue: IMPHistogramCubeCell()
+                repeating: IMPHistogramCubeCell(),
+                count: size
             )
         }
         
-        func index(red:Int, green:Int, blue:Int) -> Int{
+        func index(_ red:Int, green:Int, blue:Int) -> Int{
             return red+green*dimensions[0]+blue*dimensions[0]*dimensions[1]
         }
         
@@ -166,7 +166,7 @@ public class IMPHistogramCube{
         }
         
         
-        private var localMaxima:[LocalMaximum]{
+        fileprivate var localMaxima:[LocalMaximum]{
             
             //
             // the main idea has been taken from: https://github.com/pixelogik/ColorCube
@@ -216,10 +216,10 @@ public class IMPHistogramCube{
                 }
             }
             
-            return maxima.sort{ $0.count>$1.count }
+            return maxima.sorted{ $0.count>$1.count }
         }
         
-        func distinctMaxima(maxima:[LocalMaximum], threshold:Float) -> [LocalMaximum] {
+        func distinctMaxima(_ maxima:[LocalMaximum], threshold:Float) -> [LocalMaximum] {
             
             var filtered = [LocalMaximum]()
             
@@ -249,7 +249,7 @@ public class IMPHistogramCube{
             return filtered
         }
         
-        func filteredMaxima(maxima:[LocalMaximum], count:Int) -> [LocalMaximum] {
+        func filteredMaxima(_ maxima:[LocalMaximum], count:Int) -> [LocalMaximum] {
             
             if count>=maxima.count { return maxima }
             
@@ -270,7 +270,7 @@ public class IMPHistogramCube{
         }
         
         
-        private var maxDimension:(index:Int,dimension:Int) {
+        fileprivate var maxDimension:(index:Int,dimension:Int) {
             if dimensions[0] >= dimensions[1] && dimensions[0] >= dimensions[2] {
                 return (0,dimensions[0])
             }
@@ -282,7 +282,7 @@ public class IMPHistogramCube{
             }
         }
         
-        private func sumRedSide(index:Int) -> Float {
+        fileprivate func sumRedSide(_ index:Int) -> Float {
             var asum = Float(0)
             for g in 0..<dimensions[1]{
                 for b in 0..<dimensions[2]{
@@ -292,7 +292,7 @@ public class IMPHistogramCube{
             return asum
         }
         
-        private func sumGreenSide(index:Int) -> Float {
+        fileprivate func sumGreenSide(_ index:Int) -> Float {
             var asum = Float(0)
             for r in 0..<dimensions[0]{
                 for b in 0..<dimensions[2]{
@@ -302,7 +302,7 @@ public class IMPHistogramCube{
             return asum
         }
         
-        private func sumBlueSide(index:Int) -> Float {
+        fileprivate func sumBlueSide(_ index:Int) -> Float {
             var asum = Float(0)
             for r in 0..<dimensions[0]{
                 for g in 0..<dimensions[1]{
@@ -312,7 +312,7 @@ public class IMPHistogramCube{
             return asum
         }
         
-        private func median(side side:Int) -> Cell {
+        fileprivate func median(side:Int) -> Cell {
             
             var v = [Cell]()
             
@@ -348,7 +348,7 @@ public class IMPHistogramCube{
             return m
         }
         
-        private func split() -> [Cube] {
+        fileprivate func split() -> [Cube] {
             
             let side  = maxDimension
             let index = median(side: side.0).index
@@ -395,13 +395,13 @@ public class IMPHistogramCube{
             return [cube1,cube2]
         }
         
-        public func split(number:Int) -> [Cube] {
+        public func split(_ number:Int) -> [Cube] {
             var cubes = [Cube]()
             cubes.append(self)
             
             while cubes.count > 0 && cubes.count<number && cubes.count<Int(kIMP_HistogramCubeResolution) {
                 
-                cubes = cubes.sort{
+                cubes = cubes.sorted{
                     $0.count > $1.count //&& $0.maxDimension.dimension > $1.maxDimension.dimension
                 }
                 
@@ -447,18 +447,18 @@ public class IMPHistogramCube{
                         }
                     }
                 }
-                return float3(rsum,gsum,bsum)/count/Float(kIMP_HistogramSize-1)
+                return float3(rsum,gsum,bsum)/(Float(kIMP_HistogramSize-1) * count)
             }
         }
         
-        public func dominantColors(count count: Int) -> [float3] {
+        public func dominantColors(count: Int) -> [float3] {
             let maximas = filteredMaxima(localMaxima,count: count)
             return maximas.colors
         }
         
-        public func palette(count count: Int) -> [float3] {
+        public func palette(count: Int) -> [float3] {
             
-            let cubes = self.split(count).sort {$0.count>$1.count}
+            let cubes = self.split(count).sorted {$0.count>$1.count}
             
             var p = [float3]()
             
@@ -471,40 +471,40 @@ public class IMPHistogramCube{
         
     }
     
-    public var cube   = Cube()
-    public let size   = Int(kIMP_HistogramCubeSize)
+    open var cube   = Cube()
+    open let size   = Int(kIMP_HistogramCubeSize)
     
-    public func update(data dataIn: UnsafePointer<Void>, dataCount: Int){
+    open func update(data dataIn: UnsafeRawPointer, dataCount: Int){
         clearHistogram()
-        var buffer = [IMPHistogramCubeCell](count: size, repeatedValue: IMPHistogramCubeCell())
+        var buffer = [IMPHistogramCubeCell](repeating: IMPHistogramCubeCell(), count: size)
         for i in 0..<dataCount {
-            let dataIn = UnsafePointer<IMPHistogramCubeBuffer>(dataIn)+i
+            let dataChunk = dataIn.assumingMemoryBound(to: IMPHistogramCubeBuffer.self) + i
             clear(&buffer)
-            updateCells(&buffer, address: dataIn)
+            updateCells(&buffer, address: dataChunk)
             addCells(from: &buffer, to: &cube.cells)
         }
     }
     
-    private let dim = sizeof(UInt32)/sizeof(simd.uint);
+    fileprivate let dim = MemoryLayout<UInt32>.size/MemoryLayout<simd.uint>.size;
     
-    private func updateCells(inout cells:[IMPHistogramCubeCell], address:UnsafePointer<IMPHistogramCubeBuffer>){
-        let p = UnsafePointer<UInt32>(address)
-        let to = UnsafeMutablePointer<Float>(cells)
+    fileprivate func updateCells(_ cells:inout [IMPHistogramCubeCell], address:UnsafePointer<IMPHistogramCubeBuffer>){
+        let p = UnsafeRawPointer(address).assumingMemoryBound(to: UInt32.self)
+        let to = UnsafeMutablePointer<Float>(mutating: UnsafeRawPointer(cells).assumingMemoryBound(to: Float.self))
         vDSP_vfltu32(p, 1, to, 1, vDSP_Length(cells.count*4))
     }
     
-    private func addCells(inout from from:[IMPHistogramCubeCell], inout to:[IMPHistogramCubeCell]){
-        let tobuffer   = UnsafeMutablePointer<Float>(to)
-        let frombuffer = UnsafeMutablePointer<Float>(from)
+    fileprivate func addCells(from:inout [IMPHistogramCubeCell], to:inout [IMPHistogramCubeCell]){
+        let tobuffer   = UnsafeMutablePointer<Float>(mutating: UnsafeRawPointer(to).assumingMemoryBound(to: Float.self))
+        let frombuffer = UnsafeRawPointer(from).assumingMemoryBound(to: Float.self)
         vDSP_vadd(tobuffer, 1, frombuffer, 1, tobuffer, 1, vDSP_Length(to.count*4))
     }
     
-    private func clear(inout cells:[IMPHistogramCubeCell]){
-        let buffer = UnsafeMutablePointer<Float>(cells)
+    fileprivate func clear(_ cells:inout [IMPHistogramCubeCell]){
+        let buffer = UnsafeMutablePointer<Float>(mutating: UnsafeRawPointer(cells).assumingMemoryBound(to: Float.self))
         vDSP_vclr(buffer, 1, vDSP_Length(cells.count*4))
     }
     
-    private func clearHistogram(){
+    fileprivate func clearHistogram(){
         clear(&cube.cells)
     }
 }

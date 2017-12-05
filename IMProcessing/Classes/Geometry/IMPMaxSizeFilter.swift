@@ -8,9 +8,9 @@
 
 import Foundation
 
-public class IMPMaxSizeFilter: IMPFilter {
+open class IMPMaxSizeFilter: IMPFilter {
     
-    public var size:Float?
+    open var size:Float?
     
     public required init(context: IMPContext) {
         super.init(context: context)

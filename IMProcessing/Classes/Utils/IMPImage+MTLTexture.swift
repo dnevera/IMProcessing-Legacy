@@ -22,14 +22,14 @@ public extension IMPImage{
     
     public convenience init(image: IMPImage, size:IMPSize){
         let scale = min(size.width/image.size.width, size.height/image.size.height)
-        self.init(CGImage: image.CGImage!, scale:1.0/scale, orientation:image.imageOrientation)
+        self.init(cgImage: image.cgImage!, scale:1.0/scale, orientation:image.imageOrientation)
     }
     
-    public convenience init(CGImage image: CGImageRef, size:IMPSize){
-        let width  = CGImageGetWidth(image)
-        let height = CGImageGetHeight(image)
+    public convenience init(CGImage image: CGImage, size:IMPSize){
+        let width  = image.width
+        let height = image.height
         let scale = min(size.width.float/width.float, size.height.float/height.float)
-        self.init(CGImage: image, scale:1.0/scale.cgfloat, orientation:.Up)
+        self.init(cgImage: image, scale:1.0/scale.cgfloat, orientation:.up)
     }
 
     #else
@@ -40,9 +40,9 @@ public extension IMPImage{
     
     #endif
     
-    func newTexture(context:IMPContext, maxSize:Float = 0) -> MTLTexture? {
+    func newTexture(_ context:IMPContext, maxSize:Float = 0) -> MTLTexture? {
         
-        let imageRef  = self.CGImage
+        let imageRef  = self.cgImage
         let imageSize = self.size
         
         var imageAdjustedSize = IMPContext.sizeAdjustTo(size: imageSize)
@@ -70,42 +70,42 @@ public extension IMPImage{
         let resultWidth  = Int(width)
         let resultHeight = Int(height)
         
-        var rawData = [UInt8](count: resultHeight * resultWidth * 4, repeatedValue: 0)
+        var rawData = [UInt8](repeating: 0, count: resultHeight * resultWidth * 4)
         let componentsPerPixel = 4
         let componentsPerRow   = componentsPerPixel * resultWidth
         let bitsPerComponent   = 8
         
         let colorSpace = CGColorSpaceCreateDeviceRGB()
         
-        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.PremultipliedLast.rawValue | CGBitmapInfo.ByteOrder32Big.rawValue)
+        let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue)
         
-        let bitmapContext = CGBitmapContextCreate(&rawData, resultWidth, resultHeight,
-            bitsPerComponent, componentsPerRow, colorSpace, bitmapInfo.rawValue)
+        let bitmapContext = CGContext(data: &rawData, width: resultWidth, height: resultHeight,
+            bitsPerComponent: bitsPerComponent, bytesPerRow: componentsPerRow, space: colorSpace, bitmapInfo: bitmapInfo.rawValue)
         
-        CGContextDrawImage(bitmapContext, CGRectMake(0, 0, CGFloat(resultWidth), CGFloat(resultHeight)), imageRef)
+        bitmapContext?.draw(imageRef!, in: CGRect(x: 0, y: 0, width: CGFloat(resultWidth), height: CGFloat(resultHeight)))
         
-        let textureDescriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(IMProcessing.colors.pixelFormat,
+        let textureDescriptor = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: IMProcessing.colors.pixelFormat,
             width:resultWidth,
             height:resultHeight,
             mipmapped:false)
         
-        let texture = context.device?.newTextureWithDescriptor(textureDescriptor)
+        let texture = context.device?.makeTexture(descriptor: textureDescriptor)
         
         if let t = texture {
             let region = MTLRegionMake2D(0, 0, resultWidth, resultHeight)
             
-            if IMProcessing.colors.pixelFormat == .RGBA16Unorm {
-                var u16:[UInt16] = [UInt16](count: componentsPerRow*resultHeight, repeatedValue: 0)
+            if IMProcessing.colors.pixelFormat == .rgba16Unorm {
+                var u16:[UInt16] = [UInt16](repeating: 0, count: componentsPerRow*resultHeight)
                 for i in 0 ..< componentsPerRow*resultHeight {
                     var pixel = UInt16()
                     let address = UnsafePointer<UInt8>(rawData)+i
-                    memcpy(&pixel, address, sizeof(UInt8))
+                    memcpy(&pixel, address, MemoryLayout<UInt8>.size)
                     u16[i] = pixel<<8
                 }
-                t.replaceRegion(region, mipmapLevel:0, withBytes:u16, bytesPerRow:componentsPerRow*sizeof(UInt16)/sizeof(UInt8))
+                t.replace(region: region, mipmapLevel:0, withBytes:u16, bytesPerRow:componentsPerRow*MemoryLayout<UInt16>.size/MemoryLayout<UInt8>.size)
             }
             else {
-                t.replaceRegion(region, mipmapLevel:0, withBytes:rawData, bytesPerRow:componentsPerRow)
+                t.replace(region: region, mipmapLevel:0, withBytes:rawData, bytesPerRow:componentsPerRow)
             }
         }
         return texture
@@ -214,21 +214,21 @@ public extension IMPImage{
                 let imageByteCount = texture.width * texture.height * bytesPerPixel
                 let bytesPerRow    = texture.width * bytesPerPixel
                 
-                var rawData = [UInt8](count: Int(imageByteCount), repeatedValue: 0)
+                var rawData = [UInt8](repeating: 0, count: Int(imageByteCount))
                 
                 texture.getBytes(&rawData,
                                  bytesPerRow: bytesPerRow,
-                                 fromRegion: MTLRegionMake2D(0, 0, texture.width, texture.height),
+                                 from: MTLRegionMake2D(0, 0, texture.width, texture.height),
                                  mipmapLevel: 0)
                 
-                let bitmapInfo = CGBitmapInfo(rawValue: (CGBitmapInfo.ByteOrder32Big.rawValue | CGImageAlphaInfo.PremultipliedLast.rawValue))
+                let bitmapInfo = CGBitmapInfo(rawValue: (CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue))
                 
                 let colorSpaceRef = CGColorSpaceCreateDeviceRGB()
                 
-                let context = CGBitmapContextCreate(&rawData, texture.width, texture.height, 8, bytesPerRow, colorSpaceRef, bitmapInfo.rawValue);
+                let context = CGContext(data: &rawData, width: texture.width, height: texture.height, bitsPerComponent: 8, bytesPerRow: bytesPerRow, space: colorSpaceRef, bitmapInfo: bitmapInfo.rawValue);
                 
-                if let image = CGBitmapContextCreateImage(context){
-                    self.init(CGImage: image, scale: 0.0, orientation: .Up)
+                if let image = context?.makeImage(){
+                    self.init(cgImage: image, scale: 0.0, orientation: .up)
                 }
                 else{
                     return nil

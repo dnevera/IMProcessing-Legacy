@@ -10,7 +10,7 @@ import Foundation
 import Metal
 
 /// Should return opacity value
-public typealias IMPAutoWBAnalyzeHandler =  ((solver:IMPColorWeightsSolver, opacity:Float, wbFilter:IMPWBFilter, hsvFilter:IMPHSVFilter) -> Float)
+public typealias IMPAutoWBAnalyzeHandler =  ((_ solver:IMPColorWeightsSolver, _ opacity:Float, _ wbFilter:IMPWBFilter, _ hsvFilter:IMPHSVFilter) -> Float)
 
 ///  @brief AWB adjustment
 public struct IMPAutoWBAdjustment{
@@ -25,9 +25,9 @@ public struct IMPAutoWBAdjustment{
 /// The main idea based on seeking a dominant color of the image and 
 /// rearrange gamma of the image according to this dominant color. The image becames neutral-balanced.
 ///
-public class IMPAutoWBFilter:IMPFilter{    
+open class IMPAutoWBFilter:IMPFilter{    
     
-    public var analyzeDownScaleFactor:Float = 1 {
+    open var analyzeDownScaleFactor:Float = 1 {
         didSet{
             colorWeightsAnalyzer.downScaleFactor = analyzeDownScaleFactor
             dominantColorAnalayzer.downScaleFactor = analyzeDownScaleFactor
@@ -57,7 +57,7 @@ public class IMPAutoWBFilter:IMPFilter{
     }
 
     /// AWB corrction preferences
-    public var preferences:Preferences = Preferences() {
+    open var preferences:Preferences = Preferences() {
         didSet{
             colorWeightsAnalyzer.clipping = preferences.clipping
             self.dirty = true
@@ -65,10 +65,10 @@ public class IMPAutoWBFilter:IMPFilter{
     }
     
     /// Default adjustment
-    public static var defaultAdjustment = IMPAutoWBAdjustment(blending: IMPBlending.init(mode: IMPBlendingMode.NORMAL, opacity: 1))
+    open static var defaultAdjustment = IMPAutoWBAdjustment(blending: IMPBlending.init(mode: IMPBlendingMode.NORMAL, opacity: 1))
     
     /// Current adjustment
-    public var adjustment:IMPAutoWBAdjustment!{
+    open var adjustment:IMPAutoWBAdjustment!{
         didSet{
             wbFilter.adjustment.blending = adjustment.blending
             hsvFilter.adjustment.blending = adjustment.blending
@@ -76,21 +76,21 @@ public class IMPAutoWBFilter:IMPFilter{
     }
     
     /// Detected color weights
-    public var colorWeights:IMPColorWeightsSolver.ColorWeights?{
+    open var colorWeights:IMPColorWeightsSolver.ColorWeights?{
         get{
             return colorWeightsAnalyzer.solver.colorWeights
         }
     }
     
     /// Detected neutral weights
-    public var neutralWeights:IMPColorWeightsSolver.NeutralWeights?{
+    open var neutralWeights:IMPColorWeightsSolver.NeutralWeights?{
         get{
             return colorWeightsAnalyzer.solver.neutralWeights
         }
     }
     
     /// Detected dominant color
-    public var dominantColor:float4?{
+    open var dominantColor:float4?{
         get{
             return dominantColorSolver.color
         }
@@ -100,13 +100,13 @@ public class IMPAutoWBFilter:IMPFilter{
     /// User defined color analyze extention.
     /// It can be used to redefine color correction prefrences at runtime
     ///
-    public var colorsAnalyzeHandler:IMPAutoWBAnalyzeHandler?
+    open var colorsAnalyzeHandler:IMPAutoWBAnalyzeHandler?
     
     lazy var optimization:IMPHSVFilter.Optimization = {
-        return self.context.isLazy ? .HIGH : .NORMAL
+        return self.context.isLazy ? .high : .normal
     }()
     
-    var histogramHardware = IMPHistogramAnalyzer.Hardware.GPU
+    var histogramHardware = IMPHistogramAnalyzer.Hardware.gpu
     
     public required init(context: IMPContext,
                          optimization:IMPHSVFilter.Optimization,
@@ -143,10 +143,10 @@ public class IMPAutoWBFilter:IMPFilter{
     }
     
     required public convenience init(context: IMPContext) {
-        self.init(context:context, optimization: context.isLazy ? .HIGH : .NORMAL, histogramHardware: .GPU)
+        self.init(context:context, optimization: context.isLazy ? .high : .normal, histogramHardware: .gpu)
     }
     
-    private func updateHsvProfile(solver:IMPColorWeightsSolver){
+    fileprivate func updateHsvProfile(_ solver:IMPColorWeightsSolver){
         
         var opacity:Float = 1
         
@@ -165,7 +165,7 @@ public class IMPAutoWBFilter:IMPFilter{
         
         
         if colorsAnalyzeHandler != nil {
-            opacity = colorsAnalyzeHandler!(solver: solver, opacity:opacity, wbFilter: wbFilter, hsvFilter: hsvFilter)
+            opacity = colorsAnalyzeHandler!(solver, opacity, wbFilter, hsvFilter)
         }
         
         //
@@ -174,24 +174,24 @@ public class IMPAutoWBFilter:IMPFilter{
         wbFilter.adjustment.blending.opacity = opacity
     }
     
-    private let dominantColorSolver:IMPHistogramDominantColorSolver = IMPHistogramDominantColorSolver()
-    private lazy var dominantColorAnalayzer:IMPHistogramAnalyzer = IMPHistogramAnalyzer(context: self.context, hardware: self.histogramHardware)
+    fileprivate let dominantColorSolver:IMPHistogramDominantColorSolver = IMPHistogramDominantColorSolver()
+    fileprivate lazy var dominantColorAnalayzer:IMPHistogramAnalyzer = IMPHistogramAnalyzer(context: self.context, hardware: self.histogramHardware)
     
-    private lazy var colorWeightsAnalyzer:IMPColorWeightsAnalyzer =  {
+    fileprivate lazy var colorWeightsAnalyzer:IMPColorWeightsAnalyzer =  {
         let a = IMPColorWeightsAnalyzer(context: self.context, hardware: self.histogramHardware)
         a.clipping = self.preferences.clipping
         return a
     }()
     
     
-    private lazy var hsvFilter:IMPHSVFilter = {
+    fileprivate lazy var hsvFilter:IMPHSVFilter = {
         let f = IMPHSVFilter(context: self.context, optimization: self.optimization)
-        if self.optimization == .HIGH {
+        if self.optimization == .high {
             f.rgbCubeSize = 16
         }
         return f
     }()
-    private lazy var wbFilter:IMPWBFilter = IMPWBFilter(context: self.context)
+    fileprivate lazy var wbFilter:IMPWBFilter = IMPWBFilter(context: self.context)
     
 }
  

@@ -11,7 +11,7 @@ import Darwin
 
 extension mach_timebase_info{
     static let sharedInstance = mach_timebase_info(0)
-    private init(_:Int) {
+    fileprivate init(_:Int) {
         self.init()
         mach_timebase_info(&self)
     }
@@ -29,42 +29,42 @@ extension UInt64 {
     }
 }
 
-public class IMPRTTimer {
+open class IMPRTTimer {
     
-    public typealias UpdateHandler = ((timestamp:UInt64, duration:UInt64)->Void)
+    public typealias UpdateHandler = ((_ timestamp:UInt64, _ duration:UInt64)->Void)
     
-    public static let nanos_per_usec:UInt64 = 1000
-    public static let nanos_per_msec:UInt64 = 1000 * IMPRTTimer.nanos_per_usec
-    public static let nanos_per_sec:UInt64  = 1000 * IMPRTTimer.nanos_per_msec
+    open static let nanos_per_usec:UInt64 = 1000
+    open static let nanos_per_msec:UInt64 = 1000 * IMPRTTimer.nanos_per_usec
+    open static let nanos_per_sec:UInt64  = 1000 * IMPRTTimer.nanos_per_msec
     
-    public static let usec_per_msec:UInt64  = 1000
-    public static let usec_per_sec:UInt64   = 1000 * IMPRTTimer.usec_per_msec
+    open static let usec_per_msec:UInt64  = 1000
+    open static let usec_per_sec:UInt64   = 1000 * IMPRTTimer.usec_per_msec
     
-    public static let msec_per_sec:UInt64   = 1000
+    open static let msec_per_sec:UInt64   = 1000
     
-    public let duration:UInt64 // usec
-    public let quality:NSQualityOfService
+    open let duration:UInt64 // usec
+    open let quality:QualityOfService
     
-    public var isRunning:Bool {
+    open var isRunning:Bool {
         return condition
     }
     
-    public init(usec: UInt64, quality:NSQualityOfService = .Background, update:UpdateHandler, complete:UpdateHandler?=nil) {
+    public init(usec: UInt64, quality:QualityOfService = .background, update:@escaping UpdateHandler, complete:UpdateHandler?=nil) {
         duration = usec
         self.quality = quality
         self.update = update
         self.complete = complete
     }
     
-    public convenience init(msec: UInt64, quality:NSQualityOfService = .Background, update:UpdateHandler, complete:UpdateHandler?=nil) {
+    public convenience init(msec: UInt64, quality:QualityOfService = .background, update:@escaping UpdateHandler, complete:UpdateHandler?=nil) {
         self.init(usec: msec * IMPRTTimer.usec_per_msec, quality: quality, update: update, complete: complete)
     }
     
-    public convenience init(sec: UInt64, quality:NSQualityOfService = .Background, update:UpdateHandler, complete:UpdateHandler?=nil) {
+    public convenience init(sec: UInt64, quality:QualityOfService = .background, update:@escaping UpdateHandler, complete:UpdateHandler?=nil) {
         self.init(usec: sec * IMPRTTimer.usec_per_sec, quality: quality, update: update, complete: complete)
     }
     
-    public var now:UInt64 {
+    open var now:UInt64 {
         return mach_absolute_time()
     }
     
@@ -72,41 +72,41 @@ public class IMPRTTimer {
     
     var lastUpdate:UInt64 = 0
     var startTime:UInt64 = 0
-    public func start()  {
+    open func start()  {
         
         if self.condition {
             return
         }
         
         lastUpdate = 0
-        timer_queue.addOperationWithBlock {
+        timer_queue.addOperation {
             self.condition = true
             self.startTime = self.now
             while self.condition {
                 let t = self.now
                 let lu = self.lastUpdate
                 self.lastUpdate = t
-                dispatch_async(self.handler_queue) {
+                self.handler_queue.async {
                     let ts = (t-self.startTime).nanos
                     let ds = (t-(lu == 0 ? t : lu)).nanos
-                    self.update(timestamp: ts, duration: ds )
+                    self.update(ts, ds )
                 }
                 self.wait_until(usec: self.duration)
             }
         }
-        timer_queue.suspended = false
+        timer_queue.isSuspended = false
     }
     
-    public func stop(){
+    open func stop(){
         condition = false
-        timer_queue.suspended = true
+        timer_queue.isSuspended = true
         timer_queue.cancelAllOperations()
         if let c = self.complete {
             let t = self.now
             let lu = self.lastUpdate
             self.lastUpdate = t
-            dispatch_async(self.handler_queue) {
-               c(timestamp: t-self.startTime, duration: t-(lu == 0 ? t : lu) )
+            self.handler_queue.async {
+               c(t-self.startTime, t-(lu == 0 ? t : lu) )
             }
         }
     }
@@ -115,9 +115,9 @@ public class IMPRTTimer {
     var complete:UpdateHandler?
     
     var condition     = false
-    let handler_queue = dispatch_queue_create(IMProcessing.names.prefix + "rttimer.handler", DISPATCH_QUEUE_SERIAL)
-    lazy var timer_queue:NSOperationQueue   =  {
-        let t = NSOperationQueue()
+    let handler_queue = DispatchQueue(label: IMProcessing.names.prefix + "rttimer.handler", attributes: [])
+    lazy var timer_queue:OperationQueue   =  {
+        let t = OperationQueue()
         t.name = IMProcessing.names.prefix + "rttimer.queue"
         t.qualityOfService = self.quality
         return t
@@ -127,11 +127,11 @@ public class IMPRTTimer {
         stop()
     }
     
-    func wait_until(nsec nsec:UInt64){
+    func wait_until(nsec:UInt64){
         mach_wait_until(now + UInt64(nsec).abs)
     }
     
-    func wait_until(usec usec: UInt64) {
+    func wait_until(usec: UInt64) {
         wait_until(nsec: usec*IMPRTTimer.nanos_per_usec)
     }
 }

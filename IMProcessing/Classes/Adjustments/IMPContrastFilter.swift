@@ -9,22 +9,22 @@
 import Foundation
 import Metal
 
-public class IMPContrastFilter:IMPFilter,IMPAdjustmentProtocol{
+open class IMPContrastFilter:IMPFilter,IMPAdjustmentProtocol{
     
-    public static let defaultAdjustment = IMPContrastAdjustment(
+    open static let defaultAdjustment = IMPContrastAdjustment(
         minimum: float4([0,0,0,0]),
         maximum: float4([1,1,1,1]),
         blending: IMPBlending(mode: IMPBlendingMode.LUMNINOSITY, opacity: 1))
     
-    public var adjustment:IMPContrastAdjustment!{
+    open var adjustment:IMPContrastAdjustment!{
         didSet{
-            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:sizeof(IMPContrastAdjustment))
+            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:MemoryLayout<IMPContrastAdjustment>.size)
             self.dirty = true
         }
     }
     
-    public var adjustmentBuffer:MTLBuffer?
-    public var kernel:IMPFunction!
+    open var adjustmentBuffer:MTLBuffer?
+    open var kernel:IMPFunction!
     
     public required init(context: IMPContext) {
         super.init(context: context)
@@ -35,9 +35,9 @@ public class IMPContrastFilter:IMPFilter,IMPAdjustmentProtocol{
         }
     }
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
         }
     }
 }

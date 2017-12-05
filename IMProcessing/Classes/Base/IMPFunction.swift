@@ -14,7 +14,7 @@
 import Metal
 import simd
 
-public class IMPFunction: NSObject, IMPContextProvider {
+open class IMPFunction: NSObject, IMPContextProvider {
 
     //
     // inherits ==/!= from NSObject
@@ -25,24 +25,24 @@ public class IMPFunction: NSObject, IMPContextProvider {
         public var height:Int = 16
     }
 
-    public let name:String
-    public var context:IMPContext!
-    public var groupSize:GroupSize = GroupSize()
+    open let name:String
+    open var context:IMPContext!
+    open var groupSize:GroupSize = GroupSize()
 
-    public lazy var kernel:MTLFunction? = {
-        return self.library.newFunctionWithName(self.name)
+    open lazy var kernel:MTLFunction? = {
+        return self.library.makeFunction(name: self.name)
     }()
     
-    public lazy var library:MTLLibrary = {
+    open lazy var library:MTLLibrary = {
         return self.context.defaultLibrary
     }()
     
-    public lazy var pipeline:MTLComputePipelineState? = {
+    open lazy var pipeline:MTLComputePipelineState? = {
         if self.kernel == nil {
             fatalError(" *** IMPFunction: \(self.name) has not foumd...")
         }
         do{
-            return try self.context.device.newComputePipelineStateWithFunction(self.kernel!)
+            return try self.context.device.makeComputePipelineState(function: self.kernel!)
         }
         catch let error as NSError{
             fatalError(" *** IMPFunction: \(error)")

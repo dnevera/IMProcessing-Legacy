@@ -15,24 +15,24 @@ import Foundation
 import simd
 
 public enum IMPLutType{
-    case D1D
-    case D3D
-    case UNKNOOWN
+    case d1D
+    case d3D
+    case unknoown
 }
 
 public enum IMPLutStatus:Int{
-    case OK          = 0
-    case NOT_FOUND
-    case WRONG_FORMAT
-    case WRANG_RANGE
-    case OUT_RANGE
-    case UNKNOWN
+    case ok          = 0
+    case not_FOUND
+    case wrong_FORMAT
+    case wrang_RANGE
+    case out_RANGE
+    case unknown
 }
 
 public extension IMPImageProvider{
     
     public struct LutDescription {
-        public var type = IMPLutType.UNKNOOWN
+        public var type = IMPLutType.unknoown
         public var title = String("")
         public var domainMin = float3(0)
         public var domainMax = float3(1)
@@ -41,7 +41,7 @@ public extension IMPImageProvider{
         public init(){}
     }
     
-    public convenience init(context: IMPContext, cubeFile:String, inout description:LutDescription) throws {
+    public convenience init(context: IMPContext, cubeFile:String, description:inout LutDescription) throws {
         self.init(context: context)
         do{
             description = try update(cubeFile: cubeFile)
@@ -51,8 +51,8 @@ public extension IMPImageProvider{
         }
     }
     
-    public convenience init(context: IMPContext, cubeName:String, inout description:LutDescription) throws {
-        let path = NSBundle.mainBundle().pathForResource(cubeName, ofType:".cube")
+    public convenience init(context: IMPContext, cubeName:String, description:inout LutDescription) throws {
+        let path = Bundle.main.path(forResource: cubeName, ofType:".cube")
         self.init(context: context)
         do{
             description = try update(cubeFile: path!)
@@ -62,17 +62,17 @@ public extension IMPImageProvider{
         }
     }
     
-    public func update(cubeFile cubeFile:String) throws ->  LutDescription {
+    public func update(cubeFile:String) throws ->  LutDescription {
         
-        let manager = NSFileManager.defaultManager()
+        let manager = FileManager.default
         var description = LutDescription()
         
-        if manager.fileExistsAtPath(cubeFile){
+        if manager.fileExists(atPath: cubeFile){
             
             do{
-                let contents = try String(contentsOfFile: cubeFile, encoding: NSUTF8StringEncoding)
+                let contents = try String(contentsOfFile: cubeFile, encoding: String.Encoding.utf8)
                 
-                let lines = contents.componentsSeparatedByCharactersInSet(NSCharacterSet.newlineCharacterSet())
+                let lines = contents.components(separatedBy: CharacterSet.newlines)
                 var linenum=0
                 
                 var dataBytes = NSMutableData()
@@ -80,7 +80,7 @@ public extension IMPImageProvider{
                 
                 for line in lines {
                     linenum += 1
-                    var words = line.componentsSeparatedByCharactersInSet(NSCharacterSet.whitespaceCharacterSet())
+                    var words = line.components(separatedBy: CharacterSet.whitespaces)
                     
                     if line.hasPrefix("#") || words[0].characters.count==0 {
                         continue;
@@ -88,19 +88,19 @@ public extension IMPImageProvider{
                     else{
                         if (words.count>1) {
                             let what = updateBytes(&words, isData: &isData, dataBytes: &dataBytes, description: &description)
-                            if what == .OK  {
+                            if what == .ok  {
                                 continue
                             }
                             else{
                                 switch what {
-                                case .OUT_RANGE:
+                                case .out_RANGE:
                                     throw NSError(domain: IMProcessing.names.prefix+"cube-lut.read",
                                         code: what.rawValue,
                                         userInfo: [
                                             NSLocalizedDescriptionKey: String(format: NSLocalizedString("Adobe Cube LUT file has out of range value in in line: %i", comment:""), linenum),
                                             NSLocalizedFailureReasonErrorKey: String(format: NSLocalizedString("Adobe Cube LUT file has out of ramge value", comment:""))
                                         ])
-                                case .WRONG_FORMAT:
+                                case .wrong_FORMAT:
                                     throw NSError(domain: IMProcessing.names.prefix+"cube-lut.read",
                                         code: what.rawValue,
                                         userInfo: [
@@ -109,7 +109,7 @@ public extension IMPImageProvider{
                                         ])
                                 default:
                                     throw NSError(domain: IMProcessing.names.prefix+"cube-lut.read",
-                                        code: IMPLutStatus.UNKNOWN.rawValue,
+                                        code: IMPLutStatus.unknown.rawValue,
                                         userInfo: [
                                             NSLocalizedDescriptionKey: String(format: NSLocalizedString("Adobe Cube LUT file format error in line: %i", comment:""), linenum),
                                             NSLocalizedFailureReasonErrorKey: String(format: NSLocalizedString("Adobe Cube LUT file format error", comment:""))
@@ -120,7 +120,7 @@ public extension IMPImageProvider{
                         }
                         else{
                             throw NSError(domain: IMProcessing.names.prefix+"cube-lut.read",
-                                code: IMPLutStatus.WRONG_FORMAT.rawValue,
+                                code: IMPLutStatus.wrong_FORMAT.rawValue,
                                 userInfo: [
                                     NSLocalizedDescriptionKey: String(format: NSLocalizedString("Adobe Cube LUT file format error in line: %i", comment:""), linenum),
                                     NSLocalizedFailureReasonErrorKey: String(format: NSLocalizedString("Adobe Cube LUT file format error", comment:""))
@@ -129,16 +129,16 @@ public extension IMPImageProvider{
                     }
                 }
                 
-                if description.type == .UNKNOOWN {
+                if description.type == .unknoown {
                     throw NSError(domain: IMProcessing.names.prefix+"cube-lut.read",
-                        code: IMPLutStatus.WRONG_FORMAT.rawValue,
+                        code: IMPLutStatus.wrong_FORMAT.rawValue,
                         userInfo: [
                             NSLocalizedDescriptionKey: String(format: NSLocalizedString("Adobe Cube LUT file format error in line: %i", comment:""), linenum),
                             NSLocalizedFailureReasonErrorKey: String(format: NSLocalizedString("Adobe Cube LUT file format error", comment:""))
                         ])
                 }
                 else {
-                    updateTextureFromData(dataBytes, desciption: description)
+                    updateTextureFromData(dataBytes as Data, desciption: description)
                 }
             }
             catch let error as NSError {
@@ -147,7 +147,7 @@ public extension IMPImageProvider{
         }
         else{
             throw NSError(domain: IMProcessing.names.prefix+"cube-lut.read",
-                code: IMPLutStatus.NOT_FOUND.rawValue,
+                code: IMPLutStatus.not_FOUND.rawValue,
                 userInfo: [
                     NSLocalizedDescriptionKey: String(format: NSLocalizedString("Adobe Cube LUT file %@ not found", comment:""), cubeFile),
                     NSLocalizedFailureReasonErrorKey: String(format: NSLocalizedString("Adobe Cube LUT file not found", comment:""))
@@ -156,12 +156,12 @@ public extension IMPImageProvider{
         return description
     }
     
-    private func updateTextureFromData(data:NSData, desciption:LutDescription) {
+    fileprivate func updateTextureFromData(_ data:Data, desciption:LutDescription) {
         let width  = desciption.lut3DSize
-        let height = desciption.type == .D1D ? 1: width
-        let depth  = desciption.type == .D1D ? 1: width
+        let height = desciption.type == .d1D ? 1: width
+        let depth  = desciption.type == .d1D ? 1: width
         
-        let componentBytes =  IMProcessing.colors.pixelFormat == .RGBA16Unorm  ? sizeof(UInt16) : sizeof(UInt8)
+        let componentBytes =  IMProcessing.colors.pixelFormat == .rgba16Unorm  ? MemoryLayout<UInt16>.size : MemoryLayout<UInt8>.size
         
         let bytesPerPixel  = 4 * componentBytes
         let bytesPerRow    = bytesPerPixel * width
@@ -169,7 +169,7 @@ public extension IMPImageProvider{
         
         let textureDescriptor = MTLTextureDescriptor()
         
-        textureDescriptor.textureType = desciption.type == .D1D ? .Type2D : .Type3D
+        textureDescriptor.textureType = desciption.type == .d1D ? .type2D : .type3D
         textureDescriptor.width  = width
         textureDescriptor.height = height
         textureDescriptor.depth  = depth
@@ -179,55 +179,55 @@ public extension IMPImageProvider{
         textureDescriptor.arrayLength = 1;
         textureDescriptor.mipmapLevelCount = 1;
         
-        self.texture = self.context.device.newTextureWithDescriptor(textureDescriptor)
+        self.texture = self.context.device.makeTexture(descriptor: textureDescriptor)
         
-        let region = desciption.type == .D1D ? MTLRegionMake2D(0, 0, width, 1) : MTLRegionMake3D(0, 0, 0, width, height, depth);
+        let region = desciption.type == .d1D ? MTLRegionMake2D(0, 0, width, 1) : MTLRegionMake3D(0, 0, 0, width, height, depth);
         
-        self.texture!.replaceRegion(region, mipmapLevel:0, slice:0, withBytes:data.bytes, bytesPerRow:bytesPerRow, bytesPerImage:bytesPerImage)
+        self.texture!.replace(region: region, mipmapLevel:0, slice:0, withBytes:(data as NSData).bytes, bytesPerRow:bytesPerRow, bytesPerImage:bytesPerImage)
     }
     
-    private func updateBytes(inout words:[String], inout isData:Bool, inout dataBytes:NSMutableData, inout description: LutDescription) -> IMPLutStatus {
+    fileprivate func updateBytes(_ words:inout [String], isData:inout Bool, dataBytes:inout NSMutableData, description: inout LutDescription) -> IMPLutStatus {
         
         let keyword = words[0];
         
-        if keyword.uppercaseString.hasPrefix("TITLE") {
+        if keyword.uppercased().hasPrefix("TITLE") {
             description.title = words[1]
         }
-        else if keyword.uppercaseString.hasPrefix("DOMAIN_MIN") {
+        else if keyword.uppercased().hasPrefix("DOMAIN_MIN") {
             if (words.count==4) {
                 var w = [String]()
                 for i in 1..<4 { w.append(words[i])}
                 description.domainMin = float3(colors: w)
             }
             else{
-                return .WRONG_FORMAT
+                return .wrong_FORMAT
             }
         }
-        else if keyword.uppercaseString.hasPrefix("DOMAIN_MAX") {
+        else if keyword.uppercased().hasPrefix("DOMAIN_MAX") {
             if (words.count==4) {
                 var w = [String]()
                 for i in 1..<4 { w.append(words[i])}
                 description.domainMax = float3(colors: w)
             }
             else{
-                return .WRONG_FORMAT
+                return .wrong_FORMAT
             }
         }
-        else if keyword.uppercaseString.hasPrefix("LUT_3D_SIZE") {
+        else if keyword.uppercased().hasPrefix("LUT_3D_SIZE") {
             description.lut3DSize = words[1].intValue
-            description.type = .D3D
+            description.type = .d3D
             if description.lut3DSize < 2 || description.lut3DSize > 256  {
-                return .OUT_RANGE
+                return .out_RANGE
             }
         }
-        else if keyword.uppercaseString.hasPrefix("LUT_1D_SIZE") {
+        else if keyword.uppercased().hasPrefix("LUT_1D_SIZE") {
             description.lut3DSize = words[1].intValue
-            description.type = .D1D
+            description.type = .d1D
             if description.lut3DSize < 2 || description.lut3DSize > 65536  {
-                return .OUT_RANGE
+                return .out_RANGE
             }
         }
-        else if keyword.uppercaseString.hasPrefix("LUT_1D_INPUT_RANGE") {
+        else if keyword.uppercased().hasPrefix("LUT_1D_INPUT_RANGE") {
             if (words.count==3) {
                 
                 let dmin = words[1].floatValue
@@ -237,7 +237,7 @@ public extension IMPImageProvider{
                 description.domainMax = float3(dmax)
             }
             else{
-                return .WRONG_FORMAT
+                return .wrong_FORMAT
             }
         }
         else if isData || keyword.isNumeric {
@@ -248,28 +248,28 @@ public extension IMPImageProvider{
                     ||
                     (description.domainMax.z-description.domainMin.z)<=0
                 ) {
-                    return .WRANG_RANGE
+                    return .wrang_RANGE
             }
             
             isData = true
             
-            let denom:Float = IMProcessing.colors.pixelFormat == .RGBA16Unorm  ? Float(UInt16.max) : Float(UInt8.max)
+            let denom:Float = IMProcessing.colors.pixelFormat == .rgba16Unorm  ? Float(UInt16.max) : Float(UInt8.max)
             
             let rgb    = float3(colors: words)/(description.domainMax.x-description.domainMin.x)*denom
             var color  = float4(rgb:rgb, a: denom)
             
             for i in 0..<4 {
-                if IMProcessing.colors.pixelFormat == .RGBA16Unorm {
+                if IMProcessing.colors.pixelFormat == .rgba16Unorm {
                     var c = UInt16(color[i])
-                    dataBytes.appendBytes(&c, length: sizeofValue(c))
+                    dataBytes.append(&c, length: MemoryLayout.size(ofValue: c))
                 }
                 else {
                     var c = UInt8(color[i])
-                    dataBytes.appendBytes(&c, length: sizeofValue(c))
+                    dataBytes.append(&c, length: MemoryLayout.size(ofValue: c))
                 }
             }
         }
         
-        return .OK
+        return .ok
     }
 }

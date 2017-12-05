@@ -47,7 +47,7 @@ public enum IMProcessing{
     
     public struct colors {
         #if os(iOS)
-        public static let pixelFormat = MTLPixelFormat.RGBA8Unorm
+        public static let pixelFormat = MTLPixelFormat.rgba8Unorm
         #else
         public static let pixelFormat = MTLPixelFormat.RGBA16Unorm
         #endif
@@ -146,7 +146,7 @@ extension IMPRegion: Equatable{
         return NSRect(origin: NSPoint(x:left.cgfloat,y:top.cgfloat), size: NSSize(width: width, height: height))
     }
 
-    public func lerp(final final:IMPRegion, t:Float) -> IMPRegion {
+    public func lerp(final:IMPRegion, t:Float) -> IMPRegion {
         return IMPRegion(left:  left.lerp(  final: final.left,  t: t),
                          right: right.lerp( final: final.right, t: t),
                          top:   top.lerp(   final: final.top,   t: t),
@@ -163,7 +163,7 @@ extension IMPRegion: Equatable{
 }
 
 public extension NSRect {
-    public  init(region region:IMPRegion, inbox box:NSRect) {
+    public  init(region:IMPRegion, inbox box:NSRect) {
         self = NSRect()
         self.origin.x = box.size.width * region.left.cgfloat + box.origin.x
         self.origin.y = box.size.height * region.top.cgfloat + box.origin.y
@@ -231,9 +231,9 @@ public extension MTLTexture{
 }
 
 public extension Array where Element : Equatable {
-    public mutating func removeObject(object : Generator.Element) {
-        if let index = self.indexOf(object) {
-            self.removeAtIndex(index)
+    public mutating func removeObject(_ object : Iterator.Element) {
+        if let index = self.index(of: object) {
+            self.remove(at: index)
         }
     }
 }

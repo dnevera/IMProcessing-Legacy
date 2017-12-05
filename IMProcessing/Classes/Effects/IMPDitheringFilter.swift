@@ -9,33 +9,33 @@
 import Foundation
 import Metal
 
-public class IMPDitheringFilter:IMPFilter,IMPAdjustmentProtocol{
+open class IMPDitheringFilter:IMPFilter,IMPAdjustmentProtocol{
     
-    public var ditheringLut:[[UInt8]] {
+    open var ditheringLut:[[UInt8]] {
         get {
             fatalError("IMPDitheringFilter: ditheringLut must be implemented...")
         }
     }
     
-    public static let defaultAdjustment = IMPAdjustment(
+    open static let defaultAdjustment = IMPAdjustment(
         blending: IMPBlending(mode: NORMAL, opacity: 1))
     
-    public var adjustment:IMPAdjustment!{
+    open var adjustment:IMPAdjustment!{
         didSet{
             updateDitheringLut(&ditherLut)
-            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:sizeofValue(adjustment))
+            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:MemoryLayout.size(ofValue: adjustment))
             self.dirty = true
         }
     }
     
-    public var adjustmentBuffer:MTLBuffer?
-    public var kernel:IMPFunction!
+    open var adjustmentBuffer:MTLBuffer?
+    open var kernel:IMPFunction!
     
     public required init(context: IMPContext) {
         super.init(context: context)
         kernel = IMPFunction(context: self.context, name: "kernel_dithering")
         self.addFunction(kernel)
-        timerBuffer = context.device.newBufferWithLength(sizeof(Float), options: .CPUCacheModeDefaultCache)
+        timerBuffer = context.device.makeBuffer(length: MemoryLayout<Float>.size, options: MTLResourceOptions())
         defer{
             self.adjustment = IMPDitheringFilter.defaultAdjustment
         }
@@ -43,16 +43,16 @@ public class IMPDitheringFilter:IMPFilter,IMPAdjustmentProtocol{
     
     var timerBuffer:MTLBuffer!
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setTexture(ditherLut, atIndex: 2)
-            command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+            command.setTexture(ditherLut, at: 2)
+            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
         }
     }
     
     
     var ditherLut:MTLTexture?
-    func updateDitheringLut(inout lut:MTLTexture?){
+    func updateDitheringLut(_ lut:inout MTLTexture?){
         
         if ditheringLut.count > 256 {
             fatalError("IMPDitheringFilter.ditheringLut length must be less then 256...")
@@ -67,8 +67,8 @@ public class IMPDitheringFilter:IMPFilter,IMPAdjustmentProtocol{
     }
 }
 
-public class IMPBayerDitheringFilter:IMPDitheringFilter{
-    override public var ditheringLut:[[UInt8]] {
+open class IMPBayerDitheringFilter:IMPDitheringFilter{
+    override open var ditheringLut:[[UInt8]] {
         get {
             //
             // https://en.wikipedia.org/wiki/Ordered_dithering
@@ -88,12 +88,12 @@ public class IMPBayerDitheringFilter:IMPDitheringFilter{
     }
 }
 
-public class IMPRandomDitheringFilter:IMPDitheringFilter{
-    override public var ditheringLut:[[UInt8]] {
+open class IMPRandomDitheringFilter:IMPDitheringFilter{
+    override open var ditheringLut:[[UInt8]] {
         get {
-            var data = [[UInt8]](count: 8, repeatedValue: [UInt8](count: 8, repeatedValue: 0))
+            var data = [[UInt8]](repeating: [UInt8](repeating: 0, count: 8), count: 8)
             for i in 0 ..< data.count {
-                SecRandomCopyBytes(kSecRandomDefault, data[i].count, UnsafeMutablePointer<UInt8>(data[i]))
+                SecRandomCopyBytes(kSecRandomDefault, data[i].count, UnsafeMutablePointer<UInt8>(mutating: data[i]))
                 for j in 0 ..< data[i].count {
                     data[i][j] = data[i][j]/4
                 }

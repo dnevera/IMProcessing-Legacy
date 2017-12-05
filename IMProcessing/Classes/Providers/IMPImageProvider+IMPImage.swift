@@ -22,7 +22,7 @@ public extension IMPImageProvider{
         self.update(image: image, maxSize: maxSize, orientation: orientation)
     }
     
-    public func update(image image:IMPImage, maxSize: Float = 0, orientation: IMPImageOrientation? = nil){
+    public func update(image:IMPImage, maxSize: Float = 0, orientation: IMPImageOrientation? = nil){
         #if os(OSX)
             texture = image.newTexture(context, maxSize: maxSize)
         #else 
@@ -33,26 +33,26 @@ public extension IMPImageProvider{
                 }
                 else {
                     texture = transform(source, orientation: image.imageOrientation)
-                    self.orientation = .Up
+                    self.orientation = .up
                 }
             }
         #endif
         completeUpdate()
     }
     
-    public func writeToJpeg(path:String, compression compressionQ:Float) throws {
+    public func writeToJpeg(_ path:String, compression compressionQ:Float) throws {
         if let t = texture {
             var error:NSError?
-            IMPJpegturbo.writeMTLTexture(t, toJpegFile: path, compression: compressionQ.cgfloat, error: &error)
+            IMPJpegturbo.write(t, toJpegFile: path, compression: compressionQ.cgfloat, error: &error)
             if error != nil {
                 throw error!
             }
         }
     }
     
-    public func jpegRepresentation(compression compressionQ:Float) -> NSData? {
+    public func jpegRepresentation(compression compressionQ:Float) -> Data? {
         if let t = texture {
-            return IMPJpegturbo.dataFromMTLTexture(t, compression: compressionQ.cgfloat)
+            return IMPJpegturbo.data(from: t, compression: compressionQ.cgfloat)
         }
         else {
             return nil

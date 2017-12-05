@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class IMPJpegProvider:IMPImageProvider{
+open class IMPJpegProvider:IMPImageProvider{
 
     public convenience init(context: IMPContext, file: String, maxSize: Float = 0, orientation:IMPExifOrientation = IMPExifOrientationUp) throws {
         self.init(context: context)
@@ -16,17 +16,17 @@ public class IMPJpegProvider:IMPImageProvider{
     }
     
     
-    public func updateFromJpeg(file file:String, maxSize: Float = 0, orientation:IMPExifOrientation = IMPExifOrientationUp) throws {
-        let source = try IMPJpegturbo.updateMTLTexture(texture,
-                                                    withPixelFormat: IMProcessing.colors.pixelFormat,
-                                                    withDevice: context.device,
+    open func updateFromJpeg(file:String, maxSize: Float = 0, orientation:IMPExifOrientation = IMPExifOrientationUp) throws {
+        let source = try IMPJpegturbo.update(texture,
+                                                    with: IMProcessing.colors.pixelFormat,
+                                                    with: context.device,
                                                     fromFile: file,
                                                     maxSize: maxSize.cgfloat
         )
         
         texture = transform(source, orientation: orientation)
         
-        self.orientation = .Up
+        self.orientation = .up
         
         completeUpdate()
     }

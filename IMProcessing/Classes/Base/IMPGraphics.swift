@@ -32,27 +32,27 @@ extension IMPGraphicsProvider{
     }
 }
 
-public class IMPGraphics: NSObject, IMPContextProvider {
+open class IMPGraphics: NSObject, IMPContextProvider {
     
-    public let vertexName:String
-    public let fragmentName:String
-    public var context:IMPContext!
+    open let vertexName:String
+    open let fragmentName:String
+    open var context:IMPContext!
     
-    public lazy var library:MTLLibrary = {
+    open lazy var library:MTLLibrary = {
         return self.context.defaultLibrary
     }()
     
-    public lazy var pipeline:MTLRenderPipelineState? = {
+    open lazy var pipeline:MTLRenderPipelineState? = {
         do {
             let renderPipelineDescription = MTLRenderPipelineDescriptor()
             
             renderPipelineDescription.vertexDescriptor = self.vertexDescriptor 
             
             renderPipelineDescription.colorAttachments[0].pixelFormat = IMProcessing.colors.pixelFormat
-            renderPipelineDescription.vertexFunction   = self.context.defaultLibrary.newFunctionWithName(self.vertexName)
-            renderPipelineDescription.fragmentFunction = self.context.defaultLibrary.newFunctionWithName(self.fragmentName)
+            renderPipelineDescription.vertexFunction   = self.context.defaultLibrary.makeFunction(name: self.vertexName)
+            renderPipelineDescription.fragmentFunction = self.context.defaultLibrary.makeFunction(name: self.fragmentName)
             
-            return try self.context.device.newRenderPipelineStateWithDescriptor(renderPipelineDescription)
+            return try self.context.device.makeRenderPipelineState(descriptor: renderPipelineDescription)
         }
         catch let error as NSError{
             fatalError(" *** IMPGraphics: \(error)")
@@ -68,19 +68,19 @@ public class IMPGraphics: NSObject, IMPContextProvider {
     
     lazy var _defaultVertexDescriptor:MTLVertexDescriptor = {
         var v = MTLVertexDescriptor()
-        v.attributes[0].format = .Float3;
+        v.attributes[0].format = .float3;
         v.attributes[0].bufferIndex = 0;
         v.attributes[0].offset = 0;
-        v.attributes[1].format = .Float3;
+        v.attributes[1].format = .float3;
         v.attributes[1].bufferIndex = 0;
-        v.attributes[1].offset = sizeof(float3);  
-        v.layouts[0].stride = sizeof(IMPVertex) 
+        v.attributes[1].offset = MemoryLayout<float3>.size;  
+        v.layouts[0].stride = MemoryLayout<IMPVertex>.size 
         
         return v
     }()
     
     var _vertexDescriptor:MTLVertexDescriptor? 
-    public var vertexDescriptor:MTLVertexDescriptor {
+    open var vertexDescriptor:MTLVertexDescriptor {
         return _vertexDescriptor ?? _defaultVertexDescriptor
     }     
 }

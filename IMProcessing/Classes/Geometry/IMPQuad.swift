@@ -51,7 +51,7 @@ public struct IMPLineSegment {
         return f
     }
     
-    public func determinants(line line:IMPLineSegment) -> (D:Float,Dx:Float,Dy:Float){
+    public func determinants(line:IMPLineSegment) -> (D:Float,Dx:Float,Dy:Float){
         return determinants(standardForm: line.standardForm)
     }
     
@@ -98,7 +98,7 @@ public struct IMPLineSegment {
         self.p1 = float2(p1.x,p1.y)
     }
     
-    public func contains(point point:float2) -> Bool {
+    public func contains(point:float2) -> Bool {
         return abs(float3x3(rows: [
             float3(point.x,point.y,1),
             float3(p0.x,p0.y,1),
@@ -106,7 +106,7 @@ public struct IMPLineSegment {
             ]).determinant) <= IMPMinimumPoint
     }
         
-    public func normalIntersection(point point:float2) -> float2 {
+    public func normalIntersection(point:float2) -> float2 {
         //
         // Solve equations:
         //
@@ -127,7 +127,7 @@ public struct IMPLineSegment {
     }
 
     
-    public func distanceTo(point point:float2) -> float2 {
+    public func distanceTo(point:float2) -> float2 {
         return normalIntersection(point: point) - point
     }
     
@@ -137,11 +137,11 @@ public struct IMPLineSegment {
             return distance(p0,p)
         }
         else {
-            return Float.NaN
+            return Float.nan
         }
     }
     
-    public func crossPoint(line line:IMPLineSegment) -> float2 {
+    public func crossPoint(line:IMPLineSegment) -> float2 {
         //
         // a1*x + b1*y = c1 - self line
         // a2*x + b2*y = c2 - another line
@@ -182,17 +182,17 @@ public struct IMPTriangle {
         self.p1 = float2(p1.x*aspect,p1.y)
     }
     
-    public func contains(point:float2) -> Bool {
+    public func contains(_ point:float2) -> Bool {
         return IMPLineSegment(p0: p0, p1: pc).contains(point: point) || IMPLineSegment(p0: pc, p1: p1).contains(point: point)
     }
     
-    public func normalIntersections(point point:float2) -> [float2] {
+    public func normalIntersections(point:float2) -> [float2] {
         let line0 = IMPLineSegment(p0: p0, p1: pc)
         let line1 = IMPLineSegment(p0: p1, p1: pc)
         return [line0.normalIntersection(point: point), line1.normalIntersection(point: point)]
     }
     
-    public func distancesTo(point point:float2) -> [float2] {
+    public func distancesTo(point:float2) -> [float2] {
         let line0 = IMPLineSegment(p0: p0, p1: pc)
         let line1 = IMPLineSegment(p0: p1, p1: pc)
         return [line0.distanceTo(point: point),line1.distanceTo(point: point)]
@@ -233,7 +233,7 @@ public struct IMPQuad {
     
     public static let null = IMPQuad(left_bottom: float2(0), left_top: float2(0), right_bottom: float2(0), right_top: float2(0))
     
-    public func lerp(final final:IMPQuad, t:Float) -> IMPQuad {
+    public func lerp(final:IMPQuad, t:Float) -> IMPQuad {
         let lb = left_bottom.lerp(final: final.left_bottom, t: t)
         let lt = left_top.lerp(final: final.left_top, t: t)
         let rt = right_top.lerp(final: final.right_top, t: t)
@@ -292,7 +292,7 @@ public struct IMPQuad {
     ///  Crop quad
     ///
     ///  - parameter region: rectangle region
-    public mutating func crop(region region:IMPRegion){
+    public mutating func crop(region:IMPRegion){
         left_bottom.x = left_bottom.x * (1-2*region.left)
         left_bottom.y = left_bottom.y * (1-2*region.bottom)
         
@@ -315,7 +315,7 @@ public struct IMPQuad {
         }
     }
     
-    private mutating func setAspect(ratio ratio:Float){
+    fileprivate mutating func setAspect(ratio:Float){
         left_bottom.x *= ratio
         left_top.x *= ratio
         right_top.x *= ratio
@@ -359,7 +359,7 @@ public struct IMPQuad {
     ///  - parameter point: point coords
     ///
     ///  - returns: result
-    public func contains(point point:float2) -> Bool {
+    public func contains(point:float2) -> Bool {
         return pnpoly(point:point)
     }
 
@@ -368,7 +368,7 @@ public struct IMPQuad {
     ///  - parameter point: point coords
     ///
     ///  - returns: result
-    public func containsRect(point point:float2) -> Bool {
+    public func containsRect(point:float2) -> Bool {
         if point.x>=left_bottom.x-IMPMinimumPoint && point.y>=left_bottom.y-IMPMinimumPoint {
             if point.x>=left_top.x-IMPMinimumPoint && point.y<=left_top.y+IMPMinimumPoint {
                 if point.x<=right_top.x+IMPMinimumPoint && point.y<=right_top.y+IMPMinimumPoint {
@@ -382,7 +382,7 @@ public struct IMPQuad {
     }
     
     
-    public func intersects(quad quad:IMPQuad) -> Bool {
+    public func intersects(quad:IMPQuad) -> Bool {
         for i in 0..<4{
             let line = IMPLineSegment(p0: self[i], p1: self[i+1])
             for j in 0..<4{
@@ -402,7 +402,7 @@ public struct IMPQuad {
     ///  - parameter quad: another quad
     ///
     ///  - returns: translation (offset) vector
-    public func translation(quad quad:IMPQuad) -> float2 {
+    public func translation(quad:IMPQuad) -> float2 {
                 
         let distances = insetCornerDistances(quad: quad)
         
@@ -428,7 +428,7 @@ public struct IMPQuad {
     ///
     ///  - returns: triangles 
     ///
-    public func insetTriangles(quad quad:IMPQuad) -> [IMPTriangle] {
+    public func insetTriangles(quad:IMPQuad) -> [IMPTriangle] {
         
         var triangles = [IMPTriangle]()
         
@@ -469,7 +469,7 @@ public struct IMPQuad {
     
     
     // MARK - utils
-    func insetCornerDistances(quad quad:IMPQuad) -> [float2] {
+    func insetCornerDistances(quad:IMPQuad) -> [float2] {
         var a = [float2]()
         
         for i in 0..<4 {
@@ -517,7 +517,7 @@ public struct IMPQuad {
         return a
     }
   
-    func getInPlaceDistance(points:[float2], base:float2) -> [float2] {
+    func getInPlaceDistance(_ points:[float2], base:float2) -> [float2] {
         var a    = [float2]()
         for p in points {
             if contains(point: p) {
@@ -528,7 +528,7 @@ public struct IMPQuad {
         return a
     }
     
-    func pnpoly(point point:float2) -> Bool {
+    func pnpoly(point:float2) -> Bool {
         
         var c = false
         let x = point.x

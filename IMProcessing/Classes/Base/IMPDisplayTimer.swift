@@ -13,29 +13,29 @@
     import Cocoa
 #endif
 
-public typealias IMPTimingFunction = ((t:Float) -> Float)
+public typealias IMPTimingFunction = ((_ t:Float) -> Float)
 
-public class IMPMediaTimingFunction {
+open class IMPMediaTimingFunction {
     let function:CAMediaTimingFunction
     
-    var controls = [float2](count: 3, repeatedValue: float2(0))
+    var controls = [float2](repeating: float2(0), count: 3)
     
     public init(name: String) {
         function = CAMediaTimingFunction(name: name)
         for i in 0..<3 {
-            var coords = [Float](count: 2, repeatedValue: 0)
-            function.getControlPointAtIndex(i, values: &coords)
+            var coords = [Float](repeating: 0, count: 2)
+            function.getControlPoint(at: i, values: &coords)
             controls[i] = float2(coords)
         }
     }
     
-    public var c0:float2 {
+    open var c0:float2 {
         return controls[0]
     }
-    public var c1:float2 {
+    open var c1:float2 {
         return controls[1]
     }
-    public var c2:float2 {
+    open var c2:float2 {
         return controls[2]
     }
     
@@ -49,26 +49,26 @@ public class IMPMediaTimingFunction {
 
 public enum IMPTimingCurve: Float {
     
-    case Default
-    case Linear
-    case EaseIn
-    case EaseOut
-    case EaseInOut
+    case `default`
+    case linear
+    case easeIn
+    case easeOut
+    case easeInOut
     
     public var function:IMPTimingFunction {
         var curveFunction:IMPMediaTimingFunction
         
         switch self {
-        case .Linear:
+        case .linear:
             return {(t) in return t}
-        case .Default:
+        case .default:
             curveFunction = IMPMediaTimingFunction.Default
             
-        case .EaseIn:
+        case .easeIn:
             curveFunction = IMPMediaTimingFunction.EaseIn
-        case .EaseOut:
+        case .easeOut:
             curveFunction = IMPMediaTimingFunction.EaseOut
-        case .EaseInOut:
+        case .easeInOut:
             curveFunction = IMPMediaTimingFunction.EaseInOut
         }
         
@@ -78,24 +78,24 @@ public enum IMPTimingCurve: Float {
     }
 }
 
-public class IMPDisplayTimer:NSObject {
+open class IMPDisplayTimer:NSObject {
     
     public enum UpdateCurveOptions{
-        case Linear
-        case EaseIn
-        case EaseOut
-        case EaseInOut
-        case Decelerate
+        case linear
+        case easeIn
+        case easeOut
+        case easeInOut
+        case decelerate
     }
     
-    public typealias UpdateHandler   = ((atTime:NSTimeInterval)->Void)
-    public typealias CompleteHandler = ((flag:Bool)->Void)
+    public typealias UpdateHandler   = ((_ atTime:TimeInterval)->Void)
+    public typealias CompleteHandler = ((_ flag:Bool)->Void)
     
     
-    public static func execute(duration duration: NSTimeInterval,
-                                        options:IMPTimingCurve = .Default,
+    open static func execute(duration: TimeInterval,
+                                        options:IMPTimingCurve = .default,
                                         resolution:Int = 20,
-                                        update:UpdateHandler,
+                                        update:@escaping UpdateHandler,
                                         complete:CompleteHandler? = nil) -> IMPDisplayTimer {
         
         let timer = IMPDisplayTimer(duration: duration,
@@ -109,42 +109,42 @@ public class IMPDisplayTimer:NSObject {
     }
 
     
-    public static func cancelAll() {
+    open static func cancelAll() {
         while let t = IMPDisplayTimer.timerList.last {
             t.cancel()
         }
     }
 
-    public static func invalidateAll() {
+    open static func invalidateAll() {
         while let t = IMPDisplayTimer.timerList.last {
             t.invalidate()
         }
     }
 
-    public func cancel() {
+    open func cancel() {
         stop(true)
     }
 
-    public func invalidate() {
+    open func invalidate() {
         stop(false)
     }
     
     static var timerList = [IMPDisplayTimer]()
     
     var timingFunction:IMPTimingFunction
-    var timeElapsed:NSTimeInterval = 0
+    var timeElapsed:TimeInterval = 0
     
     let updateHandler:UpdateHandler
     let completeHandler:CompleteHandler?
-    let duration:NSTimeInterval
+    let duration:TimeInterval
     let resulution:Int
     var timer:IMPRTTimer? = nil
     
     
-    private init(duration:NSTimeInterval,
-                 timingFunction:IMPTimingFunction,
+    fileprivate init(duration:TimeInterval,
+                 timingFunction:@escaping IMPTimingFunction,
                  resolution r:Int,
-                 update:UpdateHandler,
+                 update:@escaping UpdateHandler,
                  complete:CompleteHandler?){
         self.resulution = r
         self.duration = duration
@@ -154,8 +154,8 @@ public class IMPDisplayTimer:NSObject {
     }
     
     func removeFromList()  {
-        if let index = IMPDisplayTimer.timerList.indexOf(self) {
-            IMPDisplayTimer.timerList.removeAtIndex(index)
+        if let index = IMPDisplayTimer.timerList.index(of: self) {
+            IMPDisplayTimer.timerList.remove(at: index)
         }
     }
     
@@ -173,9 +173,9 @@ public class IMPDisplayTimer:NSObject {
                     return
                 }
                 
-                self.timeElapsed +=  NSTimeInterval(duration)/NSTimeInterval(IMPRTTimer.nanos_per_sec)
+                self.timeElapsed +=  TimeInterval(duration)/TimeInterval(IMPRTTimer.nanos_per_sec)
                 let atTime = (self.timeElapsed/self.duration).float
-                self.updateHandler(atTime:  NSTimeInterval(self.timingFunction(t: atTime > 1 ? 1 : atTime)))
+                self.updateHandler(TimeInterval(self.timingFunction(atTime > 1 ? 1 : atTime)))
             })
             
             self.timer?.start()
@@ -185,13 +185,13 @@ public class IMPDisplayTimer:NSObject {
         }
     }
     
-    func stop(flag:Bool) {
+    func stop(_ flag:Bool) {
         removeFromList()
         timer?.stop()
         timer = nil
         if let c = self.completeHandler {
-            dispatch_async(dispatch_get_main_queue()) {
-                c(flag: flag)
+            DispatchQueue.main.async {
+                c(flag)
             }
         }
     }

@@ -8,7 +8,7 @@
 
 import Accelerate
 
-public class IMPHistogramZonesSolver: NSObject, IMPHistogramSolver {
+open class IMPHistogramZonesSolver: NSObject, IMPHistogramSolver {
     
     public struct Zones{
         
@@ -16,7 +16,7 @@ public class IMPHistogramZonesSolver: NSObject, IMPHistogramSolver {
         public static let indices  = [0, 1, 33, 57,  72, 94, 118, 143, 169,  197, 225, 255]
         
         /// Zone steps
-        public var steps    = [Float](count: Zones.indices.count, repeatedValue: 0)
+        public var steps    = [Float](repeating: 0, count: Zones.indices.count)
         
         /// Balance
         public var balance  = float3(0)
@@ -29,7 +29,7 @@ public class IMPHistogramZonesSolver: NSObject, IMPHistogramSolver {
         
         public init() {}
         
-        public mutating func update(inout histogram:[Float], binCount:Float){
+        public mutating func update(_ histogram:inout [Float], binCount:Float){
             
             var zone_value:Float = 0
             
@@ -65,25 +65,25 @@ public class IMPHistogramZonesSolver: NSObject, IMPHistogramSolver {
             range = range.normalized()
         }
         
-        static let line =  Float.range(0...255, scale: 1)
+        static let line: [Float] =  (0...255).map { Float($0) }
         
         var shadowsWeights    = Zones.line.gaussianDistribution(fi:1, mu: 0,   sigma: 0.1)
         var midWeights        = Zones.line.gaussianDistribution(fi:1, mu: 0.5, sigma: 0.1)
         var highlightsWeights = Zones.line.gaussianDistribution(fi:1, mu: 1.0, sigma: 0.2)
         
-        func subzoneSum(inout histogram:[Float], inout multiply:[Float]) -> Float {
+        func subzoneSum(_ histogram:inout [Float], multiply:inout [Float]) -> Float {
             var sum:Float = 0
-            var tmp = [Float](count: multiply.count, repeatedValue: 0)
+            var tmp = [Float](repeating: 0, count: multiply.count)
             vDSP_vmul(histogram, 1, multiply, 1, &tmp, 1, vDSP_Length(multiply.count))
             vDSP_sve(tmp, 1, &sum, vDSP_Length(multiply.count))
             return sum
         }
     }
     
-    public var zones = Zones()
+    open var zones = Zones()
     
-    public func analizerDidUpdate(analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
-        var h = histogram[.W]
-        zones.update(&h, binCount: histogram.binCount(.W))
+    open func analizerDidUpdate(_ analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
+        var h = histogram[.w]
+        zones.update(&h, binCount: histogram.binCount(.w))
     }
 }

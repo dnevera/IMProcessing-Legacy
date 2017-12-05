@@ -9,22 +9,22 @@
 import Metal
 
 /// 3D Node rendering
-public class IMPRenderNode: IMPContextProvider {
+open class IMPRenderNode: IMPContextProvider {
     
     public enum ReflectMode {
-        case Mirroring
-        case None
+        case mirroring
+        case none
     }    
     
-    public var context:IMPContext!
+    open var context:IMPContext!
     
-    public var model:IMPTransfromModel {
+    open var model:IMPTransfromModel {
         get{
             return currentMatrixModel
         }
     }
 
-    public var identityModel:IMPTransfromModel {
+    open var identityModel:IMPTransfromModel {
         get{
             var matrix = matrixIdentityModel
             matrix.projection.aspect = aspect
@@ -38,14 +38,14 @@ public class IMPRenderNode: IMPContextProvider {
         }
     }
 
-    public var aspect = Float(1) {
+    open var aspect = Float(1) {
         didSet{
             updateMatrixModel(currentDestinationSize)
         }
     }
     
     /// Angle in radians which node rotation in scene
-    public var angle = float3(0) {
+    open var angle = float3(0) {
         didSet{
             updateMatrixModel(currentDestinationSize)
         }
@@ -53,38 +53,38 @@ public class IMPRenderNode: IMPContextProvider {
     
     
     /// Node scale
-    public var scale = float3(1){
+    open var scale = float3(1){
         didSet{
             updateMatrixModel(currentDestinationSize)
         }
     }
     
     ///
-    public var rotationPoint = float2(0) {
+    open var rotationPoint = float2(0) {
         didSet {
             updateMatrixModel(currentDestinationSize)
         }
     }
     
     /// Node translation
-    public var translation = float2(0){
+    open var translation = float2(0){
         didSet{
             updateMatrixModel(currentDestinationSize)
         }
     }
     
     /// Field of view in radians
-    public var fovy:Float = M_PI.float/2{
+    open var fovy:Float = M_PI.float/2{
         didSet{
             updateMatrixModel(currentDestinationSize)
         }
     }
     
     /// Flip mode
-    public var reflectMode:(horizontal:ReflectMode, vertical:ReflectMode) = (horizontal:.None, vertical:.None) {
+    open var reflectMode:(horizontal:ReflectMode, vertical:ReflectMode) = (horizontal:.none, vertical:.none) {
         didSet{
             switch reflectMode.horizontal {
-            case .Mirroring:
+            case .mirroring:
                 reflectionVector.x =  1
                 reflectionVector.y = -1
             default:
@@ -92,7 +92,7 @@ public class IMPRenderNode: IMPContextProvider {
                 reflectionVector.y =  1
             }
             switch reflectMode.vertical {
-            case .Mirroring:
+            case .mirroring:
                 reflectionVector.z =  1
                 reflectionVector.w = -1
             default:
@@ -117,12 +117,12 @@ public class IMPRenderNode: IMPContextProvider {
     ///  - parameter pipelineState: graphics pipeline
     ///  - parameter source:        source texture
     ///  - parameter destination:   destination texture
-    public func render(commandBuffer: MTLCommandBuffer,
+    open func render(_ commandBuffer: MTLCommandBuffer,
                        pipelineState: MTLRenderPipelineState,
                        source: IMPImageProvider,
                        destination: IMPImageProvider,
                        clearColor:MTLClearColor = MTLClearColor(red: 1, green: 1, blue: 1, alpha: 1),
-                       configure: ((command:MTLRenderCommandEncoder)->Void)?=nil
+                       configure: ((_ command:MTLRenderCommandEncoder)->Void)?=nil
         ) {
         
         currentDestination = destination
@@ -134,12 +134,12 @@ public class IMPRenderNode: IMPContextProvider {
         }
      }
     
-    public func render(commandBuffer:  MTLCommandBuffer,
+    open func render(_ commandBuffer:  MTLCommandBuffer,
                        pipelineState: MTLRenderPipelineState,
                        source: MTLTexture,
                        destination: MTLTexture,
                        clearColor:MTLClearColor = MTLClearColor(red: 1, green: 1, blue: 1, alpha: 1),
-                       configure: ((command:MTLRenderCommandEncoder)->Void)?=nil
+                       configure: ((_ command:MTLRenderCommandEncoder)->Void)?=nil
         ) {
         
         
@@ -150,33 +150,33 @@ public class IMPRenderNode: IMPContextProvider {
         currentDestinationSize = MTLSize(width: width,height: height,depth:depth)
         
         renderPassDescriptor.colorAttachments[0].texture = destination
-        renderPassDescriptor.colorAttachments[0].loadAction = .Clear
+        renderPassDescriptor.colorAttachments[0].loadAction = .clear
         renderPassDescriptor.colorAttachments[0].clearColor = clearColor
-        renderPassDescriptor.colorAttachments[0].storeAction = .Store
+        renderPassDescriptor.colorAttachments[0].storeAction = .store
         
-        let renderEncoder = commandBuffer.renderCommandEncoderWithDescriptor(renderPassDescriptor)
+        let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         
-        renderEncoder.setCullMode(.Front)
+        renderEncoder.setCullMode(.front)
         
         renderEncoder.setRenderPipelineState(pipelineState)
         
-        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, atIndex: 0)
-        renderEncoder.setVertexBuffer(matrixBuffer, offset: 0, atIndex: 1)
+        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, at: 0)
+        renderEncoder.setVertexBuffer(matrixBuffer, offset: 0, at: 1)
         
-        renderEncoder.setFragmentBuffer(flipVectorBuffer, offset: 0, atIndex: 0)
-        renderEncoder.setFragmentTexture(source, atIndex:0)
+        renderEncoder.setFragmentBuffer(flipVectorBuffer, offset: 0, at: 0)
+        renderEncoder.setFragmentTexture(source, at:0)
         
         if let configure = configure {
-            configure(command: renderEncoder)
+            configure(renderEncoder)
         }
         
-        renderEncoder.drawPrimitives(.Triangle, vertexStart: 0, vertexCount: vertices.count, instanceCount: vertices.count/3)
+        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertices.count, instanceCount: vertices.count/3)
         renderEncoder.endEncoding()
     }
     
-    public var vertices:IMPVertices! {
+    open var vertices:IMPVertices! {
         didSet{
-            vertexBuffer = context.device.newBufferWithBytes(vertices.raw, length: vertices.length, options: .CPUCacheModeDefaultCache)
+            vertexBuffer = context.device.makeBuffer(bytes: vertices.raw, length: vertices.length, options: MTLResourceOptions())
         }
     }
     
@@ -197,7 +197,7 @@ public class IMPRenderNode: IMPContextProvider {
     var reflectionVector = float4(0,1,0,1)
     
     lazy var _reflectionVectorBuffer:MTLBuffer = {
-        return self.context.device.newBufferWithLength(sizeof(float4), options: .CPUCacheModeDefaultCache)
+        return self.context.device.makeBuffer(length: MemoryLayout<float4>.size, options: MTLResourceOptions())
     }()
     
     var flipVectorBuffer:MTLBuffer {
@@ -224,7 +224,7 @@ public class IMPRenderNode: IMPContextProvider {
         }
     }
     
-    func updateMatrixModel(size:MTLSize) -> IMPTransfromModel  {
+    func updateMatrixModel(_ size:MTLSize) -> IMPTransfromModel  {
         
         var matrix = matrixIdentityModel
         
@@ -243,6 +243,6 @@ public class IMPRenderNode: IMPContextProvider {
     }
     
     lazy var matrixBuffer: MTLBuffer = {
-        return self.context.device.newBufferWithLength(sizeof(float4x4), options: .CPUCacheModeDefaultCache)
+        return self.context.device.makeBuffer(length: MemoryLayout<float4x4>.size, options: MTLResourceOptions())
     }()
 }

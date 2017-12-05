@@ -16,7 +16,7 @@ import simd
 ///
 /// Солвер вычисляет диапазон интенсивностей для интересных нам условий клиппинга.
 ///
-public class IMPHistogramRangeSolver: NSObject, IMPHistogramSolver {
+open class IMPHistogramRangeSolver: NSObject, IMPHistogramSolver {
     
     public struct clippingType {
         ///
@@ -29,18 +29,18 @@ public class IMPHistogramRangeSolver: NSObject, IMPHistogramSolver {
         public var highlights:Float = 0.1/100.0
     }
     
-    public var clipping = clippingType()
+    open var clipping = clippingType()
     
     ///
     /// Минимальная интенсивность в пространстве RGB(Y)
     ///
-    public var minimum = float4()
+    open var minimum = float4()
     ///
     /// Максимальная интенсивность в пространстве RGB(Y)
     ///
-    public var maximum = float4()
+    open var maximum = float4()
     
-    public func analizerDidUpdate(analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
+    open func analizerDidUpdate(_ analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
         for i in 0..<histogram.channels.count{
             let index = IMPHistogram.ChannelNo(rawValue: i)!
             minimum[i] = histogram.low(channel: index, clipping: clipping.shadows)

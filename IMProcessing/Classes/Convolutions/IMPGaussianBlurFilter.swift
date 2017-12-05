@@ -9,19 +9,19 @@
 import Accelerate
 import simd
 
-public class IMPGaussianBlurFilter: IMPFilter {
+open class IMPGaussianBlurFilter: IMPFilter {
     
-    public static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
+    open static let defaultAdjustment = IMPAdjustment(blending: IMPBlending(mode: NORMAL, opacity: 1))
     
-    public var adjustment:IMPAdjustment!{
+    open var adjustment:IMPAdjustment!{
         didSet{
-            adjustmentBuffer = adjustmentBuffer ?? context.device.newBufferWithLength(sizeofValue(adjustment), options: .CPUCacheModeDefaultCache)
+            adjustmentBuffer = adjustmentBuffer ?? context.device.makeBuffer(length: MemoryLayout.size(ofValue: adjustment), options: MTLResourceOptions())
             memcpy(adjustmentBuffer.contents(), &adjustment, adjustmentBuffer.length)
             dirty = true
         }
     }
     
-    public var radius:Int!{
+    open var radius:Int!{
         didSet{
             update()
             dirty = true
@@ -46,17 +46,17 @@ public class IMPGaussianBlurFilter: IMPFilter {
     var weightsTexure:MTLTexture!
     var offsetsTexture:MTLTexture!
     
-    func create1DTexture(buffer:[Float]) -> MTLTexture {
+    func create1DTexture(_ buffer:[Float]) -> MTLTexture {
         let weightsDescription = MTLTextureDescriptor()
         
-        weightsDescription.textureType = .Type1D
-        weightsDescription.pixelFormat = .R32Float
+        weightsDescription.textureType = .type1D
+        weightsDescription.pixelFormat = .r32Float
         weightsDescription.width       = buffer.count
         weightsDescription.height      = 1
         weightsDescription.depth       = 1
         
-        let texture = context.device.newTextureWithDescriptor(weightsDescription)
-        texture.replaceRegion(MTLRegionMake1D(0, buffer.count), mipmapLevel: 0, withBytes: buffer, bytesPerRow: sizeof(Float32)*buffer.count)
+        let texture = context.device.makeTexture(descriptor: weightsDescription)
+        texture.replace(region: MTLRegionMake1D(0, buffer.count), mipmapLevel: 0, withBytes: buffer, bytesPerRow: MemoryLayout<Float32>.size*buffer.count)
         return texture
     }
     
@@ -82,22 +82,22 @@ public class IMPGaussianBlurFilter: IMPFilter {
         }
     }
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if function == horizontal_pass_kernel || function == vertical_pass_kernel {
-            command.setTexture(weightsTexure, atIndex: 2)
-            command.setTexture(offsetsTexture, atIndex: 3)
+            command.setTexture(weightsTexure, at: 2)
+            command.setTexture(offsetsTexture, at: 3)
             if function == vertical_pass_kernel{
-                command.setTexture(source?.texture, atIndex: 4)
-                command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+                command.setTexture(source?.texture, at: 4)
+                command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
             }
         }
     }
 }
 
 
-extension CollectionType where Generator.Element == Float {
+extension Collection where Iterator.Element == Float {
     
-    func drop(threshold threshold: Float) -> [Float] {
+    func drop(threshold: Float) -> [Float] {
         var collection = [Float]()
         for i in self {
             if i > threshold{
@@ -110,7 +110,7 @@ extension CollectionType where Generator.Element == Float {
     var gaussianInputs:[Float]{
         get{
             var oneSideInputs = [Float]()
-            for i in (count/2 as! Int).stride(through: 0, by: -1) {
+            for i in stride(from: (count/2 as! Int), through: 0, by: -1) {
   
                 if i == count as! Int/2  {
                     oneSideInputs.append(self[i as! Self.Index] * 0.5)
@@ -137,7 +137,7 @@ extension CollectionType where Generator.Element == Float {
         }
     }
     
-    func gaussianOffsets(weights:[Float]) -> [Float]{
+    func gaussianOffsets(_ weights:[Float]) -> [Float]{
         var offsets = [Float]()
         let numSamples = self.count as! Int/2
         for i in 0 ..< numSamples  {

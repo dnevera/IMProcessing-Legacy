@@ -10,39 +10,39 @@ import Foundation
 import Metal
 import Accelerate
 
-public class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
+open class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
     
-    public class Splines: IMPTextureProvider,IMPContextProvider {
+    open class Splines: IMPTextureProvider,IMPContextProvider {
         
-        public var context:IMPContext!
+        open var context:IMPContext!
         
-        public static let scale:Float    = 1
-        public static let minValue = 0
-        public static let maxValue = 255
-        public static let defaultControls = [float2(minValue.float,minValue.float),float2(maxValue.float,maxValue.float)]
-        public static let defaultRange    = Float.range(0..<maxValue)
-        public static let defaultCurve    = defaultRange.cubicSpline(defaultControls, scale: scale) as [Float]
+        open static let scale:Float    = 1
+        open static let minValue = 0
+        open static let maxValue = 255
+        open static let defaultControls = [float2(minValue.float,minValue.float),float2(maxValue.float,maxValue.float)]
+        open static let defaultRange    = Float.range(0..<maxValue)
+        open static let defaultCurve    = defaultRange.cubicSpline(defaultControls, scale: scale) as [Float]
 
         var _redCurve:[Float]   = Splines.defaultCurve
         var _greenCurve:[Float] = Splines.defaultCurve
         var _blueCurve:[Float]  = Splines.defaultCurve
         
         
-        func newGaussKernel(radius:Int) -> [Float] {
+        func newGaussKernel(_ radius:Int) -> [Float] {
             if radius < 2 {
                 return []
             }
             let sigma:Float = 0.5
             let mu:Float = 0.5
             let fi:Float = 1 //(sigma*sqrt(2*M_PI.float))
-            return IMPHistogram(gauss: fi, mu: [mu], sigma: [sigma], size: radius, type: .PLANAR)[.X]
+            return IMPHistogram(gauss: fi, mu: [mu], sigma: [sigma], size: radius, type: .planar)[.x]
         }
         
         lazy var curveGaussFilter:[Float] = {
             return self.newGaussKernel(self.blurRadius)
         }()
         
-        public var blurRadius:Int = 0 {
+        open var blurRadius:Int = 0 {
             didSet{
                 doNotUpdate = true
                 curveGaussFilter = newGaussKernel(blurRadius)
@@ -51,29 +51,29 @@ public class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
             }
         }
         
-        public var channelCurves:[[Float]]{
+        open var channelCurves:[[Float]]{
             get{
                 return [_redCurve,_greenCurve,_blueCurve]
             }
         }
-        public var redCurve:[Float]{
+        open var redCurve:[Float]{
             get{
                 return _redCurve
             }
         }
-        public var greenCurve:[Float]{
+        open var greenCurve:[Float]{
             get{
                 return _greenCurve
             }
         }
-        public var blueCurve:[Float]{
+        open var blueCurve:[Float]{
             get{
                 return _blueCurve
             }
         }
         
         var doNotUpdate = false
-        public var redControls   = Splines.defaultControls {
+        open var redControls   = Splines.defaultControls {
             didSet{
                 _redCurve = Splines.defaultRange.cubicSpline(redControls, scale: Splines.scale) as [Float]
                 if curveGaussFilter.count > 0 {
@@ -84,7 +84,7 @@ public class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
                 }
             }
         }
-        public var greenControls = Splines.defaultControls{
+        open var greenControls = Splines.defaultControls{
             didSet{
                 _greenCurve = Splines.defaultRange.cubicSpline(greenControls, scale: Splines.scale) as [Float]
                 if curveGaussFilter.count > 0 {
@@ -95,7 +95,7 @@ public class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
                 }
             }
         }
-        public var blueControls  = Splines.defaultControls{
+        open var blueControls  = Splines.defaultControls{
             didSet{
                 _blueCurve = Splines.defaultRange.cubicSpline(blueControls, scale: Splines.scale) as [Float]
                 if curveGaussFilter.count > 0 {
@@ -106,7 +106,7 @@ public class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
                 }
             }
         }
-        public var compositeControls = Splines.defaultControls{
+        open var compositeControls = Splines.defaultControls{
             didSet{
                 doNotUpdate = true
                 redControls   = compositeControls
@@ -117,8 +117,8 @@ public class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
             }
         }
         
-        public var texture:MTLTexture?
-        public var filter:IMPFilter?
+        open var texture:MTLTexture?
+        open var filter:IMPFilter?
         
         public required init(context:IMPContext){
             self.context = context
@@ -141,20 +141,20 @@ public class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
     }
     
     
-    public static let defaultAdjustment = IMPAdjustment(
+    open static let defaultAdjustment = IMPAdjustment(
         blending: IMPBlending(mode: IMPBlendingMode.LUMNINOSITY, opacity: 1))
     
-    public var adjustment:IMPAdjustment!{
+    open var adjustment:IMPAdjustment!{
         didSet{
-            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:sizeofValue(adjustment))
+            self.updateBuffer(&adjustmentBuffer, context:context, adjustment:&adjustment, size:MemoryLayout.size(ofValue: adjustment))
             self.dirty = true
         }
     }
     
-    public var adjustmentBuffer:MTLBuffer?
-    public var kernel:IMPFunction!
+    open var adjustmentBuffer:MTLBuffer?
+    open var kernel:IMPFunction!
     
-    public var splines:Splines!
+    open var splines:Splines!
     
     public required init(context: IMPContext) {
         super.init(context: context)
@@ -167,17 +167,17 @@ public class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
         }
     }
     
-    public override func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setTexture(splines.texture, atIndex: 2)
-            command.setBuffer(adjustmentBuffer, offset: 0, atIndex: 0)
+            command.setTexture(splines.texture, at: 2)
+            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
         }
     }
 }
 
-extension _ArrayType where Generator.Element == Float {
+extension Array where Iterator.Element == Float {
     
-    public mutating func convolve(filter:[Float], scale:Float=1) -> [Float]{
+    public mutating func convolve(_ filter:[Float], scale:Float=1) -> [Float]{
         
         if filter.count == 0 {
             return []
@@ -187,8 +187,8 @@ extension _ArrayType where Generator.Element == Float {
         
         let halfs = vDSP_Length(filter.count)
         var asize = count+filter.count*2
-        var addata = [Float](count: asize, repeatedValue: 0)
-        var tempBuffer = [Float](count: asize, repeatedValue: 0)
+        var addata = [Float](repeating: 0, count: asize)
+        var tempBuffer = [Float](repeating: 0, count: asize)
         var one:Float = 1
         var cp:Float  = 0.5
         var sindex:vDSP_Length = 128;
@@ -205,10 +205,11 @@ extension _ArrayType where Generator.Element == Float {
         vDSP_vsadd(&addata, 1, &zero, &addata, 1, vDSP_Length(filter.count))
         
         one  =  self[count-1]
-        let rest = UnsafeMutablePointer<Float>(addata)+count+Int(halfs)
-        vDSP_vsadd(rest, 1, &one, rest, 1, halfs-1)
+        let rest = UnsafePointer<Float>(addata) + (Int(count) + Int(halfs))
+        let restMutable = UnsafeMutablePointer<Float>(mutating: addata) + (Int(count) + Int(halfs))
+        vDSP_vsadd(rest, 1, &one, restMutable, 1, halfs-1)
         
-        var addr = UnsafeMutablePointer<Float>(addata)+Int(halfs)
+        var addr = UnsafeMutablePointer<Float>(mutating: addata)+Int(halfs)
         vDSP_vadd(&os, 1, addr, 1, addr, 1, vDSP_Length(count))
         
         //
@@ -236,8 +237,8 @@ extension _ArrayType where Generator.Element == Float {
         //
         // normalize coordinates
         //
-        addr = UnsafeMutablePointer<Float>(addata) + ((Int(index)-Int(sindex)))
-        memcpy(&os, addr, count*sizeof(Float))
+        addr = UnsafeMutablePointer<Float>(mutating: addata) + ((Int(index)-Int(sindex)))
+        memcpy(&os, addr, count*MemoryLayout<Float>.size)
         
         var left = -self[0]
         vDSP_vsadd(os, 1, &left, &os, 1, vDSP_Length(count))

@@ -8,11 +8,11 @@
 
 import Foundation
 
-public class IMPGridGenerator: IMPTransformFilter {
+open class IMPGridGenerator: IMPTransformFilter {
     
     public enum SpotAreaType: Int {
-        case Grid  = 0
-        case Solid = 1
+        case grid  = 0
+        case solid = 1
     }
     
     public struct Adjustment{
@@ -22,10 +22,10 @@ public class IMPGridGenerator: IMPTransformFilter {
         public var subDivisionColor  = float4(0,0,0,1)    // sub division color
         public var spotAreaColor     = float4(1,1,1,0.8)  // light spot area color
         public var spotArea          = IMPRegion.null     // light spot area
-        public var spotAreaType      = SpotAreaType.Grid  // light spot area type
+        public var spotAreaType      = SpotAreaType.grid  // light spot area type
     }
     
-    public var adjustment = Adjustment() {
+    open var adjustment = Adjustment() {
         didSet{
             memcpy(bufferStep.contents(), &adjustment.step, bufferStep.length)
             memcpy(bufferSDiv.contents(), &adjustment.subDivisionStep, bufferStep.length)
@@ -44,11 +44,11 @@ public class IMPGridGenerator: IMPTransformFilter {
         addGraphics(graphics)
     }
     
-    private lazy var graphics:IMPGraphics = IMPGraphics(context: self.context, fragment: "fragment_gridGenerator")
+    fileprivate lazy var graphics:IMPGraphics = IMPGraphics(context: self.context, fragment: "fragment_gridGenerator")
     
-    override public func configureGraphics(graphics: IMPGraphics, command: MTLRenderCommandEncoder) {
+    override open func configureGraphics(_ graphics: IMPGraphics, command: MTLRenderCommandEncoder) {
         if graphics == self.graphics {
-            command.setFragmentBuffers(buffers, offsets: bufferOffset, withRange: NSMakeRange(0, buffers.count))
+            command.setFragmentBuffers(buffers, offsets: bufferOffset, with: NSMakeRange(0, buffers.count))
         }
     }
     
@@ -64,34 +64,34 @@ public class IMPGridGenerator: IMPTransformFilter {
         return array
     }()
     
-    lazy var bufferOffset:[Int] = [Int](count: self.buffers.count, repeatedValue: 0)
+    lazy var bufferOffset:[Int] = [Int](repeating: 0, count: self.buffers.count)
     
-    lazy var bufferStep:MTLBuffer = self.context.device.newBufferWithBytes(&self.adjustment.step,
-                                                                           length: sizeof(uint),
-                                                                           options: .CPUCacheModeDefaultCache)
+    lazy var bufferStep:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.step,
+                                                                           length: MemoryLayout<uint>.size,
+                                                                           options: MTLResourceOptions())
     
-    lazy var bufferSDiv:MTLBuffer = self.context.device.newBufferWithBytes(&self.adjustment.subDivisionStep,
-                                                                           length: sizeof(uint),
-                                                                           options: .CPUCacheModeDefaultCache)
+    lazy var bufferSDiv:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.subDivisionStep,
+                                                                           length: MemoryLayout<uint>.size,
+                                                                           options: MTLResourceOptions())
     
-    lazy var bufferColor:MTLBuffer = self.context.device.newBufferWithBytes(&self.adjustment.color,
-                                                                            length: sizeof(float4),
-                                                                            options: .CPUCacheModeDefaultCache)
+    lazy var bufferColor:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.color,
+                                                                            length: MemoryLayout<float4>.size,
+                                                                            options: MTLResourceOptions())
     
-    lazy var bufferSDivColor:MTLBuffer = self.context.device.newBufferWithBytes(&self.adjustment.subDivisionColor,
-                                                                                length: sizeof(float4),
-                                                                                options: .CPUCacheModeDefaultCache)
+    lazy var bufferSDivColor:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.subDivisionColor,
+                                                                                length: MemoryLayout<float4>.size,
+                                                                                options: MTLResourceOptions())
     
-    lazy var bufferSpotAreaColor:MTLBuffer = self.context.device.newBufferWithBytes(&self.adjustment.spotAreaColor,
-                                                                               length: sizeof(float4),
-                                                                               options: .CPUCacheModeDefaultCache)
+    lazy var bufferSpotAreaColor:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.spotAreaColor,
+                                                                               length: MemoryLayout<float4>.size,
+                                                                               options: MTLResourceOptions())
     
-    lazy var bufferSpotArea:MTLBuffer = self.context.device.newBufferWithBytes(&self.adjustment.spotArea,
-                                                                               length: sizeof(IMPRegion),
-                                                                               options: .CPUCacheModeDefaultCache)
+    lazy var bufferSpotArea:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.spotArea,
+                                                                               length: MemoryLayout<IMPRegion>.size,
+                                                                               options: MTLResourceOptions())
     
-    lazy var bufferSpotAreaType:MTLBuffer = self.context.device.newBufferWithBytes(&self.adjustment.spotAreaType,
-                                                                           length: sizeof(uint),
-                                                                           options: .CPUCacheModeDefaultCache)
+    lazy var bufferSpotAreaType:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.spotAreaType,
+                                                                           length: MemoryLayout<uint>.size,
+                                                                           options: MTLResourceOptions())
     
 }

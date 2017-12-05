@@ -17,14 +17,14 @@ import Accelerate
 ///
 /// Histogram updates handler.
 ///
-public typealias IMPAnalyzerUpdateHandler =  ((histogram:IMPHistogram) -> Void)
+public typealias IMPAnalyzerUpdateHandler =  ((_ histogram:IMPHistogram) -> Void)
 
 ///
 /// Hardware uses to compute histogram.
 ///
 public enum IMPHistogramAnalyzerHardware {
-    case GPU
-    case DSP
+    case gpu
+    case dsp
 }
 
 ///
@@ -37,8 +37,8 @@ public protocol IMPHistogramAnalyzerProtocol:NSObjectProtocol,IMPFilterProtocol 
     var downScaleFactor:Float! {get set}
     var region:IMPRegion!  {get set}
     
-    func addSolver(solver:IMPHistogramSolver)
-    func addUpdateObserver(observer:IMPAnalyzerUpdateHandler)
+    func addSolver(_ solver:  IMPHistogramSolver)
+    func addUpdateObserver(_ observer:@escaping IMPAnalyzerUpdateHandler)
     
 }
 
@@ -49,12 +49,12 @@ public protocol IMPHistogramAnalyzerProtocol:NSObjectProtocol,IMPFilterProtocol 
 /// 3. ... etc
 ///
 public protocol IMPHistogramSolver {
-    func analizerDidUpdate(analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize);
+    func analizerDidUpdate(_ analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize);
 }
 
 
 public extension IMPHistogramAnalyzerProtocol {
-    public func setCenterRegionInPercent(value:Float){
+    public func setCenterRegionInPercent(_ value:Float){
         let half = value/2.0
         region = IMPRegion(
             left:   0.5 - half,
@@ -79,7 +79,7 @@ public extension IMPContext {
 ///
 /// Histogram analizer uses to create IMPHistogram object from IMPImageProvider source.
 ///
-public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
+open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
 
     public typealias Hardware = IMPHistogramAnalyzerHardware
 
@@ -87,7 +87,7 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     /// Defines wich hardware uses to compute final histogram.
     /// DSP is faster but needs memory twice, GPU is slower but doesn't additanal memory.
     ///
-    public var hardware:IMPHistogramAnalyzer.Hardware {
+    open var hardware:IMPHistogramAnalyzer.Hardware {
         return _hardware
     }
     var _hardware:IMPHistogramAnalyzer.Hardware!
@@ -95,7 +95,7 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     ///
     /// Histogram
     ///
-    public var histogram = IMPHistogram(){
+    open var histogram = IMPHistogram(){
         didSet{
             channelsToCompute = UInt(histogram.channels.count)
         }
@@ -104,39 +104,39 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     ///
     /// На сколько уменьшаем картинку перед вычисления гистограммы.
     ///
-    public var downScaleFactor:Float!{
+    open var downScaleFactor:Float!{
         didSet{
-            scaleUniformBuffer = scaleUniformBuffer ?? self.context.device.newBufferWithLength(sizeof(Float), options: .CPUCacheModeDefaultCache)
-            memcpy(scaleUniformBuffer.contents(), &downScaleFactor, sizeof(Float))
+            scaleUniformBuffer = scaleUniformBuffer ?? self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: MTLResourceOptions())
+            memcpy(scaleUniformBuffer.contents(), &downScaleFactor, MemoryLayout<Float>.size)
             dirty = true
         }
     }
-    private var scaleUniformBuffer:MTLBuffer!
+    fileprivate var scaleUniformBuffer:MTLBuffer!
     
-    private var channelsToCompute:UInt?{
+    fileprivate var channelsToCompute:UInt?{
         didSet{
-            channelsToComputeBuffer = channelsToComputeBuffer ?? self.context.device.newBufferWithLength(sizeof(UInt), options: .CPUCacheModeDefaultCache)
-            memcpy(channelsToComputeBuffer.contents(), &channelsToCompute, sizeof(UInt))
+            channelsToComputeBuffer = channelsToComputeBuffer ?? self.context.device.makeBuffer(length: MemoryLayout<UInt>.size, options: MTLResourceOptions())
+            memcpy(channelsToComputeBuffer.contents(), &channelsToCompute, MemoryLayout<UInt>.size)
         }
     }
-    private var channelsToComputeBuffer:MTLBuffer!
+    fileprivate var channelsToComputeBuffer:MTLBuffer!
     
-    private var solvers:[IMPHistogramSolver] = [IMPHistogramSolver]()
+    fileprivate var solvers:[IMPHistogramSolver] = [IMPHistogramSolver]()
     
     ///
     /// Солверы анализирующие гистограмму в текущем инстансе
     ///
-    public func addSolver(solver:IMPHistogramSolver){
+    open func addSolver(_ solver:IMPHistogramSolver){
         solvers.append(solver)
     }
     
     ///
     /// Регион внутри которого вычисляем гистограмму.
     ///
-    public var region:IMPRegion!{
+    open var region:IMPRegion!{
         didSet{
-            regionUniformBuffer = regionUniformBuffer ?? self.context.device.newBufferWithLength(sizeof(IMPRegion), options: .CPUCacheModeDefaultCache)
-            memcpy(regionUniformBuffer.contents(), &region, sizeof(IMPRegion))
+            regionUniformBuffer = regionUniformBuffer ?? self.context.device.makeBuffer(length: MemoryLayout<IMPRegion>.size, options: MTLResourceOptions())
+            memcpy(regionUniformBuffer.contents(), &region, MemoryLayout<IMPRegion>.size)
         }
     }
     internal var regionUniformBuffer:MTLBuffer!
@@ -144,15 +144,15 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     ///
     /// Кernel-функция счета
     ///
-    public var kernel:IMPFunction {
+    open var kernel:IMPFunction {
         return _kernel
     }
-    private var _kernel:IMPFunction!
+    fileprivate var _kernel:IMPFunction!
     
     //
     // Буфер обмена контейнера счета с GPU
     //
-    private var histogramUniformBuffer:MTLBuffer!
+    fileprivate var histogramUniformBuffer:MTLBuffer!
     
     //
     // Количество групп обсчета. Кратно <максимальное количество ядер>/размерность гистограммы.
@@ -162,7 +162,7 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     // 2. GPU:kernel:сборка частичных гистограмм в глобальную блочную память группы
     // 3. CPU/DSP:сборка групп гистограм в финальную из частичных блочных
     //
-    private var threadgroups = MTLSizeMake(8,8,1)
+    fileprivate var threadgroups = MTLSizeMake(8,8,1)
     
     ///
     /// Конструктор анализатора с произвольным счетчиком, который
@@ -170,21 +170,21 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     /// как контейнером данных гистограммы.
     ///
     ///
-    public init(context: IMPContext, function: String, hardware:IMPHistogramAnalyzer.Hardware = .GPU) {
+    public init(context: IMPContext, function: String, hardware:IMPHistogramAnalyzer.Hardware = .gpu) {
         super.init(context: context)
         
         _hardware = hardware
 
         _kernel = IMPFunction(context: self.context, name:function)
         
-        if context.hasFastAtomic() || hardware == .DSP
+        if context.hasFastAtomic() || hardware == .dsp
         {
-            histogramUniformBuffer = self.context.device.newBufferWithLength(sizeof(IMPHistogramBuffer), options: MTLResourceOptions.CPUCacheModeDefaultCache)
+            histogramUniformBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramBuffer>.size, options: MTLResourceOptions())
         }
         else {
             let groups = kernel.pipeline!.maxTotalThreadsPerThreadgroup/histogram.size
             threadgroups = MTLSizeMake(groups,groups,1)
-            histogramUniformBuffer = self.context.device.newBufferWithLength(sizeof(IMPHistogramBuffer) * Int(threadgroups.width*threadgroups.height), options: .CPUCacheModeDefaultCache)
+            histogramUniformBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramBuffer>.size * Int(threadgroups.width*threadgroups.height), options: MTLResourceOptions())
         }
         
         defer{
@@ -198,7 +198,7 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         
         var function = "kernel_impHistogramPartial"
         
-        if hardware == .GPU {
+        if hardware == .gpu {
             if context.hasFastAtomic() {
                 function = "kernel_impHistogramAtomic"
             }
@@ -211,23 +211,23 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     }
     
     convenience required public init(context: IMPContext) {
-        self.init(context:context, hardware: .GPU)
+        self.init(context:context, hardware: .gpu)
     }
     
     ///
     /// Замыкание выполняющаеся после завершения расчета значений солвера.
     /// Замыкание можно определить для обновления значений пользовательской цепочки фильтров.
     ///
-    public func addUpdateObserver(observer:IMPAnalyzerUpdateHandler){
+    public func addUpdateObserver(_ observer:@escaping IMPAnalyzerUpdateHandler) {
         analizerUpdateHandlers.append(observer)
     }
     
-    private var analizerUpdateHandlers:[IMPAnalyzerUpdateHandler] = [IMPAnalyzerUpdateHandler]()
+    fileprivate var analizerUpdateHandlers:[IMPAnalyzerUpdateHandler] = [IMPAnalyzerUpdateHandler]()
     
     ///
     /// Перегружаем свойство источника: при каждом обновлении нам нужно выполнить подсчет новой статистики.
     ///
-    public override var source:IMPImageProvider?{
+    open override var source:IMPImageProvider?{
         didSet{
             super.source = source
             if source?.texture != nil {
@@ -237,32 +237,32 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         }
     }
     
-    public override var destination:IMPImageProvider?{
+    open override var destination:IMPImageProvider?{
         get{
             return source
         }
     }
     
-    func applyKernel(texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer, commandBuffer:MTLCommandBuffer) {
+    func applyKernel(_ texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer, commandBuffer:MTLCommandBuffer) {
 
-        var blitEncoder = commandBuffer.blitCommandEncoder()
+        var blitEncoder = commandBuffer.makeBlitCommandEncoder()
         #if os(OSX)
             blitEncoder.synchronizeResource(texture)
         #endif
-        blitEncoder.fillBuffer(buffer, range: NSMakeRange(0, buffer.length), value: 0)
+        blitEncoder.fill(buffer: buffer, range: NSMakeRange(0, buffer.length), value: 0)
         blitEncoder.endEncoding()
         
-        let commandEncoder = commandBuffer.computeCommandEncoder()
+        let commandEncoder = commandBuffer.makeComputeCommandEncoder()
         
         //
         // Создаем вычислительный пайп
         //
         commandEncoder.setComputePipelineState(self.kernel.pipeline!);
-        commandEncoder.setTexture(texture, atIndex:0)
-        commandEncoder.setBuffer(buffer, offset:0, atIndex:0)
-        commandEncoder.setBuffer(self.channelsToComputeBuffer,offset:0, atIndex:1)
-        commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, atIndex:2)
-        commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, atIndex:3)
+        commandEncoder.setTexture(texture, at:0)
+        commandEncoder.setBuffer(buffer, offset:0, at:0)
+        commandEncoder.setBuffer(self.channelsToComputeBuffer,offset:0, at:1)
+        commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, at:2)
+        commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, at:3)
         
         self.configure(self.kernel, command: commandEncoder)
         
@@ -279,7 +279,7 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         #endif
     }
     
-    func applyPartialKernel(texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer!) {
+    func applyPartialKernel(_ texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer!) {
         self.context.execute(complete: true) { (commandBuffer) -> Void in
             self.applyKernel(texture,
                 threadgroups: threadgroups,
@@ -290,7 +290,7 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         histogram.update(data:histogramUniformBuffer.contents(), dataCount: threadgroups.width*threadgroups.height)
     }
     
-    func applyAtomicKernel(texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer!) {
+    func applyAtomicKernel(_ texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer!) {
         context.execute(complete: true) { (commandBuffer) in
             self.applyKernel(texture,
                 threadgroups: threadgroups,
@@ -301,10 +301,10 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         histogram.update(data: buffer.contents())
     }
     
-    private var analizeTexture:MTLTexture? = nil
-    private var imageBuffer:MTLBuffer? = nil
+    fileprivate var analizeTexture:MTLTexture? = nil
+    fileprivate var imageBuffer:MTLBuffer? = nil
     
-    func applyVImageKernel(texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer!) {
+    func applyVImageKernel(_ texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer!) {
         
         context.execute(complete: true) { (commandBuffer) in
             
@@ -312,22 +312,22 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
             let height = Int(floor(Float(texture.height) * self.downScaleFactor))
             
             if self.analizeTexture?.width != width || self.analizeTexture?.height != height {
-                let textureDescription = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                    .RGBA8Unorm,
+                let textureDescription = MTLTextureDescriptor.texture2DDescriptor(
+                    pixelFormat: .rgba8Unorm,
                     width: width,
                     height:height, mipmapped: false)
-                self.analizeTexture = self.context.device.newTextureWithDescriptor(textureDescription)
+                self.analizeTexture = self.context.device.makeTexture(descriptor: textureDescription)
             }
             
             if let actual = self.analizeTexture {
                 
-                let commandEncoder = commandBuffer.computeCommandEncoder()
+                let commandEncoder = commandBuffer.makeComputeCommandEncoder()
                 
                 commandEncoder.setComputePipelineState(self.kernel.pipeline!);
-                commandEncoder.setTexture(texture, atIndex:0)
-                commandEncoder.setTexture(self.analizeTexture, atIndex:1)
-                commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, atIndex:0)
-                commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, atIndex:1)
+                commandEncoder.setTexture(texture, at:0)
+                commandEncoder.setTexture(self.analizeTexture, at:1)
+                commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, at:0)
+                commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, at:1)
                 
                 self.configure(self.kernel, command: commandEncoder)
 
@@ -337,23 +337,23 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
                 let imageBufferSize = width*height*4
                 
                 if self.imageBuffer?.length != imageBufferSize {
-                    self.imageBuffer = self.context.device.newBufferWithLength( imageBufferSize, options: MTLResourceOptions.CPUCacheModeDefaultCache)
+                    self.imageBuffer = self.context.device.makeBuffer( length: imageBufferSize, options: MTLResourceOptions())
                 }
                 
                 if let data = self.imageBuffer {
                     
-                    let blitEncoder = commandBuffer.blitCommandEncoder()
+                    let blitEncoder = commandBuffer.makeBlitCommandEncoder()
                     
                     #if os(OSX)
                     blitEncoder.synchronizeResource(actual)    
                     #endif
                     
-                    blitEncoder.copyFromTexture(actual,
+                    blitEncoder.copy(from: actual,
                                                 sourceSlice: 0,
                                                 sourceLevel: 0,
                                                 sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
                                                 sourceSize: MTLSize(width: width, height: height, depth: actual.depth),
-                                                toBuffer: data,
+                                                to: data,
                                                 destinationOffset: 0,
                                                 destinationBytesPerRow: width*4,
                                                 destinationBytesPerImage: 0)
@@ -379,38 +379,39 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     }
 
     static func _vImage_createChannel256() -> [vImagePixelCount] {
-        return [vImagePixelCount](count: Int(kIMP_HistogramSize), repeatedValue: 0)
+        return [vImagePixelCount](repeating: 0, count: Int(kIMP_HistogramSize))
     }
     
     typealias _vImagePointer = UnsafeMutablePointer<vImagePixelCount>
+    typealias _vImagePointerOptional = UnsafeMutablePointer<vImagePixelCount>?
     
     let _vImage_red   = IMPHistogramAnalyzer._vImage_createChannel256()
     let _vImage_green = IMPHistogramAnalyzer._vImage_createChannel256()
     let _vImage_blue  = IMPHistogramAnalyzer._vImage_createChannel256()
     let _vImage_alpha = IMPHistogramAnalyzer._vImage_createChannel256()
 
-    lazy var _vImage_rgba:[_vImagePointer] = [
-        _vImagePointer(self._vImage_red),
-        _vImagePointer(self._vImage_green),
-        _vImagePointer(self._vImage_blue),
-        _vImagePointer(self._vImage_alpha)]
+    lazy var _vImage_rgba:[_vImagePointerOptional] = [
+        _vImagePointer(mutating: self._vImage_red) as _vImagePointerOptional,
+        _vImagePointer(mutating: self._vImage_green) as _vImagePointerOptional,
+        _vImagePointer(mutating: self._vImage_blue) as _vImagePointerOptional,
+        _vImagePointer(mutating: self._vImage_alpha) as _vImagePointerOptional]
     
-    lazy var _vImage_hist:UnsafeMutablePointer<_vImagePointer> = UnsafeMutablePointer<_vImagePointer>(self._vImage_rgba)
+    lazy var _vImage_hist:UnsafeMutablePointer<_vImagePointerOptional> = UnsafeMutablePointer<_vImagePointerOptional>(mutating: self._vImage_rgba)
     
-    public func executeSolverObservers(texture:MTLTexture) {
+    open func executeSolverObservers(_ texture:MTLTexture) {
         if observersEnabled {
             for s in solvers {
-                let size = CGSizeMake(CGFloat(texture.width), CGFloat(texture.height))
+                let size = CGSize(width: CGFloat(texture.width), height: CGFloat(texture.height))
                 s.analizerDidUpdate(self, histogram: self.histogram, imageSize: size)
             }
             
             for o in analizerUpdateHandlers{
-                o(histogram: histogram)
+                o(histogram)
             }
         }
     }
     
-    func computeOptions(texture:MTLTexture) -> (MTLSize,MTLSize) {
+    func computeOptions(_ texture:MTLTexture) -> (MTLSize,MTLSize) {
         let width  = Int(floor(Float(texture.width) * self.downScaleFactor))
         let height = Int(floor(Float(texture.height) * self.downScaleFactor))
         
@@ -424,11 +425,11 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         return (threadgroups,threadgroupCounts)
     }
     
-    public override func apply() -> IMPImageProvider {
+    open override func apply() -> IMPImageProvider {
         
         if let texture = source?.texture{
             
-            if hardware == .GPU {
+            if hardware == .gpu {
                 
                 if context.hasFastAtomic() {
                     let (threadgroups,threadgroupCounts) = computeOptions(texture)
@@ -446,7 +447,7 @@ public class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
                 }
             }
                 
-            else if hardware == .DSP {
+            else if hardware == .dsp {
                 let (threadgroups,threadgroupCounts) = computeOptions(texture)
                 applyVImageKernel(texture,
                                   threadgroups: threadgroups,

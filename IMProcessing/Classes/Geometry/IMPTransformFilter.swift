@@ -12,10 +12,10 @@ import Metal
 typealias IMPPhotoPlateFilter = IMPTransformFilter
 
 /// Image textured on the model of Rendering Node is a Cube Node with virtual depth == 0
-public class IMPPhotoPlateNode: IMPRenderNode {
+open class IMPPhotoPlateNode: IMPRenderNode {
     
     /// Cropping the plate region
-    public var region = IMPRegion() {
+    open var region = IMPRegion() {
         didSet{
             if
                 region.left != oldValue.left ||
@@ -30,7 +30,7 @@ public class IMPPhotoPlateNode: IMPRenderNode {
     
     var resetAspect:Bool = true
     
-    override public var aspect:Float {
+    override open var aspect:Float {
         didSet{
             if super.aspect != oldValue || resetAspect {
                 super.aspect = aspect
@@ -52,32 +52,32 @@ public extension IMPGraphics {
 }
 
 /// Photo plate transformation filter
-public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
+open class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
 
-    public var backgroundColor:IMPColor = IMPColor.whiteColor()
+    open var backgroundColor:IMPColor = IMPColor.white
 
-    public override var source: IMPImageProvider? {
+    open override var source: IMPImageProvider? {
         didSet {
             updatePlateAspect(region)
         }
     }
     
-    public var keepAspectRatio = true
+    open var keepAspectRatio = true
     
     //public var graphics:IMPGraphics!
 
-    private var graphicsList:[IMPGraphics] = [IMPGraphics]()
+    fileprivate var graphicsList:[IMPGraphics] = [IMPGraphics]()
 
-    public final func addGraphics(graphics:IMPGraphics){
+    public final func addGraphics(_ graphics:IMPGraphics){
         if graphicsList.contains(graphics) == false {
             graphicsList.append(graphics)
             self.dirty = true
         }
     }
     
-    public final func removeGraphics(graphics:IMPGraphics){
-        if let index = graphicsList.indexOf(graphics) {
-            graphicsList.removeAtIndex(index)
+    public final func removeGraphics(_ graphics:IMPGraphics){
+        if let index = graphicsList.index(of: graphics) {
+            graphicsList.remove(at: index)
             self.dirty = true
         }
     }
@@ -93,14 +93,14 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
         addGraphics(IMPGraphics(context: context, vertex: "vertex_transformation", fragment: "fragment_transformation"))
     }    
     
-    public var viewPortSize: MTLSize? {
+    open var viewPortSize: MTLSize? {
         didSet{
             plate.aspect = self.keepAspectRatio ? viewPortSize!.width.float/viewPortSize!.height.float : 1
             dirty = true
         }
     }
     
-    public override func main(source source:IMPImageProvider , destination provider: IMPImageProvider) -> IMPImageProvider? {
+    open override func main(source:IMPImageProvider , destination provider: IMPImageProvider) -> IMPImageProvider? {
         var inputSource = source
         for graphics in graphicsList{
             self.context.execute{ (commandBuffer) -> Void in
@@ -123,12 +123,12 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
                     inputSource === provider
                     {
                         
-                        let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                            inputTexture.pixelFormat,
+                        let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                            pixelFormat: inputTexture.pixelFormat,
                             width: width.int, height: height.int,
                             mipmapped: false)
                         
-                        provider.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                        provider.texture = self.context.device.makeTexture(descriptor: descriptor)
                     }
                     
                     self.plate.render(commandBuffer,
@@ -145,24 +145,24 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
         return provider
     }
     
-    public var aspect:Float {
+    open var aspect:Float {
         return plate.aspect
     }
     
-    public var model:IMPTransfromModel {
+    open var model:IMPTransfromModel {
             return plate.model
     }
 
-    public var identityModel:IMPTransfromModel {
+    open var identityModel:IMPTransfromModel {
         return plate.identityModel
     }
     
-    public func configureGraphics(graphics:IMPGraphics, command:MTLRenderCommandEncoder){}
+    open func configureGraphics(_ graphics:IMPGraphics, command:MTLRenderCommandEncoder){}
     
     ///  Rotate plate on angle in radians arround axis
     ///
     ///  - parameter vector: angle in radians for x,y,z axis
-    public var angle:float3 {
+    open var angle:float3 {
         set {
             plate.angle = newValue
             dirty = true
@@ -175,7 +175,7 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
     ///  Scale plate
     ///
     ///  - parameter vector: x,y,z scale factor
-    public var scale:float3 {
+    open var scale:float3 {
         set {
             plate.scale = newValue
             dirty = true
@@ -188,7 +188,7 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
     ///  Scale plate with global 2D factor
     ///
     ///  - parameter factor:
-    public func scale(factor f:Float){
+    open func scale(factor f:Float){
         plate.scale = float3(f,f,1)
         dirty = true
     }
@@ -197,7 +197,7 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
     ///  Move plate with vector
     ///
     ///  - parameter vector: vector
-    public var translation: float2 {
+    open var translation: float2 {
         set{
             plate.translation = newValue
             dirty = true
@@ -210,7 +210,7 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
     ///  Cut the plate with crop region
     ///
     ///  - parameter region: crop region
-    public var region:IMPRegion {
+    open var region:IMPRegion {
         set {
             guard (source != nil) else {return}
             updatePlateAspect(newValue)
@@ -223,7 +223,7 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
     }
     
     /// Set/get reflection
-    public var reflection:(horizontal:IMPRenderNode.ReflectMode, vertical:IMPRenderNode.ReflectMode) {
+    open var reflection:(horizontal:IMPRenderNode.ReflectMode, vertical:IMPRenderNode.ReflectMode) {
         set{
             plate.reflectMode = newValue
             dirty = true
@@ -237,7 +237,7 @@ public class IMPTransformFilter: IMPFilter, IMPGraphicsProvider {
         return PhotoPlate(context: self.context, aspectRatio:4/3)
     }()
     
-    func updatePlateAspect(region:IMPRegion)  {
+    func updatePlateAspect(_ region:IMPRegion)  {
         if let s = source {
             let width  = s.width - s.width  * (region.left   + region.right);
             let height = s.height - s.height * (region.bottom + region.top);

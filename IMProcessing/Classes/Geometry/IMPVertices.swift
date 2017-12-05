@@ -44,7 +44,7 @@ public extension IMPVertices{
     
         /// Vertices buffer langth
     public var length:Int{
-        return vertices.count * sizeofValue(vertices[0])
+        return vertices.count * MemoryLayout.size(ofValue: vertices[0])
     }
     
     ///  XY plane projection
@@ -52,7 +52,7 @@ public extension IMPVertices{
     ///  - parameter model: 3D matrix transformation model
     ///
     ///  - returns: x,y coordinates
-    public func xyProjection(model model:IMPTransfromModel) -> [float2] {
+    public func xyProjection(model:IMPTransfromModel) -> [float2] {
         var points = [float2]()
         for v in vertices {
             
@@ -73,7 +73,7 @@ public extension IMPVertices{
     ///  - parameter model: transformation matrix model
     ///
     ///  - returns: scale factor
-    public func scaleFactorFor(model model:IMPTransfromModel) -> Float {
+    public func scaleFactorFor(model:IMPTransfromModel) -> Float {
         let points = xyProjection(model: model)
         
         var left:Float   = 0
@@ -120,25 +120,25 @@ public extension IMPVertices{
 }
 
 /// Photo plate model
-public class IMPPhotoPlate: IMPVertices{
+open class IMPPhotoPlate: IMPVertices{
     
     /// Plate vertices
-    public let vertices:[IMPVertex]
+    open let vertices:[IMPVertex]
     
     /// Aspect ratio of the plate sides
-    public let aspect:Float
+    open let aspect:Float
     
     /// Processing region
-    public let region:IMPRegion
+    open let region:IMPRegion
     
-    public func quad(model model:IMPTransfromModel) -> IMPQuad {
+    open func quad(model:IMPTransfromModel) -> IMPQuad {
         let v = xyProjection(model: model)
         var q = IMPQuad(left_bottom: v[1], left_top: v[0], right_bottom: v[2], right_top: v[5])
         q.aspect = aspect
         return q
     }
    
-    public func quad() -> IMPQuad {
+    open func quad() -> IMPQuad {
         var q = IMPQuad(left_bottom: vertices[1].position.xy,
                         left_top: vertices[0].position.xy,
                         right_bottom: vertices[2].position.xy,

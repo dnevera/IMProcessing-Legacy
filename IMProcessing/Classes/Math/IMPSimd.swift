@@ -12,19 +12,19 @@ import simd
 // MARK: - Vector extensions
 
 public extension Float {
-    public func lerp(final final:Float, t:Float) -> Float {
+    public func lerp(final:Float, t:Float) -> Float {
         return (1-t)*self + t*final
     }
 }
 
 public extension float2 {
-    public func lerp(final final:float2, t:Float) -> float2 {
+    public func lerp(final:float2, t:Float) -> float2 {
         return (1-t)*self + t*final
     }
 }
 
 public extension float3 {
-    public func lerp(final final:float3, t:Float) -> float3 {
+    public func lerp(final:float3, t:Float) -> float3 {
         return (1-t)*self + t*final
     }
     
@@ -38,7 +38,7 @@ public extension float3 {
 }
 
 public extension float4 {
-    public func lerp(final final:float4, t:Float) -> float4 {
+    public func lerp(final:float4, t:Float) -> float4 {
         return (1-t)*self + t*final
     }
     
@@ -167,7 +167,7 @@ public extension matrix_float4x4 {
         self = matrix_float4x4(rows: rows)
     }
   
-    public mutating func rotate(radians radians:Float, point:float3) {
+    public mutating func rotate(radians:Float, point:float3) {
         
         let v =  normalize(point)
         let cos = cosf(radians)

@@ -9,16 +9,16 @@
 import Metal
 
 /// Crop filter
-public class IMPCropFilter: IMPFilter {
+open class IMPCropFilter: IMPFilter {
     
     /// Cropping region 
-    public var region = IMPRegion() {
+    open var region = IMPRegion() {
         didSet{
             dirty = true
         }
     }
     
-    public override func main(source source:IMPImageProvider , destination provider: IMPImageProvider) -> IMPImageProvider? {
+    open override func main(source:IMPImageProvider , destination provider: IMPImageProvider) -> IMPImageProvider? {
         
         if region.left == 0 && region.right == 0 && region.bottom == 0 && region.top == 0 {
             provider.texture = source.texture
@@ -28,7 +28,7 @@ public class IMPCropFilter: IMPFilter {
         if let texture = source.texture{
             context.execute { (commandBuffer) in
                 
-                let blit = commandBuffer.blitCommandEncoder()
+                let blit = commandBuffer.makeBlitCommandEncoder()
                 
                 let w = texture.width
                 let h = texture.height
@@ -42,21 +42,21 @@ public class IMPCropFilter: IMPFilter {
                 
                 if destinationSize.width != provider.texture?.width || destinationSize.height != provider.texture?.height{
                     
-                    let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                        texture.pixelFormat,
+                    let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                        pixelFormat: texture.pixelFormat,
                         width: destinationSize.width, height: destinationSize.height,
                         mipmapped: false)
                     
-                    provider.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                    provider.texture = self.context.device.makeTexture(descriptor: descriptor)
                 }
                                 
-                blit.copyFromTexture(
-                    texture,
+                blit.copy(
+                    from: texture,
                     sourceSlice: 0,
                     sourceLevel: 0,
                     sourceOrigin: oroginSource,
                     sourceSize: destinationSize,
-                    toTexture: provider.texture!,
+                    to: provider.texture!,
                     destinationSlice: 0,
                     destinationLevel: 0,
                     destinationOrigin: MTLOrigin(x:0,y:0,z:0))

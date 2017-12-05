@@ -15,14 +15,14 @@
 //
 // Depricated. IMPHistogramGenerator is used instead of th solver 
 //
-public class IMPHistogramLayerSolver: IMPFilter, IMPHistogramSolver {
+open class IMPHistogramLayerSolver: IMPFilter, IMPHistogramSolver {
     
     public enum IMPHistogramType{
-        case PDF
-        case CDF
+        case pdf
+        case cdf
     }
     
-    public var layer = IMPHistogramLayer(
+    open var layer = IMPHistogramLayer(
         components: (
             IMPHistogramLayerComponent(color: float4([1,0,0,0.5]), width: Float(UInt32.max)),
             IMPHistogramLayerComponent(color: float4([0,1,0,0.6]), width: Float(UInt32.max)),
@@ -38,7 +38,7 @@ public class IMPHistogramLayerSolver: IMPFilter, IMPHistogramSolver {
         }
     }
     
-    public var histogramType:(type:IMPHistogramType,power:Float) = (type:.PDF,power:1){
+    open var histogramType:(type:IMPHistogramType,power:Float) = (type:.pdf,power:1){
         didSet{
             self.dirty = true;
         }
@@ -48,54 +48,54 @@ public class IMPHistogramLayerSolver: IMPFilter, IMPHistogramSolver {
         super.init(context: context)
         kernel = IMPFunction(context: self.context, name: "kernel_histogramLayer")
         self.addFunction(kernel)
-        channelsUniformBuffer = self.context.device.newBufferWithLength(sizeof(UInt), options: .CPUCacheModeDefaultCache)
-        histogramUniformBuffer = self.context.device.newBufferWithLength(sizeof(IMPHistogramFloatBuffer), options: .CPUCacheModeDefaultCache)
-        layerUniformBiffer = self.context.device.newBufferWithLength(sizeof(IMPHistogramLayer), options: .CPUCacheModeDefaultCache)
+        channelsUniformBuffer = self.context.device.makeBuffer(length: MemoryLayout<UInt>.size, options: MTLResourceOptions())
+        histogramUniformBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramFloatBuffer>.size, options: MTLResourceOptions())
+        layerUniformBiffer = self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramLayer>.size, options: MTLResourceOptions())
         memcpy(layerUniformBiffer.contents(), &layer, layerUniformBiffer.length)
     }
     
-    public var histogram:IMPHistogram?{
+    open var histogram:IMPHistogram?{
         didSet{
             update(histogram!)
         }
     }
     
-    func update(histogram: IMPHistogram){
+    func update(_ histogram: IMPHistogram){
         
         var pdf:IMPHistogram;
         
         switch(histogramType.type){
-        case .PDF:
+        case .pdf:
             pdf = histogram.pdf()
-        case .CDF:
+        case .cdf:
             pdf = histogram.cdf(1, power: histogramType.power)
         }
         
         for c in 0..<pdf.channels.count{
-            let address =  UnsafeMutablePointer<Float>(histogramUniformBuffer.contents())+c*pdf.size
-            memcpy(address, pdf.channels[c], sizeof(Float)*pdf.size)
+            let address =  histogramUniformBuffer.contents().assumingMemoryBound(to: Float.self) + c*pdf.size
+            memcpy(address, pdf.channels[c], MemoryLayout<Float>.size*pdf.size)
         }
         
         var channels = pdf.channels.count
-        memcpy(channelsUniformBuffer.contents(), &channels, sizeof(UInt))
+        memcpy(channelsUniformBuffer.contents(), &channels, MemoryLayout<UInt>.size)
         
         self.dirty = true;
     }
     
-    public func analizerDidUpdate(analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
+    open func analizerDidUpdate(_ analizer: IMPHistogramAnalyzerProtocol, histogram: IMPHistogram, imageSize: CGSize) {
         self.histogram = histogram
     }
     
-    override public func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    override open func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if (kernel == function){
-            command.setBuffer(histogramUniformBuffer, offset: 0, atIndex: 0)
-            command.setBuffer(channelsUniformBuffer,  offset: 0, atIndex: 1)
-            command.setBuffer(layerUniformBiffer,     offset: 0, atIndex: 2)
+            command.setBuffer(histogramUniformBuffer, offset: 0, at: 0)
+            command.setBuffer(channelsUniformBuffer,  offset: 0, at: 1)
+            command.setBuffer(layerUniformBiffer,     offset: 0, at: 2)
         }
     }
     
-    private var kernel:IMPFunction!
-    private var layerUniformBiffer:MTLBuffer!
-    private var histogramUniformBuffer:MTLBuffer!
-    private var channelsUniformBuffer:MTLBuffer!
+    fileprivate var kernel:IMPFunction!
+    fileprivate var layerUniformBiffer:MTLBuffer!
+    fileprivate var histogramUniformBuffer:MTLBuffer!
+    fileprivate var channelsUniformBuffer:MTLBuffer!
 }

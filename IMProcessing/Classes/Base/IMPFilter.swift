@@ -16,22 +16,24 @@ import Metal
 
 public func report_memory() -> String {
     var info = task_basic_info()
-    var count = mach_msg_type_number_t(sizeofValue(info))/4
+    var count = mach_msg_type_number_t(MemoryLayout.size(ofValue: info))/4
     
-    let kerr: kern_return_t = withUnsafeMutablePointer(&info) {
+    let kerr: kern_return_t = withUnsafeMutablePointer(to: &info) {
+        let result: kern_return_t = $0.withMemoryRebound(to: integer_t.self, capacity: 1, { (pointer: UnsafeMutablePointer<integer_t>) -> kern_return_t in
+            task_info(mach_task_self_,
+                      task_flavor_t(TASK_BASIC_INFO),
+                      pointer,
+                      &count)
+        })
         
-        task_info(mach_task_self_,
-                  task_flavor_t(TASK_BASIC_INFO),
-                  task_info_t($0),
-                  &count)
-        
+        return result
     }
     
     if kerr == KERN_SUCCESS {
         return "\(info.resident_size/1024/1024)Mb, \(info.virtual_size/1024/1024)Mb)"
     }
     else {
-        return "Error with task_info(): " + (String.fromCString(mach_error_string(kerr)) ?? "unknown error")
+        return "Error with task_info(): " + (String(cString: mach_error_string(kerr)) )
     }
 }
 
@@ -46,7 +48,7 @@ public protocol IMPFilterProtocol:IMPContextProvider {
 
 
 private extension Array {
-    mutating func swap(ind1: Int, _ ind2: Int){
+    mutating func swap(_ ind1: Int, _ ind2: Int){
         var temp: Element
         temp = self[ind1]
         self[ind1] = self[ind2]
@@ -55,13 +57,13 @@ private extension Array {
     
 }
 
-public class IMPFilter: NSObject,IMPFilterProtocol {
+open class IMPFilter: NSObject,IMPFilterProtocol {
     
-    public typealias SourceHandler = ((source:IMPImageProvider) -> Void)
-    public typealias DestinationHandler = ((destination:IMPImageProvider) -> Void)
+    public typealias SourceHandler = ((_ source:IMPImageProvider) -> Void)
+    public typealias DestinationHandler = ((_ destination:IMPImageProvider) -> Void)
     public typealias DirtyHandler = (() -> Void)
     
-    public var observersEnabled = true {
+    open var observersEnabled = true {
         didSet {
             for f in filterList {
                 f.observersEnabled = observersEnabled
@@ -69,9 +71,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public var context:IMPContext!
+    open var context:IMPContext!
     
-    public var snapshotEnabled = false {
+    open var snapshotEnabled = false {
         didSet{
             if snapshotEnabled == false {
                 dirty = true
@@ -79,7 +81,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public var enabled = true {
+    open var enabled = true {
         didSet{
             
             for filter in filterList {
@@ -94,7 +96,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public var source:IMPImageProvider?{
+    open var source:IMPImageProvider?{
         didSet{
             if let s = source{
                 s.filter=self
@@ -105,7 +107,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public var destination:IMPImageProvider?{
+    open var destination:IMPImageProvider?{
         get{
             if enabled {
                 return self.apply()
@@ -116,7 +118,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public var destinationSize:MTLSize?{
+    open var destinationSize:MTLSize?{
         didSet{
             if let ov = oldValue{
                 if ov != destinationSize! {
@@ -129,9 +131,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public var _dirty:Bool = false
+    open var _dirty:Bool = false
 
-    public var dirty:Bool {
+    open var dirty:Bool {
         
         get {return _dirty }
         
@@ -186,25 +188,25 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         self.context = context
     }
     
-    private var functionList:[IMPFunction] = [IMPFunction]()
-    private var newSourceObservers:[SourceHandler] = [SourceHandler]()
-    private var sourceObservers:[SourceHandler] = [SourceHandler]()
-    private var destinationObservers:[DestinationHandler] = [DestinationHandler]()
-    private var dirtyHandlers:[DirtyHandler] = [DirtyHandler]()
+    fileprivate var functionList:[IMPFunction] = [IMPFunction]()
+    fileprivate var newSourceObservers:[SourceHandler] = [SourceHandler]()
+    fileprivate var sourceObservers:[SourceHandler] = [SourceHandler]()
+    fileprivate var destinationObservers:[DestinationHandler] = [DestinationHandler]()
+    fileprivate var dirtyHandlers:[DirtyHandler] = [DirtyHandler]()
     
-    private var filterList:[IMPFilter] = [IMPFilter]()
-    private var coreImageFilterList:[CIFilter] = [CIFilter]()
+    fileprivate var filterList:[IMPFilter] = [IMPFilter]()
+    fileprivate var coreImageFilterList:[CIFilter] = [CIFilter]()
 
-    public final func addFunction(function:IMPFunction){
+    public final func addFunction(_ function:IMPFunction){
         if functionList.contains(function) == false {
             functionList.append(function)
             self.dirty = true
         }
     }
     
-    public final func removeFunction(function:IMPFunction){
-        if let index = functionList.indexOf(function) {
-            functionList.removeAtIndex(index)
+    public final func removeFunction(_ function:IMPFunction){
+        if let index = functionList.index(of: function) {
+            functionList.remove(at: index)
             self.dirty = true
         }
     }
@@ -215,11 +217,11 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     var _root:IMPFilter? = nil
-    public var root:IMPFilter? {
+    open var root:IMPFilter? {
         return _root
     }
     
-    func updateNewFilterHandlers(filter:IMPFilter)  {
+    func updateNewFilterHandlers(_ filter:IMPFilter)  {
         //filter._root = self
         for o in dirtyHandlers{
             filter.addDirtyObserver(o)
@@ -227,13 +229,13 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         dirty = true
     }
     
-    func removeFilterHandlers(filter:IMPFilter) {
+    func removeFilterHandlers(_ filter:IMPFilter) {
         filter._root = nil
         filter.dirtyHandlers.removeAll()
         dirty = true
     }
     
-    public final func addFilter(filter:IMPFilter){
+    public final func addFilter(_ filter:IMPFilter){
         if filter._root != nil {
             fatalError("\(filter) already added to \(filter._root)")
             return
@@ -247,10 +249,10 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public final func removeFilter(filter:IMPFilter){
+    public final func removeFilter(_ filter:IMPFilter){
         filter._root = nil
-        if let index = filterList.indexOf(filter) {
-            removeFilterHandlers(filterList.removeAtIndex(index) as IMPFilter)
+        if let index = filterList.index(of: filter) {
+            removeFilterHandlers(filterList.remove(at: index) as IMPFilter)
         }
     }
     
@@ -263,8 +265,8 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
     }
     
     public final func removeFilter(ciFilter filter:CIFilter){
-        if let index = coreImageFilterList.indexOf(filter) {
-            coreImageFilterList.removeAtIndex(index)
+        if let index = coreImageFilterList.index(of: filter) {
+            coreImageFilterList.remove(at: index)
             dirty = true
         }
     }
@@ -275,16 +277,16 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    public final func swapFilters(first first:IMPFilter, second:IMPFilter){
-        if let index1 = filterList.indexOf(first) {
-            if let index2 = filterList.indexOf(second){
+    public final func swapFilters(first:IMPFilter, second:IMPFilter){
+        if let index1 = filterList.index(of: first) {
+            if let index2 = filterList.index(of: second){
                 filterList.swap(index1, index2)
                 dirty = true
             }
         }
     }
     
-    public final func insertFilter(filter:IMPFilter, index:Int){
+    public final func insertFilter(_ filter:IMPFilter, index:Int){
         
         if filter._root != nil {
             fatalError("\(filter) already added to \(filter._root)")
@@ -297,12 +299,12 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             if i >= filterList.count {
                 i = filterList.count
             }
-            filterList.insert(filter, atIndex: i)
+            filterList.insert(filter, at: i)
             updateNewFilterHandlers(filter)
         }
     }
     
-    public final func insertFilter(filter:IMPFilter, before:IMPFilter){
+    public final func insertFilter(_ filter:IMPFilter, before:IMPFilter){
         if filter._root != nil {
             fatalError("\(filter) already added to \(filter._root)")
             return
@@ -311,72 +313,72 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         filter._root = self
         
         if filterList.contains(filter) == false {
-            if let index = filterList.indexOf(before) {
-                filterList.insert(filter, atIndex: index)
+            if let index = filterList.index(of: before) {
+                filterList.insert(filter, at: index)
                 updateNewFilterHandlers(filter)
             }
         }
     }
     
-    public final func insertFilter(filter:IMPFilter, after:IMPFilter){
+    public final func insertFilter(_ filter:IMPFilter, after:IMPFilter){
         if filterList.contains(filter) == false {
-            if let index = filterList.indexOf(after) {
-                filterList.insert(filter, atIndex: index+1)
+            if let index = filterList.index(of: after) {
+                filterList.insert(filter, at: index+1)
                 updateNewFilterHandlers(filter)
             }
         }
     }
     
-    public final func addNewSourceObserver(source observer:SourceHandler){
+    public final func addNewSourceObserver(source observer:@escaping SourceHandler){
         newSourceObservers.append(observer)
     }
     
-    public final func addSourceObserver(source observer:SourceHandler){
+    public final func addSourceObserver(source observer:@escaping SourceHandler){
         sourceObservers.append(observer)
     }
     
-    public final func addDestinationObserver(destination observer:DestinationHandler){
+    public final func addDestinationObserver(destination observer:@escaping DestinationHandler){
         destinationObservers.append(observer)
     }
     
-    public final func addDirtyObserver(observer:DirtyHandler){
+    public final func addDirtyObserver(_ observer:@escaping DirtyHandler){
         dirtyHandlers.append(observer)
         for f in filterList{
             f.addDirtyObserver(observer)
         }
     }
     
-    public func configure(function:IMPFunction, command:MTLComputeCommandEncoder){}
+    open func configure(_ function:IMPFunction, command:MTLComputeCommandEncoder){}
     
-    internal func executeNewSourceObservers(source:IMPImageProvider?){
+    internal func executeNewSourceObservers(_ source:IMPImageProvider?){
         if let s = source{
             for o in newSourceObservers {
-                o(source: s)
+                o(s)
             }
         }
     }
     
-    internal func executeSourceObservers(source:IMPImageProvider?){
+    internal func executeSourceObservers(_ source:IMPImageProvider?){
         if observersEnabled {
             if let s = source{
                 for o in sourceObservers {
-                    o(source: s)
+                    o(s)
                 }
             }
         }
     }
     
-    internal func executeDestinationObservers(destination:IMPImageProvider?){
+    internal func executeDestinationObservers(_ destination:IMPImageProvider?){
         if observersEnabled {
             if let d = destination {
                 for o in destinationObservers {
-                    o(destination: d)
+                    o(d)
                 }
             }
         }
     }
     
-    public func apply() -> IMPImageProvider {
+    open func apply() -> IMPImageProvider {
         return doApply()
     }
     
@@ -394,26 +396,26 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
             ||
         provider === source
         {
-            let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                input.pixelFormat,
+            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                pixelFormat: input.pixelFormat,
                 width: width, height: height, mipmapped: false)
             
             if provider.texture != nil && provider.texture !== source {
-                provider.texture?.setPurgeableState(.Volatile)
+                provider.texture?.setPurgeableState(.volatile)
             }
             
-            return (context.device.newTextureWithDescriptor(descriptor), width, height)
+            return (context.device.makeTexture(descriptor: descriptor), width, height)
         }
         else {
             return (provider.texture!, provider.texture!.width, provider.texture!.height)
         }
     }
     
-    public func main(source source: IMPImageProvider , destination provider:IMPImageProvider) -> IMPImageProvider? {
+    open func main(source: IMPImageProvider , destination provider:IMPImageProvider) -> IMPImageProvider? {
         return nil
     }
     
-    func internal_main(source source: IMPImageProvider , destination provider:IMPImageProvider) -> IMPImageProvider {
+    func internal_main(source: IMPImageProvider , destination provider:IMPImageProvider) -> IMPImageProvider {
         
         var currentFilter = self
         
@@ -448,12 +450,12 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                                 (height + threadgroupCounts.height) / threadgroupCounts.height,
                                 1);
                             
-                            let commandEncoder = commandBuffer.computeCommandEncoder()
+                            let commandEncoder = commandBuffer.makeComputeCommandEncoder()
                             
                             commandEncoder.setComputePipelineState(function.pipeline!)
                             
-                            commandEncoder.setTexture(input, atIndex:0)
-                            commandEncoder.setTexture(output, atIndex:1)
+                            commandEncoder.setTexture(input, at:0)
+                            commandEncoder.setTexture(output, at:1)
                             
                             self.configure(function, command: commandEncoder)
                             
@@ -464,7 +466,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
 
                         //previouseTexture?.setPurgeableState(.Volatile)
                         if previouseTexture !== source.texture {
-                            previouseTexture?.setPurgeableState(.Volatile)
+                            previouseTexture?.setPurgeableState(.volatile)
                         }
                         previouseTexture = input
                         input = output
@@ -491,7 +493,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                 currrentProvider = filter.destination!
 
                 if previouseTexture !== source.texture {
-                    previousProvider?.texture?.setPurgeableState(.Volatile)
+                    previousProvider?.texture?.setPurgeableState(.volatile)
                 }
                 previousProvider = currrentProvider
             }
@@ -508,7 +510,7 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                     //
                     // create core image from current texture
                     //
-                    var inputImage = CIImage(MTLTexture: t, options: nil)
+                    var inputImage = CIImage(mtlTexture: t, options: nil)
                     
                     //
                     // apply CIFilter chains
@@ -518,42 +520,42 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
                         inputImage = filter.outputImage!
                     }
                     
-                    let imageSize = inputImage.extent.size
+                    let imageSize = inputImage?.extent.size
                     
                     //
                     // render image to texture back
                     //
                     self.context.execute{ (commandBuffer) in
                         
-                        var width  = Int(imageSize.width)
-                        var height = Int(imageSize.height)
+                        let width  = Int((imageSize?.width)!)
+                        let height = Int((imageSize?.height)!)
                         
                         //
                         // prepare new texture
                         //
                         if currrentProvider?.texture?.width != width || currrentProvider?.texture?.height != height
                         {
-                            let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                                input.pixelFormat,
+                            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                                pixelFormat: input.pixelFormat,
                                 width: width, height: height, mipmapped: false)
                             
                             if currrentProvider?.texture != nil {
-                                currrentProvider?.texture?.setPurgeableState(.Volatile)
+                                currrentProvider?.texture?.setPurgeableState(.volatile)
                             }
                             
                             currrentProvider = IMPImageProvider(context: self.context)
                             
-                            currrentProvider?.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                            currrentProvider?.texture = self.context.device.makeTexture(descriptor: descriptor)
                         }
                         
                         
                         //
                         // render image to new texture
                         //
-                        self.context.coreImage?.render(inputImage,
-                            toMTLTexture: currrentProvider!.texture!,
+                        self.context.coreImage?.render(inputImage!,
+                            to: currrentProvider!.texture!,
                             commandBuffer: commandBuffer,
-                            bounds: inputImage.extent,
+                            bounds: (inputImage?.extent)!,
                             colorSpace: self.colorSpace)
                     }
                 }
@@ -563,9 +565,9 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         return  currrentProvider == nil ? source : currrentProvider!
     }
     
-    let colorSpace = CGColorSpaceCreateDeviceRGB()!
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
     
-    private lazy var _destination:IMPImageProvider = {
+    fileprivate lazy var _destination:IMPImageProvider = {
         return IMPImageProvider(context: self.context)
     }()
 
@@ -591,11 +593,11 @@ public class IMPFilter: NSObject,IMPFilterProtocol {
         return _destination
     }
 
-    public func flush() {
+    open func flush() {
         for f in filterList {
             f.flush()
         }
-        _destination.texture?.setPurgeableState(.Empty)
+        _destination.texture?.setPurgeableState(.empty)
         _destination.texture = nil
         source = nil
     }

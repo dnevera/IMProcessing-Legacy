@@ -14,7 +14,7 @@
 
 
 /// RGB-Cube update handler
-public typealias IMPHistogramCubeUpdateHandler =  ((histogram:IMPHistogramCube) -> Void)
+public typealias IMPHistogramCubeUpdateHandler =  ((_ histogram:IMPHistogramCube) -> Void)
 
 ///  @brief RGB-Cube solver protocol uses to extend cube analizer computation
 public protocol IMPHistogramCubeSolver {
@@ -23,62 +23,62 @@ public protocol IMPHistogramCubeSolver {
     ///  - parameter analizer:  analizer wich did computation
     ///  - parameter histogram: current rgb-cube histogram
     ///  - parameter imageSize: image size
-    func analizerDidUpdate(analizer: IMPHistogramCubeAnalyzer, histogram: IMPHistogramCube, imageSize: CGSize);
+    func analizerDidUpdate(_ analizer: IMPHistogramCubeAnalyzer, histogram: IMPHistogramCube, imageSize: CGSize);
 }
 
 
 /// RGB-Cube histogram analizer calculates and prepares base RGB-Cube statistics such as color count and rgb-volumes an image distribution
-public class IMPHistogramCubeAnalyzer: IMPFilter {
+open class IMPHistogramCubeAnalyzer: IMPFilter {
     
     /// Cube histogram
-    public var histogram = IMPHistogramCube()
+    open var histogram = IMPHistogramCube()
     
     /// To manage computation complexity you may downscale source image presentation inside the filter kernel function
-    public var downScaleFactor:Float!{
+    open var downScaleFactor:Float!{
         didSet{
-            scaleUniformBuffer = scaleUniformBuffer ?? self.context.device.newBufferWithLength(sizeof(Float), options: .CPUCacheModeDefaultCache)
+            scaleUniformBuffer = scaleUniformBuffer ?? self.context.device.makeBuffer(length: MemoryLayout<Float>.size, options: MTLResourceOptions())
             memcpy(scaleUniformBuffer.contents(), &downScaleFactor, scaleUniformBuffer.length)
             dirty = true
         }
     }
     
     /// Default colors clipping
-    public static var defaultClipping = IMPHistogramCubeClipping(shadows: float3(0.2,0.2,0.2), highlights: float3(0.2,0.2,0.2))
+    open static var defaultClipping = IMPHistogramCubeClipping(shadows: float3(0.2,0.2,0.2), highlights: float3(0.2,0.2,0.2))
     
-    private var clippingBuffer:MTLBuffer!
+    fileprivate var clippingBuffer:MTLBuffer!
     /// Clipping preferences
-    public var clipping:IMPHistogramCubeClipping!{
+    open var clipping:IMPHistogramCubeClipping!{
         didSet{
-            clippingBuffer = clippingBuffer ?? context.device.newBufferWithLength(sizeof(IMPHistogramCubeClipping), options: .CPUCacheModeDefaultCache)
+            clippingBuffer = clippingBuffer ?? context.device.makeBuffer(length: MemoryLayout<IMPHistogramCubeClipping>.size, options: MTLResourceOptions())
             memcpy(clippingBuffer.contents(), &clipping, clippingBuffer.length)
             dirty = true
         }
     }
     
-    private var scaleUniformBuffer:MTLBuffer!
-    private var solvers:[IMPHistogramCubeSolver] = [IMPHistogramCubeSolver]()
+    fileprivate var scaleUniformBuffer:MTLBuffer!
+    fileprivate var solvers:[IMPHistogramCubeSolver] = [IMPHistogramCubeSolver]()
     
     ///  Add to the analyzer new solver
     ///
     ///  - parameter solver: rgb-cube histogram solver
-    public func addSolver(solver:IMPHistogramCubeSolver){
+    open func addSolver(_ solver:IMPHistogramCubeSolver){
         solvers.append(solver)
     }
     
     /// Crop region defines wich region of the image should be explored.
-    public var region:IMPRegion!{
+    open var region:IMPRegion!{
         didSet{
-            regionUniformBuffer = regionUniformBuffer ?? self.context.device.newBufferWithLength(sizeof(IMPRegion), options: .CPUCacheModeDefaultCache)
+            regionUniformBuffer = regionUniformBuffer ?? self.context.device.makeBuffer(length: MemoryLayout<IMPRegion>.size, options: MTLResourceOptions())
             memcpy(regionUniformBuffer.contents(), &region, regionUniformBuffer.length)
             dirty = true
         }
     }
     internal var regionUniformBuffer:MTLBuffer!
     
-    private var kernel_impHistogramCounter:IMPFunction!
-    private var histogramUniformBuffer:MTLBuffer!
-    private var threadgroups = MTLSize(width: 1, height: 1, depth: 1)
-    private var threadgroupCounts = MTLSize(width: Int(kIMP_HistogramCubeThreads),height: 1,depth: 1)
+    fileprivate var kernel_impHistogramCounter:IMPFunction!
+    fileprivate var histogramUniformBuffer:MTLBuffer!
+    fileprivate var threadgroups = MTLSize(width: 1, height: 1, depth: 1)
+    fileprivate var threadgroupCounts = MTLSize(width: Int(kIMP_HistogramCubeThreads),height: 1,depth: 1)
     
     ///  Create RGB-Cube histogram analizer with new kernel
     ///
@@ -99,7 +99,7 @@ public class IMPHistogramCubeAnalyzer: IMPFilter {
         
         threadgroups = MTLSizeMake(groups,1,1)
         
-        histogramUniformBuffer = self.context.device.newBufferWithLength(sizeof(IMPHistogramCubeBuffer) * Int(groups), options: MTLResourceOptions.CPUCacheModeDefaultCache)
+        histogramUniformBuffer = self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramCubeBuffer>.size * Int(groups), options: MTLResourceOptions())
         
         self.addFunction(kernel_impHistogramCounter);
         
@@ -121,14 +121,14 @@ public class IMPHistogramCubeAnalyzer: IMPFilter {
     ///  Add RGB-Cube histogram observer
     ///
     ///  - parameter observer: RGB-Cube update enclosure
-    public func addUpdateObserver(observer:IMPHistogramCubeUpdateHandler){
+    open func addUpdateObserver(_ observer:@escaping IMPHistogramCubeUpdateHandler){
         analizerUpdateHandlers.append(observer)
     }
     
-    private var analizerUpdateHandlers:[IMPHistogramCubeUpdateHandler] = [IMPHistogramCubeUpdateHandler]()
+    fileprivate var analizerUpdateHandlers:[IMPHistogramCubeUpdateHandler] = [IMPHistogramCubeUpdateHandler]()
     
     /// Source image frame
-    public override var source:IMPImageProvider?{
+    open override var source:IMPImageProvider?{
         didSet{
             
             super.source = source
@@ -141,32 +141,32 @@ public class IMPHistogramCubeAnalyzer: IMPFilter {
     }
     
     /// Destination image frame is equal the source frame
-    public override var destination:IMPImageProvider?{
+    open override var destination:IMPImageProvider?{
         get{
             return source
         }
     }
     
-    internal func apply(texture:MTLTexture, buffer:MTLBuffer!) {
+    internal func apply(_ texture:MTLTexture, buffer:MTLBuffer!) {
         
         self.context.execute { (commandBuffer) -> Void in
             
             #if os(iOS) 
-                let blitEncoder = commandBuffer.blitCommandEncoder()
-                blitEncoder.fillBuffer(buffer, range: NSMakeRange(0, buffer.length), value: 0)
+                let blitEncoder = commandBuffer.makeBlitCommandEncoder()
+                blitEncoder.fill(buffer: buffer, range: NSMakeRange(0, buffer.length), value: 0)
                 blitEncoder.endEncoding()
             #else
                 memset(buffer.contents(), 0, buffer.length)
             #endif
             
-            let commandEncoder = commandBuffer.computeCommandEncoder()
+            let commandEncoder = commandBuffer.makeComputeCommandEncoder()
             
             commandEncoder.setComputePipelineState(self.kernel_impHistogramCounter.pipeline!);
-            commandEncoder.setTexture(texture, atIndex:0)
-            commandEncoder.setBuffer(buffer, offset:0, atIndex:0)
-            commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, atIndex:1)
-            commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, atIndex:2)
-            commandEncoder.setBuffer(self.clippingBuffer,         offset:0, atIndex:3)
+            commandEncoder.setTexture(texture, at:0)
+            commandEncoder.setBuffer(buffer, offset:0, at:0)
+            commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, at:1)
+            commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, at:2)
+            commandEncoder.setBuffer(self.clippingBuffer,         offset:0, at:3)
             
             self.configure(self.kernel_impHistogramCounter, command: commandEncoder)
             
@@ -179,7 +179,7 @@ public class IMPHistogramCubeAnalyzer: IMPFilter {
     ///  when any changes occur with the filter, or dirty property is set. 
     ///  Usually you don't need call the method except cases you sure you have to launch new computation.
     ///
-    public override func apply() -> IMPImageProvider {
+    open override func apply() -> IMPImageProvider {
         
         if let texture = source?.texture{
             
@@ -188,12 +188,12 @@ public class IMPHistogramCubeAnalyzer: IMPFilter {
             histogram.update(data: histogramUniformBuffer.contents(), dataCount: threadgroups.width)
             
             for s in solvers {
-                let size = CGSizeMake(CGFloat(texture.width), CGFloat(texture.height))
+                let size = CGSize(width: CGFloat(texture.width), height: CGFloat(texture.height))
                 s.analizerDidUpdate(self, histogram: self.histogram, imageSize: size)
             }
             
             for o in analizerUpdateHandlers{
-                o(histogram: histogram)
+                o(histogram)
             }
         }
         

@@ -13,31 +13,31 @@ import Metal
 
 public extension IMPImageProvider{
     
-    public convenience init(context: IMPContext, pixelBuffer: CVPixelBufferRef) {
+    public convenience init(context: IMPContext, pixelBuffer: CVPixelBuffer) {
         self.init(context: context)
         #if os(iOS)
             //
             // Pixelbuffer from camera always is Left
             //
-            orientation = .Left
+            orientation = .left
         #endif
         update(pixelBuffer: pixelBuffer)
     }
     
-    public func update(pixelBuffer pixelBuffer:CVPixelBufferRef) {
+    public func update(pixelBuffer:CVPixelBuffer) {
         
         let width = CVPixelBufferGetWidth(pixelBuffer)
         let height = CVPixelBufferGetHeight(pixelBuffer)
         
-        var textureRef:Unmanaged<CVMetalTextureRef>?
+        let textureRef = UnsafeMutablePointer<CVMetalTexture?>.allocate(capacity: 1)
         
-        let error = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, videoCache.reference!, pixelBuffer, nil, .BGRA8Unorm, width, height, 0, &textureRef)
+        let error = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, videoCache.reference!, pixelBuffer, nil, .bgra8Unorm, width, height, 0, textureRef)
         
         if error != kCVReturnSuccess {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
         }
         
-        if let ref = textureRef?.takeUnretainedValue() {
+        if let ref = textureRef.pointee {
             
             if let t = CVMetalTextureGetTexture(ref) {
                 texture = t
@@ -46,7 +46,6 @@ public extension IMPImageProvider{
                 fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
             }
             
-            textureRef?.release()
         }
     }
 }

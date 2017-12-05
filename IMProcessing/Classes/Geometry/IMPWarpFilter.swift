@@ -10,14 +10,14 @@
 import Metal
 
 /// Warp transformation filter
-public class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
+open class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
     
-    public var model:float4x4 {
+    open var model:float4x4 {
         return transformation
     }
 
     /// Source image quad
-    public var sourceQuad = IMPQuad() {
+    open var sourceQuad = IMPQuad() {
         didSet{
             transformation = sourceQuad.transformTo(destination: destinationQuad)
             dirty = true
@@ -25,17 +25,17 @@ public class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
     }
     
     /// Destination image quad
-    public var destinationQuad = IMPQuad() {
+    open var destinationQuad = IMPQuad() {
         didSet{
             transformation = sourceQuad.transformTo(destination: destinationQuad)
             dirty = true
         }
     }
     
-    public var backgroundColor:IMPColor = IMPColor.whiteColor()
+    open var backgroundColor:IMPColor = IMPColor.white
     
     /// Graphic function
-    public var graphics:IMPGraphics!
+    open var graphics:IMPGraphics!
     
     /// Create Warp with new graphic function
     required public init(context: IMPContext, vertex:String, fragment:String) {
@@ -47,7 +47,7 @@ public class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
         self.init(context: context, vertex: "vertex_warpTransformation", fragment: "fragment_passthrough")
     }
     
-    public override func main(source source:IMPImageProvider , destination provider: IMPImageProvider) -> IMPImageProvider? {
+    open override func main(source:IMPImageProvider , destination provider: IMPImageProvider) -> IMPImageProvider? {
         if let texture = source.texture{
             context.execute { (commandBuffer) in
                 
@@ -56,29 +56,29 @@ public class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
                                 
                 if width.int != provider.texture?.width || height.int != provider.texture?.height{
                     
-                    let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                        texture.pixelFormat,
+                    let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+                        pixelFormat: texture.pixelFormat,
                         width: width.int, height: height.int,
                         mipmapped: false)
                     
-                    provider.texture = self.context.device.newTextureWithDescriptor(descriptor)
+                    provider.texture = self.context.device.makeTexture(descriptor: descriptor)
                 }
                 
                 self.renderPassDescriptor.colorAttachments[0].texture = provider.texture
-                self.renderPassDescriptor.colorAttachments[0].loadAction = .Clear
+                self.renderPassDescriptor.colorAttachments[0].loadAction = .clear
                 self.renderPassDescriptor.colorAttachments[0].clearColor = self.clearColor
-                self.renderPassDescriptor.colorAttachments[0].storeAction = .Store
+                self.renderPassDescriptor.colorAttachments[0].storeAction = .store
                 
-                let renderEncoder = commandBuffer.renderCommandEncoderWithDescriptor(self.renderPassDescriptor)
+                let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: self.renderPassDescriptor)
                                 
                 renderEncoder.setRenderPipelineState(self.graphics.pipeline!)
                 
-                renderEncoder.setVertexBuffer(self.vertexBuffer, offset: 0, atIndex: 0)
-                renderEncoder.setVertexBuffer(self.matrixBuffer, offset: 0, atIndex: 1)
+                renderEncoder.setVertexBuffer(self.vertexBuffer, offset: 0, at: 0)
+                renderEncoder.setVertexBuffer(self.matrixBuffer, offset: 0, at: 1)
                 
-                renderEncoder.setFragmentTexture(source.texture, atIndex:0)
+                renderEncoder.setFragmentTexture(source.texture, at:0)
                 
-                renderEncoder.drawPrimitives(.Triangle, vertexStart: 0, vertexCount: self.vertices.count, instanceCount: self.vertices.count/3)
+                renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: self.vertices.count, instanceCount: self.vertices.count/3)
                 renderEncoder.endEncoding()
             }
         }
@@ -96,7 +96,7 @@ public class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
     
     lazy var _matrixBuffer:MTLBuffer = {
         var m = self.transformation.cmatrix
-        var mm = self.context.device.newBufferWithLength(sizeofValue(self.transformation.cmatrix), options: .CPUCacheModeDefaultCache)
+        var mm = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.transformation.cmatrix), options: MTLResourceOptions())
         memcpy(mm.contents(), &m, mm.length)
         return mm
     }()
@@ -110,6 +110,6 @@ public class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
     lazy var vertices = IMPPhotoPlate(aspect: 1, region: IMPRegion())
     
     lazy var vertexBuffer: MTLBuffer = {
-        return self.context.device.newBufferWithBytes(self.vertices.raw, length: self.vertices.length, options: .CPUCacheModeDefaultCache)
+        return self.context.device.makeBuffer(bytes: self.vertices.raw, length: self.vertices.length, options: MTLResourceOptions())
     }()
 }
