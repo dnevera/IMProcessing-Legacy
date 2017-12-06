@@ -156,22 +156,22 @@ open class IMPRenderNode: IMPContextProvider {
         
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)
         
-        renderEncoder.setCullMode(.front)
+        renderEncoder?.setCullMode(.front)
         
-        renderEncoder.setRenderPipelineState(pipelineState)
+        renderEncoder?.setRenderPipelineState(pipelineState)
         
-        renderEncoder.setVertexBuffer(vertexBuffer, offset: 0, at: 0)
-        renderEncoder.setVertexBuffer(matrixBuffer, offset: 0, at: 1)
+        renderEncoder?.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+        renderEncoder?.setVertexBuffer(matrixBuffer, offset: 0, index: 1)
         
-        renderEncoder.setFragmentBuffer(flipVectorBuffer, offset: 0, at: 0)
-        renderEncoder.setFragmentTexture(source, at:0)
+        renderEncoder?.setFragmentBuffer(flipVectorBuffer, offset: 0, index: 0)
+        renderEncoder?.setFragmentTexture(source, index:0)
         
         if let configure = configure {
-            configure(renderEncoder)
+            configure(renderEncoder!)
         }
         
-        renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertices.count, instanceCount: vertices.count/3)
-        renderEncoder.endEncoding()
+        renderEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: vertices.count, instanceCount: vertices.count/3)
+        renderEncoder?.endEncoding()
     }
     
     open var vertices:IMPVertices! {
@@ -198,7 +198,7 @@ open class IMPRenderNode: IMPContextProvider {
     
     lazy var _reflectionVectorBuffer:MTLBuffer = {
         return self.context.device.makeBuffer(length: MemoryLayout<float4>.size, options: MTLResourceOptions())
-    }()
+    }()!
     
     var flipVectorBuffer:MTLBuffer {
         memcpy(_reflectionVectorBuffer.contents(), &reflectionVector, _reflectionVectorBuffer.length)
@@ -244,5 +244,5 @@ open class IMPRenderNode: IMPContextProvider {
     
     lazy var matrixBuffer: MTLBuffer = {
         return self.context.device.makeBuffer(length: MemoryLayout<float4x4>.size, options: MTLResourceOptions())
-    }()
+    }()!
 }

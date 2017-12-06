@@ -82,9 +82,9 @@ open class IMPPaletteLayerSolver: IMPFilter, IMPHistogramCubeSolver {
     
     override open func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if (kernel == function){
-            command.setBuffer(palleteBuffer, offset: 0, at: 0)
-            command.setBuffer(palleteCountBuffer,  offset: 0, at: 1)
-            command.setBuffer(layerBuffer,     offset: 0, at: 2)
+            command.setBuffer(palleteBuffer, offset: 0, index: 0)
+            command.setBuffer(palleteCountBuffer,  offset: 0, index: 1)
+            command.setBuffer(layerBuffer,     offset: 0, index: 2)
         }
     }
     

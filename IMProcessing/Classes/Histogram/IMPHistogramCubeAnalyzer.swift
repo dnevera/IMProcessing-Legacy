@@ -153,25 +153,25 @@ open class IMPHistogramCubeAnalyzer: IMPFilter {
             
             #if os(iOS) 
                 let blitEncoder = commandBuffer.makeBlitCommandEncoder()
-                blitEncoder.fill(buffer: buffer, range: NSMakeRange(0, buffer.length), value: 0)
-                blitEncoder.endEncoding()
+                blitEncoder?.__fill(buffer, range: NSMakeRange(0, buffer.length), value: 0)
+                blitEncoder?.endEncoding()
             #else
                 memset(buffer.contents(), 0, buffer.length)
             #endif
             
             let commandEncoder = commandBuffer.makeComputeCommandEncoder()
             
-            commandEncoder.setComputePipelineState(self.kernel_impHistogramCounter.pipeline!);
-            commandEncoder.setTexture(texture, at:0)
-            commandEncoder.setBuffer(buffer, offset:0, at:0)
-            commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, at:1)
-            commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, at:2)
-            commandEncoder.setBuffer(self.clippingBuffer,         offset:0, at:3)
+            commandEncoder?.setComputePipelineState(self.kernel_impHistogramCounter.pipeline!);
+            commandEncoder?.setTexture(texture, index:0)
+            commandEncoder?.setBuffer(buffer, offset:0, index:0)
+            commandEncoder?.setBuffer(self.regionUniformBuffer,    offset:0, index:1)
+            commandEncoder?.setBuffer(self.scaleUniformBuffer,     offset:0, index:2)
+            commandEncoder?.setBuffer(self.clippingBuffer,         offset:0, index:3)
             
-            self.configure(self.kernel_impHistogramCounter, command: commandEncoder)
+            self.configure(self.kernel_impHistogramCounter, command: commandEncoder!)
             
-            commandEncoder.dispatchThreadgroups(self.threadgroups, threadsPerThreadgroup:self.threadgroupCounts);
-            commandEncoder.endEncoding()
+            commandEncoder?.dispatchThreadgroups(self.threadgroups, threadsPerThreadgroup:self.threadgroupCounts);
+            commandEncoder?.endEncoding()
         }
     }
     

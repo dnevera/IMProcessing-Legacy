@@ -9,6 +9,8 @@
 #ifndef IMPTypes_h
 #define IMPTypes_h
 
+#include <stdbool.h> 
+
 #include "IMPConstants-Bridging-Metal.h"
 
 #ifdef __cplusplus

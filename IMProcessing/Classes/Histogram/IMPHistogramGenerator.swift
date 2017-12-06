@@ -24,7 +24,7 @@ public class IMPHistogramGenerator: IMPFilter{
                  source?.texture?.height.cgfloat != size.height
             {
                 let desc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: Int(size.width), height: Int(size.height), mipmapped: false)
-                source = IMPImageProvider(context: context, texture: context.device.makeTexture(descriptor: desc))
+                source = IMPImageProvider(context: context, texture: context.device.makeTexture(descriptor: desc)!)
             }
             destinationSize = MTLSize(cgsize: size)
         }
@@ -88,8 +88,8 @@ public class IMPHistogramGenerator: IMPFilter{
     
     override public func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if (kernel == function){
-            command.setTexture(histogramInputTexture, at: 2)
-            command.setBuffer(layerUniformBiffer,     offset: 0, at: 0)
+            command.setTexture(histogramInputTexture, index: 2)
+            command.setBuffer(layerUniformBiffer,     offset: 0, index: 0)
         }
     }
     

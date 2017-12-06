@@ -42,8 +42,8 @@ open class IMPRandomNoiseFilter:IMPFilter,IMPAdjustmentProtocol{
             let timer  = UInt32(modf(Date.timeIntervalSinceReferenceDate).0)
             var rand = Float(arc4random_uniform(timer))/Float(timer)
             memcpy(timerBuffer.contents(), &rand, MemoryLayout<Float>.size)
-            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
-            command.setBuffer(timerBuffer, offset: 0, at: 1)
+            command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
+            command.setBuffer(timerBuffer, offset: 0, index: 1)
         }
     }
 }

@@ -48,7 +48,7 @@ open class IMPGridGenerator: IMPTransformFilter {
     
     override open func configureGraphics(_ graphics: IMPGraphics, command: MTLRenderCommandEncoder) {
         if graphics == self.graphics {
-            command.setFragmentBuffers(buffers, offsets: bufferOffset, with: NSMakeRange(0, buffers.count))
+            command.setFragmentBuffers(buffers, offsets: bufferOffset, range: 0..<buffers.count)
         }
     }
     
@@ -68,30 +68,30 @@ open class IMPGridGenerator: IMPTransformFilter {
     
     lazy var bufferStep:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.step,
                                                                            length: MemoryLayout<uint>.size,
-                                                                           options: MTLResourceOptions())
+                                                                           options: MTLResourceOptions())!
     
     lazy var bufferSDiv:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.subDivisionStep,
                                                                            length: MemoryLayout<uint>.size,
-                                                                           options: MTLResourceOptions())
+                                                                           options: MTLResourceOptions())!
     
     lazy var bufferColor:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.color,
                                                                             length: MemoryLayout<float4>.size,
-                                                                            options: MTLResourceOptions())
+                                                                            options: MTLResourceOptions())!
     
     lazy var bufferSDivColor:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.subDivisionColor,
                                                                                 length: MemoryLayout<float4>.size,
-                                                                                options: MTLResourceOptions())
+                                                                                options: MTLResourceOptions())!
     
     lazy var bufferSpotAreaColor:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.spotAreaColor,
                                                                                length: MemoryLayout<float4>.size,
-                                                                               options: MTLResourceOptions())
+                                                                               options: MTLResourceOptions())!
     
     lazy var bufferSpotArea:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.spotArea,
                                                                                length: MemoryLayout<IMPRegion>.size,
-                                                                               options: MTLResourceOptions())
+                                                                               options: MTLResourceOptions())!
     
     lazy var bufferSpotAreaType:MTLBuffer = self.context.device.makeBuffer(bytes: &self.adjustment.spotAreaType,
                                                                            length: MemoryLayout<uint>.size,
-                                                                           options: MTLResourceOptions())
+                                                                           options: MTLResourceOptions())!
     
 }

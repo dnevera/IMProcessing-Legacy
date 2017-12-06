@@ -68,8 +68,8 @@ open class IMPLutFilter: IMPFilter, IMPAdjustmentProtocol {
     
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setTexture(lut?.texture, at: 2)
-            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
+            command.setTexture(lut?.texture, index: 2)
+            command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
         }
     }
 }

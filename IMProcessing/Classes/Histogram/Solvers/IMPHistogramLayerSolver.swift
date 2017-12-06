@@ -88,9 +88,9 @@ open class IMPHistogramLayerSolver: IMPFilter, IMPHistogramSolver {
     
     override open func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if (kernel == function){
-            command.setBuffer(histogramUniformBuffer, offset: 0, at: 0)
-            command.setBuffer(channelsUniformBuffer,  offset: 0, at: 1)
-            command.setBuffer(layerUniformBiffer,     offset: 0, at: 2)
+            command.setBuffer(histogramUniformBuffer, offset: 0, index: 0)
+            command.setBuffer(channelsUniformBuffer,  offset: 0, index: 1)
+            command.setBuffer(layerUniformBiffer,     offset: 0, index: 2)
         }
     }
     

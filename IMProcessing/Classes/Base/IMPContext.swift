@@ -115,7 +115,7 @@ open class IMPContext {
         isLazy = lazy
         if let device = self.device{
             commandQueue = device.makeCommandQueue()
-            if let library = device.newDefaultLibrary(){
+            if let library = device.makeDefaultLibrary(){
                 defaultLibrary = library
             }
             else{

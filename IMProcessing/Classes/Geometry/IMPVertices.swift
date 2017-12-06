@@ -59,7 +59,7 @@ public extension IMPVertices{
             let xyzw = float4(v.position.x,v.position.y,v.position.z,1)
             let result = model.matrix * xyzw
             let t = (1+result.z)/2
-            let xy = result.xy/t
+            let xy = result.xy / Float(t)
             
             points.append(xy)
             

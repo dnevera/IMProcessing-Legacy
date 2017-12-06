@@ -85,7 +85,8 @@ open class  IMPColorWeightsSolver: NSObject, IMPHistogramSolver {
         let sz = vDSP_Length(A.count)
         vDSP_sve(&A, 1, &n, sz);
         if n != 0 {
-            vDSP_vsdiv(&A, 1, &n, &A, 1, sz);
+            var AArg = A
+            vDSP_vsdiv(&AArg, 1, &n, &A, 1, sz);
         }
     }
     
@@ -157,7 +158,7 @@ open class IMPColorWeightsAnalyzer: IMPHistogramAnalyzer {
     }
     
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
-        command.setBuffer(self.clippingBuffer, offset: 0, at: 4)
+        command.setBuffer(self.clippingBuffer, offset: 0, index: 4)
     }
     
     override open func addSolver(_ solver: IMPHistogramSolver) {

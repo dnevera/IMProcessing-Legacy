@@ -249,28 +249,28 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         #if os(OSX)
             blitEncoder.synchronizeResource(texture)
         #endif
-        blitEncoder.fill(buffer: buffer, range: NSMakeRange(0, buffer.length), value: 0)
-        blitEncoder.endEncoding()
+        blitEncoder?.__fill(buffer, range: NSMakeRange(0, buffer.length), value: 0)
+        blitEncoder?.endEncoding()
         
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()
         
         //
         // Создаем вычислительный пайп
         //
-        commandEncoder.setComputePipelineState(self.kernel.pipeline!);
-        commandEncoder.setTexture(texture, at:0)
-        commandEncoder.setBuffer(buffer, offset:0, at:0)
-        commandEncoder.setBuffer(self.channelsToComputeBuffer,offset:0, at:1)
-        commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, at:2)
-        commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, at:3)
+        commandEncoder?.setComputePipelineState(self.kernel.pipeline!);
+        commandEncoder?.setTexture(texture, index:0)
+        commandEncoder?.setBuffer(buffer, offset:0, index:0)
+        commandEncoder?.setBuffer(self.channelsToComputeBuffer,offset:0, index:1)
+        commandEncoder?.setBuffer(self.regionUniformBuffer,    offset:0, index:2)
+        commandEncoder?.setBuffer(self.scaleUniformBuffer,     offset:0, index:3)
         
-        self.configure(self.kernel, command: commandEncoder)
+        self.configure(self.kernel, command: commandEncoder!)
         
         //
         // Запускаем вычисления
         //
-        commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts);
-        commandEncoder.endEncoding()
+        commandEncoder?.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts);
+        commandEncoder?.endEncoding()
         
         #if os(OSX)
             blitEncoder = commandBuffer.blitCommandEncoder()
@@ -323,16 +323,16 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
                 
                 let commandEncoder = commandBuffer.makeComputeCommandEncoder()
                 
-                commandEncoder.setComputePipelineState(self.kernel.pipeline!);
-                commandEncoder.setTexture(texture, at:0)
-                commandEncoder.setTexture(self.analizeTexture, at:1)
-                commandEncoder.setBuffer(self.regionUniformBuffer,    offset:0, at:0)
-                commandEncoder.setBuffer(self.scaleUniformBuffer,     offset:0, at:1)
+                commandEncoder?.setComputePipelineState(self.kernel.pipeline!);
+                commandEncoder?.setTexture(texture, index:0)
+                commandEncoder?.setTexture(self.analizeTexture, index:1)
+                commandEncoder?.setBuffer(self.regionUniformBuffer,    offset:0, index:0)
+                commandEncoder?.setBuffer(self.scaleUniformBuffer,     offset:0, index:1)
                 
-                self.configure(self.kernel, command: commandEncoder)
+                self.configure(self.kernel, command: commandEncoder!)
 
-                commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts);
-                commandEncoder.endEncoding()
+                commandEncoder?.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts);
+                commandEncoder?.endEncoding()
                 
                 let imageBufferSize = width*height*4
                 
@@ -348,7 +348,7 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
                     blitEncoder.synchronizeResource(actual)    
                     #endif
                     
-                    blitEncoder.copy(from: actual,
+                    blitEncoder?.copy(from: actual,
                                                 sourceSlice: 0,
                                                 sourceLevel: 0,
                                                 sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
@@ -362,7 +362,7 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
                         blitEncoder.synchronizeResource(actual)    
                     #endif
 
-                    blitEncoder.endEncoding()
+                    blitEncoder?.endEncoding()
                     
                     var vImage = vImage_Buffer(
                         data: data.contents(),

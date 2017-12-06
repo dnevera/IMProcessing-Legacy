@@ -404,7 +404,7 @@ open class IMPFilter: NSObject,IMPFilterProtocol {
                 provider.texture?.setPurgeableState(.volatile)
             }
             
-            return (context.device.makeTexture(descriptor: descriptor), width, height)
+            return (context.device.makeTexture(descriptor: descriptor)!, width, height)
         }
         else {
             return (provider.texture!, provider.texture!.width, provider.texture!.height)
@@ -452,15 +452,15 @@ open class IMPFilter: NSObject,IMPFilterProtocol {
                             
                             let commandEncoder = commandBuffer.makeComputeCommandEncoder()
                             
-                            commandEncoder.setComputePipelineState(function.pipeline!)
+                            commandEncoder?.setComputePipelineState(function.pipeline!)
                             
-                            commandEncoder.setTexture(input, at:0)
-                            commandEncoder.setTexture(output, at:1)
+                            commandEncoder?.setTexture(input, index:0)
+                            commandEncoder?.setTexture(output, index:1)
                             
-                            self.configure(function, command: commandEncoder)
+                            self.configure(function, command: commandEncoder!)
                             
-                            commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts)
-                            commandEncoder.endEncoding()
+                            commandEncoder?.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts)
+                            commandEncoder?.endEncoding()
                             
                         }
 

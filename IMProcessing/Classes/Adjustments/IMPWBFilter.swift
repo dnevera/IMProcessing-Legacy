@@ -48,7 +48,7 @@ open class IMPWBFilter:IMPFilter,IMPAdjustmentProtocol{
     
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
+            command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
         }
     }
 }

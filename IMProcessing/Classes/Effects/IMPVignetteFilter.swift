@@ -112,37 +112,37 @@ open class IMPVignetteFilter: IMPFilter,IMPAdjustmentProtocol {
  
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
-            command.setBuffer(colorStartUniformBuffer, offset: 0, at: 1)
-            command.setBuffer(colorEndUniformBuffer, offset: 0, at: 2)
-            command.setBuffer(colorUniformBuffer, offset: 0, at: 3)
+            command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
+            command.setBuffer(colorStartUniformBuffer, offset: 0, index: 1)
+            command.setBuffer(colorEndUniformBuffer, offset: 0, index: 2)
+            command.setBuffer(colorUniformBuffer, offset: 0, index: 3)
             if type == .center {
-                command.setBuffer(centerUniformBuffer, offset: 0, at: 4)
+                command.setBuffer(centerUniformBuffer, offset: 0, index: 4)
             }
             else {
-                command.setBuffer(regionUniformBuffer, offset: 0, at: 4)
+                command.setBuffer(regionUniformBuffer, offset: 0, index: 4)
             }
         }
     }
     
     lazy var regionUniformBuffer:MTLBuffer = {
         return self.context.device.makeBuffer(bytes: &self.region, length: MemoryLayout.size(ofValue: self.region), options: MTLResourceOptions())
-    }()
+    }()!
     
     lazy var centerUniformBuffer:MTLBuffer = {
         var c = self.center
-        return self.context.device.makeBuffer(bytes: &c, length: MemoryLayout.size(ofValue: c), options: MTLResourceOptions())
+        return self.context.device.makeBuffer(bytes: &c, length: MemoryLayout.size(ofValue: c), options: MTLResourceOptions())!
     }()
 
     lazy var colorStartUniformBuffer:MTLBuffer = {
         return self.context.device.makeBuffer(bytes: &self.adjustment.start, length: MemoryLayout.size(ofValue: self.adjustment.start), options: MTLResourceOptions())
-    }()
+    }()!
     
     lazy var colorEndUniformBuffer:MTLBuffer = {
         return self.context.device.makeBuffer(bytes: &self.adjustment.end, length: MemoryLayout.size(ofValue: self.adjustment.end), options: MTLResourceOptions())
-    }()
+    }()!
     
     lazy var colorUniformBuffer:MTLBuffer = {
         return self.context.device.makeBuffer(bytes: &self.adjustment.color, length: MemoryLayout.size(ofValue: self.adjustment.color), options: MTLResourceOptions())
-    }()
+    }()!
 }

@@ -56,8 +56,8 @@ open class IMPGaussianBlurFilter: IMPFilter {
         weightsDescription.depth       = 1
         
         let texture = context.device.makeTexture(descriptor: weightsDescription)
-        texture.replace(region: MTLRegionMake1D(0, buffer.count), mipmapLevel: 0, withBytes: buffer, bytesPerRow: MemoryLayout<Float32>.size*buffer.count)
-        return texture
+        texture?.replace(region: MTLRegionMake1D(0, buffer.count), mipmapLevel: 0, withBytes: buffer, bytesPerRow: MemoryLayout<Float32>.size*buffer.count)
+        return texture!
     }
     
     func update(){
@@ -84,11 +84,11 @@ open class IMPGaussianBlurFilter: IMPFilter {
     
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if function == horizontal_pass_kernel || function == vertical_pass_kernel {
-            command.setTexture(weightsTexure, at: 2)
-            command.setTexture(offsetsTexture, at: 3)
+            command.setTexture(weightsTexure, index: 2)
+            command.setTexture(offsetsTexture, index: 3)
             if function == vertical_pass_kernel{
-                command.setTexture(source?.texture, at: 4)
-                command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
+                command.setTexture(source?.texture, index: 4)
+                command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
             }
         }
     }

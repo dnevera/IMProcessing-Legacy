@@ -45,8 +45,8 @@ open class IMPDitheringFilter:IMPFilter,IMPAdjustmentProtocol{
     
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setTexture(ditherLut, at: 2)
-            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
+            command.setTexture(ditherLut, index: 2)
+            command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
         }
     }
     

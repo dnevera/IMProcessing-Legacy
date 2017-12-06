@@ -25,6 +25,10 @@ public struct IMPProjectionModel{
     public var near:Float = 0
     public var far:Float = 1
     
+    public init() {
+        
+    }
+    
     public var matrix:float4x4{
         get {
             let cotan = 1.0 / tanf(fovy / 2.0)

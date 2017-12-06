@@ -261,12 +261,12 @@ open class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
             if self.optimization == .high {
-                command.setTexture(hsv3DlutTexture, at: 2)
-                command.setBuffer(adjustmentLutBuffer, offset: 0, at: 0)
+                command.setTexture(hsv3DlutTexture, index: 2)
+                command.setBuffer(adjustmentLutBuffer, offset: 0, index: 0)
             }
             else{
-                command.setTexture(hueWeights, at: 2)
-                command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
+                command.setTexture(hueWeights, index: 2)
+                command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
             }
         }
     }
@@ -299,10 +299,10 @@ open class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
         for i in 0..<IMProcessing.hsv.hueRamps.count{
             let ramp = IMProcessing.hsv.hueRamps[i]
             var data = hues.overlapWeightsDistribution(ramp: ramp, overlap: overlap) as [Float32]
-            hueWeights.replace(region: region, mipmapLevel:0, slice:i, withBytes:&data, bytesPerRow:MemoryLayout<Float32>.size * width, bytesPerImage:0)
+            hueWeights?.replace(region: region, mipmapLevel:0, slice:i, withBytes:&data, bytesPerRow:MemoryLayout<Float32>.size * width, bytesPerImage:0)
         }
         
-        return hueWeights;
+        return hueWeights!;
     }
     
     
@@ -358,14 +358,14 @@ open class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
             
             let commandEncoder = commandBuffer.makeComputeCommandEncoder()
             
-            commandEncoder.setComputePipelineState(self.kernel_hsv3DLut.pipeline!)
+            commandEncoder?.setComputePipelineState(self.kernel_hsv3DLut.pipeline!)
             
-            commandEncoder.setTexture(self.hsv3DlutTexture, at:0)
-            commandEncoder.setTexture(self.hueWeights, at:1)
-            commandEncoder.setBuffer(self.adjustmentBuffer, offset: 0, at: 0)
+            commandEncoder?.setTexture(self.hsv3DlutTexture, index:0)
+            commandEncoder?.setTexture(self.hueWeights, index:1)
+            commandEncoder?.setBuffer(self.adjustmentBuffer, offset: 0, index: 0)
 
-            commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts)
-            commandEncoder.endEncoding()
+            commandEncoder?.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts)
+            commandEncoder?.endEncoding()
             #if os(OSX)
                 let blitEncoder = commandBuffer.blitCommandEncoder()
                 blitEncoder.synchronizeResource(self.hsv3DlutTexture!)
@@ -391,7 +391,7 @@ open class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
         
         let texture = context_hsv3DLut.device.makeTexture(descriptor: textureDescriptor)
         
-        return texture
+        return texture!
     }
 }
     

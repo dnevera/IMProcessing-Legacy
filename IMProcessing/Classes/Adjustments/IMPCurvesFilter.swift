@@ -169,8 +169,8 @@ open class IMPCurvesFilter:IMPFilter,IMPAdjustmentProtocol{
     
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setTexture(splines.texture, at: 2)
-            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
+            command.setTexture(splines.texture, index: 2)
+            command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
         }
     }
 }
@@ -202,7 +202,8 @@ extension Array where Iterator.Element == Float {
         vDSP_vclr(&addata, 1, vDSP_Length(asize))
         
         var zero = self[0]
-        vDSP_vsadd(&addata, 1, &zero, &addata, 1, vDSP_Length(filter.count))
+        var addataArg = addata
+        vDSP_vsadd(&addataArg, 1, &zero, &addata, 1, vDSP_Length(filter.count))
         
         one  =  self[count-1]
         let rest = UnsafePointer<Float>(addata) + (Int(count) + Int(halfs))

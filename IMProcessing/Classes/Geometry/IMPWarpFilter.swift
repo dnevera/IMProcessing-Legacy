@@ -71,15 +71,15 @@ open class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
                 
                 let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: self.renderPassDescriptor)
                                 
-                renderEncoder.setRenderPipelineState(self.graphics.pipeline!)
+                renderEncoder?.setRenderPipelineState(self.graphics.pipeline!)
                 
-                renderEncoder.setVertexBuffer(self.vertexBuffer, offset: 0, at: 0)
-                renderEncoder.setVertexBuffer(self.matrixBuffer, offset: 0, at: 1)
+                renderEncoder?.setVertexBuffer(self.vertexBuffer, offset: 0, index: 0)
+                renderEncoder?.setVertexBuffer(self.matrixBuffer, offset: 0, index: 1)
                 
-                renderEncoder.setFragmentTexture(source.texture, at:0)
+                renderEncoder?.setFragmentTexture(source.texture, index:0)
                 
-                renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: self.vertices.count, instanceCount: self.vertices.count/3)
-                renderEncoder.endEncoding()
+                renderEncoder?.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: self.vertices.count, instanceCount: self.vertices.count/3)
+                renderEncoder?.endEncoding()
             }
         }
         return provider
@@ -97,8 +97,8 @@ open class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
     lazy var _matrixBuffer:MTLBuffer = {
         var m = self.transformation.cmatrix
         var mm = self.context.device.makeBuffer(length: MemoryLayout.size(ofValue: self.transformation.cmatrix), options: MTLResourceOptions())
-        memcpy(mm.contents(), &m, mm.length)
-        return mm
+        memcpy(mm?.contents(), &m, (mm?.length)!)
+        return mm!
     }()
 
     var matrixBuffer: MTLBuffer {
@@ -111,5 +111,5 @@ open class IMPWarpFilter: IMPFilter, IMPGraphicsProvider {
     
     lazy var vertexBuffer: MTLBuffer = {
         return self.context.device.makeBuffer(bytes: self.vertices.raw, length: self.vertices.length, options: MTLResourceOptions())
-    }()
+    }()!
 }

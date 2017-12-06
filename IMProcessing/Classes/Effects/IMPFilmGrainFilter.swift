@@ -56,9 +56,9 @@ open class IMPFilmGrainFilter:IMPFilter,IMPAdjustmentProtocol{
     
     open override func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if kernel == function {
-            command.setBuffer(adjustmentBuffer, offset: 0, at: 0)
+            command.setBuffer(adjustmentBuffer, offset: 0, index: 0)
             
-            command.setBuffer(timerBuffer, offset: 0, at: 1)
+            command.setBuffer(timerBuffer, offset: 0, index: 1)
         }
     }
 }

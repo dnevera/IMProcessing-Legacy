@@ -50,7 +50,7 @@ open class IMPCropFilter: IMPFilter {
                     provider.texture = self.context.device.makeTexture(descriptor: descriptor)
                 }
                                 
-                blit.copy(
+                blit?.copy(
                     from: texture,
                     sourceSlice: 0,
                     sourceLevel: 0,
@@ -61,7 +61,7 @@ open class IMPCropFilter: IMPFilter {
                     destinationLevel: 0,
                     destinationOrigin: MTLOrigin(x:0,y:0,z:0))
                                 
-                blit.endEncoding()                
+                blit?.endEncoding()                
             }
         }
         return provider 

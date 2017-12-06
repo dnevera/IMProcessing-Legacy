@@ -40,8 +40,8 @@ public extension MTLDevice {
         weightsDescription.depth       = 1
         
         let texture = self.makeTexture(descriptor: weightsDescription)
-        texture.update(buffer)
-        return texture
+        texture?.update(buffer)
+        return texture!
     }
 
     public func texture1D(_ buffer:[UInt8]) -> MTLTexture {
@@ -54,16 +54,16 @@ public extension MTLDevice {
         weightsDescription.depth       = 1
         
         let texture = self.makeTexture(descriptor: weightsDescription)
-        texture.update(buffer)
-        return texture
+        texture?.update(buffer)
+        return texture!
     }
 
     public func texture2D(_ buffer:[[UInt8]]) -> MTLTexture {
         let width = buffer[0].count
         let weightsDescription = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .r8Unorm, width: width, height: buffer.count, mipmapped: false)
         let texture = self.makeTexture(descriptor: weightsDescription)
-        texture.update(buffer)
-        return texture
+        texture?.update(buffer)
+        return texture!
     }
 
     public func texture1DArray(_ buffers:[[UInt8]]) -> MTLTexture {
@@ -88,9 +88,9 @@ public extension MTLDevice {
         
         let texture = self.makeTexture(descriptor: textureDescriptor)
                 
-        texture.update1DArray(buffers)
+        texture?.update1DArray(buffers)
         
-        return texture
+        return texture!
     }
     
     public func texture1DArray(_ buffers:[[Float]]) -> MTLTexture {
@@ -115,9 +115,9 @@ public extension MTLDevice {
         
         let texture = self.makeTexture(descriptor: textureDescriptor)
         
-        texture.update(buffers)
+        texture?.update(buffers)
         
-        return texture
+        return texture!
     }
 
 }

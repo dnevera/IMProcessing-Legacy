@@ -26,7 +26,7 @@ public extension float3{
         let q = mix(float4(rgb: p.xyw, a: self.r), float4(self.r, p.yzx), t: IMPstep(p.x, self.r))
         
         let e = Float(1.0e-10)
-        let d = q.x - min(q.w, q.y)
+        let d = q.x - Swift.min(q.w, q.y)
         return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x)
     }
     

@@ -53,17 +53,17 @@ open class IMPBezierWarpFilter: IMPTransformFilter {
 
     override open func configureGraphics(_ graphics: IMPGraphics, command: MTLRenderCommandEncoder) {
         if graphics == self.graphics {
-            command.setFragmentBuffer(buffer, offset: 0, at: 0)
-            command.setFragmentBuffer(bgColorBuffer, offset: 0, at: 1)
+            command.setFragmentBuffer(buffer, offset: 0, index: 0)
+            command.setFragmentBuffer(bgColorBuffer, offset: 0, index: 1)
         }
     }
 
     lazy var bgColorBuffer:MTLBuffer = self.context.device.makeBuffer(length: MemoryLayout<float4>.size,
-                                                                         options: MTLResourceOptions())
+                                                                         options: MTLResourceOptions())!
 
     lazy var buffer:MTLBuffer = self.context.device.makeBuffer(bytes: &self.controlPoints,
                                                                        length: MemoryLayout<IMPFloat2x4x4>.size,
-                                                                       options: MTLResourceOptions())
+                                                                       options: MTLResourceOptions())!
 }
 
 

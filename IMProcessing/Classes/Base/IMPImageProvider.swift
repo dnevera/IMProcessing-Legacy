@@ -295,7 +295,7 @@ open class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                     blitEncoder.synchronizeResource(texture)
                 #endif
 
-                blitEncoder.copy(
+                blitEncoder?.copy(
                     from: texture,
                     sourceSlice:      0,
                     sourceLevel:      0,
@@ -310,7 +310,7 @@ open class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                     blitEncoder.synchronizeResource(source!)
                 #endif
 
-                blitEncoder.endEncoding()
+                blitEncoder?.endEncoding()
                 
             }
         }

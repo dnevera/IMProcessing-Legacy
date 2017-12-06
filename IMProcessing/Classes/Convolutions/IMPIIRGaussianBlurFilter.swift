@@ -77,50 +77,50 @@ open class IMPIIRGaussianBlurFilter: IMPFilter {
                     // horizontal stage
                     //
                     var blitEncoder = commandBuffer.makeBlitCommandEncoder()
-                    blitEncoder.fill(buffer: self.inoutBuffer!, range: NSRange(location: 0, length: self.inoutBuffer!.length), value: 0)
-                    blitEncoder.fill(buffer: self.inoutBuffer2!,range: NSRange(location: 0, length:self.inoutBuffer2!.length), value: 0)
-                    blitEncoder.endEncoding()
+                    blitEncoder?.__fill(self.inoutBuffer!, range: NSRange(location: 0, length: self.inoutBuffer!.length), value: 0)
+                    blitEncoder?.__fill(self.inoutBuffer2!,range: NSRange(location: 0, length:self.inoutBuffer2!.length), value: 0)
+                    blitEncoder?.endEncoding()
 
                     var commandEncoder = commandBuffer.makeComputeCommandEncoder()
                     
-                    commandEncoder.setComputePipelineState(self.kernel_iirFilterHorizontal.pipeline!)
+                    commandEncoder?.setComputePipelineState(self.kernel_iirFilterHorizontal.pipeline!)
                     
-                    commandEncoder.setTexture(inputTexture,    at: 0)
-                    commandEncoder.setTexture(self._destination.texture,    at: 1)
-                    commandEncoder.setTexture(self.bTexture,   at: 2)
-                    commandEncoder.setTexture(self.aTexture,   at: 3)
-                    commandEncoder.setBuffer(self.inoutBuffer,  offset: 0, at: 0)
-                    commandEncoder.setBuffer(self.inoutBuffer2, offset: 0, at: 1)
-                    commandEncoder.setBuffer(self.bsizeBuffer,  offset: 0, at: 2)
-                    commandEncoder.setBuffer(self.radiusBuffer, offset: 0, at: 3)
+                    commandEncoder?.setTexture(inputTexture,    index: 0)
+                    commandEncoder?.setTexture(self._destination.texture,    index: 1)
+                    commandEncoder?.setTexture(self.bTexture,   index: 2)
+                    commandEncoder?.setTexture(self.aTexture,   index: 3)
+                    commandEncoder?.setBuffer(self.inoutBuffer,  offset: 0, index: 0)
+                    commandEncoder?.setBuffer(self.inoutBuffer2, offset: 0, index: 1)
+                    commandEncoder?.setBuffer(self.bsizeBuffer,  offset: 0, index: 2)
+                    commandEncoder?.setBuffer(self.radiusBuffer, offset: 0, index: 3)
 
-                    commandEncoder.dispatchThreadgroups(threadgroupsX, threadsPerThreadgroup:threadgroupCounts)
-                    commandEncoder.endEncoding()
+                    commandEncoder?.dispatchThreadgroups(threadgroupsX, threadsPerThreadgroup:threadgroupCounts)
+                    commandEncoder?.endEncoding()
 
                 
                     //
                     // vertical stage
                     //
                     blitEncoder = commandBuffer.makeBlitCommandEncoder()
-                    blitEncoder.fill(buffer: self.inoutBuffer!, range: NSRange(location: 0, length: self.inoutBuffer!.length), value: 0)
-                    blitEncoder.fill(buffer: self.inoutBuffer2!,range: NSRange(location: 0, length:self.inoutBuffer2!.length), value: 0)
-                    blitEncoder.endEncoding()
+                    blitEncoder?.__fill(self.inoutBuffer!, range: NSRange(location: 0, length: self.inoutBuffer!.length), value: 0)
+                    blitEncoder?.__fill(self.inoutBuffer2!,range: NSRange(location: 0, length:self.inoutBuffer2!.length), value: 0)
+                    blitEncoder?.endEncoding()
                     
                     commandEncoder = commandBuffer.makeComputeCommandEncoder()
                     
-                    commandEncoder.setComputePipelineState(self.kernel_iirFilterVertical.pipeline!)
+                    commandEncoder?.setComputePipelineState(self.kernel_iirFilterVertical.pipeline!)
                     
-                    commandEncoder.setTexture(self._destination.texture,    at: 0)
-                    commandEncoder.setTexture(self._destination.texture,    at: 1)
-                    commandEncoder.setTexture(self.bTexture,   at: 2)
-                    commandEncoder.setTexture(self.aTexture,   at: 3)
-                    commandEncoder.setBuffer(self.inoutBuffer,  offset: 0, at: 0)
-                    commandEncoder.setBuffer(self.inoutBuffer2, offset: 0, at: 1)
-                    commandEncoder.setBuffer(self.bsizeBuffer,  offset: 0, at: 2)
-                    commandEncoder.setBuffer(self.radiusBuffer, offset: 0, at: 3)
+                    commandEncoder?.setTexture(self._destination.texture,    index: 0)
+                    commandEncoder?.setTexture(self._destination.texture,    index: 1)
+                    commandEncoder?.setTexture(self.bTexture,   index: 2)
+                    commandEncoder?.setTexture(self.aTexture,   index: 3)
+                    commandEncoder?.setBuffer(self.inoutBuffer,  offset: 0, index: 0)
+                    commandEncoder?.setBuffer(self.inoutBuffer2, offset: 0, index: 1)
+                    commandEncoder?.setBuffer(self.bsizeBuffer,  offset: 0, index: 2)
+                    commandEncoder?.setBuffer(self.radiusBuffer, offset: 0, index: 3)
                     
-                    commandEncoder.dispatchThreadgroups(threadgroupsY, threadsPerThreadgroup:threadgroupCounts)
-                    commandEncoder.endEncoding()
+                    commandEncoder?.dispatchThreadgroups(threadgroupsY, threadsPerThreadgroup:threadgroupCounts)
+                    commandEncoder?.endEncoding()
                 }
                 
                 executeDestinationObservers(_destination)
@@ -187,7 +187,7 @@ public extension Float {
             
             var q = self
             
-            if 0.5 <= self && self <= 2.5 {
+            if Float(0.5) <= self && self <= Float(2.5) {
                 q = 3.97156 - 4.14554 * sqrt(1.0 - 0.26891*self)
             }
             else if self > 2.5 {

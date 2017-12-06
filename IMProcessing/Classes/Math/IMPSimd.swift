@@ -58,18 +58,8 @@ public extension float4 {
 
 // MARK: - Matrix constructors
 public extension float3x3 {
-    public init(rows: [[Float]]){
-        self.init(matrix_from_rows(vector_float3(rows[0]), vector_float3(rows[1]), vector_float3(rows[2])))
-    }
-    
     public init(_ columns: [[Float]]){
         self.init(matrix_from_columns(vector_float3(columns[0]), vector_float3(columns[1]), vector_float3(columns[2])))
-    }
-}
-
-public extension float4x4 {
-    public init(rows: [[Float]]){
-        self.init(matrix_from_rows(float4(rows[0]), float4(rows[1]), float4(rows[2]),float4(rows[3])))
     }
 }
 
@@ -169,26 +159,29 @@ public extension matrix_float4x4 {
   
     public mutating func rotate(radians:Float, point:float3) {
         
-        let v =  normalize(point)
-        let cos = cosf(radians)
-        let cosp = 1.0 - cos
-        let sin = sinf(radians)
+        let v: float3 =  normalize(point)
+        let cos: Float = cosf(radians)
+        let cosp: Float = 1.0 - cos
+        let sin: Float = sinf(radians)
         
-        let m = [
-            [cos  + cosp * v[0] * v[0],
-             cosp * v[0] * v[1] + v[2] * sin,
-             cosp * v[0] * v[2] - v[1] * sin,
-             0],
-            [cosp * v[0] * v[1] - v[2] * sin,
-             cos  + cosp * v[1] * v[1],
-             cosp * v[1] * v[2] + v[0] * sin,
-             0],
-            [cosp * v[0] * v[2] + v[1] * sin,
-             cosp * v[1] * v[2] - v[0] * sin,
-             cos  + cosp * v[2] * v[2],
-             0],
-            [0.0, 0.0, 0.0, 1.0]
-        ]
+        let column0 = float4(cos  + cosp * v[0] * v[0],
+                             cosp * v[0] * v[1] + v[2] * sin,
+                             cosp * v[0] * v[2] - v[1] * sin,
+                             0)
+        
+        let column1 = float4(cosp * v[0] * v[1] - v[2] * sin,
+                             cos  + cosp * v[1] * v[1],
+                             cosp * v[1] * v[2] + v[0] * sin,
+                             0)
+        
+        let column2 = float4(cosp * v[0] * v[2] + v[1] * sin,
+                             cosp * v[1] * v[2] - v[0] * sin,
+                             cos  + cosp * v[2] * v[2],
+                             0)
+        
+        let column3 = float4(0.0, 0.0, 0.0, 1.0)
+
+        let m = [column0, column1, column2, column3]
         
         self = matrix_multiply(matrix_float4x4(rows: m),self)
     }
@@ -214,56 +207,4 @@ public extension float3x3 {
             return a1.x*a2.y*a3.z - a1.x*a2.z*a3.y - a1.y*a2.x*a3.z + a1.y*a2.z*a3.x + a1.z*a2.x*a3.y - a1.z*a2.y*a3.x
         }
     }
-}
-
-extension float2: Equatable {}
-extension float3: Equatable {}
-extension float4: Equatable {}
-
-public func == (left:float2,right:float2) -> Bool {
-    return (left.x == right.x) && (left.y == right.y)
-}
-
-public func != (left:float2,right:float2) -> Bool {
-    return !(left == right)
-}
-
-public func == (left:float3,right:float3) -> Bool {
-    return (left.x == right.x) && (left.y == right.y) && (left.z == right.z)
-}
-
-public func != (left:float3,right:float3) -> Bool {
-    return !(left == right)
-}
-
-public func == (left:float4,right:float4) -> Bool {
-    return (left.x == right.x) && (left.y == right.y) && (left.z == right.z) && (left.w == right.w)
-}
-
-public func != (left:float4,right:float4) -> Bool {
-    return !(left == right)
-}
-
-public func / (left:float2,right:Float) -> float2 {
-    return float2(left.x/right,left.y/right)
-}
-
-public func / (left:float3,right:Float) -> float3 {
-    return float3(left.x/right,left.y/right,left.z/right)
-}
-
-public func / (left:float4,right:Float) -> float4 {
-    return float4(left.x/right,left.y/right,left.z/right,left.w/right)
-}
-
-public func * (left:float2,right:Float) -> float2 {
-    return float2(left.x*right,left.y*right)
-}
-
-public func * (left:float3,right:Float) -> float3 {
-    return float3(left.x*right,left.y*right,left.z*right)
-}
-
-public func * (left:float4,right:Float) -> float4 {
-    return float4(left.x*right,left.y*right,left.z*right,left.w*right)
 }

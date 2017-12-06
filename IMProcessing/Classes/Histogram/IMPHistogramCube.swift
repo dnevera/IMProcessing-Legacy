@@ -447,7 +447,7 @@ open class IMPHistogramCube{
                         }
                     }
                 }
-                return float3(rsum,gsum,bsum)/(Float(kIMP_HistogramSize-1) * count)
+                return float3(rsum,gsum,bsum) / Float(Float(kIMP_HistogramSize-1) * count)
             }
         }
         
