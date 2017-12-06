@@ -15,14 +15,14 @@
     import Cocoa
     
     public enum IMPImageOrientation : Int {
-        case Up             // 0,  default orientation
-        case Down           // 1, -> Up    (0), UIImage, 180 deg rotation
-        case Left           // 2, -> Right (3), UIImage, 90 deg CCW
-        case Right          // 3, -> Down  (1), UIImage, 90 deg CW
-        case UpMirrored     // 4, -> Right (3), UIImage, as above but image mirrored along other axis. horizontal flip
-        case DownMirrored   // 5, -> Right (3), UIImage, horizontal flip
-        case LeftMirrored   // 6, -> Right (3), UIImage, vertical flip
-        case RightMirrored  // 7, -> Right (3), UIImage, vertical flip
+        case up             // 0,  default orientation
+        case down           // 1, -> Up    (0), UIImage, 180 deg rotation
+        case left           // 2, -> Right (3), UIImage, 90 deg CCW
+        case right          // 3, -> Down  (1), UIImage, 90 deg CW
+        case upMirrored     // 4, -> Right (3), UIImage, as above but image mirrored along other axis. horizontal flip
+        case downMirrored   // 5, -> Right (3), UIImage, horizontal flip
+        case leftMirrored   // 6, -> Right (3), UIImage, vertical flip
+        case rightMirrored  // 7, -> Right (3), UIImage, vertical flip
     }
 
     public typealias UIImageOrientation = IMPImageOrientation
@@ -271,7 +271,7 @@ open class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
             
             context.execute(complete: true) { (commandBuffer) in
                 
-                let blitEncoder = commandBuffer.makeBlitCommandEncoder()
+                let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
                 
                 
                 let w = texture.width
@@ -292,10 +292,10 @@ open class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                 
                 
                 #if os(OSX)
-                    blitEncoder.synchronizeResource(texture)
+                    blitEncoder.synchronize(resource: texture)
                 #endif
 
-                blitEncoder?.copy(
+                blitEncoder.copy(
                     from: texture,
                     sourceSlice:      0,
                     sourceLevel:      0,
@@ -307,10 +307,10 @@ open class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
                     destinationOrigin: MTLOrigin(x:0,y:0,z:0))
                 
                 #if os(OSX)
-                    blitEncoder.synchronizeResource(source!)
+                    blitEncoder.synchronize(resource: source!)
                 #endif
 
-                blitEncoder?.endEncoding()
+                blitEncoder.endEncoding()
                 
             }
         }

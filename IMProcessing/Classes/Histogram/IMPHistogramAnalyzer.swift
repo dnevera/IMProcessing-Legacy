@@ -245,12 +245,12 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
     
     func applyKernel(_ texture:MTLTexture, threadgroups:MTLSize, threadgroupCounts: MTLSize, buffer:MTLBuffer, commandBuffer:MTLCommandBuffer) {
 
-        var blitEncoder = commandBuffer.makeBlitCommandEncoder()
+        var blitEncoder = commandBuffer.makeBlitCommandEncoder()!
         #if os(OSX)
-            blitEncoder.synchronizeResource(texture)
+            blitEncoder.synchronize(resource: texture)
         #endif
-        blitEncoder?.__fill(buffer, range: NSMakeRange(0, buffer.length), value: 0)
-        blitEncoder?.endEncoding()
+        blitEncoder.__fill(buffer, range: NSMakeRange(0, buffer.length), value: 0)
+        blitEncoder.endEncoding()
         
         let commandEncoder = commandBuffer.makeComputeCommandEncoder()
         
@@ -273,8 +273,8 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         commandEncoder?.endEncoding()
         
         #if os(OSX)
-            blitEncoder = commandBuffer.blitCommandEncoder()
-            blitEncoder.synchronizeResource(buffer)
+            blitEncoder = commandBuffer.makeBlitCommandEncoder()!
+            blitEncoder.synchronize(resource: buffer)
             blitEncoder.endEncoding()
         #endif
     }
@@ -342,13 +342,13 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
                 
                 if let data = self.imageBuffer {
                     
-                    let blitEncoder = commandBuffer.makeBlitCommandEncoder()
+                    let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
                     
                     #if os(OSX)
-                    blitEncoder.synchronizeResource(actual)    
+                        blitEncoder.synchronize(resource: actual)
                     #endif
                     
-                    blitEncoder?.copy(from: actual,
+                    blitEncoder.copy(from: actual,
                                                 sourceSlice: 0,
                                                 sourceLevel: 0,
                                                 sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
@@ -359,10 +359,10 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
                                                 destinationBytesPerImage: 0)
                     
                     #if os(OSX)
-                        blitEncoder.synchronizeResource(actual)    
+                        blitEncoder.synchronize(resource: actual)
                     #endif
 
-                    blitEncoder?.endEncoding()
+                    blitEncoder.endEncoding()
                     
                     var vImage = vImage_Buffer(
                         data: data.contents(),
@@ -425,7 +425,7 @@ open class IMPHistogramAnalyzer: IMPFilter,IMPHistogramAnalyzerProtocol {
         return (threadgroups,threadgroupCounts)
     }
     
-    open override func apply() -> IMPImageProvider {
+    @discardableResult open override func apply() -> IMPImageProvider {
         
         if let texture = source?.texture{
             

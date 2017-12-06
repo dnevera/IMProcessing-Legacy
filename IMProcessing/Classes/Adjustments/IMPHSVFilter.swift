@@ -367,8 +367,8 @@ open class IMPHSVFilter:IMPFilter,IMPAdjustmentProtocol{
             commandEncoder?.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts)
             commandEncoder?.endEncoding()
             #if os(OSX)
-                let blitEncoder = commandBuffer.blitCommandEncoder()
-                blitEncoder.synchronizeResource(self.hsv3DlutTexture!)
+                let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
+                blitEncoder.synchronize(resource: self.hsv3DlutTexture!)
                 blitEncoder.endEncoding()
             #endif
         }

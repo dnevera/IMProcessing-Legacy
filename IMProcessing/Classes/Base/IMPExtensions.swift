@@ -49,14 +49,14 @@ public enum IMProcessing{
         #if os(iOS)
         public static let pixelFormat = MTLPixelFormat.rgba8Unorm
         #else
-        public static let pixelFormat = MTLPixelFormat.RGBA16Unorm
+        public static let pixelFormat = MTLPixelFormat.rgba16Unorm
         #endif
     }    
 }
 
 
 #if os(OSX)
-let impColorSpace = NSColorSpace.sRGBColorSpace()
+let impColorSpace = NSColorSpace.sRGB
 #endif
 
 public extension IMPColor{
@@ -93,7 +93,7 @@ public extension IMPColor{
     #else
     public var rgb:float3{
         get{
-            guard let rgba = self.colorUsingColorSpace(impColorSpace) else {
+            guard let rgba = self.usingColorSpace(impColorSpace) else {
                 return float3(0)
             }
             return float3(rgba.redComponent.float,rgba.greenComponent.float,rgba.blueComponent.float)
@@ -102,7 +102,7 @@ public extension IMPColor{
     
     public var rgba:float4{
         get{
-            guard let rgba = self.colorUsingColorSpace(impColorSpace) else {
+            guard let rgba = self.usingColorSpace(impColorSpace) else {
                 return float4(0)
             }
             return float4(rgba.redComponent.float,rgba.greenComponent.float,rgba.blueComponent.float,rgba.alphaComponent.float)

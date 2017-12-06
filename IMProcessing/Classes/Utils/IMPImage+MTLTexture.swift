@@ -35,7 +35,7 @@ public extension IMPImage{
     #else
     
     public convenience init(image: IMPImage, size:IMPSize){
-        self.init(CGImage: image.CGImage!, size:size)
+        self.init(cgImage: image.cgImage!, size:size)
     }
     
     #endif
@@ -116,7 +116,7 @@ public extension IMPImage{
     
     public convenience init? (provider: IMPImageProvider){
         #if os(OSX)
-            var imageRef:CGImageRef?
+            var imageRef:CGImage?
             var width  = 0
             var height = 0
             
@@ -129,27 +129,27 @@ public extension IMPImage{
                 let bitsPerComponent = 8
                 
                 var bytesPerRow      = width * components
-                if texture.pixelFormat == .RGBA16Unorm {
+                if texture.pixelFormat == .rgba16Unorm {
                     bytesPerRow *= 2
                 }
                 
                 let imageByteCount  = bytesPerRow * height
                 
-                let imageBuffer = provider.context.device.newBufferWithLength( imageByteCount, options: MTLResourceOptions.CPUCacheModeDefaultCache)
+                let imageBuffer = provider.context.device.makeBuffer( length: imageByteCount, options: [])!
                 
                 //
                 // Use blit encoder to copy data from device memory, then convert to 8bits presentation if it needs
                 //
                 provider.context.execute(closure: { (commandBuffer) in
                     
-                    let blitEncoder = commandBuffer.blitCommandEncoder()
+                    let blitEncoder = commandBuffer.makeBlitCommandEncoder()!
                     
-                    blitEncoder.copyFromTexture(texture,
-                        sourceSlice: 0,
-                        sourceLevel: 0,
-                        sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
-                        sourceSize: MTLSize(width: width, height: height, depth: 1),
-                        toBuffer: imageBuffer,
+                    blitEncoder.copy(from: texture,
+                                     sourceSlice: 0,
+                                     sourceLevel: 0,
+                                     sourceOrigin: MTLOrigin(x: 0, y: 0, z: 0),
+                                     sourceSize: MTLSize(width: width, height: height, depth: 1),
+                                     to: imageBuffer,
                         destinationOffset: 0,
                         destinationBytesPerRow: bytesPerRow,
                         destinationBytesPerImage: 0)
@@ -158,12 +158,12 @@ public extension IMPImage{
                     
                 })
                 
-                var rawData   = [UInt8](count: width*height*components, repeatedValue: 0)
-                if texture.pixelFormat == .RGBA16Unorm {
+                var rawData   = [UInt8](repeating: 0, count: width*height*components)
+                if texture.pixelFormat == .rgba16Unorm {
                     for i in 0 ..< rawData.count {
                         var pixel = UInt16()
-                        let address =  UnsafePointer<UInt16>(imageBuffer.contents())+i
-                        memcpy(&pixel, address, sizeof(UInt16))
+                        let address = imageBuffer.contents().assumingMemoryBound(to: UInt16.self) + i
+                        memcpy(&pixel, address, MemoryLayout<UInt16>.size)
                         rawData[i] = UInt8(pixel>>8)
                     }
                 }
@@ -171,9 +171,9 @@ public extension IMPImage{
                     memcpy(&rawData, imageBuffer.contents(), imageBuffer.length)
                 }
                 
-                let cgprovider = CGDataProviderCreateWithData(nil, &rawData, imageByteCount, nil)
+                let cgprovider = CGDataProvider(dataInfo: nil, data: &rawData, size: imageByteCount, releaseData: { (_, _, _) in })!
                 
-                if texture.pixelFormat == .RGBA16Unorm {
+                if texture.pixelFormat == .rgba16Unorm {
                     bytesPerRow /= 2
                 }
                 
@@ -181,22 +181,22 @@ public extension IMPImage{
                 
                 let colorSpaceRef  = CGColorSpaceCreateDeviceRGB();
                 
-                let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.PremultipliedLast.rawValue | CGBitmapInfo.ByteOrder32Big.rawValue)
+                let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue | CGBitmapInfo.byteOrder32Big.rawValue)
                 
-                if let imageRef = CGImageCreate(
-                    width,
-                    height,
-                    bitsPerComponent,
-                    bitsPerPixel,
-                    bytesPerRow,
-                    colorSpaceRef,
-                    bitmapInfo,
-                    cgprovider,
-                    nil,
-                    false,
-                    .RenderingIntentDefault){
+                if let imageRef = CGImage(
+                    width: width,
+                    height: height,
+                    bitsPerComponent: bitsPerComponent,
+                    bitsPerPixel: bitsPerPixel,
+                    bytesPerRow: bytesPerRow,
+                    space: colorSpaceRef,
+                    bitmapInfo: bitmapInfo,
+                    provider: cgprovider,
+                    decode: nil,
+                    shouldInterpolate: false,
+                    intent: CGColorRenderingIntent.defaultIntent){
                 
-                    self.init(CGImage: imageRef, size: IMPSize(width: width, height: height))
+                    self.init(cgImage: imageRef, size: IMPSize(width: width, height: height))
                 }
                 else{
                     return nil
@@ -245,10 +245,10 @@ public extension IMPImage{
     public func writeJpegToFile(path:String, compression compressionQ:Float) {
         
         let dr:CGImageDestination! = CGImageDestinationCreateWithURL(
-            NSURL(fileURLWithPath: path), "public.jpeg" as CFStringRef , 1, nil)
+            NSURL(fileURLWithPath: path), "public.jpeg" as CFString , 1, nil)
         
-        CGImageDestinationAddImage(dr, self.CGImage!,
-            [kCGImageDestinationLossyCompressionQuality as String: 0.9])
+        CGImageDestinationAddImage(dr, self.cgImage!,
+            [kCGImageDestinationLossyCompressionQuality as String: 0.9] as CFDictionary)
         
         CGImageDestinationFinalize(dr);
     }

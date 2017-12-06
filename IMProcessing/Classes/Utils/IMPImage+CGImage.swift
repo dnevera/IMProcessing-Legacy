@@ -11,10 +11,10 @@
 #else
     import Cocoa
     extension IMPImage {
-        var CGImage:CGImageRef?{
+        var cgImage:CGImage?{
             get {
                 var imageRect:CGRect = CGRect(x: 0, y: 0, width: self.size.width, height: self.size.height)
-                return self.CGImageForProposedRect(&imageRect, context: nil, hints: nil)
+                return self.cgImage(forProposedRect: &imageRect, context: nil, hints: nil)
             }
         }
     }
