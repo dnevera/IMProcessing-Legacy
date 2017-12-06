@@ -378,7 +378,7 @@ open class IMPFilter: NSObject,IMPFilterProtocol {
         }
     }
     
-    open func apply() -> IMPImageProvider {
+    @discardableResult open func apply() -> IMPImageProvider {
         return doApply()
     }
     

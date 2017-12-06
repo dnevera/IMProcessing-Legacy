@@ -13,7 +13,7 @@
     extension IMPImage {
         var CGImage:CGImageRef?{
             get {
-                var imageRect:CGRect = CGRectMake(0, 0, self.size.width, self.size.height)
+                var imageRect:CGRect = CGRect(x: 0, y: 0, width: self.size.width, height: self.size.height)
                 return self.CGImageForProposedRect(&imageRect, context: nil, hints: nil)
             }
         }

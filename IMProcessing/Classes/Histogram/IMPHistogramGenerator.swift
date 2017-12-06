@@ -23,8 +23,8 @@ public class IMPHistogramGenerator: IMPFilter{
                 || 
                  source?.texture?.height.cgfloat != size.height
             {
-                let desc = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(.RGBA8Unorm, width: Int(size.width), height: Int(size.height), mipmapped: false)
-                source = IMPImageProvider(context: context, texture: context.device.newTextureWithDescriptor(desc))
+                let desc = MTLTextureDescriptor.texture2DDescriptor(pixelFormat: .rgba8Unorm, width: Int(size.width), height: Int(size.height), mipmapped: false)
+                source = IMPImageProvider(context: context, texture: context.device.makeTexture(descriptor: desc))
             }
             destinationSize = MTLSize(cgsize: size)
         }
@@ -44,8 +44,8 @@ public class IMPHistogramGenerator: IMPFilter{
     
     public var layer = IMPHistogramGenerator.defaultLayer {
         didSet{
-            layerUniformBiffer = layerUniformBiffer ?? self.context.device.newBufferWithLength(sizeof(IMPHistogramLayer), options: .CPUCacheModeDefaultCache)
-            memcpy(layerUniformBiffer.contents(), &layer, sizeof(IMPHistogramLayer))
+            layerUniformBiffer = layerUniformBiffer ?? self.context.device.makeBuffer(length: MemoryLayout<IMPHistogramLayer>.size, options: [])
+            memcpy(layerUniformBiffer.contents(), &layer, MemoryLayout<IMPHistogramLayer>.size)
         }
     }
     
@@ -73,7 +73,7 @@ public class IMPHistogramGenerator: IMPFilter{
         }
     }
     
-    func update(histogram: IMPHistogram){
+    func update(_ histogram: IMPHistogram){
         
         if histogramInputTexture.arrayLength != histogram.channels.count || histogramInputTexture.width != histogram.size {
             histogramInputTexture = context.device.texture1DArray(histogram.channels)
@@ -86,10 +86,10 @@ public class IMPHistogramGenerator: IMPFilter{
     }
     
     
-    override public func configure(function: IMPFunction, command: MTLComputeCommandEncoder) {
+    override public func configure(_ function: IMPFunction, command: MTLComputeCommandEncoder) {
         if (kernel == function){
-            command.setTexture(histogramInputTexture, atIndex: 2)
-            command.setBuffer(layerUniformBiffer,     offset: 0, atIndex: 0)
+            command.setTexture(histogramInputTexture, at: 2)
+            command.setBuffer(layerUniformBiffer,     offset: 0, at: 0)
         }
     }
     
@@ -97,8 +97,8 @@ public class IMPHistogramGenerator: IMPFilter{
         if let c = self.histogram?.channels {
             return self.context.device.texture1DArray(c)
         }
-        return self.context.device.texture1DArray([[Float]](count:4,
-            repeatedValue:[Float](count:Int(kIMP_HistogramSize),repeatedValue:0)))
+        return self.context.device.texture1DArray([[Float]](repeating:[Float](repeating:0,count:Int(kIMP_HistogramSize)),
+                                                            count:4))
     }()
     
     private var kernel:IMPFunction!

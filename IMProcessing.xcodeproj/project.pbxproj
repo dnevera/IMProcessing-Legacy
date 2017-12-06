@@ -89,6 +89,7 @@
 		313B954C1D465F310005821A /* IMPTransformModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B95431D465F310005821A /* IMPTransformModel.swift */; };
 		313B954D1D465F310005821A /* IMPVertices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B95441D465F310005821A /* IMPVertices.swift */; };
 		313B954E1D465F310005821A /* IMPWarpFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 313B95451D465F310005821A /* IMPWarpFilter.swift */; };
+		9A269E181FD747C800908FFA /* IMPHistogramGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A269E171FD747C800908FFA /* IMPHistogramGenerator.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -190,6 +191,7 @@
 		31CFE52A1D47530400C15EC8 /* IMProcessing_metal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = IMProcessing_metal.h; sourceTree = "<group>"; };
 		31E97DD11CCA1A88004560DF /* IMProcessing.podspec */ = {isa = PBXFileReference; lastKnownFileType = text; path = IMProcessing.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
 		31E97DD21CCA1A88004560DF /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		9A269E171FD747C800908FFA /* IMPHistogramGenerator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IMPHistogramGenerator.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -356,6 +358,7 @@
 				313B947A1D4658C00005821A /* IMPHistogramAnalyzer.swift */,
 				313B947B1D4658C00005821A /* IMPHistogramCube.swift */,
 				313B947C1D4658C00005821A /* IMPHistogramCubeAnalyzer.swift */,
+				9A269E171FD747C800908FFA /* IMPHistogramGenerator.swift */,
 				313B947D1D4658C00005821A /* Solvers */,
 			);
 			path = Histogram;
@@ -594,6 +597,7 @@
 				313B94C71D4658C00005821A /* IMPIIRGaussianBlurFilter.swift in Sources */,
 				313B95481D465F310005821A /* IMPGridGenerator.swift in Sources */,
 				313B94B61D4658C00005821A /* IMPContext.swift in Sources */,
+				9A269E181FD747C800908FFA /* IMPHistogramGenerator.swift in Sources */,
 				313B950B1D4658C00005821A /* IMPImage+MTLTexture.swift in Sources */,
 				313B94BF1D4658C00005821A /* IMPTexturePovider.swift in Sources */,
 				313B94B91D4658C00005821A /* IMPFilter.swift in Sources */,
