@@ -145,7 +145,7 @@ public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
 
 // MARK: - construcutors
 public extension IMPImageProvider {
-    
+        
     public init(context: IMPContext,
                 url: URL,
                 storageMode:IMPImageStorageMode? = nil,
@@ -556,7 +556,6 @@ public extension IMPImageProvider {
                                                to: t,
                                                commandBuffer: commandBuffer,
                                                bounds: image.extent,
-                                               //colorSpace: CGColorSpace(name: CGColorSpace.sRGB)!)
                                                colorSpace: self.colorSpace)
                 complete?(t,commandBuffer)
             }
@@ -785,18 +784,11 @@ public extension IMPImageProvider {
             }
 
             return self.context.device.makeTexture(descriptor: descriptor)
-        //}
-        
-        //if texture != nil {
-        //    texture?.setPurgeableState(.keepCurrent)
-        //}
-
-        //return texture
+      
     }
     
     public func scaledImage(with scale:CGFloat, reflect:Bool = false) -> CIImage? {
         guard let image = image else { return nil }
-        //let colorSpace = CGColorSpaceCreateDeviceRGB()
         var t = CGAffineTransform.identity
         t = t.scaledBy(x: scale, y: scale)
         if reflect {
@@ -837,27 +829,6 @@ public extension IMPImageProvider {
     }
     #else
     public func nsImage(scale:CGFloat, reflect:Bool = false) -> NSImage? {
-/*        if let image = self.image {
-            
-            var t = CGAffineTransform.identity
-            t = t.scaledBy(x: scale, y: scale)
-
-            if reflect {
-                t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height*scale)
-            }
-            
-            let rep: NSCIImageRep = NSCIImageRep(ciImage: image.transformed(by: t))
-            
-            let nsImage: NSImage = NSImage(size: rep.size)                
-            nsImage.addRepresentation(rep)
-            return nsImage
-            
-//            image = image.transformed(by: t)
-//            if let cgim = self.context.coreImage?.createCGImage(image, from: image.extent) {                
-//                return NSImage(cgImage: cgim, size: image.extent.size)                
-//            }         
-
-        }*/
         if let cgi =  cgiImage(scale: scale, reflect: reflect){
             return NSImage(cgImage: cgi, size: NSZeroSize)
         }
@@ -928,13 +899,14 @@ public extension IMPImageProvider {
         ///   - factor: compression factor (.JPEG only)
         /// - Returns: representation Data?
         public func representation(using type: IMPImageFileType, compression factor:Float? = nil, reflect:Bool = false) -> Data?{
-            //return nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
             
             var properties:[NSBitmapImageRep.PropertyKey : Any] = [:]            
             if type == .jpeg {
                 properties = [NSBitmapImageRep.PropertyKey.compressionFactor: factor ?? 1.0]
             }
-                        
+            
+            let csp = self.colorSpace
+            
             if let image = self.image { 
 
                 var t = CGAffineTransform.identity
@@ -945,12 +917,12 @@ public extension IMPImageProvider {
 
                 switch type {
                 case .jpeg:
-                    return context.coreImage?.jpegRepresentation(of: image.transformed(by: t), colorSpace: colorSpace, options: properties)
+                    return context.coreImage?.jpegRepresentation(of: image.transformed(by: t), colorSpace: csp, options: properties)
                 case .tiff:
-                    return context.coreImage?.tiffRepresentation(of: image.transformed(by: t), format: kCIFormatRGBAf, colorSpace: colorSpace, options:properties)
+                    return context.coreImage?.tiffRepresentation(of: image.transformed(by: t), format: kCIFormatRGBAf, colorSpace: csp, options:properties)
                 case .png:
                     if #available(OSX 10.13, *) {
-                        return context.coreImage?.pngRepresentation(of: image.transformed(by: t), format: kCIFormatRGBA16, colorSpace: colorSpace, options: properties)
+                        return context.coreImage?.pngRepresentation(of: image.transformed(by: t), format: kCIFormatRGBA16, colorSpace: csp, options: properties)
                     } else {
                         nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
                     }

@@ -9,6 +9,7 @@
 import CoreImage
 
 open class IMPRawFile: IMPImageProvider {
+
     
     public let mutex = IMPSemaphore()
 

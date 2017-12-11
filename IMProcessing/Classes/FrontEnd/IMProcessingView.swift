@@ -31,13 +31,14 @@ open class IMProcessingView: MTKView {
     }
     
     public var image:IMPImageProvider? {
-        didSet{
+        didSet{            
             refreshQueue.async(flags: [.barrier]) {                
                 self.__source = self.image
+                if self.image == nil && self.__placeHolderColor == nil{
+                    return
+                }
                 if self.isPaused  {
-                    DispatchQueue.main.async {
-                        self.needsDisplay = true
-                    }
+                    self.draw()
                 }
             }
         }
@@ -56,15 +57,11 @@ open class IMProcessingView: MTKView {
         device = MTLCreateSystemDefaultDevice()
         configure()
     }
-    
-    deinit {
-        isPaused = true
-    }
-    
+        
     open func configure() {
         delegate = self
         isPaused = true
-        enableSetNeedsDisplay = true
+        enableSetNeedsDisplay = false
         framebufferOnly = true
         clearColor = MTLClearColorMake(0, 0, 0, 0)
     }
@@ -73,39 +70,27 @@ open class IMProcessingView: MTKView {
     
     private static let maxFrames = 1  
     
-    private let mutex = DispatchSemaphore(value: IMProcessingView.maxFrames)    
-    
-    private var framesCount = 0
+    private let mutex = DispatchSemaphore(value: IMProcessingView.maxFrames)        
     private var framesTimeout:UInt64 = 5
-    
-    private func framesUpdated(){
-        if framesCount > IMProcessingView.maxFrames {
-            isPaused = true
-            framesCount = 0
-        }
-        else {
-            framesCount += 1
-        }
-    }
-    
+        
     fileprivate func refresh(){
         
         guard
             let pipeline = ((self.__source?.texture == nil)  ? self.placeHolderPipeline : self.pipeline), 
             let commandBuffer = self.__source?.context.commandBuffer ?? commandQueue.makeCommandBuffer() else {
-                framesUpdated()
                 return             
         }
         
-        guard self.mutex.wait(timeout: DispatchTime(uptimeNanoseconds: 1000000000 * framesTimeout)) == .success else {
-            framesUpdated()
-            isPaused = false
-            return                         
-        } 
+        if !self.isPaused {
+            guard self.mutex.wait(timeout: DispatchTime(uptimeNanoseconds: 1000000000 * framesTimeout)) == .success else {
+                return                         
+            }
+        }
 
         self.render(commandBuffer: commandBuffer, texture: self.__source?.texture, with: pipeline){
-            self.framesUpdated()
-            self.mutex.signal()
+            if !self.isPaused {
+                self.mutex.signal()
+            }
         }
     }
     
@@ -202,7 +187,6 @@ open class IMProcessingView: MTKView {
         return v
     }()
     
-    public var syncQueue = DispatchQueue(label:  String(format: "com.dehancer.metal.view.sync-%08x%08x", arc4random(), arc4random()))
     public var refreshQueue = DispatchQueue(label:  String(format: "com.dehancer.metal.view.refresh-%08x%08x", arc4random(), arc4random()))
 }
 
@@ -211,9 +195,7 @@ extension IMProcessingView: MTKViewDelegate {
     public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
     
     public func draw(in view: MTKView) {
-        refreshQueue.async(flags: [.barrier]) {
-            self.refresh()            
-        }
+        self.refresh()
     }    
     
 }

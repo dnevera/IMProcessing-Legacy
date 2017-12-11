@@ -76,11 +76,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
             source?.removeObserver(optionsChanged: optionChangedObserver)
         }
         didSet{   
-            context.runOperation(.sync) {
-                self._destination.texture = nil
-                self.executeNewSourceObservers(source: self.source)
-                self.source?.addObserver(optionsChanged: self.optionChangedObserver)
-            }
+            _destination.texture = nil
+            executeNewSourceObservers(source: source)
+            source?.addObserver(optionsChanged: optionChangedObserver)
         }
     }
     
@@ -93,7 +91,6 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public var destination: IMPImageProvider {
         guard dirty || (_destination.texture == nil) else {
-            self.executeDestinationObservers(destination: _destination)
             return _destination
         }
         return apply(result: _destination, resampleSize: nil)

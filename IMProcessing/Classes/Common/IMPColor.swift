@@ -17,7 +17,7 @@ import Metal
 
 
 #if os(OSX)
-let impColorSpace = NSColorSpace.sRGB
+let impColorSpace = NSColorSpace.genericRGB
 #endif
 
 public extension NSColor{

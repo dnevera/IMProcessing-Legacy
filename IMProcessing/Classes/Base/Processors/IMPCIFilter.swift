@@ -89,7 +89,7 @@ public class IMPCIFilter: CIFilter, IMPDestinationSizeProvider {
     
     lazy public var colorSpace:CGColorSpace = {
         if #available(iOS 10.0, *) {
-            return CGColorSpace(name: CGColorSpace.linearSRGB)!
+            return CGColorSpace(name: CGColorSpace.sRGB)!
             //return CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
             //return CGColorSpace(name: CGColorSpace.genericRGBLinear)!
         }
