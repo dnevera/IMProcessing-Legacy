@@ -32,6 +32,7 @@
 import CoreImage
 import simd
 import Metal
+import MetalKit
 import AVFoundation
 import ImageIO
 
@@ -126,6 +127,8 @@ public enum IMPImageStorageMode {
 /// Image provider base protocol
 public protocol IMPImageProvider: IMPTextureProvider, IMPContextProvider{
     
+    var mutex:IMPSemaphore {get}
+    
     typealias ObserverType = (_ :IMPImageProvider) -> Void
     
     var image:CIImage?{ get set }
@@ -172,7 +175,7 @@ public extension IMPImageProvider {
                   maxSize:maxSize,
                   orientation:orientation)
     }
-
+    
     public init(context: IMPContext,
                 provider: IMPImageProvider,
                 storageMode:IMPImageStorageMode? = nil,
@@ -182,7 +185,7 @@ public extension IMPImageProvider {
         self.image = prepareImage(image: provider.image?.copy() as? CIImage,
                                   maxSize: maxSize, orientation: orientation)
     }
-
+    
     public init(context: IMPContext,
                 image: CIImage,
                 storageMode:IMPImageStorageMode? = nil,
@@ -302,7 +305,7 @@ public extension IMPImageProvider {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
         }
     }
-     
+    
     internal mutating func prepareImage(image originImage: CIImage?, maxSize: CGFloat, orientation:IMPImageOrientation? = nil)  -> CIImage? {
         
         guard let image = originImage else { return originImage }
@@ -388,7 +391,7 @@ public extension IMPImageProvider {
                 texture?.makeTextureView(pixelFormat: .rgba8Uint) :
             texture
         {
-
+            
             let width       = Int(size.width)
             let height      = Int(size.height)
             
@@ -396,20 +399,20 @@ public extension IMPImageProvider {
             let imageBytes = height * bytesPerRow
             
             let buffer = self.context.device.makeBuffer(length: imageBytes, options: [])
-
+            
             
             func readblit(commandBuffer:MTLCommandBuffer){
                 let blit = commandBuffer.makeBlitCommandEncoder()
                 
                 blit?.copy(from:          texture,
-                          sourceSlice:  0,
-                          sourceLevel:  0,
-                          sourceOrigin: MTLOrigin(x:0,y:0,z:0),
-                          sourceSize:   texture.size,
-                          to:           buffer!,
-                          destinationOffset: 0,
-                          destinationBytesPerRow: bytesPerRow,
-                          destinationBytesPerImage: imageBytes)
+                           sourceSlice:  0,
+                           sourceLevel:  0,
+                           sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                           sourceSize:   texture.size,
+                           to:           buffer!,
+                           destinationOffset: 0,
+                           destinationBytesPerRow: bytesPerRow,
+                           destinationBytesPerImage: imageBytes)
                 
                 blit?.endEncoding()
             }
@@ -442,52 +445,52 @@ public extension IMPImageProvider {
         }
         
         
-//        if let size = self.size,
-//            let texture = texture?.pixelFormat != .rgba8Uint ?
-//                texture?.makeTextureView(pixelFormat: .rgba8Uint) :
-//                texture
-//        {
-//            
-//            let width       = Int(size.width)
-//            let height      = Int(size.height)
-//            
-//            bytesPerRow   = width * 4
-//            let newSize = height * bytesPerRow
-//            
-//            if bytes == nil {
-//                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
-//            }
-//            else if imageByteSize != newSize {
-//                if imageByteSize > 0 {
-//                    bytes?.deallocate(capacity: imageByteSize)
-//                }
-//                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
-//            }
-//
-//            if bytes == nil {
-//                context.resume()
-//                return  nil
-//            }
-//            
-//            imageByteSize = newSize
-//            
-//            #if os(OSX)
-//                guard let command = context.commandBuffer else { return nil }
-//                let blit = command.makeBlitCommandEncoder()
-//                blit.synchronize(resource: texture)
-//                blit.endEncoding()
-//                command.commit()
-//                command.waitUntilCompleted()
-//            #endif
-//                        
-//            texture.getBytes(bytes!,
-//                             bytesPerRow: bytesPerRow,
-//                             from: MTLRegionMake2D(0, 0, texture.width, texture.height),
-//                             mipmapLevel: 0)
-//            
-//            context.resume()
-//            return bytes
-//        }
+        //        if let size = self.size,
+        //            let texture = texture?.pixelFormat != .rgba8Uint ?
+        //                texture?.makeTextureView(pixelFormat: .rgba8Uint) :
+        //                texture
+        //        {
+        //            
+        //            let width       = Int(size.width)
+        //            let height      = Int(size.height)
+        //            
+        //            bytesPerRow   = width * 4
+        //            let newSize = height * bytesPerRow
+        //            
+        //            if bytes == nil {
+        //                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
+        //            }
+        //            else if imageByteSize != newSize {
+        //                if imageByteSize > 0 {
+        //                    bytes?.deallocate(capacity: imageByteSize)
+        //                }
+        //                bytes = UnsafeMutablePointer<UInt8>.allocate(capacity:newSize)
+        //            }
+        //
+        //            if bytes == nil {
+        //                context.resume()
+        //                return  nil
+        //            }
+        //            
+        //            imageByteSize = newSize
+        //            
+        //            #if os(OSX)
+        //                guard let command = context.commandBuffer else { return nil }
+        //                let blit = command.makeBlitCommandEncoder()
+        //                blit.synchronize(resource: texture)
+        //                blit.endEncoding()
+        //                command.commit()
+        //                command.waitUntilCompleted()
+        //            #endif
+        //                        
+        //            texture.getBytes(bytes!,
+        //                             bytesPerRow: bytesPerRow,
+        //                             from: MTLRegionMake2D(0, 0, texture.width, texture.height),
+        //                             mipmapLevel: 0)
+        //            
+        //            context.resume()
+        //            return bytes
+        //        }
         
         //context.resume()
         return nil
@@ -502,11 +505,11 @@ public extension IMPImageProvider {
                        to texture: inout MTLTexture?,
                        flipVertical:Bool = false,
                        complete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)?=nil) {
-                
+        
         var texture = texture
         
         context.execute(.sync, wait: true) { (commandBuffer) in
-        
+            
             guard  var image = image else {
                 complete?(nil,nil)            
                 return             
@@ -516,7 +519,7 @@ public extension IMPImageProvider {
             image = !flipVertical ? image : image.transformed(by: transform)
             
             texture = self.checkTexture(texture: texture)
-
+            
             if let t = texture {
                 self.context.coreImage?.render(image,
                                                to: t,
@@ -536,7 +539,7 @@ public extension IMPImageProvider {
                        flipVertical:Bool = false,
                        complete:((_ texture:MTLTexture?, _ command:MTLCommandBuffer?)->Void)?=nil) {
         
-        guard  var image = self.image else {
+        guard  var image:CIImage = self.image  else {
             complete?(nil,nil)            
             return             
         }
@@ -545,10 +548,10 @@ public extension IMPImageProvider {
         
         if let t = texture {
             context.execute(.sync, wait: true) { (commandBuffer) in
-
+                
                 let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
                 image = !flipVertical ? image : image.transformed(by: transform)
-
+                
                 self.context.coreImage?.render(image,
                                                to: t,
                                                commandBuffer: commandBuffer,
@@ -562,6 +565,100 @@ public extension IMPImageProvider {
         }
     }
     
+    public func asyncRender(to texture: MTLTexture,
+                            execute:((_ command:MTLCommandBuffer?)->Void)?=nil,
+                            complete:((_ command:MTLCommandBuffer?)->Void)?=nil) {
+        
+        context.runOperation(.async) { 
+            
+            if let commandBuffer = self.context.commandBuffer {
+                
+                commandBuffer.addCompletedHandler{ commandBuffer in            
+                    complete?(commandBuffer)                
+                    return
+                }                
+                
+                if let txt = self.texture {
+                    
+                    let blit = commandBuffer.makeBlitCommandEncoder()
+                    
+                    blit?.copy(
+                        from: txt,
+                        sourceSlice: 0,
+                        sourceLevel: 0,
+                        sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                        sourceSize: txt.size,
+                        to: texture,
+                        destinationSlice: 0,
+                        destinationLevel: 0,
+                        destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                    
+                    blit?.endEncoding()                    
+                }      
+                
+                execute?(commandBuffer) 
+                
+                commandBuffer.commit()                
+                commandBuffer.waitUntilCompleted()                
+            }
+        }
+    }
+    
+    public func asyncRender(to view: MTKView,
+                            execute:((_ command:MTLCommandBuffer?)->Void)?=nil,
+                            complete:((_ command:MTLCommandBuffer?)->Void)?=nil) {
+        
+        context.runOperation(.async) { 
+            if let txt = self.texture {
+                
+                DispatchQueue.main.async {
+                    view.drawableSize = txt.cgsize                    
+                }
+                
+                if let currentDrawable = view.currentDrawable, let commandBuffer = self.context.commandBuffer {
+                    
+                    let texture = currentDrawable.texture
+                    
+                    commandBuffer.addCompletedHandler{ commandBuffer in            
+                        complete?(commandBuffer)                
+                        return
+                    }                
+                    
+                    
+                    let blit = commandBuffer.makeBlitCommandEncoder()
+                    
+                    blit?.copy(
+                        from: txt,
+                        sourceSlice: 0,
+                        sourceLevel: 0,
+                        sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                        sourceSize: txt.size,
+                        to: texture,
+                        destinationSlice: 0,
+                        destinationLevel: 0,
+                        destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                    
+                    blit?.endEncoding()                    
+                    
+                    execute?(commandBuffer) 
+                    
+                    commandBuffer.present(currentDrawable)
+                    commandBuffer.commit()            
+                    
+                    commandBuffer.waitUntilCompleted()   
+                }
+                else {
+                    complete?(nil)
+                }
+            }
+            else {
+                complete?(nil)                
+                
+            }
+        }
+    }
+    
+    
     public func render(to texture: inout MTLTexture?,
                        with commandBuffer: MTLCommandBuffer,
                        flipVertical:Bool = false,
@@ -574,7 +671,7 @@ public extension IMPImageProvider {
         
         let transform = CGAffineTransform.identity.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
         image = !flipVertical ? image : image.transformed(by: transform)
-
+        
         texture = checkTexture(texture: texture)
         
         if let t = texture {
@@ -590,6 +687,69 @@ public extension IMPImageProvider {
         }
     }
     
+    public func makeCopy() -> MTLTexture? {
+        var newTexture:MTLTexture? = nil
+        
+        context.execute { (commandBuffer) in
+            
+            if let txt = self.texture {
+                
+                newTexture = self.context.device.make2DTexture(size: txt.cgsize, pixelFormat: txt.pixelFormat)
+                
+                let blit = commandBuffer.makeBlitCommandEncoder()
+                
+                blit?.copy(
+                    from: txt,
+                    sourceSlice: 0,
+                    sourceLevel: 0,
+                    sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                    sourceSize: txt.size,
+                    to: newTexture!,
+                    destinationSlice: 0,
+                    destinationLevel: 0,
+                    destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                
+                blit?.endEncoding()
+            }
+        }
+        
+        return newTexture
+    }
+    
+    public func makeTextureCopyAsync(copy: @escaping (_ texture:MTLTexture?)->Void){
+        
+        context.runOperation(.async) {             
+            
+            if let txt = self.texture, let commandBuffer = self.context.commandBuffer {
+                
+                var newTexture = self.context.device.make2DTexture(size: txt.cgsize, pixelFormat: txt.pixelFormat)
+                
+                let blit = commandBuffer.makeBlitCommandEncoder()
+                
+                blit?.copy(
+                    from: txt,
+                    sourceSlice: 0,
+                    sourceLevel: 0,
+                    sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                    sourceSize: txt.size,
+                    to: newTexture,
+                    destinationSlice: 0,
+                    destinationLevel: 0,
+                    destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+                
+                blit?.endEncoding()  
+                
+                commandBuffer.commit()
+                commandBuffer.waitUntilCompleted()
+                
+                copy(newTexture)
+            }
+            else {
+                copy(nil)
+            }
+        }                 
+    }
+    
     
     private func checkTexture(texture:MTLTexture?) -> MTLTexture? {
         
@@ -598,51 +758,48 @@ public extension IMPImageProvider {
         let width = Int(image.extent.size.width)
         let height = Int(image.extent.size.height)
         
-        if texture?.width != width  || texture?.height != height
-        {
-            let descriptor = MTLTextureDescriptor.texture2DDescriptor(
-                pixelFormat: IMProcessing.colors.pixelFormat,
-                width: width, height: height, mipmapped: false)
-            
-            
-            if storageMode == .shared {
-                #if os(iOS)
-                    descriptor.storageMode = .shared
-                    descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
-                #elseif os(OSX)
-                    descriptor.storageMode = .managed
-                    descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
-                #endif
-            }
-            else {
-                descriptor.storageMode = .private
-                descriptor.usage = [.shaderRead,.pixelFormatView,.renderTarget]
-            }
-            
-            if texture != nil {
-                texture?.setPurgeableState(.volatile)
-            }
-
-            return self.context.device.makeTexture(descriptor: descriptor)
+        // if texture?.width != width  || texture?.height != height
+        // {
+        let descriptor = MTLTextureDescriptor.texture2DDescriptor(
+            pixelFormat: IMProcessing.colors.pixelFormat,
+            width: width, height: height, mipmapped: false)
+        
+        
+        if storageMode == .shared {
+            #if os(iOS)
+                descriptor.storageMode = .shared
+                descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
+            #elseif os(OSX)
+                descriptor.storageMode = .managed
+                descriptor.usage = [.shaderRead, .shaderWrite, .pixelFormatView, .renderTarget]
+            #endif
+        }
+        else {
+            descriptor.storageMode = .private
+            descriptor.usage = [.shaderRead, .shaderWrite,.pixelFormatView,.renderTarget]
         }
         
         if texture != nil {
-            texture?.setPurgeableState(.keepCurrent)
+            //texture?.setPurgeableState(.volatile)
         }
-
-        return texture
+        
+        return self.context.device.makeTexture(descriptor: descriptor)
+        
     }
     
-    public func scaledImage(with scale:CGFloat) -> CIImage? {
+    public func scaledImage(with scale:CGFloat, reflect:Bool = false) -> CIImage? {
         guard let image = image else { return nil }
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
         var t = CGAffineTransform.identity
-        t = t.scaledBy(x: scale, y: scale).scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height*scale)
+        t = t.scaledBy(x: scale, y: scale)
+        if reflect {
+            t = t.scaledBy(x: 1, y: -1)
+        }        
+        t = t.translatedBy(x: 0, y: image.extent.size.height*scale)
         return image.transformed(by: t)        
     }
     
-    public func cgiImage(scale:CGFloat) -> CGImage? {
-        guard let image = scaledImage(with: scale) else { return nil }
+    public func cgiImage(scale:CGFloat, reflect:Bool = false) -> CGImage? {
+        guard let image = scaledImage(with: scale, reflect:reflect) else { return nil }
         return context.coreImage?.createCGImage(image, from: image.extent,
                                                 format: kCIFormatARGB8,
                                                 colorSpace: colorSpace,
@@ -662,34 +819,22 @@ public extension IMPImageProvider {
     
     #if os(iOS)
     public var nsImage:NSImage? {
-        get{
-            guard (image != nil) else { return nil}
-            return NSImage(cgImage: cgiImage!)
-        }
-        set {
-            cgiImage = newValue?.cgImage
-        }
+    get{
+    guard (image != nil) else { return nil}
+    return NSImage(cgImage: cgiImage!)
+    }
+    set {
+    cgiImage = newValue?.cgImage
+    }
     }
     #else
     public func nsImage(scale:CGFloat, reflect:Bool = false) -> NSImage? {
-        if let image = self.image {
-            
-            var t = CGAffineTransform.identity
-            t = t.scaledBy(x: scale, y: scale)
-
-            if reflect {
-                t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height*scale)
-            }
-            
-            let rep: NSCIImageRep = NSCIImageRep(ciImage: image.transformed(by: t))
-            
-            let nsImage: NSImage = NSImage(size: rep.size)                
-            nsImage.addRepresentation(rep)
-            return nsImage
+        if let cgi =  cgiImage(scale: scale, reflect: reflect){
+            return NSImage(cgImage: cgi, size: NSZeroSize)
         }
         return nil
     }
-
+    
     public var nsImage:NSImage? {
         get {
             return nsImage(scale:1)
@@ -705,13 +850,13 @@ public extension IMPImageProvider {
 
 
 #if os(OSX)
-
+    
     public typealias IMPImageFileType = NSBitmapImageRep.FileType
     
-    extension NSImage {
-                      
-        func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data? {
-                                    
+    public extension NSImage {
+        
+        public func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data? {
+            
             guard let tiffRepresentation = tiffRepresentation(using: .none, factor: factor ?? 1.0), 
                 let bitmapImage = NSBitmapImageRep(data: tiffRepresentation) 
                 else { return nil }
@@ -724,8 +869,8 @@ public extension IMPImageProvider {
             
             return bitmapImage.representation(using: type, properties: properties)            
         }
-                
-        convenience init?(ciimage:CIImage?){
+        
+        public convenience init?(ciimage:CIImage?){
             
             guard var image = ciimage else {
                 return nil
@@ -740,8 +885,7 @@ public extension IMPImageProvider {
             self.init(size: image.extent.size)
             let rep = NSCIImageRep(ciImage: image)
             addRepresentation(rep)
-        }
-        
+        }        
     }
     
     // MARK: - export to files
@@ -755,7 +899,38 @@ public extension IMPImageProvider {
         ///   - factor: compression factor (.JPEG only)
         /// - Returns: representation Data?
         public func representation(using type: IMPImageFileType, compression factor:Float? = nil, reflect:Bool = false) -> Data?{
-            return nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
+            
+            var properties:[NSBitmapImageRep.PropertyKey : Any] = [:]            
+            if type == .jpeg {
+                properties = [NSBitmapImageRep.PropertyKey.compressionFactor: factor ?? 1.0]
+            }
+            
+            let csp = self.colorSpace
+            
+            if let image = self.image { 
+                
+                var t = CGAffineTransform.identity
+                
+                if reflect {
+                    t = t.scaledBy(x: 1, y: -1).translatedBy(x: 0, y: image.extent.size.height)
+                }
+                
+                switch type {
+                case .jpeg:
+                    return context.coreImage?.jpegRepresentation(of: image.transformed(by: t), colorSpace: csp, options: properties)
+                case .tiff:
+                    return context.coreImage?.tiffRepresentation(of: image.transformed(by: t), format: kCIFormatRGBAf, colorSpace: csp, options:properties)
+                case .png:
+                    if #available(OSX 10.13, *) {
+                        return context.coreImage?.pngRepresentation(of: image.transformed(by: t), format: kCIFormatRGBA16, colorSpace: csp, options: properties)
+                    } else {
+                        nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
+                    }
+                default:
+                    nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
+                }
+            }
+            return nil
         }
         
         
@@ -775,5 +950,5 @@ public extension IMPImageProvider {
         }        
     }
     
-    
 #endif
+
