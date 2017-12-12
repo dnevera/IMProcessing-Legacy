@@ -123,7 +123,10 @@ open class IMPContext {
     open let uid = String.uniqString()
     
     /// Current command queue uses the current device
-    open let commandQueue:MTLCommandQueue?
+    open var commandQueue:MTLCommandQueue? 
+    //{
+    //    return _device?.makeCommandQueue()
+    //}
     
     /// Default library associated with current context
     open let defaultLibrary:MTLLibrary
@@ -158,9 +161,9 @@ open class IMPContext {
         semaphore.signal()
     }
     
-    private let dispatchQueue = DispatchQueue (label: "org.improcessing.context", qos : .background)
+    private let dispatchQueue = DispatchQueue (label: "ccom.improcessing.context", qos : .utility)
     private var dispatchQueueKey:DispatchSpecificKey<Int> =  DispatchSpecificKey<Int>()
-    private let queueKey: Int = Int(arc4random())
+    private  let queueKey: Int = 1837264
     
     ///  Initialize current context
     ///
@@ -192,7 +195,7 @@ open class IMPContext {
             fatalError("Default Metal command queue could not be created...")
         }
         
-        if let library = _device?.makeDefaultLibrary(){
+        if let library = IMPContext.__library {
             defaultLibrary = library
         }
         else{
@@ -200,9 +203,14 @@ open class IMPContext {
         }
     }
     
+    private static let __sharedDevice = MTLCreateSystemDefaultDevice()
+    private static var __library = IMPContext.__sharedDevice?.makeDefaultLibrary()
+    
     var _device:MTLDevice?
     
     @available(iOS 9.0, *)
+    //private static let __sharedCIContext = CIContext(mtlDevice: __sharedDevice!)
+    //lazy var _ciContext:CIContext = IMPContext.__sharedCIContext //CIContext(mtlDevice: self.device)
     lazy var _ciContext:CIContext = CIContext(mtlDevice: self.device)
     
     open lazy var supportsGPUv2:Bool = {
@@ -220,7 +228,7 @@ open class IMPContext {
     public var maxThreads:MTLSize {
         return device.maxThreadsPerThreadgroup
     }
-
+    
     
     ///  The main idea context execution: all filters should put commands in context queue within the one execution.
     ///
@@ -238,7 +246,7 @@ open class IMPContext {
             #if DEBUG
                 //this.commandQueue?.insertDebugCaptureBoundary()
             #endif
-
+            
             if let commandBuffer = this.commandBuffer {
                 
                 action(commandBuffer)
@@ -256,9 +264,9 @@ open class IMPContext {
             }
             
             #if DEBUG
-               // this.commandQueue?.insertDebugCaptureBoundary()
+                // this.commandQueue?.insertDebugCaptureBoundary()
             #endif
-
+            
         }
     }
     
@@ -276,18 +284,12 @@ open class IMPContext {
                 dispatchQueue.sync(execute: block)
                 
                 return block
-                //dispatchQueue.sync{
-                //    execute()
-                //}
             }
         }
         else {
             let block = DispatchWorkItem { 
                 execute()
             }
-            //dispatchQueue.async{
-            //    execute()
-            //}
             dispatchQueue.async(execute: block)
             return block
         }
@@ -349,7 +351,7 @@ open class IMPContext {
         
         return newTexture
     }
-
+    
     
     public var textureCache:IMPTextureCache {
         return _textureCache
@@ -399,7 +401,7 @@ open class IMPContext {
     }
     
     private lazy var _textureCache:IMPTextureCache = { return IMPTextureCache(context: self) }()
-
+    
     // Singleton Class
     fileprivate class sharedContainerType: NSObject {
         
@@ -443,14 +445,14 @@ public extension IMPContext {
         }
         return device.makeBuffer(bytes: &value, length: length, options: options)!
     }
-
-//    public func makeBuffer<T:Array>(from value:T, options: MTLResourceOptions = []) -> MTLBuffer {
-//        var value = value
-//        //return device.makeBuffer(bytes: &value, length: MemoryLayout<T.Iterator.Element>.size * Int(value.count.toIntMax()), options: options)
-//        let length = MemoryLayout.size(ofValue: value) * Int(value.count.toIntMax())
-//        return device.makeBuffer(bytes: &value, length: length, options: options)
-//    }
-
+    
+    //    public func makeBuffer<T:Array>(from value:T, options: MTLResourceOptions = []) -> MTLBuffer {
+    //        var value = value
+    //        //return device.makeBuffer(bytes: &value, length: MemoryLayout<T.Iterator.Element>.size * Int(value.count.toIntMax()), options: options)
+    //        let length = MemoryLayout.size(ofValue: value) * Int(value.count.toIntMax())
+    //        return device.makeBuffer(bytes: &value, length: length, options: options)
+    //    }
+    
     public func make2DTexture(size: MTLSize,
                               pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
                               mode:IMPImageStorageMode = .shared) -> MTLTexture {
@@ -462,7 +464,7 @@ public extension IMPContext {
                               mode:IMPImageStorageMode = .shared) -> MTLTexture {
         return device.make2DTexture(size: size, pixelFormat: pixelFormat, mode: mode)
     }
-
+    
     public func make2DTexture(width:Int, height:Int,
                               pixelFormat:MTLPixelFormat = IMProcessing.colors.pixelFormat,
                               mode:IMPImageStorageMode = .shared) -> MTLTexture {
@@ -501,3 +503,4 @@ public extension MTLBuffer{
 //    guard left.length == size else { fatalAssignment(left, right); return }
 //    memcpy(left.contents(), &value, left.length)
 //}
+
