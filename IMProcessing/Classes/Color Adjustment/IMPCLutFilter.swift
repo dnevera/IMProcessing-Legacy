@@ -23,7 +23,7 @@ public class IMPCLutFilter: IMPFilter {
     /// Color LUT is nil by default. Application of the filter is no effect in this case.    
     public var clut:IMPCLut? {
         willSet{
-            //clut?.removeAllObservers()
+            clut?.removeObserver(updated: clutUpdateHandler)
         }
         didSet{
             guard oldValue !== clut else {    
@@ -57,12 +57,21 @@ public class IMPCLutFilter: IMPFilter {
                 dirty = true
             }
             
-            clut?.addObserver(updated: { (lut) in
-                self.dirty = true
-            })
+            clut?.addObserver(updated: clutUpdateHandler)
         }
     }
  
+    deinit {
+        clut?.removeObserver(updated: clutUpdateHandler)
+    }
+    
+    private lazy var clutUpdateHandler:IMPCLut.UpdateHandler = {
+        let handler:IMPCLut.UpdateHandler = { lut in
+            self.dirty = true
+            //Swift.print(" ^^^ -- -- clutUpdateHandler \(self.dirty)")
+        }
+        return handler
+    }() 
     
     /// Create color LUT filtering with 2d color LUT
     ///
@@ -82,7 +91,7 @@ public class IMPCLutFilter: IMPFilter {
             }
         }
     }
-    
+       
     public override func configure(complete: IMPFilterProtocol.CompleteHandler?) {
         completeHandler = complete
         extendName(suffix: "LutFilter")

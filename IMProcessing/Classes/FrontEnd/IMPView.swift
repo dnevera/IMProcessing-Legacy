@@ -102,23 +102,21 @@ open class IMPView: MTKView {
     
     public var exactResolutionEnabled = true {
         didSet{
-            //filter?.dirty = true
-            Swift.print("exactResolutionEnabled --> \(exactResolutionEnabled)")
-            //updateDrawble(size: filter?.source?.size)
-            //needProcessing = true
+            needProcessing = true            
         }
     }
     
     open weak var filter:IMPFilter? = nil {
         willSet{
-            operation.cancelAllOperations()
+            processingPhase?.cancel()
             needProcessing = false
             filter?.removeObserver(newSource: sourceObserver)
             filter?.removeObserver(destinationUpdated: destinationObserver)
             filter?.removeObserver(dirty: dirtyObserver)
         }
         didSet {         
-            device = filter?.context.device 
+            guard let context = self.filter?.context else { return } 
+            device = context.device 
             filter?.addObserver(newSource: sourceObserver)            
             filter?.addObserver(destinationUpdated: destinationObserver)            
             filter?.addObserver(dirty: dirtyObserver)
@@ -128,12 +126,7 @@ open class IMPView: MTKView {
 
     private lazy var sourceObserver:IMPFilter.SourceUpdateHandler = {
         let handler:IMPFilter.SourceUpdateHandler = { (source) in
-            if source == nil { 
-                self.needProcessing = true
-            }
-            else if let size = source?.size {
-                self.updateDrawble(size: size)
-            }
+            self.needProcessing = true
         }
         return handler
     }()
@@ -143,6 +136,7 @@ open class IMPView: MTKView {
         let handler:IMPFilter.UpdateHandler = { (destination) in
             self.currentDestination = destination
             self.updateDrawble(size: destination.size)
+            self.needUpdateDisplay = true 
         }
         return handler
     }()
@@ -158,32 +152,15 @@ open class IMPView: MTKView {
     open override var frame: NSRect {
         didSet{
             isolatedFrame = frame
-            //Swift.print(" @@@ IMPView frame \(isolatedFrame)")
+            needUpdateDisplay = true 
         }
     }
-    
-    open override func setNeedsDisplay(_ invalidRect: NSRect) {
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        super.setNeedsDisplay(invalidRect)
-        CATransaction.commit()
-        //Swift.print(" @@@ IMPView setNeedsDisplay \(invalidRect, frame, isolatedFrame)")
-    }
-    
-    private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
-                     
-        var needReprocess = false
         
+    private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
+                             
         if let size = size {
                      
-            if drawableSize.width != size.width || drawableSize.height != size.height {
-                needReprocess = true
-            }
-            
-//            OperationQueue.main.addOperation {
-//                Swift.print("1 !!! IMPView.updateDrawble \(size, self.isolatedFrame, self.frame, self.exactResolutionEnabled, needReprocess)")                
-//            }
-            
+                  
             if exactResolutionEnabled || isolatedFrame.size == NSZeroSize {
                 drawableSize = size
             }
@@ -194,32 +171,10 @@ open class IMPView: MTKView {
                 )
                 let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
                 drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
-                //Swift.print("2 !!! IMPView.updateDrawble \(size, self.drawableSize, self.needUpdateDisplay, needReprocess, scale)")                
             }
-
-
+            
             viewUpdateDrawbleHandler?(size)
-        }
-//        else if filter?.source == nil {
-//            let newSize = NSSize(width: isolatedFrame.size.width * screenScale,
-//                                 height: isolatedFrame.size.height * screenScale)
-//
-//            drawableSize = NSSize(width: newSize.width, height: newSize.height)
-//            
-//            Swift.print("3 !!! IMPView.updateDrawble \(size, self.drawableSize, self.needUpdateDisplay, needReprocess)")                
-//
-//            if drawableSize != NSZeroSize {
-//                viewUpdateDrawbleHandler?(newSize)
-//            }
-//        }        
-
-
-        //Swift.print("4 !!! IMPView.updateDrawble \(size, self.drawableSize, self.needUpdateDisplay, needReprocess)")                
-
-        if needReprocess {
-            self.processing(size: drawableSize, observersEnabled: false)
-        }            
-        
+        }                       
     }
             
     public init(frame frameRect: CGRect) {
@@ -240,26 +195,21 @@ open class IMPView: MTKView {
     }
     
     public var context:IMPContext? {
-        return filter?.context
+        return IMPView.__context //filter?.context
     }
     
     var needProcessing = false {
         didSet{
-            if isPaused{
-                if needProcessing {
-                    processing(size: drawableSize)
-                }
+            if needProcessing {
+                processing(size: drawableSize)
             }
-            else {
-                operation.cancelAllOperations()                    
-            }            
         }
     }
     
     var frameCounter = 0
     
     var frameImage:IMPImageProvider? 
-    
+
     private let __operation:OperationQueue = {
         let o = OperationQueue()
         o.qualityOfService = .utility
@@ -269,40 +219,41 @@ open class IMPView: MTKView {
     }()
     
     public var operation:OperationQueue { 
-        return  self.__operation         
+        return  __operation         
     }
-    
+
     deinit {
         filter = nil
         processingPhase?.cancel()
     }
+        
+    private static let __context = IMPContext()
     
-    private var processingPhase:Operation?
+    private var processingPhase:DispatchWorkItem?
     private func processing(size: NSSize, observersEnabled:Bool = true)  {
-        guard let context = filter?.context else {
+        
+        processingPhase?.cancel()
+
+        guard let context = self.context else {
             return
         }
-        processingPhase?.cancel()
-        processingPhase = operation.addBackgroundContext(context){
-
-            self.needProcessing = false
-
+        
+        func proc(){            
+            needProcessing = false
+            
             guard let filter = self.filter else { return }
             
-            //Swift.print("\n >>>> *************************** IMPView **********************************")
-
             let oe = filter.observersEnabled 
             filter.observersEnabled = observersEnabled
-            //filter.destinationSize = size
-            self.frameImage = filter.destination
-            //Swift.print(" *** IMPView drawableSize \(self.drawableSize, size)")
-            //self.frameImage = filter.resample(with: size)
-            filter.observersEnabled = oe
+            frameImage = filter.destination
+            filter.observersEnabled = oe                                
             
-            self.needUpdateDisplay = true 
-            
-           // Swift.print(" <<< *************************** IMPView **********************************\n")
+            needUpdateDisplay = true                         
         }
+        
+        processingPhase = context.runOperation(.async, { 
+            proc()
+        })        
     }
 
     lazy var viewPort:MTLViewport = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
@@ -315,15 +266,15 @@ open class IMPView: MTKView {
     
     func refresh(rect: CGRect){
 
-        guard let context = self.context else { return }
-        
-        //context.wait()
+        guard let context = self.filter?.context else { return }
+                
+        context.wait()
 
         guard 
             let commandBuffer = context.commandBuffer,
             let sourceTexture = frameImage?.texture,
             let targetTexture = currentDrawable?.texture else {
-                //context.resume()
+                context.resume()
                 return                 
         }
                                    
@@ -331,14 +282,14 @@ open class IMPView: MTKView {
             if self.isFirstFrame  {
                 self.frameCounter += 1
             }
-            //context.resume()
+            context.resume()
             self.viewBufferCompleteHandler?(self.frameImage!)
         }        
         
         if renderingEnabled == false 
             &&
-            sourceTexture.cgsize == drawableSize  
-            &&
+            /*sourceTexture.cgsize == drawableSize  
+            &&*/
             sourceTexture.pixelFormat == targetTexture.pixelFormat
         {
             guard let encoder = commandBuffer.makeBlitCommandEncoder() else {return }
@@ -366,7 +317,7 @@ open class IMPView: MTKView {
                 
                 encoder.setVertexBuffer(vertexBuffer, offset:0, index:0)
                 encoder.setFragmentTexture(sourceTexture, index:0)
-                encoder.setViewport(viewPort)
+                //encoder.setViewport(viewPort)
                 
                 encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
                 encoder.endEncoding()
@@ -385,17 +336,11 @@ open class IMPView: MTKView {
     }
 
     fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()    
+   
     fileprivate var needUpdateDisplay:Bool = false {
         didSet{
-            guard needUpdateDisplay != oldValue else {
-                return
-            }
-            if self.isPaused {
-                if self.needUpdateDisplay {
-                    DispatchQueue.main.safeAsync {
-                        self.draw()
-                    }
-                }                
+            if needUpdateDisplay {
+                processingLink.isPaused = false
             }
         }
     }
@@ -410,10 +355,14 @@ open class IMPView: MTKView {
     #else
     public func setNeedsDisplay() {
         needUpdateDisplay = true
-        if isPaused {
-            display()
+    }
+    
+    open override var needsDisplay: Bool {
+        didSet{
+            needProcessing = true
         }
     }
+    
     #endif
     
     private func _init_() {
@@ -427,23 +376,18 @@ open class IMPView: MTKView {
         #endif
         enableSetNeedsDisplay = false
         colorPixelFormat = .bgra8Unorm
-        delegate = self    
+        delegate = self  
+        
         processingLink.addObserver { (timev) in
-            if self.needProcessing {
-                //guard self.filter?.source != nil else { return }
-                self.processing(size: self.drawableSize)
-            }
+            self.draw()
+            self.processingLink.isPaused = true
         }
+        
         isPaused = true 
         isolatedFrame = frame
         configure()
     }
-    
-    open override var isPaused: Bool {
-        didSet{
-           processingLink.isPaused = isPaused
-        }
-    }
+            
     
     open override var preferredFramesPerSecond: Int {
         didSet{
@@ -462,7 +406,8 @@ open class IMPView: MTKView {
     }()
     
     lazy var vertexBuffer:MTLBuffer? = {
-        let v = self.context?.device.makeBuffer(bytes: IMPView.viewVertexData, length: MemoryLayout<Float>.size*IMPView.viewVertexData.count, options: [])
+        guard let context =  self.context else { return nil }
+        let v = context.device.makeBuffer(bytes: IMPView.viewVertexData, length: MemoryLayout<Float>.size*IMPView.viewVertexData.count, options: [])
         v?.label = "Vertices"
         return v
     }()
@@ -471,22 +416,23 @@ open class IMPView: MTKView {
     
     lazy var renderPipeline:MTLRenderPipelineState? = {
         do {
+            guard let context = self.context else { return nil }
             let descriptor = MTLRenderPipelineDescriptor()
             
             descriptor.colorAttachments[0].pixelFormat = self.colorPixelFormat
             
-            guard let vertex = self.context?.defaultLibrary.makeFunction(name: "vertex_passview") else {
+            guard let vertex = context.defaultLibrary.makeFunction(name: "vertex_passview") else {
                 fatalError("IMPView error: vertex function 'vertex_passview' is not found in: \(self.context?.defaultLibrary.functionNames)")
             }
             
-            guard let fragment = self.context?.defaultLibrary.makeFunction(name: "fragment_passview") else {
+            guard let fragment = context.defaultLibrary.makeFunction(name: "fragment_passview") else {
                 fatalError("IMPView error: vertex function 'fragment_passview' is not found in: \(self.context?.defaultLibrary.functionNames)")
             }
             
             descriptor.vertexFunction   = vertex
             descriptor.fragmentFunction = fragment
             
-            return try self.context?.device.makeRenderPipelineState(descriptor: descriptor)
+            return try context.device.makeRenderPipelineState(descriptor: descriptor)
         }
         catch let error as NSError {
             NSLog("IMPView error: \(error)")
@@ -613,6 +559,7 @@ open class IMPView: MTKView {
     }
     
     #endif
+    
 }
 
 
@@ -627,9 +574,9 @@ extension IMPView: MTKViewDelegate {
         if !impview.needUpdateDisplay {
             return
         }
-        
-        impview.needUpdateDisplay = false
                 
+        impview.needUpdateDisplay = false
+        
         impview.refresh(rect: view.bounds)
     }
 }

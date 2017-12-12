@@ -20,7 +20,7 @@ import ImageIO
 
 open class IMPImage: IMPImageProvider {
     
-    public var mutex = IMPSemaphore()
+    public let mutex = IMPSemaphore()
     
     public func removeObserver(optionsChanged observer: @escaping ObserverType) {
         mutex.sync { () -> Void in
@@ -57,8 +57,8 @@ open class IMPImage: IMPImageProvider {
     
     public var texture: MTLTexture? {
         set{
-            _texture = newValue
-            _image = nil
+            self._texture = newValue
+            self._image = nil                
         }
         get{
             if _texture == nil && _image != nil {
@@ -113,7 +113,7 @@ open class IMPImage: IMPImageProvider {
         if #available(iOS 10.0, *) {
             return CGColorSpace(name: CGColorSpace.sRGB)!
             //return  CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
-            //return  CGColorSpace(name: CGColorSpace.genericRGBLinear)!
+           // return  CGColorSpace(name: CGColorSpace.genericRGBLinear)!
         }
         else {
             fatalError("extendedLinearSRGB: ios >10.0 supports only")

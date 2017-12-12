@@ -97,7 +97,7 @@ open class IMPCLut: IMPImage {
     internal var _lutSize = Int(0)
     internal var _compressionRange = float2(0,1)
     
-    internal var observers:[UpdateHandler] = [UpdateHandler]()
+    internal var observers = [IMPObserverHash<UpdateHandler>]()
     
     private let compressionM = float2x2(rows:[float2(-1,1),float2(1,0)])
     
@@ -142,8 +142,8 @@ public extension IMPCLut {
         let kernel = IMPFunction(context: context, kernelName:
             _type == .lut_1d ? "kernel_make1DLut" :  _type == .lut_2d ?  "kernel_make2DLut" :  "kernel_make3DLut")
 
-        let threadsPerThreadgroup = MTLSizeMake(4, 4, 4)
         let threadgroups  = MTLSizeMake(text.width/4, text.height == 1 ? 1 : text.height/4, text.depth == 1 ? 1 : text.depth/4)
+        let threadsPerThreadgroup = MTLSizeMake(4, 4, text.depth == 1 ? 1 : 4)
         
         context.execute(.sync, wait: true){ (commandBuffer) in
             let commandEncoder =  kernel.commandEncoder(from: commandBuffer)
@@ -160,7 +160,7 @@ public extension IMPCLut {
         }
     }
     
-    public func update(from image: IMPImageProvider) throws {
+    public func update(from image: IMPImageProvider, operation:IMPContext.OperationType = .async, complete: (() -> Void)? = nil) throws {
         
         guard let txt = image.texture else { 
              throw FormatError(file: "", line: 0, kind: .empty) 
@@ -181,11 +181,13 @@ public extension IMPCLut {
             throw FormatError(file: "", line: 0, kind: .wrangRange)
         }
         
-        context.execute(.async, wait: true, complete: {
+        context.execute(operation, wait: true, complete: {
         
             for o in self.observers {
-                o(self)
+                o.observer(self)
             }
+            
+            complete?()
         
         }){ (commandBuffer) in
             let blt = commandBuffer.makeBlitCommandEncoder()
@@ -207,9 +209,38 @@ public extension IMPCLut {
         observers.removeAll()
     }
     
-    public func addObserver(updated observer:@escaping UpdateHandler){
-        observers.append(observer)
+   // public func addObserver(updated observer:@escaping UpdateHandler){
+   //     observers.append(observer)
+    //}
+    
+    
+    //
+    // MARK: - observers
+    //    
+    private func unsafeRemoveObserver<T>(from list: inout [IMPObserverHash<T>], _ observer:T, key aKey:String? = nil) -> String {
+        let key = aKey ?? IMPObserverHash<T>.observerKey(observer)
+        if let index = list.index(where: { return $0.key == key }) {
+            list.remove(at: index)
+        }                
+        return key
+    }    
+    
+    private func unsafeAddObserver<T>(to list:inout [IMPObserverHash<T>], _ observer:T, key aKey:String? = nil){
+        let key = unsafeRemoveObserver(from: &list, observer, key: aKey)
+        list.append(IMPObserverHash<T>(key:key, observer:observer))
     }
+    
+    public func addObserver(updated observer:@escaping UpdateHandler, key aKey:String? = nil){
+        mutex.sync {             
+            unsafeAddObserver(to: &observers, observer, key: aKey)
+        }
+    }
+        
+    public func removeObserver(updated observer:@escaping UpdateHandler, key aKey:String? = nil) {
+        mutex.sync { 
+            unsafeRemoveObserver(from: &observers, observer, key: aKey)
+        }
+    }   
     
     public var identity:IMPCLut {
         return try! IMPCLut(context: context, lutType: _type, lutSize: _lutSize, format:_format, title:_title)
@@ -281,6 +312,7 @@ internal extension IMPCLut {
         textureDescriptor.width  = width
         textureDescriptor.height = height
         textureDescriptor.depth  = depth
+        textureDescriptor.usage  = [.shaderWrite, .shaderRead]
         
         if (nFormat != .float) {
             textureDescriptor.pixelFormat = .rgba8Snorm

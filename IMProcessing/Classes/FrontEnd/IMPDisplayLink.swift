@@ -66,8 +66,9 @@ import CoreVideo
     //
     public class IMPDisplayLink {
         
-        public  var isPaused:Bool = false {
+        public  var isPaused:Bool = true {
             didSet(oldValue){
+                guard oldValue != isPaused else { return } 
                 guard let link = displayLink else { return }
                 if  isPaused {
                     if CVDisplayLinkIsRunning(link) {
