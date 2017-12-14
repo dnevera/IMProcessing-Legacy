@@ -92,6 +92,7 @@ open class IMPDisplayTimer:NSObject {
     public typealias CompleteHandler = ((_ flag:Bool)->Void)
     
     
+    @discardableResult
     open static func execute(duration: TimeInterval,
                                         options:IMPTimingCurve = .default,
                                         resolution:Int = 20,
