@@ -12,6 +12,10 @@
 
 #include "IMPConstants-Bridging-Metal.h"
 
+#ifndef __METAL_VERSION__
+#import <Foundation/Foundation.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
