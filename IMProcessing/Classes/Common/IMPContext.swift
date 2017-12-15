@@ -62,12 +62,25 @@ public struct IMPObserverHash<T>:Hashable {
         self.key = key
         self.observer = observer
     }
+    
+    @discardableResult public static func unsafeRemoveObserver<T>(from list: inout [IMPObserverHash<T>], _ observer:T, key aKey:String? = nil) -> String {
+        let key = aKey ?? IMPObserverHash<T>.observerKey(observer)
+        if let index = list.index(where: { return $0.key == key }) {
+            list.remove(at: index)
+        }                
+        return key
+    }    
+    
+    public static func unsafeAddObserver<T>(to list:inout [IMPObserverHash<T>], _ observer:T, key aKey:String? = nil){
+        let key = unsafeRemoveObserver(from: &list, observer, key: aKey)
+        list.append(IMPObserverHash<T>(key:key, observer:observer))
+    }
 }
 
 public struct IMPSemaphore {
     private let s = DispatchSemaphore(value: 1)
     public init() {}
-    public func sync<R>(execute: () throws -> R) rethrows -> R {
+    @discardableResult public func sync<R>(execute: () throws -> R) rethrows -> R {
         _ = s.wait(timeout: DispatchTime.distantFuture)
         defer { s.signal() }
         return try execute()
