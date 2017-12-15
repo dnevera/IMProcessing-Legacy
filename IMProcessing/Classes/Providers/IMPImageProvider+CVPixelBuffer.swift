@@ -29,15 +29,15 @@ public extension IMPImageProvider{
         let width = CVPixelBufferGetWidth(pixelBuffer)
         let height = CVPixelBufferGetHeight(pixelBuffer)
         
-        let textureRef = UnsafeMutablePointer<CVMetalTexture?>.allocate(capacity: 1)
+        var textureRef: CVMetalTexture?
         
-        let error = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, videoCache.reference!, pixelBuffer, nil, .bgra8Unorm, width, height, 0, textureRef)
-        
+        let error = CVMetalTextureCacheCreateTextureFromImage(kCFAllocatorDefault, videoCache.reference!, pixelBuffer, nil, .bgra8Unorm, width, height, 0, &textureRef)
+
         if error != kCVReturnSuccess {
             fatalError("IMPImageProvider error: couldn't create texture from pixelBuffer: \(error)")
         }
         
-        if let ref = textureRef.pointee {
+        if let ref = textureRef {
             
             if let t = CVMetalTextureGetTexture(ref) {
                 texture = t

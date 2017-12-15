@@ -97,7 +97,7 @@ open class IMPContext {
     fileprivate let semaphore = DispatchSemaphore(value: 3)
     
     open func wait() {
-        semaphore.wait(timeout: DispatchTime.distantFuture)
+        semaphore.wait()
     }
     open func resume(){
         semaphore.signal()
