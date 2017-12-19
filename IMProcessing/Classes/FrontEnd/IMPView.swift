@@ -577,7 +577,7 @@ extension IMPView: MTKViewDelegate {
                 
         impview.needUpdateDisplay = false
         
-        impview.refresh(rect: view.bounds)
+        impview.refresh(rect: NSZeroRect)
     }
 }
 
