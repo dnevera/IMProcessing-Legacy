@@ -102,7 +102,8 @@ public extension Float{
     ///
     ///  - returns: Y value
     public func gaussianPoint(fi:Float, mu:Float, sigma:Float) -> Float {
-        return fi * exp( -(pow(( self - mu ),2)) / (2*pow(sigma, 2)) )
+        //return fi * exp( -(pow(( self - mu ),2)) / (2*pow(sigma, 2)) )
+        return fi * exp( -0.5 * pow( ( self - mu )/sigma, 2)) 
     }
     
     ///  Get double pointed gaussian Y point from distripbution of two X points
