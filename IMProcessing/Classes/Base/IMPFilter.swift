@@ -115,6 +115,9 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     
     public var dirty: Bool = true {
         didSet{
+            
+            if isIgnoringDirty { return }
+            
             for c in self.coreImageFilterList {
                 c.filter?.dirty = dirty
             }
@@ -125,6 +128,20 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                 }
             }
         }
+    }
+    
+    private var isIgnoringDirty: Bool = false {
+        didSet{        
+            for c in self.coreImageFilterList {
+                c.filter?.isIgnoringDirty = isIgnoringDirty
+            }
+        }
+    }
+
+    public func ignoringDirty(_ execute: ()->Void) {
+        isIgnoringDirty = true
+        execute()
+        isIgnoringDirty = false
     }
     
     private func resetDirty(_ dirty:Bool){
