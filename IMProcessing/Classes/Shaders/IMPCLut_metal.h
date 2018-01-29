@@ -196,6 +196,62 @@ namespace IMProcessing
     }
     
     ///
+    /// @brief Kernel optimized convertion from 1D Array LUT to new 2D Lut
+    ///
+    kernel void kernel_convert1DArrayLut_to_2DLut(
+                                                  texture1d_array<float, access::sample> d1DLut       [[texture(0)]],
+                                                  texture2d<float, access::read>         d2DLutSource [[texture(1)]],
+                                                  texture2d<float, access::write>        d2DLut       [[texture(2)]],
+                                                  uint2 gid [[thread_position_in_grid]]){
+        
+        float3 rgb     = d2DLutSource.read(gid).rgb;
+                
+        float x = d1DLut.sample(lutSampler, rgb.x, 0).x;
+        float y = d1DLut.sample(lutSampler, rgb.y, 1).x;
+        float z = d1DLut.sample(lutSampler, rgb.z, 2).x;
+
+        d2DLut.write(float4(x,y,z, 1),gid);
+        
+    }
+    
+    ///
+    /// @brief Kernel optimized convertion from 1D Array LUT to new 3D Lut
+    ///
+    kernel void kernel_convert1DArrayLut_to_3DLut(
+                                                  texture1d_array<float, access::sample> d1DLut       [[texture(0)]],
+                                                  texture3d<float, access::read>         d3DLutSource [[texture(1)]],
+                                                  texture3d<float, access::write>        d3DLut       [[texture(2)]],
+                                                  uint3 gid [[thread_position_in_grid]]){
+        
+        float3 rgb     = d3DLutSource.read(gid).rgb;
+        
+        float x = d1DLut.sample(lutSampler, rgb.x, 0).x;
+        float y = d1DLut.sample(lutSampler, rgb.y, 1).x;
+        float z = d1DLut.sample(lutSampler, rgb.z, 2).x;
+        
+        d3DLut.write(float4(x,y,z, 1),gid);        
+    }
+    
+    ///
+    /// @brief Kernel optimized convertion from 2D LUT to new 1D Lut
+    ///
+    kernel void kernel_convert1DArrayLut_to_1DLut(
+                                                  texture1d_array<float, access::sample> d1DLut       [[texture(0)]],
+                                                  texture1d<float, access::read>         d1DLutSource [[texture(1)]],
+                                                  texture1d<float, access::write>        d1DLutDest   [[texture(2)]],
+                                                  uint gid [[thread_position_in_grid]]){
+        
+        float3 rgb     = d1DLutSource.read(gid).rgb;
+
+        float x = d1DLut.sample(lutSampler, rgb.x, 0).x;
+        float y = d1DLut.sample(lutSampler, rgb.y, 1).x;
+        float z = d1DLut.sample(lutSampler, rgb.z, 2).x;
+        
+        d1DLutDest.write(float4(x,y,z,1),gid);
+    }
+    
+    
+    ///
     /// @brief Kernel optimized convertion from 2D LUT to new 1D Lut
     ///
     kernel void kernel_convert2DLut_to_1DLut(

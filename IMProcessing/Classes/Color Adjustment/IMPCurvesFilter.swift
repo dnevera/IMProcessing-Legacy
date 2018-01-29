@@ -97,9 +97,7 @@ public class IMPCurvesFilter: IMPFilter {
     private lazy var curvesKernel:IMPFunction = {
         let f = IMPFunction(context: self.context, kernelName: "kernel_adjustChannelCurves")
         f.optionsHandler = { (function, command, input, output) in
-            
-            
-            
+                                    
             command.setTexture(self.lut.texture, index:2)
             
             var cs = self.colorSpace.index

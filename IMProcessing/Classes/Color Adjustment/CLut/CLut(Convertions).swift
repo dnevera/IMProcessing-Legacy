@@ -12,8 +12,7 @@ import simd
 
 
 // MARK: - Convert from between types
-public extension IMPCLut {
-    
+public extension IMPCLut {        
     
     /// Convert the CLut object to another representation
     ///
