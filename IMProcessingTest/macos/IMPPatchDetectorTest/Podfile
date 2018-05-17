@@ -5,7 +5,9 @@ inhibit_all_warnings!
 target 'IMPPatchDetectorTest' do
     pod 'SnapKit'
     pod 'ObjectMapper'
-    pod 'Surge', :git => 'https://github.com/dnevera/Surge'
+    pod 'Surge', :path => '../../../../Surge'
+
+    #pod 'Surge', :git => 'https://github.com/dnevera/Surge'
     #pod 'IMProcessing', :path => '../../../'
 end
 

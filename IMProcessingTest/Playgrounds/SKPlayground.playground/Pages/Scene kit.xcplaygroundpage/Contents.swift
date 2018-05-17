@@ -70,18 +70,19 @@ class View:NSView {
         cameraNode.constraints = [constraint]
         
         let press = NSPressGestureRecognizer(target: self, action: #selector(scenePressed(recognizer:)))
+        
         sceneView.addGestureRecognizer(press)
 
     }
 
-    func scenePressed(recognizer: NSPressGestureRecognizer) {        
+    @objc func scenePressed(recognizer: NSPressGestureRecognizer) {        
         let location = recognizer.location(in: sceneView)
         let hitResults = sceneView.hitTest(location, options: nil)
-        //NSLog("--> \(location, hitResults)")
+        NSLog("--> \(location, hitResults)")
         if hitResults.count > 0 {
             let result = hitResults[0] 
             let node = result.node
-            //node.removeFromParentNode()
+            node.removeFromParentNode()
         }
     }
     

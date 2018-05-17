@@ -9,72 +9,6 @@
 import Foundation
 import Metal
 
-public class IMPCheckerColorObserver:IMPFilter {
-
-    public var centers:[float2] = [float2]() {
-        didSet{
-            if centers.count > 0 {
-                
-                centersBuffer = makeCentersBuffer()
-                colorsBuffer = makeColorsBuffer()
-                
-                memcpy(centersBuffer.contents(), centers, centersBuffer.length)
-                _colors = [float3](repeating:float3(0), count:centers.count)
-                patchColorsKernel.preferedDimension =  MTLSize(width: centers.count, height: 1, depth: 1)
-                process()
-            }
-        }
-    }
-    
-    public var colors:[float3] {
-        return _colors
-    }
-    
-    fileprivate func makeCentersBuffer() -> MTLBuffer {
-        return context.device.makeBuffer(length: MemoryLayout<float2>.size * centers.count, options: [])!
-    }
-    
-    fileprivate func makeColorsBuffer() -> MTLBuffer {
-        return context.device.makeBuffer(length: MemoryLayout<float3>.size * centers.count, options: .storageModeShared)!
-    }
-
-    fileprivate lazy var centersBuffer:MTLBuffer = self.makeCentersBuffer()
-    fileprivate lazy var colorsBuffer:MTLBuffer = self.makeColorsBuffer()
-
-    private var complete: IMPFilter.CompleteHandler?
-
-    public override func configure(complete: IMPFilter.CompleteHandler?) {
-        
-        self.complete = complete
-        extendName(suffix: "Checker Color Observer")
-        super.configure()
-
-        patchColorsKernel.preferedDimension =  MTLSize(width: 1, height: 1, depth: 1)
-
-        add(function: self.patchColorsKernel){ (source) in
-            if self.centers.count > 0 {
-                memcpy(&self._colors, self.colorsBuffer.contents(), self.colorsBuffer.length)
-            }
-            if let s = self.source {
-                self.complete?(s)
-            }
-        }
-    }
-    
-    private lazy var patchColorsKernel:IMPFunction = {
-        let f = IMPFunction(context: self.context, kernelName: "kernel_patchColors")
-        f.optionsHandler = { (function,command,source,destination) in
-            if self.centers.count > 0 {
-                command.setBuffer(self.centersBuffer,  offset: 0, index: 0)
-                command.setBuffer(self.colorsBuffer,   offset: 0, index: 1)
-            }
-        }
-        return f
-    }()
-
-    private var _colors:[float3] = [float3]()
-}
-
 public class IMPCCheckerDetector: IMPDetector {
     
     public var isDetected:Bool {
@@ -94,11 +28,6 @@ public class IMPCCheckerDetector: IMPDetector {
         didSet{
             dirty = true
             patchColors.dirty = true
-            //colorsBuffer = makeColorsBuffer()
-            //centersBuffer = makeCentersBuffer()
-//            patchColorsKernel.preferedDimension =  MTLSize(width: patchGrid.dimension.width * patchGrid.dimension.height,
-//                                                           height: 1,
-//                                                           depth: 1)
         }
     }
     
@@ -125,7 +54,6 @@ public class IMPCCheckerDetector: IMPDetector {
         }
         
         patchDetectorKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
-//        patchColorsKernel.threadsPerThreadgroup = MTLSize(width: 1, height: 1, depth: 1)
         
         harrisCornerDetector.addObserver { (corners:[IMPCorner], size:NSSize) in
             
@@ -208,18 +136,7 @@ public class IMPCCheckerDetector: IMPDetector {
     fileprivate lazy var cornersBuffer:MTLBuffer = self.context.device.makeBuffer(
         length: MemoryLayout<IMPCorner>.size * Int(self.harrisCornerDetector.pointsMax),
         options: .storageModeShared)!
-    
-    //func makeCentersBuffer() -> MTLBuffer {
-    //    return context.device.makeBuffer(length: MemoryLayout<float2>.size * self.patchGrid.target.count, options: [])
-   // }
-    
-    //func makeColorsBuffer() -> MTLBuffer {
-    //    return context.device.makeBuffer(length: MemoryLayout<float3>.size * self.patchGrid.target.count, options: .storageModeShared)
-    //}
-    
-    //fileprivate lazy var centersBuffer:MTLBuffer = self.makeCentersBuffer()
-    //fileprivate lazy var colorsBuffer:MTLBuffer = self.makeColorsBuffer()
-    
+        
     private lazy var harrisCornerDetector:IMPHarrisCornerDetector = IMPHarrisCornerDetector(context:  self.context)
     private lazy var opening:IMPErosion = IMPOpening(context: self.context)
     
@@ -254,47 +171,20 @@ public class IMPCCheckerDetector: IMPDetector {
             }
             
             self.patchColors.centers = self.patchGrid.target.centers
-            
-            //memcpy(self.centersBuffer.contents(), self.patchGrid.target.centers, self.centersBuffer.length)
-            
-            //self.patchColors.centersBuffer = self.patchColors.makeCentersBuffer()
-            //self.patchColors.colorsBuffer = self.patchColors.makeColorsBuffer()
-            
-            //memcpy(self.patchColors.centersBuffer.contents(), self.patchColors.centers, self.patchColors.centersBuffer.length)
-            
-
         }
         
         return f
     }()
-    
-//    private lazy var patchColorsKernel:IMPFunction = {
-//        let f = IMPFunction(context: self.context, kernelName: "kernel_patchColors")
-//        f.optionsHandler = { (function,command,source,destination) in
-//            
-//            command.setBuffer(self.centersBuffer,  offset: 0, at: 0)
-//            command.setBuffer(self.colorsBuffer,   offset: 0, at: 1)
-//        }
-//        return f
-//    }()
 
-    private lazy var patchColors:IMPCheckerColorObserver = {
-        //let f = IMPFilter(context:self.context)
-        let f = IMPCheckerColorObserver(context: self.context)
+    private lazy var patchColors:IMPColorObserver = {
+        let f = IMPColorObserver(context: self.context)
         
         f.addObserver(destinationUpdated: { (destination) in
             self.patchGrid.target.update(colors:f.colorsBuffer)
             if let s = f.source {
                 self.complete?(s)
             }
-        })
-        
-//        f.add(function: self.patchColorsKernel){ (source) in
-//            self.patchGrid.target.update(colors:self.colorsBuffer)
-//            if let s = self.sourceImage {
-//                self.complete?(s)
-//            }
-//        }
+        })        
         
         return f
     }()

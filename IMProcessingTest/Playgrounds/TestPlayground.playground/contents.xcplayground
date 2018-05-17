@@ -10,5 +10,6 @@
         <page name='3D Catmul-rom'/>
         <page name='TPSpline'/>
         <page name='String'/>
+        <page name='Ternar'/>
     </pages>
 </playground>
