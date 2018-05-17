@@ -14,12 +14,18 @@ public class IMPColorObserver:IMPFilter {
         didSet{
             if centers.count > 0 {
                 
+                //
+                // TODO: optimize!
+                //
                 centersBuffer = makeCentersBuffer()
                 colorsBuffer = makeColorsBuffer()
                 
                 memcpy(centersBuffer.contents(), centers, centersBuffer.length)
                 _colors = [float3](repeating:float3(0), count:centers.count)
                 patchColorsKernel.preferedDimension =  MTLSize(width: centers.count, height: 1, depth: 1)
+                
+                dirty = true
+                
                 process()
             }
         }
