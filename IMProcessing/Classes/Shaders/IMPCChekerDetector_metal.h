@@ -72,8 +72,9 @@ kernel void kernel_patchScanner(
 kernel void kernel_patchColors(
                                metal::texture2d<float, metal::access::sample> source [[texture(0)]],
                                metal::texture2d<float, metal::access::write>  destination [[texture(1)]],
-                               device    float2 *centers  [[ buffer(0) ]],
-                               device    float3 *colors   [[ buffer(1) ]],
+                               device    float2 *centers   [[ buffer(0) ]],
+                               device    float3 *colors    [[ buffer(1) ]],
+                               constant  float &regionSize [[ buffer(2) ]],
                                uint2 tid [[thread_position_in_grid]]
                                )
 {
@@ -83,7 +84,6 @@ kernel void kernel_patchColors(
     
     float2 point = centers[tid.x];
     
-    int regionSize = 8;
     int rs = -regionSize/2;
     int re =  regionSize/2+1;
     uint2 gid = uint2(float2(point.x,point.y) * size);

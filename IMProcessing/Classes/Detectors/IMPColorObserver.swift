@@ -10,6 +10,15 @@ import Metal
 
 public class IMPColorObserver:IMPFilter {
     
+    public var regionSize:Float = 8 {
+        didSet{            
+            if oldValue != regionSize {
+                dirty = true
+                process()
+            }
+        }
+    }
+    
     public var centers:[float2] = [float2]() {
         didSet{
             if centers.count > 0 {
@@ -24,8 +33,7 @@ public class IMPColorObserver:IMPFilter {
                 _colors = [float3](repeating:float3(0), count:centers.count)
                 patchColorsKernel.preferedDimension =  MTLSize(width: centers.count, height: 1, depth: 1)
                 
-                dirty = true
-                
+                dirty = true                
                 process()
             }
         }
@@ -72,6 +80,7 @@ public class IMPColorObserver:IMPFilter {
             if self.centers.count > 0 {
                 command.setBuffer(self.centersBuffer,  offset: 0, index: 0)
                 command.setBuffer(self.colorsBuffer,   offset: 0, index: 1)
+                command.setBytes(&self.regionSize, length:MemoryLayout.size(ofValue: self.regionSize), index:2)                
             }
         }
         return f
