@@ -337,7 +337,7 @@ extension IMPCLut {
             let height = _type == .lut_1d ? 1 : _lutSize
             let depth  = _type == .lut_1d ? 1 : _lutSize
             
-            texture = makeTexture(size: _lutSize, type: _type, format: _format)
+            texture = try makeTexture(size: _lutSize, type: _type, format: _format)
             
             let region = _type == .lut_1d ?MTLRegionMake2D(0, 0, width, 1):MTLRegionMake3D(0, 0, 0, width, height, depth)
             

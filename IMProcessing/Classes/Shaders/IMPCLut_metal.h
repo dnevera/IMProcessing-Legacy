@@ -24,8 +24,20 @@
 
 namespace IMProcessing
 {
-    
+        
     constexpr sampler lutSampler(address::clamp_to_edge, filter::linear, coord::normalized);
+    
+    kernel void kernel_clutColorMapper(
+                                       texture3d<float, access::sample> clut      [[texture(0)]],
+                                       device float3                   *reference [[buffer(0)]],
+                                       device float3                   *target    [[buffer(1)]],
+                                       uint gid [[thread_position_in_grid]]
+                                       )
+    {
+        float3 rgb = reference[gid];
+        target[gid] =  clut.sample(lutSampler, rgb).rgb;     
+    }
+    
     
     inline float3 compress(float3 rgb, float2 compression) {
         //return  pow(compression.x*rgb + compression.y, 1/1.8);

@@ -120,7 +120,9 @@ public extension IMPCLut {
     ///   - format: cube number format: Format.integer or .float
     ///   - title: cube file title
     public convenience init(context: IMPContext, lutType:LutType, lutSize:Int, format:Format = .float, compression range:float2 = float2(0,1), title:String? = nil) throws {
+        
         self.init(context: context, storageMode:nil)
+        
         _title    = title ?? "IMPCLut \(lutSize):\(lutType):\(format)"
         _lutSize  = lutSize
         _type     = lutType
@@ -131,10 +133,10 @@ public extension IMPCLut {
         let level = Int(sqrt(Double(_lutSize)))
 
         if _type == .lut_2d {
-            texture = makeTexture(size: level*level*level, type: _type, format: _format)
+            texture = try makeTexture(size: level*level*level, type: _type, format: _format)
         }
         else {
-            texture = makeTexture(size: _lutSize, type: _type, format: _format)
+            texture = try makeTexture(size: _lutSize, type: _type, format: _format)
         }
         
         guard let text = texture else { throw FormatError(file: "", line: 0, kind: .empty) }
@@ -208,11 +210,7 @@ public extension IMPCLut {
         removeObservers()
         observers.removeAll()
     }
-    
-   // public func addObserver(updated observer:@escaping UpdateHandler){
-   //     observers.append(observer)
-    //}
-    
+        
     
     //
     // MARK: - observers
@@ -250,27 +248,8 @@ public extension IMPCLut {
 
 // MARK: - Utilities
 public extension IMPCLut {
+    /** TODO
     public var min:float3? {
-
-//        let analazer = IMPHistogramAnalyzer(context: self.context)
-//        analazer.colorSpace = .lab
-//        let range = IMPHistogramRangeSolver()
-//        
-//        
-//        
-//        analazer.add(solver: range) { (solver) in
-//            var lm = range.minimum.xyz
-//            var lM = range.maximum.xyz
-////            lm.y = 0.5
-////            lm.z = 0.5
-////            lM.y = 0.5
-////            lM.z = 0.5
-//            //Swift.print("lab L    min = \(IMPColorSpace.lab.fromNormalized(.lab, value: range.minimum.xyz).x) max = \(IMPColorSpace.lab.fromNormalized(.lab, value: range.maximum.xyz).x)")
-//            //Swift.print("rgb luma min = \(IMPColorSpace.hsv.fromNormalized(.lab, value: lm).z) max = \(IMPColorSpace.hsv.fromNormalized(.lab, value: lM).z)")
-//        }
-//        
-//        analazer.source = self
-//        analazer.process()
         
         do{
             guard let txt = try convert(to: .lut_3d).texture else { return nil }
@@ -286,7 +265,7 @@ public extension IMPCLut {
                 return float3(r,g,b)
             }
             else {
-                //let (bytes,count) =  getBytes(texture: txt) as (UnsafeMutablePointer<uint8>,Int)
+                let (bytes,count) =  getBytes(texture: txt) as (UnsafeMutablePointer<uint8>,Int)
             }            
         }
         catch {
@@ -294,20 +273,24 @@ public extension IMPCLut {
         }
 
         return nil
-    }
+    }*/
 }
 
 
 // MARK: - Internal extension
 internal extension IMPCLut {
-    internal func makeTexture(size nSize:Int, type nType:LutType, format nFormat:Format) -> MTLTexture {
+    internal func makeTexture(size nSize:Int, type nType:LutType, format nFormat:Format) throws -> MTLTexture {
         
         let textureDescriptor = MTLTextureDescriptor()
         
-        var width  = nSize
-        var height = nType == .lut_1d ? 1 : nSize
+        let width  = nSize
+        let height = nType == .lut_1d ? 1 : nSize
         let depth  = nType == .lut_1d ? 1 : nType == .lut_2d ? 1 :nSize
                 
+        if  width*height*depth > context.maxThreads.width * context.maxThreads.height * context.maxThreads.depth {
+            throw FormatError(file: "", line: 0, kind: .outOfRange)
+        }
+        
         textureDescriptor.textureType = nType == .lut_1d ? .type1D : nType == .lut_2d ? .type2D : .type3D
         textureDescriptor.width  = width
         textureDescriptor.height = height
@@ -315,8 +298,7 @@ internal extension IMPCLut {
         textureDescriptor.usage  = [.shaderWrite, .shaderRead]
         
         if (nFormat != .float) {
-            textureDescriptor.pixelFormat = .rgba8Snorm
-            //textureDescriptor.pixelFormat = .rgba8Unorm
+            textureDescriptor.pixelFormat = .rgba8Unorm
         }
         else{
             textureDescriptor.pixelFormat = .rgba32Float
@@ -325,7 +307,11 @@ internal extension IMPCLut {
         textureDescriptor.arrayLength = 1;
         textureDescriptor.mipmapLevelCount = 1;
         
-        return context.device.makeTexture(descriptor: textureDescriptor)!
+        guard let t = context.device.makeTexture(descriptor: textureDescriptor) else {
+            throw FormatError(file: "", line: 0, kind: .notCreated)
+        }
+        
+        return t
     }
             
     internal func getBytes<T>(texture:MTLTexture) -> (UnsafeMutablePointer<T>,Int) {

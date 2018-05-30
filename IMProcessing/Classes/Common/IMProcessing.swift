@@ -22,6 +22,12 @@ public enum IMProcessing{
         public static let imageSourceFocusMode     = "SourceFocusMode"
     }
     
+    public struct colorSpace {
+        #if os(OSX)
+        public static let srgb = NSColorSpace.sRGB
+        #endif
+    }
+    
     public struct names {
         public static let prefix = "com.improcessing."
     }
