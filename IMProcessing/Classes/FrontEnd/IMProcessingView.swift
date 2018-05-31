@@ -14,7 +14,6 @@
 //
 
 import Cocoa
-import IMProcessing
 import MetalKit
 
 open class IMProcessingView: MTKView {
@@ -34,7 +33,7 @@ open class IMProcessingView: MTKView {
         didSet{            
             refreshQueue.async(flags: [.barrier]) {                
                 self.__source = self.image
-                if self.image == nil && self.__placeHolderColor == nil{
+                if self.image == nil /*&& self.__placeHolderColor == nil*/ {
                     return
                 }
                 if self.isPaused  {

@@ -71,27 +71,27 @@ public class IMPLinesGenerator: IMPFilter {
     private var _lines = [IMPLineSegment]()
     
     func updateLines()  {
-        pointsShader.points = [IMPCorner]()
-        guard let size = source?.size else { return }
-        
-        //let thick = float2(1/size.width.float,1/size.height.float)
-        
-        for p in _lines {
-            //pointsShader.points.append(p.p0)
-            //pointsShader.points.append(p.p1)
-            
-            //for x in stride(from: -width/2, to: width/2, by: 1) {
-                //pointsShader.points.append(p.p0+thick)
-                //pointsShader.points.append(p.p1+thick)
-            //}
-        }
-        
+//        pointsShader.points = [IMPCorner]()
+//        guard let size = source?.size else { return }
+//        
+//        //let thick = float2(1/size.width.float,1/size.height.float)
+//        
 //        for p in _lines {
-////            for x in stride(from: -width/2, to: width/2, by: 1) {
-//            pointsShader.points.append(p.p0+thick)
-//            pointsShader.points.append(p.p1+thick)
-////            }
+//            //pointsShader.points.append(p.p0)
+//            //pointsShader.points.append(p.p1)
+//            
+//            //for x in stride(from: -width/2, to: width/2, by: 1) {
+//                //pointsShader.points.append(p.p0+thick)
+//                //pointsShader.points.append(p.p1+thick)
+//            //}
 //        }
+//        
+////        for p in _lines {
+//////            for x in stride(from: -width/2, to: width/2, by: 1) {
+////            pointsShader.points.append(p.p0+thick)
+////            pointsShader.points.append(p.p1+thick)
+//////            }
+////        }
     }
     
     static var defaultWidth:Float = 2

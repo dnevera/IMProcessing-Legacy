@@ -320,7 +320,7 @@ public class IMPHistogram {
         vDSP_vsadd(&a, 1, &zero, &addata, 1, vDSP_Length(filter.count))
         
         var one  =  channels[c.rawValue][self.size-1]
-        var rest =  UnsafeMutablePointer<Float>(mutating: addata) + Int(size + Int(halfs))
+        let rest =  UnsafeMutablePointer<Float>(mutating: addata) + Int(size + Int(halfs))
         vDSP_vsadd(rest, 1, &one, rest, 1, halfs-1)
         
         var addr = UnsafeMutablePointer<Float>(mutating: addata)+Int(halfs)
@@ -883,7 +883,7 @@ public extension Collection where Iterator.Element == IMPHistogram.Extremum {
         for i in self {
             sum += i.y * i.i.float
         }
-        return sum/(self.count as! Int).float
+        return sum/(self.count).float
     }
 }
 

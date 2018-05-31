@@ -117,8 +117,8 @@ public class IMPHoughLinesDetector: IMPHoughSpaceDetector {
 
     private func getGPULocalMaximums(_ countBuff:MTLBuffer?, _ maximumsBuff:MTLBuffer?) -> [uint2] {
         
-        guard var maximumsBuff = maximumsBuff else {return []}
-        guard var countBuff = countBuff else {return []}
+        guard let maximumsBuff = maximumsBuff else {return []}
+        guard let countBuff = countBuff else {return []}
         
         let count = Int(countBuff.contents().bindMemory(to: uint.self,
                                                         capacity: MemoryLayout<uint>.size).pointee)

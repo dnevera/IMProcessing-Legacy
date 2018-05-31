@@ -186,7 +186,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         guard dirty || (_destination.texture == nil) else {
             return            
         }
-        apply(result: _destination, resampleSize: nil)
+        _ = apply(result: _destination, resampleSize: nil)
     }
     
     public func resample(with resampleSize:NSSize? = nil) -> IMPImageProvider {

@@ -441,7 +441,7 @@ public extension IMPImageProvider {
                     //                blit.endEncoding()
                 }
             }
-            return (buffer,bytesPerRow,imageBytes) as! (buffer: MTLBuffer, bytesPerRow: Int, imageBytes: Int)
+            return (buffer,bytesPerRow,imageBytes) as? (buffer: MTLBuffer, bytesPerRow: Int, imageBytes: Int) //as! (buffer: MTLBuffer, bytesPerRow: Int, imageBytes: Int)
         }
         
         
@@ -722,7 +722,7 @@ public extension IMPImageProvider {
             
             if let txt = self.texture, let commandBuffer = self.context.commandBuffer {
                 
-                var newTexture = self.context.device.make2DTexture(size: txt.cgsize, pixelFormat: txt.pixelFormat)
+                let newTexture = self.context.device.make2DTexture(size: txt.cgsize, pixelFormat: txt.pixelFormat)
                 
                 let blit = commandBuffer.makeBlitCommandEncoder()
                 
@@ -855,7 +855,7 @@ public extension IMPImageProvider {
     
     public extension NSImage {
         
-        public func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data? {
+        @discardableResult public func representation(using type: IMPImageFileType, compression factor:Float? = nil) -> Data? {
             
             guard let tiffRepresentation = tiffRepresentation(using: .none, factor: factor ?? 1.0), 
                 let bitmapImage = NSBitmapImageRep(data: tiffRepresentation) 

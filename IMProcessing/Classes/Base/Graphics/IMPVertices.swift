@@ -11,6 +11,7 @@ import Metal
 // MARK: - Vertex structure
 public extension IMPVertex{
     public init(x:Float, y:Float, z:Float, tx:Float, ty:Float){
+        self.init()
         self.position = float3(x,y,z)
         self.texcoord = float3(tx,ty,1)
     }

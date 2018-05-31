@@ -422,11 +422,11 @@ open class IMPView: MTKView {
             descriptor.colorAttachments[0].pixelFormat = self.colorPixelFormat
             
             guard let vertex = context.defaultLibrary.makeFunction(name: "vertex_passview") else {
-                fatalError("IMPView error: vertex function 'vertex_passview' is not found in: \(self.context?.defaultLibrary.functionNames)")
+                fatalError("IMPView error: vertex function 'vertex_passview' is not found in: \(String(describing: self.context?.defaultLibrary.functionNames))")
             }
             
             guard let fragment = context.defaultLibrary.makeFunction(name: "fragment_passview") else {
-                fatalError("IMPView error: vertex function 'fragment_passview' is not found in: \(self.context?.defaultLibrary.functionNames)")
+                fatalError("IMPView error: vertex function 'fragment_passview' is not found in: \(String(describing: self.context?.defaultLibrary.functionNames))")
             }
             
             descriptor.vertexFunction   = vertex

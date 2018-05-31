@@ -26,7 +26,7 @@ open class IMPRawFile: IMPImageProvider {
         }
     }
     
-    private func unsafeRemoveObserver(optionsChanged observer: @escaping ObserverType) -> String {
+    @discardableResult private func unsafeRemoveObserver(optionsChanged observer: @escaping ObserverType) -> String {
         let key = IMPObserverHash<ObserverType>.observerKey(observer)
         if let index = self.filterObservers.index(where: { return $0.key == key }) {
             self.filterObservers.remove(at: index)

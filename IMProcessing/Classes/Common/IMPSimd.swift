@@ -103,7 +103,7 @@ public extension float3x3 {
     }
     
     public init(_ columns: [[Float]]){
-        self.init(matrix_from_columns(vector_float3(columns[0]), vector_float3(columns[1]), vector_float3(columns[2])))
+        self.init(float3x3(vector_float3(columns[0]), vector_float3(columns[1]), vector_float3(columns[2])))
     }
 }
 
@@ -124,7 +124,7 @@ public extension matrix_float3x3{
 //    }
     
     public init(columns: [float3]){
-        self = matrix_from_columns(columns[0], columns[1], columns[2])
+        self = float3x3(columns[0], columns[1], columns[2])
     }
     
 //    public init(rows: [[Float]]){
@@ -132,12 +132,12 @@ public extension matrix_float3x3{
 //    }
     
     public init(columns: [[Float]]){
-        self = matrix_from_columns(float3(columns[0]), float3(columns[1]), float3(columns[2]))
+        self = float3x3(float3(columns[0]), float3(columns[1]), float3(columns[2]))
     }
     
-    public func toFloat3x3() -> float3x3 {
-        return float3x3(self)
-    }
+//    public func toFloat3x3() -> float3x3 {
+//        return self
+//    }
 }
 
 
@@ -152,7 +152,7 @@ public extension matrix_float4x4{
     }
     
     public init(columns: [float4]){
-        self = matrix_from_columns(columns[0], columns[1], columns[2], columns[3])
+        self = float4x4(columns[0], columns[1], columns[2], columns[3])
     }
     
 //    public init(rows: [[Float]]){
@@ -160,12 +160,12 @@ public extension matrix_float4x4{
 //    }
     
     public init(columns: [[Float]]){
-        self = matrix_from_columns(float4(columns[0]), float4(columns[1]), float4(columns[2]), float4(columns[3]))
+        self = simd_float4x4(float4(columns[0]), float4(columns[1]), float4(columns[2]), float4(columns[3]))
     }
     
-    public func toFloat4x4() -> float4x4 {
-        return float4x4(self)
-    }
+//    public func toFloat4x4() -> float4x4 {
+//        return float4x4(self)
+//    }
 }
 
 // MARK: - Basic matrix transformations
@@ -217,7 +217,7 @@ public extension matrix_float4x4 {
         let m00 = _cos + cosp * v[0] * v[0]
         let m01 = cosp * v[0] * v[1] + v[2] * _sin
         let m02 = cosp * v[0] * v[2] - v[1] * _sin
-        let mm0 = [m01, m01, m02, 0.0]
+        let mm0 = [m00, m01, m02, 0.0]
         
         let m10 = cosp * v[0] * v[1] - v[2] * _sin
         let m11 = _cos  + cosp * v[1] * v[1]
@@ -240,7 +240,7 @@ public extension matrix_float4x4 {
 public extension float2x2 {
     var determinant:Float {
         get {
-            let t = cmatrix.columns
+            let t = self.columns //cmatrix.columns
             return t.0.x*t.1.y - t.0.y*t.1.x
         }
     }
@@ -250,9 +250,9 @@ public extension float3x3 {
     var determinant:Float {
         get {
             let t  = self.transpose
-            let a1 = t.cmatrix.columns.0
-            let a2 = t.cmatrix.columns.1
-            let a3 = t.cmatrix.columns.2
+            let a1 = t.columns.0
+            let a2 = t.columns.1
+            let a3 = t.columns.2
             return a1.x*a2.y*a3.z - a1.x*a2.z*a3.y - a1.y*a2.x*a3.z + a1.y*a2.z*a3.x + a1.z*a2.x*a3.y - a1.z*a2.y*a3.x
         }
     }

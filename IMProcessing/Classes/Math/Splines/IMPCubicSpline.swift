@@ -61,7 +61,7 @@ public class IMPCubicSpline:IMPInterpolator {
     private func getCoeffs() -> [Float] {
         
         let n = controls.count
-        var A = Matrix<Float>(rows: n, columns: n, repeatedValue: 0)
+        let A = Matrix<Float>(rows: n, columns: n, repeatedValue: 0)
         var B = Matrix<Float>(rows: n, columns: 1, repeatedValue: 0)
         
         A[0,0]     = 2

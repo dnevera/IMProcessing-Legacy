@@ -252,12 +252,12 @@ public class IMPTPSpline:IMP3DInterpolator{
     public var bendingEnergy: Float {
         
         let p = controls.count
-        var w = Matrix<Float>(rows:p,columns:1,repeatedValue:0)
+        let w = Matrix<Float>(rows:p,columns:1,repeatedValue:0)
         
         for i in 0..<p {
             w[i,0] = V[i,0]
         }
-        var w_trans = transpose(w)
+        let w_trans = transpose(w)
 
         let prod = w_trans * K
 

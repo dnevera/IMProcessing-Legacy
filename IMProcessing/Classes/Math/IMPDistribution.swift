@@ -240,7 +240,7 @@ public extension Sequence where Iterator.Element == Float {
     ///
     ///  - returns: discrete gaussian distribution
     public func gaussianDistribution(mu:Float, sigma:Float) -> [Float]{
-        return self.gaussianDistribution(fi: 1/(sigma*sqrt(2*M_PI.float)), mu: mu, sigma: sigma)
+        return self.gaussianDistribution(fi: 1/(sigma*sqrt(2*Float.pi)), mu: mu, sigma: sigma)
     }
     
     ///  Create normalized gaussian distribution of discrete values of Y points from two points of means
@@ -250,7 +250,7 @@ public extension Sequence where Iterator.Element == Float {
     ///
     ///  - returns: discrete gaussian distribution
     public func gaussianDistribution(mu:float2, sigma:float2) -> [Float]{
-        return self.gaussianDistribution(fi: float2(1/(sigma.x*sigma.y*sqrt(2*M_PI.float))), mu: mu, sigma: sigma)
+        return self.gaussianDistribution(fi: float2(1/(sigma.x*sigma.y*sqrt(2*Float.pi))), mu: mu, sigma: sigma)
     }
 }
 
@@ -300,7 +300,7 @@ public extension Collection where Iterator.Element == [Float] {
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
         }
-        let fi = 1/(sigma.x*sigma.y*sqrt(2*M_PI.float))
+        let fi = 1/(sigma.x*sigma.y*sqrt(2*Float.pi))
         
         return gaussianDistribution(fi: fi, mu: mu, sigma: sigma)
     }

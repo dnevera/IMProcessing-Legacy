@@ -20,7 +20,7 @@ public struct IMPProjectionModel{
     
     public static var identity:IMPProjectionModel { return IMPProjectionModel() }
     
-    var projectionMatrix  = float4x4(matrix_identity_float4x4)
+    var projectionMatrix  = matrix_identity_float4x4
     
     public var fovy:Float = Float.pi/2
     public var aspect:Float = 1
@@ -38,7 +38,7 @@ public struct IMPProjectionModel{
                 [0,              0,    (far + near) / (near - far),    -1],
                 [0,              0,    (2 * far * near) / (near - far), 0]
             ]
-            return float4x4(matrix_float4x4(columns:m))
+            return matrix_float4x4(columns:m)
         }
     }
 }
@@ -56,9 +56,9 @@ public struct IMPTransfromModel{
     
     public static let identity = IMPTransfromModel()
     
-    var rotationMatrix    = float4x4(matrix_identity_float4x4)
-    var translationMatrix = float4x4(matrix_identity_float4x4)
-    var scaleMatrix       = float4x4(matrix_identity_float4x4)
+    var rotationMatrix    = matrix_identity_float4x4 
+    var translationMatrix = matrix_identity_float4x4
+    var scaleMatrix       = matrix_identity_float4x4
     
     public var projection = IMPProjectionModel()
         
@@ -143,27 +143,27 @@ public struct IMPTransfromModel{
     
     public var angle = float3(0) {
         didSet{
-            var a = rotationMatrix.cmatrix
+            var a = rotationMatrix//.cmatrix
             a.rotate(radians: angle.x, point:float3(1,0,0))
             a.rotate(radians: angle.y, point:float3(0,1,0))
             a.rotate(radians: angle.z, point:float3(0,0,1))
-            rotationMatrix = float4x4(a)
+            rotationMatrix = a //float4x4(a)
         }
     }
     
     public var scale = float3(0) {
         didSet{
-            var s = scaleMatrix.cmatrix
+            var s = scaleMatrix//.cmatrix
             s.scale(factor: scale)
-            scaleMatrix =  float4x4(s)
+            //scaleMatrix =  s//float4x4(s)
         }
     }
     
     public var translation = float3(0){
         didSet{
-            var t = translationMatrix.cmatrix
+            var t = translationMatrix//.cmatrix
             t.translate(position: translation)
-            translationMatrix = float4x4(t)
+            //translationMatrix = float4x4(t)
         }
     }
 }

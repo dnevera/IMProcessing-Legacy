@@ -47,6 +47,7 @@
 + (float3) hsl2dcproflut:(float3)color     { return IMPhsl2dcproflut(color); }
 + (float3) hsl2xyz:(float3)color     { return IMPhsl2xyz(color); }
 + (float3) hsl2ycbcrHD:(float3)color { return IMPhsl2ycbcrHD(color); }
++ (float3) hsl2hsp:(float3)color     { return IMPhsl2hsp(color); }
 
 + (float3) hsp2rgb:(float3)color       { return IMPhsp2rgb(color); }
 + (float3) hsp2srgb:(float3)color      { return IMPhsp2srgb(color); }
