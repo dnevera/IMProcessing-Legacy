@@ -12,12 +12,12 @@
 #import <Metal/Metal.h>
 #import <CoreVideo/CoreVideo.h>
 
-typedef enum {
+typedef NS_ENUM(NSUInteger, IMPJpegColorSpace) {
     JPEG_TURBO_RGBA,
     JPEG_TURBO_ARGB,
     JPEG_TURBO_BGRA,
     JPEG_TURBO_ABGR
-}IMPJpegColorSpace;
+};
 
 typedef BOOL (^writeInitBlock)( void * _Null_unspecified cinfo,  void *_Null_unspecified*_Null_unspecified userData);
 typedef void (^writeFinishBlock)(void  *_Null_unspecified cinfo, void   *_Null_unspecified userData);

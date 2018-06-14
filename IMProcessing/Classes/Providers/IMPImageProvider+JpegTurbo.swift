@@ -10,13 +10,13 @@ import Foundation
 
 open class IMPJpegProvider:IMPImageProvider{
 
-    public convenience init(context: IMPContext, file: String, maxSize: Float = 0, orientation:IMPExifOrientation = IMPExifOrientationUp) throws {
+    public convenience init(context: IMPContext, file: String, maxSize: Float = 0, orientation:IMPExifOrientation = IMPExifOrientation.up) throws {
         self.init(context: context)
         try self.updateFromJpeg(file: file, maxSize: maxSize, orientation: orientation)
     }
     
     
-    open func updateFromJpeg(file:String, maxSize: Float = 0, orientation:IMPExifOrientation = IMPExifOrientationUp) throws {
+    open func updateFromJpeg(file:String, maxSize: Float = 0, orientation:IMPExifOrientation = IMPExifOrientation.up) throws {
         let source = try IMPJpegturbo.update(texture,
                                                     with: IMProcessing.colors.pixelFormat,
                                                     with: context.device,

@@ -47,8 +47,8 @@ open class IMPVignetteFilter: IMPFilter,IMPAdjustmentProtocol {
         public init() {}
         
         mutating func  check_diff() {
-            if abs(end - start) < FLT_EPSILON  {
-                end   = start+FLT_EPSILON // to avoid smoothstep 0 division
+            if abs(end - start) < Float.ulpOfOne  {
+                end   = start + Float.ulpOfOne // to avoid smoothstep 0 division
             }
         }
     }

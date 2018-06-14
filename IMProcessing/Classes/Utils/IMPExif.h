@@ -9,7 +9,7 @@
 #ifndef IMPExif_h
 #define IMPExif_h
 
-typedef enum  {
+typedef NS_ENUM(NSUInteger, IMPExifOrientation) {
     //
     // Exif codes, F is example
     //
@@ -28,7 +28,7 @@ typedef enum  {
     IMPExifOrientationLeft90                  = 6,
     IMPExifOrientationLeft90HorizontalFlipped = 7,
     IMPExifOrientationRight90                 = 8,
-}IMPExifOrientation;
+};
 
 
 #endif /* IMPExif_h */

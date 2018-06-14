@@ -10,10 +10,11 @@ import Foundation
 import Metal
 
 public extension IMPExifOrientation{
-    init(rawValue:Int){
-        self.rawValue = UInt32(rawValue)
+    init(_ rawValue: UInt) {
+        self = IMPExifOrientation(rawValue: rawValue) ?? .up
     }
 }
+
 
 public extension IMPImageProvider{
     

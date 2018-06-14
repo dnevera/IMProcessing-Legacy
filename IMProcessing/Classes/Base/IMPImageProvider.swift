@@ -80,23 +80,23 @@ public extension IMPExifOrientation {
     init?(imageOrientationValue: IMPImageOrientation) {
         switch imageOrientationValue {
         case .up:
-            self.init(rawValue: IMPExifOrientationUp.rawValue)
+            self.init(rawValue: IMPExifOrientation.up.rawValue)
         case .upMirrored:
-            self.init(rawValue: IMPExifOrientationHorizontalFlipped.rawValue)
+            self.init(rawValue: IMPExifOrientation.horizontalFlipped.rawValue)
         case .down:
-            self.init(rawValue: IMPExifOrientationLeft180.rawValue)
+            self.init(rawValue: IMPExifOrientation.left180.rawValue)
         case .downMirrored:
-            self.init(rawValue: IMPExifOrientationVerticalFlipped.rawValue)
+            self.init(rawValue: IMPExifOrientation.verticalFlipped.rawValue)
         case .leftMirrored:
-            self.init(rawValue: IMPExifOrientationLeft90VertcalFlipped.rawValue)
+            self.init(rawValue: IMPExifOrientation.left90VertcalFlipped.rawValue)
         case .right:
-            self.init(rawValue: IMPExifOrientationLeft90.rawValue)
+            self.init(rawValue: IMPExifOrientation.left90.rawValue)
         case .rightMirrored:
-            self.init(rawValue: IMPExifOrientationLeft90HorizontalFlipped.rawValue)
+            self.init(rawValue: IMPExifOrientation.left90HorizontalFlipped.rawValue)
         case .left:
-            self.init(rawValue: IMPExifOrientationRight90.rawValue)
+            self.init(rawValue: IMPExifOrientation.right90.rawValue)
         default:
-            self.init(rawValue: IMPExifOrientationUp.rawValue)
+            self.init(rawValue: IMPExifOrientation.up.rawValue)
         }
     }
 }
@@ -333,30 +333,30 @@ open class IMPImageProvider: IMPTextureProvider,IMPContextProvider {
         
         switch orientation {
             
-        case IMPExifOrientationHorizontalFlipped:
+        case IMPExifOrientation.horizontalFlipped:
             transformer.reflectMode = (horizontal:.mirroring, vertical:.none)
             
-        case IMPExifOrientationLeft180:
+        case IMPExifOrientation.left180:
             transformer.angle = IMPTransfromModel.degrees180
             
-        case IMPExifOrientationVerticalFlipped:
+        case IMPExifOrientation.verticalFlipped:
             transformer.reflectMode = (horizontal:.none, vertical:.mirroring)
             
-        case IMPExifOrientationLeft90VertcalFlipped:
+        case IMPExifOrientation.left90VertcalFlipped:
             swapSize()
             transformer.angle = IMPTransfromModel.left
             transformer.reflectMode = (horizontal:.mirroring, vertical:.none)
             
-        case IMPExifOrientationLeft90:
+        case IMPExifOrientation.left90:
             swapSize()
             transformer.angle = IMPTransfromModel.right
             
-        case IMPExifOrientationLeft90HorizontalFlipped:
+        case IMPExifOrientation.left90HorizontalFlipped:
             swapSize()
             transformer.angle = IMPTransfromModel.right
             transformer.reflectMode = (horizontal:.mirroring, vertical:.none)
             
-        case IMPExifOrientationRight90:
+        case IMPExifOrientation.right90:
             swapSize()
             transformer.angle = IMPTransfromModel.left
             

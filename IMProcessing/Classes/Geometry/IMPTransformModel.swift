@@ -18,9 +18,9 @@ public extension IMPTransfromModel{
 
 public struct IMPProjectionModel{
     
-    var projectionMatrix  = float4x4(matrix_identity_float4x4)
+    var projectionMatrix  = matrix_identity_float4x4
     
-    public var fovy:Float = M_PI.float/2
+    public var fovy:Float = Float.pi/2
     public var aspect:Float = 1
     public var near:Float = 0
     public var far:Float = 1
@@ -38,7 +38,7 @@ public struct IMPProjectionModel{
                 [0,              0,    (far + near) / (near - far),    -1],
                 [0,              0,    (2 * far * near) / (near - far), 0]
             ]
-            return float4x4(matrix_float4x4(columns:m))
+            return matrix_float4x4(columns:m)
         }
     }
 }
@@ -54,9 +54,9 @@ public struct IMPTransfromModel{
     public static let right45    = float3(0,0,45.float.radians)
     public static let left45     = float3(0,0,-45.float.radians)
 
-    var rotationMatrix    = float4x4(matrix_identity_float4x4)
-    var translationMatrix = float4x4(matrix_identity_float4x4)
-    var scaleMatrix       = float4x4(matrix_identity_float4x4)
+    var rotationMatrix    = matrix_identity_float4x4
+    var translationMatrix = matrix_identity_float4x4
+    var scaleMatrix       = matrix_identity_float4x4
     
     public var projection = IMPProjectionModel()
     

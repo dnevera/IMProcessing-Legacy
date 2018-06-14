@@ -70,11 +70,11 @@ public extension Float{
 public extension Float {
     /// Convert radians to degrees
     public var degrees:Float{
-        return self * (180 / M_PI.float)
+        return self * (180 / Float.pi)
     }
     /// Convert degrees to radians
     public var radians:Float{
-        return self * (M_PI.float / 180)
+        return self * (Float.pi / 180)
     }
 }
 

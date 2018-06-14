@@ -6,15 +6,15 @@
 #ifndef IMProcessing_Bridging_Metal_h
 #define IMProcessing_Bridging_Metal_h
 
-#include "IMPTypes-Bridging-Metal.h"
-#include "IMPConstants-Bridging-Metal.h"
-#include "IMPOperations-Bridgin-Metal.h"
-#include "IMPHistogramTypes-Bridging-Metal.h"
+#import "IMPTypes-Bridging-Metal.h"
+#import "IMPConstants-Bridging-Metal.h"
+#import "IMPOperations-Bridgin-Metal.h"
+#import "IMPHistogramTypes-Bridging-Metal.h"
 
 #ifndef __METAL_VERSION__
 
-#include "IMPExif.h"
-#include "IMPJpegturbo.h"
+#import "IMPExif.h"
+//#import "IMPJpegturbo.h"
 
 #endif
 

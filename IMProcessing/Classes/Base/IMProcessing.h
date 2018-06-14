@@ -9,7 +9,7 @@
 #ifndef IMProcessing_h
 #define IMProcessing_h
 
-#include "IMProcessing-Bridging-Header.h"
+//#include "IMProcessing-Bridging-Header.h"
 
 //! Project version number for IMProcessing.
 FOUNDATION_EXPORT double IMProcessingVersionNumber;
