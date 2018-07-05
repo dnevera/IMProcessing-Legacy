@@ -68,7 +68,6 @@ public class IMPCLutFilter: IMPFilter {
     private lazy var clutUpdateHandler:IMPCLut.UpdateHandler = {
         let handler:IMPCLut.UpdateHandler = { lut in
             self.dirty = true
-            //Swift.print(" ^^^ -- -- clutUpdateHandler \(self.dirty)")
         }
         return handler
     }() 
