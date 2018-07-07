@@ -16,8 +16,7 @@ class PatchesGridView: NSView {
         didSet{
             updateGrid()
         }
-    }
-    
+    }    
     
     lazy var skview:SKView = SKView(frame: self.bounds)
     lazy var scene:SKScene = SKScene(size: self.skview.bounds.size)

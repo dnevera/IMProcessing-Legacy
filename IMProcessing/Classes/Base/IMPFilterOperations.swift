@@ -13,6 +13,45 @@ infix operator --> : AdditionPrecedence
 infix operator ==> : AdditionPrecedence
 
 
+public extension IMPFilter {
+    /// Async redirect source image frame to another filter
+    ///
+    /// - Parameters:
+    ///   - sourceFilter: source image frame updatable filter
+    ///   - destinationFilter: destination filter which should recieve the same source image frames
+    /// - Returns: destination filter
+    ///
+    @discardableResult public func addRedirection<T:IMPFilter>(to destination:T) ->T {
+        addObserver(newSource: { (source) in
+            destination.source = source
+        })
+        return destination
+    }
+    
+    /// Async processing result image frames to enclosure process block
+    ///
+    /// - Parameters:
+    ///   - filter: processed filter
+    ///   - action: next processing action
+    /// - Returns: filter
+    ///
+    @discardableResult public func addProcessing<T:IMPFilter>(action:  @escaping ((_ image:IMPImageProvider) -> Void)) -> T {
+        addObserver(newSource:{ (source) in
+            self.context.runOperation(.async, {
+                self.process()
+            })
+        })
+        
+        addObserver(destinationUpdated: {(destination) in
+            self.context.runOperation(.async) {
+                action(destination)
+            }
+        })
+        
+        return self as! T
+    }
+}
+
 /// Async redirect source image frame to another filter
 ///
 /// - Parameters:
@@ -21,10 +60,7 @@ infix operator ==> : AdditionPrecedence
 /// - Returns: destination filter
 ///
 @discardableResult public func =><T:IMPFilter>(sourceFilter:T, destinationFilter:T) -> T {
-    sourceFilter.addObserver(newSource: { (source) in
-        destinationFilter.source = source
-    })
-    return destinationFilter
+    return sourceFilter.addRedirection(to: destinationFilter)
 }
 
 
@@ -36,19 +72,7 @@ infix operator ==> : AdditionPrecedence
 /// - Returns: filter
 ///
 @discardableResult public func --><T:IMPFilter>(filter:T, action:  @escaping ((_ image:IMPImageProvider) -> Void)) -> T {
-    filter.addObserver(newSource:{ (source) in
-        filter.context.runOperation(.async, {
-            filter.process()
-        })
-    })
-
-    filter.addObserver(destinationUpdated: {(destination) in
-        filter.context.runOperation(.async) {
-            action(destination)
-        }
-    })
-    
-    return filter
+    return filter.addProcessing(action: action)
 }
 
 /// Async redirect result image frames to next processing filter

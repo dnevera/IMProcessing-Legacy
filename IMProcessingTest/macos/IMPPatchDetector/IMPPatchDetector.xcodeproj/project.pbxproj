@@ -91,9 +91,9 @@
 		3196A37D20F0CFB400384FB6 /* Classes */ = {
 			isa = PBXGroup;
 			children = (
+				31FFCEE420F0E31900290EBA /* PatchesGrid.swift */,
 				31FFCEE020F0DE0900290EBA /* MarkersView.swift */,
 				3102E00820F0C4E7006E3E47 /* ViewController.swift */,
-				31FFCEE420F0E31900290EBA /* PatchesGrid.swift */,
 			);
 			path = Classes;
 			sourceTree = "<group>";

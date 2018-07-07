@@ -57,10 +57,9 @@ open class IMPTwoPass: IMPFilter {
     open override func configure(complete:CompleteHandler?=nil) {
         super.configure()
         add(function: horizontalKernel)
-        add(function: verticalKernel){ (source) in
-            complete?(source)
+            .add(function: verticalKernel){ (source) in
+                complete?(source)
         }
-
     }
     
     private var kernelName:String

@@ -22,7 +22,7 @@ public class IMPWhiteBalanceFilter: IMPFilter {
         
     public var adjustment:IMPAdjustment = defaultAdjustment { didSet{ dirty = true } }
 
-    public override func configure(complete: IMPFilter.CompleteHandler?) { 
+    public override func configure(complete: IMPFilter.CompleteHandler?) {
         extendName(suffix: "White Balance")
         super.configure()
         temperature = 5000.0

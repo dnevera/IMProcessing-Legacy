@@ -144,8 +144,7 @@ class MarkersView: NSView {
                 }
             }
         }
-    }
-    
+    }    
     
     func drawLine(segment:IMPLineSegment,
                   color:NSColor,
@@ -170,10 +169,6 @@ class MarkersView: NSView {
         path.line(to: p1)
         
         path.stroke()
-        //path.close()
-        
-        // NSLog(" line = \(p0,p1)")
-        
         
         if spokeWidth > 0 {
             path = NSBezierPath()
@@ -187,7 +182,6 @@ class MarkersView: NSView {
             path.line(to: p1)
             
             path.stroke()
-            //path.close()
         }
     }
     
@@ -273,15 +267,12 @@ class MarkersView: NSView {
         for y in 0..<grid.dimension.height {
             for x in 0..<grid.dimension.width {
                 
-                //if
-                let c = grid.target[x,y] //{
+                let c = grid.target[x,y]
                 drawCircle(center: c.center, radius: 20, color: NSColor(red: CGFloat(c.color.r),
                                                                         green: CGFloat(c.color.g),
                                                                         blue: CGFloat(c.color.b),
                                                                         alpha: CGFloat(1))
                 )
-                //}
-                
             }
         }
     }

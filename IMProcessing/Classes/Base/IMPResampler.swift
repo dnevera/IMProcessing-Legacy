@@ -58,3 +58,12 @@ open class IMPResampler: IMPFilter{
     private lazy var resampleShader:IMPShader = IMPShader(context: self.context)
     private lazy var resampler:IMPCIFilter = { return IMPCoreImageMTLShader.register(shader: self.resampleShader)}()
 }
+
+public extension IMPResampler{
+    public convenience init(context: IMPContext,  maxSize:CGFloat?) {
+        self.init(context: context)
+        defer {
+            self.maxSize = maxSize
+        }
+    }
+}

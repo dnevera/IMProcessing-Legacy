@@ -22,31 +22,42 @@ class ViewController: NSViewController {
         }
     }
     
-    lazy var filter:IMPFilter = {
-        let f = IMPFilter(context: self.context)
-        f.extendName(suffix: "ViewController filter")
+    func update(detector:IMPCCheckerDetector, destination:IMPImageProvider)  {
+        guard let size = destination.size else { return }
         
-        f => self.detector --> { (destination) in
-            guard let size = destination.size else { return }
+        Swift.print("Size: \(size) Corners: \(detector.corners)")
+        
+        DispatchQueue.main.async {
+            // set absolute size of image to right scale of view canvas
+            self.markersView.imageSize = size
+            // set corners 
+            self.markersView.corners = detector.corners
             
-            Swift.print("Size: \(size) Corners: \(self.detector.corners)")
-            
-            DispatchQueue.main.async {
-                self.markersView.imageSize = size
-                self.markersView.corners = self.detector.corners
-                self.gridView.grid = self.detector.patchGrid
-            }
+            // draw patches
+            self.gridView.grid = detector.patchGrid
+        }
+    }
+    
+    //
+    // Just redirect image rendering in IMPFilterView
+    //
+    lazy var filter:IMPFilter = {
+        
+        let detector = IMPCCheckerDetector(context: self.context, maxSize:800)
+        
+        let f = IMPFilter(context: self.context)
+        
+        f
+            // add debug info
+            .extendName(suffix: "ViewController filter")
+            // add source image frame redirection to next filter
+            // (multiplex operation)
+            .addRedirection(to: detector)
+            // add processing action to redirected filter
+            .addProcessing { destination in
+                self.update(detector: detector, destination: destination)
         }
         
-        return f
-    }()
-    
-    lazy var detector:IMPCCheckerDetector = {
-        let f = IMPCCheckerDetector(context: self.context)
-        f.maxSize = 800
-        f.addObserver(newSource: { (source) in
-            NSLog("Detector filter source... updated")
-        })
         return f
     }()
     
@@ -75,7 +86,7 @@ class ViewController: NSViewController {
         view.addSubview(targetView)
         targetView.addSubview(markersView)
         targetView.addSubview(gridView)
-
+        
         targetView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview().inset(20)
         }
@@ -84,12 +95,6 @@ class ViewController: NSViewController {
             make.edges.equalToSuperview()
         }
     }
-    
-    override var representedObject: Any? {
-        didSet {
-        }
-    }
-    
-    
+
 }
 

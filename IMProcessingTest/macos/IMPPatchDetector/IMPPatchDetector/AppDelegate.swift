@@ -11,7 +11,6 @@ import Cocoa
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
 
-
     lazy var openPanel:NSOpenPanel = {
         let p = NSOpenPanel()
         p.canChooseFiles = true
@@ -31,15 +30,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
     }
-
-    func applicationDidFinishLaunching(_ aNotification: Notification) {
-        // Insert code here to initialize your application
-    }
-
-    func applicationWillTerminate(_ aNotification: Notification) {
-        // Insert code here to tear down your application
-    }
-
-
 }
 
