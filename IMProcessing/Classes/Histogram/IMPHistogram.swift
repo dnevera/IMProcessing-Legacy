@@ -365,7 +365,9 @@ public class IMPHistogram {
         let h = IMPHistogram(ramp: 0..<size, size:size, type: type)
         for c in 0 ..< h.channels.count {
             var data  = [UInt8](repeating: 0, count: h.size)
-            SecRandomCopyBytes(kSecRandomDefault, data.count, &data)
+            
+            guard SecRandomCopyBytes(kSecRandomDefault, data.count, &data) == 0 else { continue }
+            
             h.channels[c] = [Float](repeating: 0, count: h.size)
             
             let addr = UnsafeMutablePointer<Float>(mutating: h.channels[c])
