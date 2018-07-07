@@ -14,6 +14,7 @@
 		3102E01720F0CADD006E3E47 /* WindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3102E01620F0CADD006E3E47 /* WindowController.swift */; };
 		3196A37F20F0CFB400384FB6 /* IMPMain_metal.metal in Sources */ = {isa = PBXBuildFile; fileRef = 3196A37C20F0CFB400384FB6 /* IMPMain_metal.metal */; };
 		31FFCEE120F0DE0900290EBA /* MarkersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31FFCEE020F0DE0900290EBA /* MarkersView.swift */; };
+		31FFCEE520F0E31900290EBA /* PatchesGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31FFCEE420F0E31900290EBA /* PatchesGrid.swift */; };
 		BB18E681D6DEFBED7E80DA94 /* Pods_IMPPatchDetector.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4FA9BD148DC3BECCBDFD5A65 /* Pods_IMPPatchDetector.framework */; };
 /* End PBXBuildFile section */
 
@@ -29,6 +30,7 @@
 		3102E01620F0CADD006E3E47 /* WindowController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowController.swift; sourceTree = "<group>"; };
 		3196A37C20F0CFB400384FB6 /* IMPMain_metal.metal */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.metal; path = IMPMain_metal.metal; sourceTree = "<group>"; };
 		31FFCEE020F0DE0900290EBA /* MarkersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkersView.swift; sourceTree = "<group>"; };
+		31FFCEE420F0E31900290EBA /* PatchesGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PatchesGrid.swift; sourceTree = "<group>"; };
 		4FA9BD148DC3BECCBDFD5A65 /* Pods_IMPPatchDetector.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_IMPPatchDetector.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		83A2A395D5CB764BD89E59A0 /* Pods-IMPPatchDetector.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-IMPPatchDetector.debug.xcconfig"; path = "Pods/Target Support Files/Pods-IMPPatchDetector/Pods-IMPPatchDetector.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -91,6 +93,7 @@
 			children = (
 				31FFCEE020F0DE0900290EBA /* MarkersView.swift */,
 				3102E00820F0C4E7006E3E47 /* ViewController.swift */,
+				31FFCEE420F0E31900290EBA /* PatchesGrid.swift */,
 			);
 			path = Classes;
 			sourceTree = "<group>";
@@ -227,6 +230,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				31FFCEE520F0E31900290EBA /* PatchesGrid.swift in Sources */,
 				3102E00920F0C4E7006E3E47 /* ViewController.swift in Sources */,
 				3196A37F20F0CFB400384FB6 /* IMPMain_metal.metal in Sources */,
 				31FFCEE120F0DE0900290EBA /* MarkersView.swift in Sources */,

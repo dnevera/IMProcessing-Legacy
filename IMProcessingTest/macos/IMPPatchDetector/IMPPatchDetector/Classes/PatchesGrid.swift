@@ -1,35 +1,35 @@
 //
-//  IMPPatchGridView.swift
-//  IMPPatchDetectorTest
+//  PatchesGrid.swift
+//  IMPPatchDetector
 //
-//  Created by denis svinarchuk on 08.04.17.
-//  Copyright © 2017 Dehancer. All rights reserved.
+//  Created by denn on 07.07.2018.
+//  Copyright © 2018 Dehancer. All rights reserved.
 //
 
-import Foundation
+import AppKit
+import IMProcessing
 import SpriteKit
-import Cocoa
 
-class IMPPatchesGridView: NSView {
-
+class PatchesGridView: NSView {
+    
     var grid = IMPPatchesGrid() {
         didSet{
             updateGrid()
         }
     }
-
+    
     
     lazy var skview:SKView = SKView(frame: self.bounds)
     lazy var scene:SKScene = SKScene(size: self.skview.bounds.size)
-
+    
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         
         scene.scaleMode = .resizeFill
         scene.backgroundColor = .clear
         
-        skview.autoresizingMask = [.viewWidthSizable, .viewHeightSizable]
-
+        skview.autoresizingMask = [.width, .height]
+        
         skview.allowsTransparency = true
         skview.presentScene(scene)
         addSubview(skview)
@@ -45,11 +45,11 @@ class IMPPatchesGridView: NSView {
             let postion = float2(c.x,1-c.y) * float2(bounds.width.float,bounds.height.float)
             let point = NSPoint(x: postion.x.cgfloat,
                                 y: postion.y.cgfloat)
-
+            
             if nodes.count > i {
                 nodes[i].position = point
                 nodes[i].setValue(SKAttributeValue(float: Float(nodeRadius)),
-                              forAttribute: "radius")
+                                  forAttribute: "radius")
             }
         }
     }
@@ -79,7 +79,7 @@ class IMPPatchesGridView: NSView {
             node.fillColor = NSColor(rgb: grid.target[i].color)
             node.strokeColor = NSColor(rgb: float3(1) - grid.target[i].color)
             node.lineWidth = 4
-
+            
             nodes.append(node)
             scene.addChild(node)
         }

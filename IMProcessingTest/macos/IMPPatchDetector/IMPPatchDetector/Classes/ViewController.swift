@@ -34,6 +34,7 @@ class ViewController: NSViewController {
             DispatchQueue.main.async {
                 self.markersView.imageSize = size
                 self.markersView.corners = self.detector.corners
+                self.gridView.grid = self.detector.patchGrid
             }
         }
         
@@ -66,15 +67,21 @@ class ViewController: NSViewController {
         return v
     }()
     
+    lazy var gridView:PatchesGridView = PatchesGridView(frame: self.view.bounds)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         view.addSubview(targetView)
         targetView.addSubview(markersView)
-        
+        targetView.addSubview(gridView)
+
         targetView.snp.makeConstraints { (make) in
             make.edges.equalToSuperview().inset(20)
+        }
+        
+        gridView.snp.makeConstraints { (make) in
+            make.edges.equalToSuperview()
         }
     }
     
