@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = 'IMProcessing'
-  s.version      = '0.10.0'
+  s.version      = '0.11.0'
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
   s.author       = { 'denn nevera' => 'denn.nevera@gmail.com' }
   s.homepage     = 'http://degradr.photo'
@@ -18,7 +18,7 @@ Pod::Spec.new do |s|
   s.vendored_libraries  = 'vendor/libjpeg-turbo/lib/libturbojpeg.a'
   s.header_dir   = 'IMProcessing'
   s.frameworks   = 'Metal'
-  # s.dependency:  'Surge', :git => 'https://github.com/dnevera/surge.git'
+  # s.dependency:  'Surge', :git => 'https://github.com/dnevera/surge.git', :tag => '1.0.2'
   s.dependency  'Surge'
   #
   # does not work with cocoapods 1.0.0rc2

@@ -1,18 +1,18 @@
 //
-//  IMPCanvasView.swift
-//  ImageMetalling-16
+//  IMPFilterView.swift
+//  IMProcessing
 //
-//  Created by denis svinarchuk on 21.06.2018.
-//  Copyright © 2018 ImageMetalling. All rights reserved.
+//  Created by denn on 07.07.2018.
 //
+
+import AppKit
 
 import Cocoa
 import MetalKit
-import IMProcessing
 
 open class IMPFilterView: MTKView {
-
-    public var name:String? 
+    
+    public var name:String?
     public var debug:Bool = false
     
     public var placeHolderColor:NSColor? {
@@ -31,16 +31,16 @@ open class IMPFilterView: MTKView {
             filter?.removeObserver(destinationUpdated: destinationObserver)
             filter?.removeObserver(newSource: sourceObserver)
         }
-        didSet {         
-            filter?.addObserver(destinationUpdated: destinationObserver)            
-            filter?.addObserver(newSource: sourceObserver)            
+        didSet {
+            filter?.addObserver(destinationUpdated: destinationObserver)
+            filter?.addObserver(newSource: sourceObserver)
         }
-    }      
+    }
     
     public var image:IMPImageProvider? {
         return _image
     }
-       
+    
     public override init(frame frameRect: CGRect, device: MTLDevice?=nil) {
         super.init(frame: frameRect, device: device ?? MTLCreateSystemDefaultDevice())
         configure()
@@ -51,12 +51,12 @@ open class IMPFilterView: MTKView {
         device = MTLCreateSystemDefaultDevice()
         configure()
     }
-        
+    
     open override var frame: NSRect {
         didSet{
             self.filter?.dirty = true
-        }        
-    }    
+        }
+    }
     
     open override func setNeedsDisplay(_ invalidRect: NSRect) {
         super.setNeedsDisplay(invalidRect)
@@ -74,8 +74,8 @@ open class IMPFilterView: MTKView {
     }
     
     private var _image:IMPImageProvider? {
-        didSet{            
-            refreshQueue.async(flags: [.barrier]) {                
+        didSet{
+            refreshQueue.async(flags: [.barrier]) {
                 self.__source = self.image
                 if self.image == nil /*&& self.__placeHolderColor == nil*/ {
                     return
@@ -87,8 +87,8 @@ open class IMPFilterView: MTKView {
         }
     }
     
-    private var __source:IMPImageProvider? 
-    private var __placeHolderColor = float4(1)  
+    private var __source:IMPImageProvider?
+    private var __placeHolderColor = float4(1)
     
     private lazy var destinationObserver:IMPFilter.UpdateHandler = {
         let handler:IMPFilter.UpdateHandler = { (destination) in
@@ -110,14 +110,14 @@ open class IMPFilterView: MTKView {
     private var needProcessing = true
     private lazy var commandQueue:MTLCommandQueue = self.device!.makeCommandQueue(maxCommandBufferCount: IMPFilterView.maxFrames)!
     
-    private static let maxFrames = 1  
+    private static let maxFrames = 1
     
-    private let mutex = DispatchSemaphore(value: IMPFilterView.maxFrames)        
+    private let mutex = DispatchSemaphore(value: IMPFilterView.maxFrames)
     private var framesTimeout:UInt64 = 5
     
     fileprivate func refresh(){
-              
-        self.filter?.context.runOperation(.async, {                 
+        
+        self.filter?.context.runOperation(.async, {
             
             if let filter = self.filter, filter.dirty || self.needProcessing {
                 self.__source = filter.destination
@@ -129,16 +129,16 @@ open class IMPFilterView: MTKView {
             else {
                 return
             }
-                        
-            guard            
-                let pipeline = ((self.__source?.texture == nil)  ? self.placeHolderPipeline : self.pipeline), 
+            
+            guard
+                let pipeline = ((self.__source?.texture == nil)  ? self.placeHolderPipeline : self.pipeline),
                 let commandBuffer = self.commandQueue.makeCommandBuffer() else {
-                    return             
+                    return
             }
             
             if !self.isPaused {
                 guard self.mutex.wait(timeout: DispatchTime(uptimeNanoseconds: 1000000000 * self.framesTimeout)) == .success else {
-                    return                         
+                    return
                 }
             }
             
@@ -146,22 +146,22 @@ open class IMPFilterView: MTKView {
                 if !self.isPaused {
                     self.mutex.signal()
                 }
-            }  
-        })        
+            }
+        })
     }
     
     fileprivate func render(commandBuffer:MTLCommandBuffer, texture:MTLTexture?, with pipeline: MTLRenderPipelineState,
-                            complete: @escaping () -> Void) {        
-                        
+                            complete: @escaping () -> Void) {
+        
         commandBuffer.label = "Frame command buffer"
         
-        commandBuffer.addCompletedHandler{ commandBuffer in            
-            complete()            
+        commandBuffer.addCompletedHandler{ commandBuffer in
+            complete()
             return
         }
         
         if  let currentDrawable = self.currentDrawable,
-            let renderPassDescriptor = currentRenderPassDescriptor,               
+            let renderPassDescriptor = currentRenderPassDescriptor,
             let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor){
             
             renderEncoder.label = "IMPProcessingView"
@@ -181,19 +181,19 @@ open class IMPFilterView: MTKView {
             renderEncoder.endEncoding()
             
             commandBuffer.present(currentDrawable)
-            commandBuffer.commit()  
+            commandBuffer.commit()
             commandBuffer.waitUntilCompleted()
         }
         else {
-            complete()            
+            complete()
         }
     }
     
-    private static var library = MTLCreateSystemDefaultDevice()!.makeDefaultLibrary()!    
+    private static var library = MTLCreateSystemDefaultDevice()!.makeDefaultLibrary()!
     
     private lazy var fragment = IMPFilterView.library.makeFunction(name: "fragment_passview")
     private lazy var fragmentPlaceHolder = IMPFilterView.library.makeFunction(name: "fragment_placeHolderView")
-    private lazy var vertex   = IMPFilterView.library.makeFunction(name: "vertex_passview")    
+    private lazy var vertex   = IMPFilterView.library.makeFunction(name: "vertex_passview")
     
     private lazy var pipeline:MTLRenderPipelineState? = {
         do {
@@ -251,6 +251,6 @@ extension IMPFilterView: MTKViewDelegate {
     
     public func draw(in view: MTKView) {
         self.refresh()
-    }    
+    }
     
 }

@@ -13,7 +13,7 @@ import SnapKit
 class ViewController: NSViewController {
     
     let context = IMPContext()
-
+    
     var imagePath:String? {
         didSet{
             if let path = imagePath {
@@ -32,6 +32,8 @@ class ViewController: NSViewController {
             Swift.print("Size: \(size) Corners: \(self.detector.corners)")
             
             DispatchQueue.main.async {
+                self.markersView.imageSize = size
+                self.markersView.corners = self.detector.corners
             }
         }
         
@@ -53,12 +55,26 @@ class ViewController: NSViewController {
         return f
     }()
     
+    lazy var markersView:MarkersView = {
+        let v = MarkersView(frame:self.view.bounds)
+        
+        v.wantsLayer = true
+        v.frame = self.targetView.bounds
+        v.layer?.backgroundColor = NSColor.clear.cgColor
+        v.autoresizingMask = [.width, .height]
+        
+        return v
+    }()
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         view.addSubview(targetView)
+        targetView.addSubview(markersView)
         
         targetView.snp.makeConstraints { (make) in
-            make.edges.equalToSuperview().offset(-20)
+            make.edges.equalToSuperview().inset(20)
         }
     }
     
