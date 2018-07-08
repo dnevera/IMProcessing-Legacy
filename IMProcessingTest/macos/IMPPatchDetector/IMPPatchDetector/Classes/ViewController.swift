@@ -22,49 +22,70 @@ class ViewController: NSViewController {
         }
     }
     
-    func update(detector:IMPCCheckerDetector, destination:IMPImageProvider)  {
-        guard let size = destination.size else { return }
-        
-        Swift.print("Size: \(size) Corners: \(detector.corners)")
-        
-        DispatchQueue.main.async {
-            // set absolute size of image to right scale of view canvas
-            self.markersView.imageSize = size
-            // set corners 
-            self.markersView.corners = detector.corners
-            
-            // draw patches
-            self.gridView.grid = detector.patchGrid
-        }
-    }
-    
     //
-    // Just redirect image rendering in IMPFilterView
+    // Just redirect image rendering to IMPFilterView
     //
     lazy var filter:IMPFilter = {
         
-        let detector = IMPCCheckerDetector(context: self.context, maxSize:800)
+        let checkerDetector = IMPCCheckerDetector(context: self.context, maxSize:800)
+        let linesDetector   = IMPOrientedLinesDetector(context: self.context, maxSize: 800)
         
-        let f = IMPFilter(context: self.context)
+        linesDetector.linesMax = 20
         
-        f
+        let renderer = IMPFilter(context: self.context)
+        
+        renderer
             // add debug info
             .extendName(suffix: "ViewController filter")
+            //
             // add source image frame redirection to next filter
             // (multiplex operation)
-            .addRedirection(to: detector)
+            //
+            .addRedirection(to: checkerDetector)
+            //
             // add processing action to redirected filter
+            //
             .addProcessing { destination in
-                self.update(detector: detector, destination: destination)
+                guard let size = destination.size else { return }
+
+                DispatchQueue.main.async {
+                    // set absolute size of image to right scale of view canvas
+                    self.markersView.imageSize = size
+                    // set corners
+                    self.markersView.corners = checkerDetector.corners
+                    
+                    // draw patches
+                    self.gridView.grid = checkerDetector.patchGrid
+                }
         }
         
-        return f
+        renderer
+            //
+            // Now add redirection to process oriented lines
+            //
+            .addRedirection(to: linesDetector)
+            //
+            // add processing stage without action, only process result of redirection
+            //
+            .addProcessing()
+            //
+            // add observing result of processing in the Hough lines detector
+            //
+            .addObserver(lines: { (hlines, vlines, size) in
+                DispatchQueue.main.async {
+                    self.markersView.imageSize = size
+                    self.markersView.hlines = hlines
+                    self.markersView.vlines = vlines
+                }
+        })
+        
+        return renderer
     }()
     
     lazy var targetView:IMPFilterView = {
-        let f = IMPFilterView()
-        f.filter = self.filter
-        return f
+        let v = IMPFilterView()
+        v.filter = self.filter
+        return v
     }()
     
     lazy var markersView:MarkersView = {
@@ -95,6 +116,5 @@ class ViewController: NSViewController {
             make.edges.equalToSuperview()
         }
     }
-
 }
 

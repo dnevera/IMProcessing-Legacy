@@ -35,7 +35,7 @@ public extension IMPFilter {
     ///   - action: next processing action
     /// - Returns: filter
     ///
-    @discardableResult public func addProcessing<T:IMPFilter>(action:  @escaping ((_ image:IMPImageProvider) -> Void)) -> T {
+    @discardableResult public func addProcessing<T:IMPFilter>(action:  ((_ image:IMPImageProvider) -> Void)?=nil) -> T {
         addObserver(newSource:{ (source) in
             self.context.runOperation(.async, {
                 self.process()
@@ -43,8 +43,10 @@ public extension IMPFilter {
         })
         
         addObserver(destinationUpdated: {(destination) in
-            self.context.runOperation(.async) {
-                action(destination)
+            if let a = action {
+                self.context.runOperation(.async) {
+                    a(destination)
+                }
             }
         })
         

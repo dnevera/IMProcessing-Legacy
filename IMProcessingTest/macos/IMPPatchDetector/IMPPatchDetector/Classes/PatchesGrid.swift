@@ -54,7 +54,7 @@ class PatchesGridView: NSView {
     }
     
     var nodeRadius:CGFloat {
-        return skview.bounds.size.width/25
+        return skview.bounds.size.width/50
     }
     
     var nodes = [SKShapeNode]()

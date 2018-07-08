@@ -10,15 +10,17 @@ import Foundation
 import Metal
 
 
+public extension IMPFilter{
+    @discardableResult public func addObserver<T:IMPOrientedLinesDetector>(lines observer: @escaping IMPOrientedLinesDetector.LinesListObserver) -> T {
+        (self as! IMPOrientedLinesDetector).linesObserverList.append(observer)
+        return self as! T
+    }
+}
+
 public class IMPOrientedLinesDetector: IMPHoughSpaceDetector {
     
     public typealias LinesListObserver = ((_ horisontal: [IMPPolarLine], _ vertical: [IMPPolarLine], _ imageSize:NSSize) -> Void)
-    
-    public func addObserver(lines observer: @escaping LinesListObserver) {
-        linesObserverList.append(observer)
-    }
-    
-    
+        
     /// Radius of region to explore lines orientation
     public var radius:Int = 8 {
         didSet{
@@ -151,5 +153,5 @@ public class IMPOrientedLinesDetector: IMPHoughSpaceDetector {
     }
     
     
-    private lazy var linesObserverList = [LinesListObserver]()
+    fileprivate lazy var linesObserverList = [LinesListObserver]()
 }

@@ -76,17 +76,23 @@ public class IMPHoughSpaceDetector: IMPDetector {
         return lines
     }
     
-    func accumBufferGetter() -> MTLBuffer? {
+    internal func accumBufferGetter() -> MTLBuffer? {
         //
         // to echange data should be .storageModeShared!!!!
         //
+        guard accumSize>0 else {
+            return nil
+        }
         return context.device.makeBuffer(length: MemoryLayout<UInt32>.size * Int(accumSize), options: .storageModeShared)
     }
     
-    func maximumsBufferGetter() -> MTLBuffer? {
+    internal func maximumsBufferGetter() -> MTLBuffer? {
         //
         // to echange data should be .storageModeShared!!!!
         //
+        guard accumSize>0 else {
+            return nil
+        }
         return context.device.makeBuffer(length: MemoryLayout<uint2>.size * Int(accumSize), options: .storageModeShared)
     }
 }
