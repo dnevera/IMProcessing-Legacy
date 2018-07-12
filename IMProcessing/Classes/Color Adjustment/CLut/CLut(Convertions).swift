@@ -25,7 +25,7 @@ public extension IMPCLut {
     /// - Throws: `FormatError`
     public func convert(to newType: LutType, lutSize newLutSize:Int? = nil, format newFormat: Format? = nil, title newTitle:String?=nil) throws -> IMPCLut {
         
-        if newType == self._type {
+        if newType == self._type && (self._lutSize == newLutSize &&  newLutSize != nil) {
             //
             // the same
             //
@@ -35,7 +35,18 @@ public extension IMPCLut {
         //
         // make new identity
         //
-        let lut = try IMPCLut(context: context, lutType: newType, lutSize: newLutSize ?? _lutSize, format: newFormat ?? _format, compression: _compressionRange, title: newTitle ?? _title)
+        
+        let sz = newLutSize ?? _lutSize
+//        if newType == .lut_2d && newLutSize == nil {
+//            sz = _lutSize //Int(sqrt(Float(_lutSize*_lutSize*_lutSize)))/3; //sz = sz*sz*sz
+//        }
+        
+        let lut = try IMPCLut(context: context,
+                              lutType: newType,
+                              lutSize: sz,
+                              format: newFormat ?? _format,
+                              compression: _compressionRange,
+                              title: newTitle ?? _title)
         
         guard let newtext = lut.texture else { throw FormatError(file: "", line: 0, kind: .empty) }
         guard let text = texture else { throw FormatError(file: "", line: 0, kind: .empty) }
@@ -51,6 +62,12 @@ public extension IMPCLut {
             threadgroups = MTLSizeMake(newtext.width/threads.width, newtext.height/threads.height, 1)
         }
 
+        else if _type == .lut_3d && lut._type == .lut_3d {
+            kernel = IMPFunction(context: context, kernelName: "kernel_resample3DLut_to_3DLut")
+            threads = MTLSizeMake(4, 4, 4)
+            threadgroups  = MTLSizeMake(newtext.width/threads.width, newtext.height/threads.height, newtext.depth/threads.depth)
+        }
+            
         else if _type == .lut_2d && lut._type == .lut_3d {
             kernel = IMPFunction(context: context, kernelName: "kernel_convert2DLut_to_3DLut")
             threads = MTLSizeMake(4, 4, 4)
@@ -81,6 +98,10 @@ public extension IMPCLut {
             kernel = IMPFunction(context: context, kernelName: "kernel_convert3DLut_to_1DLut")
             threads = MTLSizeMake(4, 1, 1)
             threadgroups = MTLSizeMake(newtext.width/threads.width, 1, 1)
+        }
+        
+        else {
+            throw FormatError(file: #file, line: #line, kind: .wrangType)
         }
 
         context.execute(.sync, wait: true){ (commandBuffer) in

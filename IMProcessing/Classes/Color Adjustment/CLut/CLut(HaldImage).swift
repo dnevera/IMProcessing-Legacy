@@ -48,7 +48,19 @@ public extension IMPCLut {
     public convenience init(context:IMPContext,  haldImage path: String, storageMode:IMPImageStorageMode?=nil) throws {
         self.init(context: context, path: path)
         try checkFormat(url: URL(fileURLWithPath:path))
-    }    
+    }
+    
+    /// Load data from URL (the current version is supported local file only!)
+    ///
+    /// - Parameters:
+    ///   - context:  processing context
+    ///   - path: path
+    ///   - storageMode: storageMode
+    /// - Throws: `FormatError`
+    public convenience init(context:IMPContext,  haldImage image: NSImage, storageMode:IMPImageStorageMode?=nil) throws {
+        self.init(context: context, image: image)
+        try checkFormat(image: image)
+    }
 }
 
 
@@ -68,6 +80,25 @@ extension IMPCLut {
         }
         _type = .lut_2d
         _title = url.lastPathComponent
+        let level = Int(round(pow(Float(text.width), 1.0/3.0)))
+        _lutSize = level*level
+    }
+    
+    fileprivate func checkFormat(image:NSImage) throws {
+        
+        //imagelet path = url.absoluteString
+        
+        guard let text = texture else { throw FormatError(file: "", line: 0, kind: .empty) }
+        
+        if Int(image.size.width) != text.height {
+            throw FormatError(file: "", line: 0, kind: .wrangFormat)
+        }
+        
+        if !Int(image.size.width).isPowerOfTwo {
+            throw FormatError(file: "", line: 0, kind: .wrangFormat)
+        }
+        _type = .lut_2d
+        //_title = url.lastPathComponent
         let level = Int(round(pow(Float(text.width), 1.0/3.0)))
         _lutSize = level*level
     }

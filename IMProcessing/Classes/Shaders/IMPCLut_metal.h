@@ -113,6 +113,17 @@ namespace IMProcessing
         d2DLut.write(float4(result.rgb,1),gid);
     }
     
+    kernel void kernel_resample3DLut_to_3DLut(
+                                              texture3d<float, access::sample>    d3DLut       [[texture(0)]],
+                                              texture3d<float, access::read>      d3DLutSource [[texture(1)]],
+                                              texture3d<float, access::write>     d3DLutOut    [[texture(2)]],
+                                              uint3 gid [[thread_position_in_grid]]){
+        
+        float3 rgb    = d3DLutSource.read(gid).rgb;
+        float3 result = d3DLut.sample(lutSampler, rgb).rgb;
+        
+        d3DLutOut.write(float4(result,1),gid);
+    }
     
     /**
      Look up color in Hald-like 2D representaion of 3D LUT

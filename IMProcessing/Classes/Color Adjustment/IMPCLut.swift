@@ -87,6 +87,8 @@ open class IMPCLut: IMPImage {
     /// Lut level
     public var level:Int { return Int(sqrt(Float(_lutSize))) }
     
+    public var lutSize:Int {return _lutSize}
+    
     public var compressionRange:float2 { return _compressionRange }
     
     internal var _format:Format = .float
@@ -130,7 +132,7 @@ public extension IMPCLut {
         _compressionRange = range
         
         var compression = self.compression
-        let level = Int(sqrt(Double(_lutSize)))
+        let level = Int(floor(sqrt(Double(_lutSize))))
 
         if _type == .lut_2d {
             texture = try makeTexture(size: level*level*level, type: _type, format: _format)
