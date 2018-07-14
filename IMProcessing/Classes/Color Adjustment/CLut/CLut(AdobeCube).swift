@@ -70,7 +70,7 @@ public extension IMPCLut {
     ///
     /// - Parameter path: file path
     /// - Throws: FormatError
-    public func writeAsCube(to path: String) throws {
+    public func write(cube path: String) throws {
         try autoreleasepool{
             
             if _type == .lut_2d {
