@@ -1,406 +1,1009 @@
 //
 //  IMPFilter.swift
-//  IMProcessing
+//  IMPCoreImageMTLKernel
 //
-//  Created by denis svinarchuk on 16.12.15.
-//  Copyright © 2015 IMetalling. All rights reserved.
+//  Created by denis svinarchuk on 12.02.17.
+//  Copyright © 2017 Dehancer. All rights reserved.
 //
 
 #if os(iOS)
-    import UIKit
+import UIKit
+import MetalPerformanceShaders
 #else
-    import Cocoa
+import Cocoa
 #endif
-import Metal
 
-public protocol IMPFilterProtocol:IMPContextProvider {
-    var source:IMPImageProvider? {get set}
-    var destination:IMPImageProvider? {get}
-    var observersEnabled:Bool {get set}
-    var dirty:Bool {get set}
-    func apply() -> IMPImageProvider
+import Metal
+import CoreImage
+
+public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider {
+    typealias CompleteHandler = ((_ image:IMPImageProvider)->Void)
+    
+    var  name:             String            {get    }
+    var  source:           IMPImageProvider? {get set}
+    var  destination:      IMPImageProvider  {get    }
+    var  observersEnabled: Bool              {get set}
+    var  enabled:          Bool              {get set}
+    var  dirty:            Bool              {get set}
+    
+    init(context:IMPContext, name: String?)
+    
+    func configure(complete:CompleteHandler?)
+    
+    func process<T:IMPFilter>() -> T
 }
 
-public class IMPFilter: NSObject,IMPFilterProtocol {
+
+open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
     
-    public typealias SourceHandler = ((source:IMPImageProvider) -> Void)
-    public typealias DestinationHandler = ((destination:IMPImageProvider) -> Void)
-    public typealias DirtyHandler = (() -> Void)
+    public var mutex = IMPSemaphore()
     
-    public var observersEnabled = true {
-        didSet {
-            for f in filterList {
-                f.observersEnabled = observersEnabled
-            }
+    public static let filterType = IMPFilter.self
+    
+    // MARK: - Type aliases
+    
+    public enum RegisteringError: Error {
+        case AlreadyExist
+        case NotFound
+        case OutOfRangeInsertion
+    }
+    
+    public typealias FailHandler          = (_ error:RegisteringError)->Void
+    public typealias CompleteHandler      = (_ image:IMPImageProvider)->Void
+    public typealias UpdateHandler        = (_ image:IMPImageProvider) -> Void
+    public typealias SourceUpdateHandler  = (_ image:IMPImageProvider?) -> Void
+    public typealias FilterHandler        = (_ filter:IMPFilter, _ source:IMPImageProvider?, _ destination:IMPImageProvider) -> Void
+    
+    // MARK: - public
+    
+    open var prefersRendering:Bool  {
+        return  context.supportsGPUv2
+    }
+    
+    public var name: String {
+        return _name!
+    }
+    
+    public lazy var _name: String? = String.uniqString() //self.context.uid
+    
+    public var context: IMPContext
+    
+    public var observersEnabled: Bool = true
+    
+    open var source: IMPImageProvider? = nil {
+        willSet{
+            source?.removeObserver(optionsChanged: optionChangedObserver)
+        }
+        didSet{   
+            _destination.texture = nil
+            executeNewSourceObservers(source: source)
+            source?.addObserver(optionsChanged: optionChangedObserver)
         }
     }
     
-    public var context:IMPContext!
+    private lazy var optionChangedObserver:IMPImageProvider.ObserverType = {
+        let handler:IMPImageProvider.ObserverType = { source in
+            self.dirty = true                
+        } 
+        return handler        
+    }() 
     
-    public var enabled = true {
+    public var destination: IMPImageProvider {
+        guard dirty || (_destination.texture == nil) else {
+            return _destination
+        }
+        return apply(result: _destination, resampleSize: nil)
+    }
+    
+    public var destinationSize: NSSize?
+    
+    public required init(context:IMPContext, name: String? = nil) {
+        self.context = context
+        _name = name ?? String(describing: type(of: self)) + ":" + String.uniqString()
+        defer {
+            configure()
+        }
+    }
+    
+    public var enabled: Bool = true {
         didSet{
-            
-            for filter in filterList {
-                filter.enabled = enabled
-            }
-            
             dirty = true
+            executeEnablingObservers(filter: self)
+        }
+    }
+    
+    public var dirty: Bool = true {
+        didSet{
             
-            if enabled == false && oldValue != enabled {
-                executeDestinationObservers(source)
+            if isIgnoringDirty { return }
+            
+            for c in self.coreImageFilterList {
+                c.filter?.dirty = dirty
             }
-        }
-    }
-    
-    public var source:IMPImageProvider?{
-        didSet{
-            if let s = source{
-                s.filter=self
-                _destination.orientation =  s.orientation
-            }
-            executeNewSourceObservers(source)
-            dirty = true
-        }
-    }
-    
-    public var destination:IMPImageProvider?{
-        get{
-            if enabled {
-                return self.apply()
-            }
-            else{
-                return source
-            }
-        }
-    }
-    
-    public var destinationSize:MTLSize?{
-        didSet{
-            if let ov = oldValue{
-                if ov != destinationSize! {
-                    dirty = true
+            root?.resetDirty(dirty)
+            if dirty {
+                if root == nil {
+                    executeDirtyObservers(filter: self)
                 }
             }
-            else{
-                dirty = true
+        }
+    }
+    
+    private var isIgnoringDirty: Bool = false {
+        didSet{        
+            for c in self.coreImageFilterList {
+                c.filter?.isIgnoringDirty = isIgnoringDirty
             }
         }
     }
     
-    public var dirty:Bool{
-        set(newDirty){
-            
-            context.dirty = newDirty
-            
-            for f in filterList{
-                f.dirty = newDirty
+    public func ignoringDirty(_ execute: ()->Void) {
+        isIgnoringDirty = true
+        execute()
+        isIgnoringDirty = false
+    }
+    
+    private func resetDirty(_ dirty:Bool){
+        self.dirty = dirty
+    }
+    
+    public var chain:[FilterContainer] {
+        return coreImageFilterList
+    }
+    
+    @discardableResult public func extendName<T:IMPFilter>(suffix:String) -> T {
+        _name = {
+            if _name == nil {
+                return String.uniqString() + ":" + suffix
             }
-            
-            if newDirty == true /*&& context.dirty != true*/ {
-                for o in dirtyHandlers{
-                    o()
-                }
+            return self._name! + ":" + suffix
+        }()
+        return self as! T
+    }
+    
+    open func configure(complete:CompleteHandler?=nil) {
+        if let c = complete {
+            addObserver(destinationUpdated: { (destination) in
+                c(destination)
+            })
+        }
+    }
+    
+    public func flush(){
+        source?.image = nil
+        _destination.image = nil
+        for c in coreImageFilterList {
+            if let f = c.filter {
+                f.flush()
             }
+            else if let f = c.cifilter as? IMPCIFilter{
+                f.flush()
+            }
+        }
+    }
+    
+    @discardableResult public func process<T:IMPFilter>() -> T {
+        guard dirty || (_destination.texture == nil) else {
+            return  self as! T
+        }
+        apply(result: _destination, resampleSize: nil)
+        return self as! T
+    }
+    
+    public func resample<T:IMPImageProvider>(with resampleSize:NSSize? = nil) -> T {
+        guard dirty || (_destination.texture == nil) else {
+            return _destination as! T
+        }
+        return apply(result: _destination, resampleSize: resampleSize) as! T
+    }
+    
+    @discardableResult private func apply(result:IMPImageProvider, resampleSize:NSSize?) -> IMPImageProvider {
+        
+        guard let source = self.source else {
+            executeDestinationObservers(destination: result)
+            dirty = false
+            return result
         }
         
-        get{
-            return  context.dirty
+        guard let size = source.size else {
+            executeDestinationObservers(destination: result)
+            dirty = false
+            return result
         }
-    }
-    
-    required public init(context: IMPContext) {
-        self.context = context
-    }
-    
-    private var functionList:[IMPFunction] = [IMPFunction]()
-    private var filterList:[IMPFilter] = [IMPFilter]()
-    private var newSourceObservers:[SourceHandler] = [SourceHandler]()
-    private var sourceObservers:[SourceHandler] = [SourceHandler]()
-    private var destinationObservers:[DestinationHandler] = [DestinationHandler]()
-    private var dirtyHandlers:[DirtyHandler] = [DirtyHandler]()
-    
-    public final func addFunction(function:IMPFunction){
-        if functionList.contains(function) == false {
-            functionList.append(function)
-            self.dirty = true
-        }
-    }
-    
-    public final func removeFunction(function:IMPFunction){
-        if let index = functionList.indexOf(function) {
-            functionList.removeAtIndex(index)
-            self.dirty = true
-        }
-    }
-    
-    public final func removeAllFunctions(){
-        functionList.removeAll()
-        self.dirty = true
-    }
-    
-    var _root:IMPFilter? = nil
-    public var root:IMPFilter? {
-        return _root
-    }
-    
-    func updateNewFilterHandlers(filter:IMPFilter)  {
-        filter._root = self
-        for o in dirtyHandlers{
-            filter.addDirtyObserver(o)
-        }
-        dirty = true
-    }
-    
-    func removeFilterHandlers(filter:IMPFilter) {
-        filter._root = nil
-        filter.dirtyHandlers.removeAll()
-        dirty = true
-    }
-    
-    public final func addFilter(filter:IMPFilter){
-        if filterList.contains(filter) == false {
-            filterList.append(filter)
-            updateNewFilterHandlers(filter)
-        }
-    }
-    
-    public final func removeFilter(filter:IMPFilter){
-        if let index = filterList.indexOf(filter) {
-            removeFilterHandlers(filterList.removeAtIndex(index) as IMPFilter)
-        }
-    }
-    
-    public final func removeFromStack() {
-        if _root != nil {
-            _root?.removeFilter(self)
-        }
-    }
-    
-    public final func insertFilter(filter:IMPFilter, index:Int){
-        if filterList.contains(filter) == false {
-            var i = index
-            if i >= filterList.count {
-                i = filterList.count
+        
+        var result = result
+        
+        if fmax(size.width, size.height) <= IMPContext.maximumTextureSize.cgfloat {
+            
+            if enabled == false {
+                result.texture = source.texture
+                executeDestinationObservers(destination: result)
+                dirty = false
+                return result
             }
-            filterList.insert(filter, atIndex: i)
-            updateNewFilterHandlers(filter)
+            
+            let destSize = resampleSize ?? destinationSize ?? size
+            
+            result.texture = self.apply(size:destSize, commandBuffer: nil)
+            
+            self.executeDestinationObservers(destination: result)
+            self.dirty = false
+            return result
         }
-    }
-    
-    public final func insertFilter(filter:IMPFilter, before:IMPFilter){
-        if filterList.contains(filter) == false {
-            if let index = filterList.indexOf(before) {
-                filterList.insert(filter, atIndex: index)
-                updateNewFilterHandlers(filter)
+        
+        var scaledImage = source.image
+        
+        if let newsize = destinationSize ?? source.size,
+            let sImage = scaledImage
+        {
+            let originX = sImage.extent.origin.x
+            let originY = sImage.extent.origin.y
+            
+            let scaleX = newsize.width /  sImage.extent.width
+            let scaleY = newsize.height / sImage.extent.height
+            let scale = min(scaleX, scaleY)
+            
+            let transform = CGAffineTransform.identity.translatedBy(x: -originX, y: -originY)
+            scaledImage = sImage.transformed(by: transform.scaledBy(x: scale, y: scale))
+        }
+        
+        result.image = scaledImage
+        
+        if enabled == false {
+            executeDestinationObservers(destination: result)
+            dirty = false
+            return result
+        }
+        
+        //
+        // apply CIFilter chains
+        //
+        for c in coreImageFilterList {
+            if let filter = c.cifilter {
+                filter.setValue(result.image?.copy(), forKey: kCIInputImageKey)
+                result.image = filter.outputImage
             }
-        }
-    }
-    
-    public final func insertFilter(filter:IMPFilter, after:IMPFilter){
-        if filterList.contains(filter) == false {
-            if let index = filterList.indexOf(after) {
-                filterList.insert(filter, atIndex: index+1)
-                updateNewFilterHandlers(filter)
+            else if let filter = c.filter {
+                if !filter.enabled {
+                    continue
+                }
+                filter.source = IMPImage(context: filter.context, provider: result)
+                result = filter.destination
             }
+            c.complete?(result)
+        }
+        
+        executeDestinationObservers(destination: result)
+        
+        dirty = false
+        
+        return result
+    }
+    
+    //
+    // optimize processing when image < GPU SIZE
+    //
+    //private func apply(size:NSSize?, pixelFormat:MTLPixelFormat, commandBuffer: MTLCommandBuffer? = nil) -> MTLTexture? {
+    private func apply(size:NSSize?, commandBuffer: MTLCommandBuffer? = nil) -> MTLTexture? {
+        
+        guard let input = self.source?.texture else { return nil}
+        
+        guard let colorSpace =  source?.colorSpace else { return nil }
+        
+        var currentResult = input
+        
+        for c in coreImageFilterList {
+            
+            context.execute(.sync, complete: { 
+                
+                if let filter = c.filter {
+                    filter.executeDestinationObservers(destination: filter._destination)
+                }
+                
+            }, fail: {                
+                
+                NSLog("IMPFilter: applying failed.")
+                
+            }, action: { (commandBuffer) in
+                
+                let device = commandBuffer.device
+                
+                if let filter = c.cifilter {
+                    
+                    if filter.isKind(of: IMPCIFilter.self) {
+                        
+                        guard let f = (filter as? IMPCIFilter) else {
+                            return
+                        }
+                        
+                        let dsize = (f.destinationSize ?? size) ?? currentResult.cgsize
+                        
+                        let pixelFormat = currentResult.pixelFormat
+                        let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
+                        
+                        if f.source == nil {
+                            f.source = IMPImage(context: self.context)
+                        }
+                        
+                        f.source?.texture = currentResult
+                        f.process(to: tmp, commandBuffer: commandBuffer)
+                        
+                        currentResult = tmp
+                    }
+                    else {
+                        let dsize = currentResult.cgsize
+                        let pixelFormat = currentResult.pixelFormat 
+                        let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
+                        
+                        filter.setValue(CIImage(mtlTexture: currentResult,
+                                                options:  [kCIImageColorSpace: colorSpace]),
+                                        forKey: kCIInputImageKey)
+                        
+                        guard let image = filter.outputImage else { return }
+                        
+                        self.context.coreImage?.render(image,
+                                                       to: tmp,
+                                                       commandBuffer: commandBuffer,
+                                                       bounds: image.extent,
+                                                       colorSpace: colorSpace)
+                        
+                        currentResult = tmp
+                    }
+                }
+                else if let filter = c.filter {
+                    
+                    if !filter.enabled {
+                        return
+                    }
+                    
+                    if filter.source == nil {
+                        filter.source = IMPImage(context: self.context)
+                    }
+                    
+                    filter.source?.texture = currentResult
+                    if let t = filter.apply(size: filter.destinationSize ?? size ?? currentResult.cgsize,
+                                            commandBuffer: commandBuffer){
+                        currentResult = t
+                    }
+                    else {
+                        return
+                    }
+                    
+                    filter._destination.texture = currentResult
+                    
+                }
+            })
+            
+            c.complete?(IMPImage(context:self.context, texture: currentResult))
+        }
+        return currentResult
+    }
+    
+    
+    public static func == (lhs: IMPFilter, rhs: IMPFilter) -> Bool {
+        //if let ln = lhs.name, let rn = rhs.name {
+        //    return ln == rn
+        //}
+        return lhs.name == rhs.name
+    }
+    
+    //
+    // MARK: - observers
+    //    
+    @discardableResult private func unsafeRemoveObserver<T>(from list: inout [IMPObserverHash<T>], _ observer:T, key aKey:String? = nil) -> String {
+        let key = aKey ?? IMPObserverHash<T>.observerKey(observer)
+        if let index = list.index(where: { return $0.key == key }) {
+            list.remove(at: index)
+        }                
+        return key
+    }    
+    
+    private func unsafeAddObserver<T>(to list:inout [IMPObserverHash<T>], _ observer:T, key aKey:String? = nil){
+        let key = unsafeRemoveObserver(from: &list, observer, key: aKey)
+        list.append(IMPObserverHash<T>(key:key, observer:observer))
+    }
+    
+    @discardableResult public func addObserver<T:IMPFilter>(newSource observer:@escaping SourceUpdateHandler, key aKey:String? = nil) -> T {
+        mutex.sync {
+            unsafeAddObserver(to: &newSourceObservers, observer, key: aKey)
+        }
+        return self as! T
+    }
+    
+    public func removeObserver(newSource observer:@escaping SourceUpdateHandler, key aKey:String? = nil) {
+        mutex.sync {
+            unsafeRemoveObserver(from: &newSourceObservers, observer, key: aKey)
+        }
+    }    
+    
+    @discardableResult public func addObserver<T:IMPFilter>(destinationUpdated observer:@escaping UpdateHandler, key aKey:String? = nil) -> T {
+        mutex.sync {
+            unsafeAddObserver(to: &destinationObservers, observer, key: aKey)
+        }
+        return self as! T
+    }
+    
+    public func removeObserver(destinationUpdated observer:@escaping UpdateHandler, key aKey:String? = nil) {
+        mutex.sync { 
+            unsafeRemoveObserver(from: &destinationObservers, observer, key: aKey)
         }
     }
     
-    public final func addNewSourceObserver(source observer:SourceHandler){
-        newSourceObservers.append(observer)
+    @discardableResult public func addObserver<T:IMPFilter>(dirty observer:@escaping FilterHandler, key aKey:String? = nil) -> T {
+        mutex.sync {             
+            unsafeAddObserver(to: &dirtyObservers, observer, key: aKey)
+        }
+        return self as! T
     }
     
-    public final func addSourceObserver(source observer:SourceHandler){
-        sourceObservers.append(observer)
-    }
-    
-    public final func addDestinationObserver(destination observer:DestinationHandler){
-        destinationObservers.append(observer)
-    }
-    
-    public final func addDirtyObserver(observer:DirtyHandler){
-        dirtyHandlers.append(observer)
-        for f in filterList{
-            f.addDirtyObserver(observer)
+    public func removeObserver(dirty observer:@escaping FilterHandler, key aKey:String? = nil) {
+        mutex.sync {
+            unsafeRemoveObserver(from: &dirtyObservers, observer, key: aKey)
         }
     }
     
-    public func configure(function:IMPFunction, command:MTLComputeCommandEncoder){}
+    @discardableResult public func addObserver<T:IMPFilter>(enabling observer:@escaping FilterHandler, key aKey:String? = nil) -> T {
+        mutex.sync {            
+            unsafeAddObserver(to: &enablingObservers, observer, key: aKey)
+        }
+        return self as! T
+    }
     
-    internal func executeNewSourceObservers(source:IMPImageProvider?){
-        if let s = source{
-            for o in newSourceObservers {
-                o(source: s)
-            }
+    public func removeObserver(enabling observer:@escaping FilterHandler, key aKey:String? = nil) {
+        mutex.sync { 
+            unsafeRemoveObserver(from: &enablingObservers, observer, key: aKey)
         }
     }
     
-    internal func executeSourceObservers(source:IMPImageProvider?){
-        if observersEnabled {
-            if let s = source{
-                for o in sourceObservers {
-                    o(source: s)
+    public func removeAllObservers(){
+        mutex.sync {
+            newSourceObservers.removeAll()
+            destinationObservers.removeAll()
+            
+            root?.removeAllObservers()
+            dirtyObservers.removeAll()
+            enablingObservers.removeAll()
+        }
+    }
+    
+    //
+    // MARK: - main filter chain operations
+    //
+    @discardableResult public func add<T:IMPFilter>(filter: IMPFilter,
+                                       fail: FailHandler?=nil,
+                                       complete: CompleteHandler?=nil) -> T {
+        filter.root = self
+        return appendFilter(filter: FilterContainer(cifilter: nil, filter: filter, complete:complete),
+                            fail: { (error) in
+                                filter.root = nil
+                                fail?(error)
+        })
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(filter: IMPFilter,
+                                          at index: Int,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        filter.root = self
+        return insertFilter(filter: FilterContainer(cifilter: nil, filter: filter, complete:complete), index:index,
+                            fail: { (error) in
+                                filter.root = nil
+                                fail?(error)
+        })
+    }
+    
+    
+    @discardableResult public func insert<T:IMPFilter>(filter: IMPFilter,
+                                          after filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        let (index, contains) = findFilter(name: filterName, isAfter: true, fail: fail)
+        if contains {
+            filter.root = self
+            return insertFilter(filter: FilterContainer(cifilter: nil, filter: filter, complete:complete), index:index,
+                                fail: { (error) in
+                                    filter.root = nil
+                                    fail?(error)
+            })
+        }
+        return self as! T
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(filter: IMPFilter,
+                                          before filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        
+        let (index, contains) = findFilter(name: filterName, isAfter: false, fail: fail)
+        if contains {
+            filter.root = self
+            return insertFilter(filter: FilterContainer(cifilter: nil, filter: filter, complete:complete), index:index,
+                                fail: { (error) in
+                                    filter.root = nil
+                                    fail?(error)
+            })
+        }
+        return self as! T
+    }
+    
+    
+    //
+    // MARK: - create filters chain
+    //
+    @discardableResult public func add<T:IMPFilter>(function: IMPFunction,
+                                       fail: FailHandler?=nil,
+                                       complete: CompleteHandler?=nil) -> T {
+        let filter = IMPCoreImageMTLKernel.register(function: function)
+        return appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    }
+    
+    @discardableResult public func add<T:IMPFilter>(shader: IMPShader,
+                                       fail: FailHandler?=nil,
+                                       complete: CompleteHandler?=nil) -> T {
+        let filter = IMPCoreImageMTLShader.register(shader: shader)
+        return appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    }
+    
+    @discardableResult public func add<T:IMPFilter>(function name: String,
+                                       fail: FailHandler?=nil,
+                                       complete: CompleteHandler?=nil) -> T {
+        return add(function: IMPFunction(context: context, kernelName: name), fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func add<T:IMPFilter>(vertex: String, fragment: String,
+                                       fail: FailHandler?=nil,
+                                       complete: CompleteHandler?=nil) -> T {
+        return add(shader: IMPShader(context: context, vertexName: vertex, fragmentName: fragment), fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func add<T:IMPFilter>(filter: CIFilter,
+                                       fail: FailHandler?=nil,
+                                       complete: CompleteHandler?=nil)  -> T {
+        return appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    }
+    #if os(iOS)
+    public func add<T:IMPFilter>(mps: MPSUnaryImageKernel, withName: String? = nil,
+                    fail: FailHandler?=nil,
+                    complete: CompleteHandler?=nil)   {
+        if let newName = withName {
+            mps.label = newName
+        }
+        guard let _ = mps.label else {
+            fatalError(" *** IMPFilter add(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
+        }
+        let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
+        appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    }
+    
+    public func add<T:IMPFilter>(mps: IMPMPSUnaryKernelProvider,
+                    fail: FailHandler?=nil,
+                    complete: CompleteHandler?=nil)   {
+        let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
+        appendFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), fail: fail)
+    }
+    #endif
+    
+    
+    //
+    // MARK: - insertion at index
+    //
+    @discardableResult public func insert<T:IMPFilter>(function: IMPFunction,
+                                          at index: Int,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        let filter = IMPCoreImageMTLKernel.register(function: function)
+        return insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(shader: IMPShader,
+                                          at index: Int,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        let filter = IMPCoreImageMTLShader.register(shader: shader)
+        return insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(function name: String,
+                                          at index: Int,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        return insert(function: IMPFunction(context:context, kernelName:name),
+                      at: index, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(vertex: String, fragment: String,
+                                          at index: Int,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        return insert(shader: IMPShader(context:context, vertexName: vertex, fragmentName:fragment),
+                      at: index, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(filter: CIFilter,
+                                          at index: Int,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        return insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    }
+    
+    #if os(iOS)
+    @discardableResult public func insert<T:IMPFilter>(mps: MPSUnaryImageKernel, withName: String? = nil,
+                       at index: Int,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        if let newName = withName {
+            mps.label = newName
+        }
+        guard let _ = mps.label else {
+            fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
+        }
+        let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
+        return insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(mps: IMPMPSUnaryKernelProvider,
+                       at index: Int,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
+        return insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+    }
+    #endif
+    
+    //
+    // MARK: - insertion before / after
+    //
+    
+    // Insert CIFilter before/after
+    @discardableResult public func insert<T:IMPFilter>(filter: CIFilter,
+                                          before filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        
+        let (index, contains) = findFilter(name: filterName, isAfter: false, fail: fail)
+        if contains {
+            return insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+        }
+        return self as! T
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(filter: CIFilter,
+                                          after filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        
+        let (index, contains) = findFilter(name: filterName, isAfter: true, fail: fail)
+        if contains {
+            return insertFilter(filter: FilterContainer(cifilter: filter, filter: nil, complete:complete), index:index, fail: fail)
+        }
+        return self as! T
+    }
+    
+    // Insert IMPFunction before/after
+    @discardableResult public func insert<T:IMPFilter>(function: IMPFunction,
+                                          after filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        let filter = IMPCoreImageMTLKernel.register(function: function)
+        return insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    }
+    
+    // Insert IMPFunction before/after
+    @discardableResult public func insert<T:IMPFilter>(shader: IMPShader,
+                                          after filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        let filter = IMPCoreImageMTLShader.register(shader: shader)
+        return insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(function: IMPFunction,
+                                          before filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        let filter = IMPCoreImageMTLKernel.register(function: function)
+        return insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(shader: IMPShader,
+                                          before filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        let filter = IMPCoreImageMTLShader.register(shader: shader)
+        return insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    }
+    
+    // Insert IMPFunction by name before/after
+    @discardableResult public func insert<T:IMPFilter>(function name: String,
+                                          after filterName: String,
+                                          fail: FailHandler?=nil,
+                                          complete: CompleteHandler?=nil) -> T {
+        let function = IMPFunction(context: context, kernelName: name)
+        let filter = IMPCoreImageMTLKernel.register(function: function)
+        return insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(vertex: String, fragment: String,
+                       after filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) -> T {
+        return insert(shader: IMPShader(context:context, vertexName:vertex, fragmentName:fragment),
+                      after: filterName, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(function name: String,
+                       before filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) -> T {
+        let function = IMPFunction(context: context, kernelName: name)
+        let filter = IMPCoreImageMTLKernel.register(function: function)
+        return insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(vertex: String, fragment: String,
+                       before filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) -> T {
+        return insert(shader: IMPShader(context:context, vertexName:vertex, fragmentName:fragment),
+                      before: filterName, fail: fail, complete: complete)
+    }
+    
+    // Insert MPS before/after
+    #if os(iOS)
+    @discardableResult public func insert<T:IMPFilter>(mps: MPSUnaryImageKernel, withName: String? = nil,
+                       after filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        if let newName = withName {
+            mps.label = newName
+        }
+        guard let _ = mps.label else {
+            fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
+        }
+        let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
+        return insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(mps: IMPMPSUnaryKernelProvider,
+                       after filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
+        return insert(filter: filter, after: filterName, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(mps: MPSUnaryImageKernel, withName: String? = nil,
+                       before filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        if let newName = withName {
+            mps.label = newName
+        }
+        guard let _ = mps.label else {
+            fatalError(" *** IMPFilter insert(mps:withName:): mps kernel should contain defined label property or withName should be specified...")
+        }
+        let filter = IMPCoreImageMPSUnaryKernel.register(mps: IMPMPSUnaryKernel.make(kernel: mps))
+        return insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    }
+    
+    @discardableResult public func insert<T:IMPFilter>(mps: IMPMPSUnaryKernelProvider,
+                       before filterName: String,
+                       fail: FailHandler?=nil,
+                       complete: CompleteHandler?=nil) {
+        let filter = IMPCoreImageMPSUnaryKernel.register(mps: mps)
+        return insert(filter: filter, before: filterName, fail: fail, complete: complete)
+    }
+    #endif
+    
+    //
+    // MARK: - remove filter from chain
+    //
+    public func remove(function: IMPFunction) {
+        remove(filter: function.name)
+    }
+    
+    public func remove(shader: IMPShader) {
+        remove(filter: shader.name)
+    }
+    
+    public func remove(filter name: String){
+        var index = 0
+        for f in coreImageFilterList{
+            if let filter = f.cifilter {
+                if filter.name == name {
+                    coreImageFilterList.remove(at: index)
+                    break
                 }
             }
+            else if let filter = f.filter {
+                //if let fname = filter.name {
+                if filter.name == name {
+                    coreImageFilterList.remove(at: index)
+                    break
+                }
+                //}
+            }
+            index += 1
+        }
+    }
+    
+    #if os(iOS)
+    public func remove(mps: MPSUnaryImageKernel) {
+        guard let name = mps.label else {
+            fatalError(" *** IMPFilter: remove(mps:) mps kernel should contain defined label property...")
+        }
+        remove(filter: name)
+    }
+    
+    public func remove(mps: IMPMPSUnaryKernelProvider) {
+        remove(filter: mps.name)
+    }
+    #endif
+    
+    public func remove(filter: CIFilter) {
+        remove(filter: filter.name)
+    }
+    
+    public func remove(filter matchedFilter:IMPFilter){
+        var index = 0
+        for f in coreImageFilterList{
+            if let filter = f.filter {
+                if filter == matchedFilter {
+                    coreImageFilterList.remove(at: index)
+                    break
+                }
+            }
+            index += 1
+        }
+    }
+    
+    public func removeAll(){
+        coreImageFilterList.removeAll()
+    }
+    
+    //
+    // MARK: - internal
+    //
+    internal func executeNewSourceObservers(source:IMPImageProvider?){
+        let observers = self.mutex.sync { Array(self.newSourceObservers) } 
+        context.runOperation(.async) {            
+            for hash in observers {
+                hash.observer(source)
+            }            
         }
     }
     
     internal func executeDestinationObservers(destination:IMPImageProvider?){
         if observersEnabled {
             if let d = destination {
-                for o in destinationObservers {
-                    o(destination: d)
-                }
-            }
-        }
-    }
-    
-    var passThroughKernel:IMPFunction?
-    
-    public func apply() -> IMPImageProvider {
-        return doApply()
-    }
-    
-    func newDestinationtexture(destination provider:IMPImageProvider, source input: MTLTexture) -> (MTLTexture, Int, Int) {
-
-        var width  = input.width
-        var height = input.height
-        
-        if let s = self.destinationSize {
-            width = s.width
-            height = s.height
-        }
-
-        if provider.texture?.width != width || provider.texture?.height != height
-            ||
-        provider === source
-        {
-            let descriptor = MTLTextureDescriptor.texture2DDescriptorWithPixelFormat(
-                input.pixelFormat,
-                width: width, height: height, mipmapped: false)
-            
-            if provider.texture != nil {
-                provider.texture?.setPurgeableState(MTLPurgeableState.Empty)
-            }
-            
-            return (context.device.newTextureWithDescriptor(descriptor), width, height)
-        }
-        else {
-
-            return (provider.texture!, provider.texture!.width, provider.texture!.height)
-        }
-    }
-    
-    public func main(source source: IMPImageProvider , destination provider:IMPImageProvider) -> IMPImageProvider? {
-        return nil
-    }
-    
-    func internal_main(source source: IMPImageProvider , destination provider:IMPImageProvider) -> IMPImageProvider {
-        
-        var currentFilter = self
-        
-        var currrentProvider:IMPImageProvider = source
-
-        if var input = source.texture {
-            
-            if functionList.count > 0 {
-                
-                var width:Int
-                var height:Int
-                let texture:MTLTexture
-                
-                (texture, width, height) = self.newDestinationtexture(destination: provider, source: input)
-                
-                provider.texture = texture
-                
-                if let output = provider.texture {
-                    
-                    //
-                    // Functions
-                    //
-                    
-                    for function in self.functionList {
-                        
-                        self.context.execute { (commandBuffer) -> Void in
-                            
-                            let threadgroupCounts = MTLSizeMake(function.groupSize.width, function.groupSize.height, 1);
-                            let threadgroups = MTLSizeMake(
-                                (width  + threadgroupCounts.width ) / threadgroupCounts.width ,
-                                (height + threadgroupCounts.height) / threadgroupCounts.height,
-                                1);
-                            
-                            let commandEncoder = commandBuffer.computeCommandEncoder()
-                            
-                            commandEncoder.setComputePipelineState(function.pipeline!)
-                            
-                            commandEncoder.setTexture(input, atIndex:0)
-                            commandEncoder.setTexture(output, atIndex:1)
-                            
-                            self.configure(function, command: commandEncoder)
-                            
-                            commandEncoder.dispatchThreadgroups(threadgroups, threadsPerThreadgroup:threadgroupCounts)
-                            commandEncoder.endEncoding()
-                            
-                        }
-                        
-                            input = output
+                let observers = self.mutex.sync { Array(self.destinationObservers) }                     
+                context.runOperation(.async) {
+                    for hash in observers {
+                        hash.observer(d)
                     }
-                    
-                    currrentProvider = provider
                 }
-            }
-            
-            
-            if let p = main(source: currrentProvider, destination: provider) {
-                currrentProvider = p
-            }
-            
-            //
-            // Filter chains...
-            //
-            for filter in filterList {
-                filter.source = currrentProvider
-                currentFilter = filter
-                currrentProvider = currentFilter.destination!
-            }
+            }                            
         }
-        
-        return  currrentProvider
     }
     
-    private lazy var _destination:IMPImageProvider = {
-        return IMPImageProvider(context: self.context)
-    }()
-
-    func doApply() -> IMPImageProvider {
-        
-        if let s = self.source{
-            if dirty {
-                
-                if functionList.count == 0 && filterList.count == 0 {
-                    
-                    //
-                    // copy source to destination
-                    //
-                    
-                    //passThroughKernel = passThroughKernel ?? IMPFunction(context: self.context, name: IMPSTD_PASS_KERNEL)
-                    //addFunction(passThroughKernel!)
+    internal func executeDirtyObservers(filter:IMPFilter){
+        if observersEnabled {
+            root?.executeDirtyObservers(filter: self)
+            let observers = self.mutex.sync { Array(self.dirtyObservers) }
+            context.runOperation(.async) {
+                for hash in observers {
+                    hash.observer(filter,filter.source,filter._destination)
                 }
-                
-                executeSourceObservers(source)
-                
-                _destination = internal_main(source:  s, destination: _destination)
-                
-                executeDestinationObservers(_destination)
-            }
+            }                
         }
-        
-        dirty = false
-        
-        return _destination
     }
-
-    deinit {
-        _destination.texture = nil
-        source = nil
+    
+    internal func executeEnablingObservers(filter:IMPFilter){
+        if observersEnabled {
+            let observers = self.mutex.sync { Array(self.enablingObservers) }
+            context.runOperation(.async) {
+                for hash in observers {
+                    hash.observer(filter,filter.source,filter._destination)
+                }
+            }                
+        }
     }
+    
+    
+    //
+    // MARK: - private
+    //
+    
+    private var root:IMPFilter?
+    
+    private lazy var _destination:IMPImageProvider   = IMPImage(context: self.context)
+    
+    private var newSourceObservers   = [IMPObserverHash<SourceUpdateHandler>]()
+    private var destinationObservers = [IMPObserverHash<UpdateHandler>]()
+    
+    private var dirtyObservers       = [IMPObserverHash<FilterHandler>]()
+    private var enablingObservers    = [IMPObserverHash<FilterHandler>]()
+    
+    private var coreImageFilterList:[FilterContainer] = [FilterContainer]()
+    
+    public struct FilterContainer: Equatable {
+        
+        var cifilter:CIFilter?        = nil
+        var filter:IMPFilter?         = nil
+        var complete:CompleteHandler? = nil
+        
+        public static func == (lhs: FilterContainer, rhs: FilterContainer) -> Bool {
+            if let lf = lhs.cifilter, let rf = rhs.cifilter {
+                return lf.name == rf.name
+            }
+            else if let lf = lhs.filter, let rf = rhs.filter {
+                return lf == rf
+            }
+            return false
+        }
+    }
+    
+    private func appendFilter<T:IMPFilter>(filter:FilterContainer,
+                              fail: FailHandler?=nil) -> T {
+        if coreImageFilterList.contains(filter) == false {
+            coreImageFilterList.append(filter)
+        }
+        else{
+            fail?(.AlreadyExist)
+        }
+        return self as! T
+    }
+    
+    private func insertFilter<T:IMPFilter>(filter:FilterContainer,
+                              index: Int,
+                              fail: FailHandler?=nil) -> T {
+        if coreImageFilterList.contains(filter) == false {
+            coreImageFilterList.insert(filter, at: index)
+        }
+        else{
+            fail?(.AlreadyExist)
+        }
+        return self as! T
+    }
+    
+    private func findFilter(name: String, isAfter: Bool, fail: FailHandler?=nil) -> (Int,Bool) {
+        var index = 0
+        var contains = false
+        for f in coreImageFilterList{
+            if let filter = f.filter{
+                if filter.name == name {
+                    contains = true
+                    if isAfter {
+                        index += 1
+                    }
+                    break
+                }
+            } else if let filter = f.cifilter {
+                if filter.name == name {
+                    contains = true
+                    if isAfter {
+                        index += 1
+                    }
+                    break
+                }
+            }
+            index += 1
+        }
+        if !contains {
+            fail?(.NotFound)
+            return (0,false)
+        }
+        return (index,true)
+    }
+    
+    private lazy var resampleKernel:IMPFunction = IMPFunction(context: self.context/*, name: self.name + "Common resampler kernel"*/)
+    private lazy var resampleShader:IMPShader = IMPShader(context: self.context/*, name: self.name + "Common resampler shader"*/)
+    
+    private lazy var resampler:IMPCIFilter = {
+        let v = self.prefersRendering ?
+            IMPCoreImageMTLShader.register(shader: self.resampleShader)  :
+            IMPCoreImageMTLKernel.register(function: self.resampleKernel)
+        v.source = IMPImage(context: self.context)
+        return v
+    }()
 }

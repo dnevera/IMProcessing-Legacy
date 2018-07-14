@@ -1,237 +1,438 @@
 //
-//  IMPView.swift
-//  IMProcessing
+//  IMPMetalView.swift
+//  IMProcessingUI
 //
-//  Created by denis svinarchuk on 15.12.15.
-//  Copyright © 2015 IMetalling. All rights reserved.
+//  Created by Denis Svinarchuk on 20/12/16.
+//  Copyright © 2016 Dehancer. All rights reserved.
 //
+
+#if os(iOS)
+    import UIKit
+    let screenScale = UIScreen.main.scale
+#else
+let screenScale = NSScreen.main?.backingScaleFactor ?? 1
+#endif
+
+import MetalKit
 
 #if os(iOS)
     
     import UIKit
-    import QuartzCore
     public typealias IMPViewBase = UIView
     
 #else
     
     import AppKit
     public typealias IMPViewBase = NSView
-    public typealias IMPDragOperationHandler = ((files:[String]) -> Bool)
+    public typealias IMPDragOperationHandler = ((_ files:[String]) -> Bool)
     
 #endif
-import Metal
-import GLKit.GLKMath
-import QuartzCore
 
-/// Image Metal View presentation
-public class IMPView: IMPViewBase, IMPContextProvider {
+fileprivate class IMPExecuteOperation: Operation {
+    fileprivate var mainBlock: ((_ this:IMPExecuteOperation)->Void)? 
     
-    static private let viewVertexData:[Float] = [
-        -1.0,  -1.0,  0.0,  1.0,
-        1.0,  -1.0,  1.0,  1.0,
-        -1.0,   1.0,  0.0,  0.0,
-        1.0,   1.0,  1.0,  0.0,
-        ]
+    fileprivate init(mainBlock: @escaping ((_ this:IMPExecuteOperation)->Void)) {
+        self.mainBlock = mainBlock
+        super.init()
+    }
+    
+    fileprivate override func main() {
+        if self.isCancelled { return }
+        mainBlock?(self)
+    }       
+}
 
-    /// Current Metal device context
-    public var context:IMPContext!
-    
-    public var ignoreDeviceOrientation:Bool = false
-    
-    #if os(iOS)
-    public var animationDuration:CFTimeInterval  = UIApplication.sharedApplication().statusBarOrientationAnimationDuration
-    #else
-    public var animationDuration:CFTimeInterval  = 0
-    #endif
-    
-    /// Current image filter
-    public var filter:IMPFilter?{
-        didSet{
-            
-            filter?.addNewSourceObserver(source: { (source) in
-                if self.isPaused {
-                    self.refresh()
-                }
-            })
-            
-            filter?.addDirtyObserver({ () -> Void in
-                self.layerNeedUpdate = true
-            })
-            
-            #if os(iOS)
-            filter?.addDestinationObserver(destination: { (destination) in
-                if !self.ignoreDeviceOrientation {
-                    self.setOrientation(UIDevice.currentDevice().orientation, animate: false)
-                }
-            })
-            #endif
-        }
-    }
-    
-    public var isPaused:Bool = false {
-        didSet{
-            self.timer?.paused = isPaused
-        }
-    }
-    
-    
-    public init(context contextIn:IMPContext, frame: NSRect=CGRect(x: 0, y: 0, width: 100, height: 100)) {
-        super.init(frame: frame)
-        context = contextIn
-        defer{
-            self.configure()
-        }
-    }
-    
-    public convenience override init(frame frameRect: NSRect)  {
-        self.init(context: IMPContext(), frame:frameRect)
-    }
-    
-    public convenience init(filter:IMPFilter, frame:NSRect=CGRect(x: 0, y: 0, width: 100, height: 100)){
-        self.init(context:filter.context,frame:frame)
-        defer{
-            self.filter = filter
-        }
-    }
-    
-    public required init?(coder: NSCoder) {
-        super.init(coder: coder)
-        context = IMPContext()
-        defer{
-            self.configure()
-        }
-    }
-    
-    #if os(OSX)
-    public var backgroundColor:IMPColor = IMPColor.clearColor(){
-        didSet{
-            metalLayer.backgroundColor = backgroundColor.CGColor
-        }
-    }
-    #else
-    override public var backgroundColor:UIColor? {
-        didSet{
-            super.backgroundColor = backgroundColor
-            if let c = backgroundColor?.CGColor{
-                metalLayer.backgroundColor = c
+
+fileprivate extension OperationQueue {
+       
+    fileprivate func addBackgroundContext(_ context:IMPContext, background:@escaping (()->Void)) -> Operation {
+        let operation = IMPExecuteOperation { this in                                    
+            if this.isCancelled { return }            
+            context.runOperation(.async){
+                background()
             }
+            if this.isCancelled { return }            
         }
+        
+        addOperation(operation)        
+        return operation
     }
-    #endif
-    
-    internal lazy var originalBounds:CGRect = self.bounds
-    private var pipeline:MTLComputePipelineState?
-    private func configure(){
-        
-        #if os(iOS)
-            metalLayer = CAMetalLayer()
-            layer.addSublayer(metalLayer)
-        #else
-            wantsLayer = true
-            metalLayer = CAMetalLayer()
-            metalLayer.colorspace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB)!
-            layerContentsRedrawPolicy = .DuringViewResize
-            layer?.addSublayer(metalLayer)
-            
-            registerForDraggedTypes([NSFilenamesPboardType])
-            
-        #endif
-        
-        let library:MTLLibrary!  = self.context.device.newDefaultLibrary()
-        
-        let function:MTLFunction! = library.newFunctionWithName(IMPSTD_VIEW_KERNEL)
-        
-        pipeline = try! self.context.device.newComputePipelineStateWithFunction(function)
-    }
-    
-    #if os(iOS)
-    private var timer:CADisplayLink!
-    #else
-    private var timer:IMPDisplayLink!
-    #endif
-    
-    internal var metalLayer:CAMetalLayer!{
-        didSet{
-            metalLayer.device = self.context.device
-            metalLayer.framebufferOnly = false
-            metalLayer.pixelFormat = .BGRA8Unorm
-            
-            originalBounds = self.bounds
-            metalLayer.bounds = originalBounds
-            
-            #if os(iOS)
-                metalLayer.backgroundColor = self.backgroundColor?.CGColor
-            #else
-                metalLayer.backgroundColor = self.backgroundColor.CGColor
-            #endif
-            
-            #if os(iOS)
-                if self.timer != nil {
-                    self.timer.removeFromRunLoop(NSRunLoop.currentRunLoop(), forMode: NSRunLoopCommonModes)
-                }
-                self.timer = CADisplayLink(target: self, selector: #selector(self.refresh))
-            #else
-                self.timer = IMPDisplayLink.sharedInstance
-                self.timer?.addView(self)
-            #endif
-            self.timer?.paused = self.isPaused
-            
-            #if os(iOS)
-                self.timer.addToRunLoop(NSRunLoop.currentRunLoop(), forMode:NSRunLoopCommonModes)
-            #endif
+}
 
-            layerNeedUpdate = true
+extension DispatchQueue {
+    // This method will dispatch the `block` to self.
+    // If `self` is the main queue, and current thread is main thread, the block
+    // will be invoked immediately instead of being dispatched.
+    func safeAsync(_ block: @escaping ()->()) {
+        if self === DispatchQueue.main && Thread.isMainThread {
+            NSLog(" @@@ IMPView safeAsync \(Thread.isMainThread, self)")
+            block()
+        } else {
+            async { block() }
         }
     }
+}
+
+open class IMPView: MTKView {
     
-    deinit{
-        #if os(OSX)
-            timer?.removeView(self)
-        #endif
-    }
+    public var viewReadyHandler:(()->Void)?
+    public var viewBufferCompleteHandler:((_ image:IMPImageProvider)->Void)?
+    public var viewUpdateDrawbleHandler:((_ size:NSSize)->Void)?
+
+    open func configure(){}
     
-    private let inflightSemaphore = dispatch_semaphore_create(4)
-    
-    
-    #if os(iOS)
-    public var screenSize:CGSize{
-        get {
-            let screen = self.window?.screen ?? UIScreen.mainScreen()
-            return screen.bounds.size
-        }
-    }
-    #endif
-    
-    public var scaleFactor:Float{
+    public static var scaleFactor:Float{
         get {
             #if os(iOS)
                 return  Float(UIScreen.mainScreen().scale)
             #else
-                let screen = self.window?.screen ?? NSScreen.mainScreen()
+                let screen = NSScreen.main
                 let scaleFactor = screen?.backingScaleFactor ?? 1.0
                 return Float(scaleFactor)
             #endif
         }
     }
     
-    public var viewReadyHandler:(()->Void)?
+    #if os(iOS)
+        public var renderingEnabled = false
+    #else
+        public typealias MouseEventHandler = ((_ event:NSEvent, _ location:NSPoint, _ view:NSView)->Void)
+        public let renderingEnabled = false
+    #endif
+    
+    public var exactResolutionEnabled = true {
+        didSet{
+            needProcessing = true            
+        }
+    }
+    
+    open weak var filter:IMPFilter? = nil {
+        willSet{
+            processingPhase?.cancel()
+            needProcessing = false
+            filter?.removeObserver(newSource: sourceObserver)
+            filter?.removeObserver(destinationUpdated: destinationObserver)
+            filter?.removeObserver(dirty: dirtyObserver)
+        }
+        didSet {         
+            guard let context = self.filter?.context else { return } 
+            device = context.device 
+            filter?.addObserver(newSource: sourceObserver)            
+            filter?.addObserver(destinationUpdated: destinationObserver)            
+            filter?.addObserver(dirty: dirtyObserver)
+            needProcessing = true            
+        }
+    }        
+
+    private lazy var sourceObserver:IMPFilter.SourceUpdateHandler = {
+        let handler:IMPFilter.SourceUpdateHandler = { (source) in
+            self.needProcessing = true
+        }
+        return handler
+    }()
+    
+    private var currentDestination:IMPImageProvider?
+    private lazy var destinationObserver:IMPFilter.UpdateHandler = {
+        let handler:IMPFilter.UpdateHandler = { (destination) in
+            self.currentDestination = destination
+            self.updateDrawble(size: destination.size)
+            self.needUpdateDisplay = true 
+        }
+        return handler
+    }()
+    
+    private lazy var dirtyObserver:IMPFilter.FilterHandler = {
+        let handler:IMPFilter.FilterHandler = { (filter, source, destintion) in
+            self.needProcessing = true
+        } 
+        return handler
+    }()
+            
+    private var isolatedFrame = NSZeroRect
+    open override var frame: NSRect {
+        didSet{
+            isolatedFrame = frame
+            needUpdateDisplay = true 
+        }
+    }
+        
+    private func updateDrawble(size: NSSize?, need processing:Bool = true)  {
+                             
+        if let size = size {
+                     
+                  
+            if exactResolutionEnabled || isolatedFrame.size == NSZeroSize {
+                drawableSize = size
+            }
+            else {
+                // down scale targetTexture
+                let newSize = NSSize(width: isolatedFrame.size.width * screenScale,
+                                     height: isolatedFrame.size.height * screenScale
+                )
+                let scale = fmax(fmin(fmin(newSize.width/size.width, newSize.height/size.height),1),0.01)
+                drawableSize = NSSize(width: size.width * scale, height: size.height * scale)
+            }
+            
+            viewUpdateDrawbleHandler?(size)
+        }                       
+    }
+            
+    public init(frame frameRect: CGRect) {
+        super.init(frame: frameRect, device: nil)
+        defer {
+            _init_()            
+        }
+    }
+    
+    required public init(coder: NSCoder) {
+        super.init(coder: coder)
+        guard device != nil else {
+            fatalError("The system does not support any MTL devices...")
+        }
+        defer {
+            _init_()
+        }
+    }
+    
+    public var context:IMPContext? {
+        return IMPView.__context //filter?.context
+    }
+    
+    var needProcessing = false {
+        didSet{
+            if needProcessing {
+                processing(size: drawableSize)
+            }
+        }
+    }
+    
+    var frameCounter = 0
+    
+    var frameImage:IMPImageProvider? 
+
+    private let __operation:OperationQueue = {
+        let o = OperationQueue()
+        o.qualityOfService = .utility
+        o.maxConcurrentOperationCount = 1
+        o.name = String(format: "com.improcessing.IMPView-%08x%08x", arc4random(), arc4random())
+        return o
+    }()
+    
+    public var operation:OperationQueue { 
+        return  __operation         
+    }
+
+    deinit {
+        filter = nil
+        processingPhase?.cancel()
+    }
+        
+    private static let __context = IMPContext()
+    
+    private var processingPhase:DispatchWorkItem?
+    private func processing(size: NSSize, observersEnabled:Bool = true)  {
+        
+        processingPhase?.cancel()
+
+        guard let context = self.context else {
+            return
+        }
+        
+        func proc(){            
+            needProcessing = false
+            
+            guard let filter = self.filter else { return }
+            
+            let oe = filter.observersEnabled 
+            filter.observersEnabled = observersEnabled
+            frameImage = filter.destination
+            filter.observersEnabled = oe                                
+            
+            needUpdateDisplay = true                         
+        }
+        
+        processingPhase = context.runOperation(.async, { 
+            proc()
+        })        
+    }
+
+    lazy var viewPort:MTLViewport = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
+    
+    open override var drawableSize: CGSize {
+        didSet{
+            viewPort = MTLViewport(originX: 0, originY: 0, width: Double(self.drawableSize.width), height: Double(self.drawableSize.height), znear: 0, zfar: 1)
+        }
+    }
+    
+    func refresh(rect: CGRect){
+
+        guard let context = self.filter?.context else { return }
+                
+        context.wait()
+
+        guard 
+            let commandBuffer = context.commandBuffer,
+            let sourceTexture = frameImage?.texture,
+            let targetTexture = currentDrawable?.texture else {
+                context.resume()
+                return                 
+        }
+                                   
+        commandBuffer.addCompletedHandler{ (commandBuffer) in
+            if self.isFirstFrame  {
+                self.frameCounter += 1
+            }
+            context.resume()
+            self.viewBufferCompleteHandler?(self.frameImage!)
+        }        
+        
+        if renderingEnabled == false 
+            &&
+            /*sourceTexture.cgsize == drawableSize  
+            &&*/
+            sourceTexture.pixelFormat == targetTexture.pixelFormat
+        {
+            guard let encoder = commandBuffer.makeBlitCommandEncoder() else {return }
+            encoder.copy(
+                from: sourceTexture,
+                sourceSlice: 0,
+                sourceLevel: 0,
+                sourceOrigin: MTLOrigin(x:0,y:0,z:0),
+                sourceSize: sourceTexture.size,
+                to: targetTexture,
+                destinationSlice: 0,
+                destinationLevel: 0,
+                destinationOrigin: MTLOrigin(x:0,y:0,z:0))
+            
+            encoder.endEncoding()        
+        }
+        else {
+            renderPassDescriptor.colorAttachments[0].texture     = targetTexture
+            
+            guard let encoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else { return }
+            
+            if let pipeline = renderPipeline {
+                
+                encoder.setRenderPipelineState(pipeline)
+                
+                encoder.setVertexBuffer(vertexBuffer, offset:0, index:0)
+                encoder.setFragmentTexture(sourceTexture, index:0)
+                //encoder.setViewport(viewPort)
+                
+                encoder.drawPrimitives(type: .triangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
+                encoder.endEncoding()
+            }
+        }
+        
+        commandBuffer.present(currentDrawable!)        
+        commandBuffer.commit()
+                
+        if self.frameCounter > 0  && self.isFirstFrame {
+            self.isFirstFrame = false
+            if self.viewReadyHandler !=  nil {
+                self.viewReadyHandler!()
+            }
+        }
+    }
+
+    fileprivate let processingLink:IMPDisplayLink = IMPDisplayLink()    
+   
+    fileprivate var needUpdateDisplay:Bool = false {
+        didSet{
+            if needUpdateDisplay {
+                processingLink.isPaused = false
+            }
+        }
+    }
+    
+    #if os(iOS)
+    public override func setNeedsDisplay() {
+        needUpdateDisplay = true
+        if isPaused {
+            super.setNeedsDisplay()
+        }
+    }
+    #else
+    public func setNeedsDisplay() {
+        needUpdateDisplay = true
+    }
+    
+    open override var needsDisplay: Bool {
+        didSet{
+            needProcessing = true
+        }
+    }
+    
+    #endif
+    
+    private func _init_() {
+        clearColor = MTLClearColorMake(1, 1, 1, 0)
+        framebufferOnly = false
+        autoResizeDrawable = false
+        #if os(iOS)
+            contentMode = .scaleAspectFit
+        #elseif os(OSX)
+            postsFrameChangedNotifications = true
+        #endif
+        enableSetNeedsDisplay = false
+        colorPixelFormat = .bgra8Unorm
+        delegate = self  
+        
+        processingLink.addObserver { (timev) in
+            self.draw()
+            self.processingLink.isPaused = true
+        }
+        
+        isPaused = true 
+        isolatedFrame = frame
+        configure()
+    }
+            
+    
+    open override var preferredFramesPerSecond: Int {
+        didSet{
+            processingLink.preferredFramesPerSecond = preferredFramesPerSecond
+        }
+    }
+    
     private var isFirstFrame = true
     
-    lazy var vertexBuffer:MTLBuffer = {
-        let v = self.context.device.newBufferWithBytes(viewVertexData, length:sizeof(Float)*viewVertexData.count, options:.CPUCacheModeDefaultCache)
-        v.label = "Vertices"
+    lazy var renderPassDescriptor:MTLRenderPassDescriptor =  {
+        let d = MTLRenderPassDescriptor()
+        d.colorAttachments[0].loadAction  = .clear
+        d.colorAttachments[0].storeAction = .store
+        d.colorAttachments[0].clearColor  =  self.clearColor
+        return d
+    }()
+    
+    lazy var vertexBuffer:MTLBuffer? = {
+        guard let context =  self.context else { return nil }
+        let v = context.device.makeBuffer(bytes: IMPView.viewVertexData, length: MemoryLayout<Float>.size*IMPView.viewVertexData.count, options: [])
+        v?.label = "Vertices"
         return v
     }()
-
+    
+    lazy var fragmentfunction:MTLFunction? = self.context?.defaultLibrary.makeFunction(name: "fragment_passview")
+    
     lazy var renderPipeline:MTLRenderPipelineState? = {
         do {
+            guard let context = self.context else { return nil }
             let descriptor = MTLRenderPipelineDescriptor()
             
-            descriptor.colorAttachments[0].pixelFormat = .BGRA8Unorm
-            descriptor.vertexFunction = self.context.defaultLibrary.newFunctionWithName("vertex_passview")
-            descriptor.fragmentFunction = self.context.defaultLibrary.newFunctionWithName("fragment_passview")
+            descriptor.colorAttachments[0].pixelFormat = self.colorPixelFormat
             
-            return try self.context.device.newRenderPipelineStateWithDescriptor(descriptor)
+            guard let vertex = context.defaultLibrary.makeFunction(name: "vertex_passview") else {
+                fatalError("IMPView error: vertex function 'vertex_passview' is not found in: \(String(describing: self.context?.defaultLibrary.functionNames))")
+            }
+            
+            guard let fragment = context.defaultLibrary.makeFunction(name: "fragment_passview") else {
+                fatalError("IMPView error: vertex function 'fragment_passview' is not found in: \(String(describing: self.context?.defaultLibrary.functionNames))")
+            }
+            
+            descriptor.vertexFunction   = vertex
+            descriptor.fragmentFunction = fragment
+            
+            return try context.device.makeRenderPipelineState(descriptor: descriptor)
         }
         catch let error as NSError {
             NSLog("IMPView error: \(error)")
@@ -239,415 +440,107 @@ public class IMPView: IMPViewBase, IMPContextProvider {
         }
     }()
     
-    #if os(iOS)
+    static private let viewVertexData:[Float] = [
+        -1.0,  -1.0,  0.0,  1.0,
+        1.0,  -1.0,  1.0,  1.0,
+        -1.0,   1.0,  0.0,  0.0,
+        1.0,   1.0,  1.0,  0.0,
+        ]
+    
+    #if os(OSX)
 
-    func correctImageOrientation(inTransform:CATransform3D) -> CATransform3D {
-        
-        var angle:CGFloat = 0
-        
-        if let orientation = filter?.source?.orientation{
-            
-            switch orientation {
-                
-            case .Left, .LeftMirrored:
-                angle = Float(90.0).radians.cgfloat
-                
-            case .Right, .RightMirrored:
-                angle = Float(-90.0).radians.cgfloat
-                
-            case .Down, .DownMirrored:
-                angle = Float(180.0).radians.cgfloat
-                
-            default: break
-                
-            }
-        }
-        
-        return CATransform3DRotate(inTransform, angle, 0.0, 0.0, -1.0)
-    }
-
-    private var currentDeviceOrientation = UIDeviceOrientation.Unknown
-    
-    public var orientation:UIDeviceOrientation{
-        get{
-            return currentDeviceOrientation
-        }
-        set{
-            setOrientation(orientation, animate: false)
-        }
-    }
-    
-    func delay(delay:NSTimeInterval, closure:()->()) {
-        dispatch_after(
-            dispatch_time(
-                DISPATCH_TIME_NOW,
-                Int64(delay * Double(NSEC_PER_SEC))
-            ),
-            dispatch_get_main_queue(), closure)
-    }
-    
-    
-    public func setOrientation(orientation:UIDeviceOrientation, animate:Bool){
-        
-        let duration = animate ? animationDuration : 0
-        
-        var transform = CATransform3DIdentity
-        
-        func doTransform() {
-            if let layer = self.metalLayer {
-                
-                transform = CATransform3DScale(transform, 1.0, 1.0, 1.0)
-                
-                var angle:CGFloat = 0
-                
-                switch (orientation) {
-                    
-                case .LandscapeLeft:
-                    angle = Float(-90.0).radians.cgfloat
-                    self.currentDeviceOrientation = orientation
-                    
-                case .LandscapeRight:
-                    angle = Float(90.0).radians.cgfloat
-                    self.currentDeviceOrientation = orientation
-                    
-                case .PortraitUpsideDown:
-                    angle = Float(180.0).radians.cgfloat
-                    self.currentDeviceOrientation = orientation
-                    
-                case .Portrait:
-                    self.currentDeviceOrientation = orientation
-                    
-                default:
-                    break
-                }
-                
-                transform = CATransform3DRotate(transform, angle, 0.0, 0.0, -1.0)
-    
-                delay(duration, closure: {
-                    self.updateLayer(duration)
-                    self.animateLayer(duration, closure: { (duration) in
-                        layer.transform = self.correctImageOrientation(transform);
-                    })
-                })
-            }
-        }
-        
-        if animate {
-            
-            UIView.animateWithDuration(
-                duration,
-                delay: 0,
-                usingSpringWithDamping: 1.0,
-                initialSpringVelocity: 0,
-                options: .CurveEaseIn,
-                animations: { () -> Void in
-                    doTransform()
-                },
-                completion:  nil
-            )
-            
-        }
-        else {
-            CATransaction.begin()
-            CATransaction.setDisableActions(true)
-            doTransform()
-            CATransaction.commit()
-        }
-    }
-    
-    #endif
-    
-    lazy var renderPassDescriptor:MTLRenderPassDescriptor = MTLRenderPassDescriptor()
-
-    var clearColor:MTLClearColor {
-        get {
-            #if os(OSX)
-                let rgba = backgroundColor.rgba
-                return MTLClearColor(red: rgba.r.double,
-                                     green: rgba.g.double,
-                                     blue: rgba.b.double,
-                                     alpha: rgba.a.double)
-            #else
-            if let rgba = backgroundColor?.rgba {
-            return MTLClearColor(red: rgba.r.double,
-                                 green: rgba.g.double,
-                                 blue: rgba.b.double,
-                                 alpha: rgba.a.double)
-            }
-            else {
-                return MTLClearColorMake(0, 0, 0, 0)
-            }
-            #endif
-        }
-    }
-    
-    var currentDestination:IMPImageProvider? = nil
-    
-    
-    internal func refresh() {
-        
-        dispatch_async(dispatch_get_main_queue()) {
-            
-            
-            if self.layerNeedUpdate {
-                
-                self.layerNeedUpdate = false
-                
-                autoreleasepool({ () -> () in
-                    
-                    self.currentDestination = self.filter?.destination
-                    
-                    if let actualImageTexture = self.currentDestination?.texture {
-                        
-                        if !CGSizeEqualToSize(self.metalLayer.drawableSize, actualImageTexture.size){ self.metalLayer.drawableSize = actualImageTexture.size }
-
-                        if let drawable = self.metalLayer.nextDrawable(){
-                                                        
-                            self.renderPassDescriptor.colorAttachments[0].texture     = drawable.texture
-                            self.renderPassDescriptor.colorAttachments[0].loadAction  = .Clear
-                            self.renderPassDescriptor.colorAttachments[0].storeAction = .Store
-                            self.renderPassDescriptor.colorAttachments[0].clearColor =  self.clearColor
-                            
-                            self.context.execute { (commandBuffer) -> Void in
-                                
-                                self.context.wait()
-                                
-                                commandBuffer.addCompletedHandler({ (commandBuffer) -> Void in
-                                    self.context.resume()
-                                })
-                                
-                                let encoder = commandBuffer.renderCommandEncoderWithDescriptor(self.renderPassDescriptor)
-                                
-                                //
-                                // render current texture
-                                //
-                                
-                                if let pipeline = self.renderPipeline {
-                                    
-                                    encoder.setRenderPipelineState(pipeline)
-                                    
-                                    encoder.setVertexBuffer(self.vertexBuffer, offset:0, atIndex:0)
-                                    encoder.setFragmentTexture(actualImageTexture, atIndex:0)
-                                    
-                                    encoder.drawPrimitives(.TriangleStrip, vertexStart:0, vertexCount:4, instanceCount:1)
-                                    encoder.endEncoding()
-                                }
-                                
-                                commandBuffer.presentDrawable(drawable)
-                                
-                                if self.isFirstFrame && self.viewReadyHandler !=  nil {
-                                    self.isFirstFrame = false
-                                    self.viewReadyHandler!()
-                                }
-                            }
-                        }
-                        else{
-                            self.context.resume()
-                        }
-                    }
-                })
-            }
-        }
-    }
-    
-    #if os(iOS)
-    public func display() {
-        self.refresh()
-    }
-    #else
-    override public func display() {
-        self.refresh()
-    }
-    #endif
-    
-    internal var layerNeedUpdate:Bool = true  {
-        didSet {
-            dispatch_async(dispatch_get_main_queue()) { 
-                if self.layerNeedUpdate {
-                    #if os(iOS)
-                        self.updateLayer(self.isFirstFrame ? 0 : self.animationDuration)
-                    #else
-                        self.updateLayer()
-                    #endif
-                }
-            }
-        }
-    }
-    
-    func animateLayer(duration:NSTimeInterval, closure:((duration:NSTimeInterval)->Void)) {
-        
-        CATransaction.begin()
-        CATransaction.setDisableActions(duration <= 0 ? true : false)
-        if duration > 0 {
-            CATransaction.setAnimationDuration(duration)
-        }
-        
-        closure(duration: duration)
-        
-        CATransaction.commit()
-    }
-    
-    
-    func getNewBounds(texture:MTLTexture) -> CGRect {
-        var adjustedSize = bounds.size
-        
-        if !ignoreDeviceOrientation{
-            
-            adjustedSize = originalBounds.size
-            
-            var ratio  = texture.width.cgfloat/texture.height.cgfloat
-            let aspect = originalBounds.size.width/originalBounds.size.height
-            
-            #if os(iOS)
-            if UIDeviceOrientationIsLandscape(self.orientation)  {
-                ratio  = 1/ratio
-            }
-            #endif
-            
-            let newRatio = aspect/ratio
-            
-            if newRatio < 1 {
-                adjustedSize.height *= newRatio
-            }
-            else {
-                adjustedSize.width /= newRatio
-            }
-        }
-        
-        var origin = CGPointZero
-        
-        if adjustedSize.height < bounds.height {
-            origin.y = ( bounds.height - adjustedSize.height ) / 2
-        }
-        if adjustedSize.width < bounds.width {
-            origin.x = ( bounds.width - adjustedSize.width ) / 2
-        }
-        
-        return  CGRect(origin: origin, size: adjustedSize)
-    }
-
-    #if os(iOS)
-
-    func changeBounds(texure:MTLTexture, bounds:CGRect, duration:NSTimeInterval) {
-        
-        guard let l = metalLayer else { return }
-        if !CGRectEqualToRect(l.frame, bounds) {
-
-            animateLayer(duration, closure: { (duration) in
-              l.frame = bounds
-            })
-        }
-    }
-    
-    internal func updateLayer(duration:NSTimeInterval){
-        currentDestination = currentDestination ?? filter?.destination
-        guard let t = currentDestination?.texture else { return }
-        changeBounds(t, bounds:  getNewBounds(t), duration: duration)
-    }
-    
-    override public func layoutSubviews() {
-        super.layoutSubviews()
-        layerNeedUpdate = true
-    }
-    
-    #else
-    
-    func changeBounds(texure:MTLTexture, bounds:CGRect, duration:NSTimeInterval) {
-    
-        guard let l = metalLayer else { return }
-    
-        if !CGRectEqualToRect(l.frame, bounds) {
-            animateLayer(duration, closure: { (duration) in
-                l.frame = bounds
-            })
-        }
-    }
-
-    override public func updateLayer(){
-        currentDestination = currentDestination ?? filter?.destination
-        guard let t = currentDestination?.texture else { return }
-        
-        if let l = metalLayer {
-            l.drawableSize = t.size
-            animateLayer(animationDuration, closure: { (duration) in
-                l.frame = CGRect(origin: CGPointZero, size:  self.bounds.size)
-            })
-        }
-    }
-    
-    public override func draggingEntered(sender: NSDraggingInfo) -> NSDragOperation {
+    open override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         
         let sourceDragMask = sender.draggingSourceOperationMask()
         let pboard = sender.draggingPasteboard()
         
-        if pboard.availableTypeFromArray([NSFilenamesPboardType]) == NSFilenamesPboardType {
-            if sourceDragMask.rawValue & NSDragOperation.Generic.rawValue != 0 {
-                return NSDragOperation.Generic
+        let draggedType = NSPasteboard.PasteboardType(kUTTypeURL as String)
+        
+        if pboard.availableType(from: [draggedType]) == draggedType {
+            if sourceDragMask.rawValue & NSDragOperation.generic.rawValue != 0 {
+                return NSDragOperation.generic
             }
         }
         
-        return NSDragOperation.None
+        return []
     }
     
     public var dragOperation:IMPDragOperationHandler?
     
-    public override func performDragOperation(sender: NSDraggingInfo) -> Bool {
-        if let files  = sender.draggingPasteboard().propertyListForType(NSFilenamesPboardType) {
+    open override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+        let draggedType = NSPasteboard.PasteboardType(kUTTypeURL as String)
+        if let files  = sender.draggingPasteboard().propertyList(forType: draggedType) {
             if let o = dragOperation {
-                return o(files: files as! [String])
+                return o(files as! [String])
             }
         }
         return false
     }
     
     lazy var trackingArea:NSTrackingArea? = nil
-
-    override public func updateTrackingAreas() {
+    
+    override open func updateTrackingAreas() {
         if mouseEventEnabled {
             super.updateTrackingAreas()
             if let t = trackingArea{
                 removeTrackingArea(t)
             }
             trackingArea = NSTrackingArea(rect: frame,
-                                          options: [.ActiveInKeyWindow,.MouseMoved,.MouseEnteredAndExited],
+                                          options: [.activeInKeyWindow,.mouseMoved,.mouseEnteredAndExited],
                                           owner: self, userInfo: nil)
             addTrackingArea(trackingArea!)
         }
     }
-   
-    override public func mouseEntered(event:NSEvent) {
-        lounchMouseObservers(event)
+    
+    override open func mouseEntered(with event:NSEvent) {        
+        lounchMouseObservers(event: event)
+        super.mouseEntered(with:event)
     }
     
-    override public func mouseExited(event:NSEvent) {
-        lounchMouseObservers(event)
+    override open func mouseExited(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+        super.mouseExited(with:event)
     }
     
-    override public func mouseMoved(event:NSEvent) {
-        lounchMouseObservers(event)
-    }
-   
-    override public func mouseDown(event:NSEvent) {
-        lounchMouseObservers(event)
+    override open func mouseMoved(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+        super.mouseMoved(with:event)
     }
     
-    override public func mouseUp(event:NSEvent) {
-        lounchMouseObservers(event)
+    override open func mouseDown(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+        super.mouseDown(with:event)
     }
     
-    override public func mouseDragged(event: NSEvent) {
-        lounchMouseObservers(event)
+    override open func mouseUp(with event:NSEvent) {
+        lounchMouseObservers(event: event)
+        super.mouseUp(with:event)
     }
-           
-    public typealias MouseEventHandler = ((event:NSEvent, location:NSPoint, view:NSView)->Void)
     
-    var mouseEventHandlers = [MouseEventHandler]()
+    override open func mouseDragged(with event: NSEvent) {
+        lounchMouseObservers(event: event)
+        super.mouseDragged(with:event)
+
+    }
+    
+    var mouseEventHandlers = [IMPObserverHash<MouseEventHandler>]()
     
     var mouseEventEnabled = false
-    public func addMouseEventObserver(observer:MouseEventHandler){
-        mouseEventHandlers.append(observer)
+    public func addMouseEventObserver(observer:@escaping MouseEventHandler){
+        let key = IMPObserverHash<MouseEventHandler>.observerKey(observer)
+        if let index = mouseEventHandlers.index(where: { return $0.key == key }) {
+            mouseEventHandlers.remove(at: index)
+        }    
+        mouseEventHandlers.append(IMPObserverHash<MouseEventHandler>(key:key,observer: observer))
         mouseEventEnabled = true
     }
+    
+    public func removeObserver(observer:@escaping MouseEventHandler) {
+        let key = IMPObserverHash<MouseEventHandler>.observerKey(observer)
+        if let index = mouseEventHandlers.index(where: { return $0.key == key }) {
+            mouseEventHandlers.remove(at: index)
+        }    
+    }    
     
     public func removeMouseEventObservers(){
         mouseEventEnabled = false
@@ -659,94 +552,32 @@ public class IMPView: IMPViewBase, IMPContextProvider {
     
     func lounchMouseObservers(event:NSEvent){
         let location = event.locationInWindow
-        let point  = self.convertPoint(location,fromView:nil)
-        for o in mouseEventHandlers {
-            o(event: event, location: point, view: self)
+        let point  = self.convert(location,from:nil)
+        for hash in mouseEventHandlers {
+            hash.observer(event, point, self)
         }
     }
     
     #endif
+    
 }
 
-#if os(OSX)
+
+extension IMPView: MTKViewDelegate {
     
-    private class IMPDisplayLink {
+    public func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
+    
+    public func draw(in view: MTKView) {
         
-        static let sharedInstance = IMPDisplayLink()
+        guard let impview = (view as? IMPView) else { return }
         
-        private typealias DisplayLinkCallback = @convention(block) ( CVDisplayLink!, UnsafePointer<CVTimeStamp>, UnsafePointer<CVTimeStamp>, CVOptionFlags, UnsafeMutablePointer<CVOptionFlags>, UnsafeMutablePointer<Void>)->Void
-        
-        private func displayLinkSetOutputCallback( displayLink:CVDisplayLink, callback:DisplayLinkCallback )
-        {
-            let block:DisplayLinkCallback = callback
-            let myImp = imp_implementationWithBlock( unsafeBitCast( block, AnyObject.self ) )
-            let callback = unsafeBitCast( myImp, CVDisplayLinkOutputCallback.self )
-            
-            CVDisplayLinkSetOutputCallback( displayLink, callback, nil)
+        if !impview.needUpdateDisplay {
+            return
         }
-        
-        
-        private var displayLink:CVDisplayLink!
-        
-        var paused:Bool = false {
-            didSet(oldValue){
-                if  paused {
-                    if CVDisplayLinkIsRunning(displayLink) {
-                        CVDisplayLinkStop( displayLink)
-                    }
-                }
-                else{
-                    if !CVDisplayLinkIsRunning(displayLink) {
-                        CVDisplayLinkStart( displayLink )
-                    }
-                }
-            }
-        }
-        
-        private var viewList = [IMPView]()
-        
-        func addView(view:IMPView){
-            if viewList.contains(view) == false {
-                viewList.append(view)
-            }
-        }
-        
-        func removeView(view:IMPView){
-            if let index = viewList.indexOf(view) {
-                viewList.removeAtIndex(index)
-            }
-        }
-        
-        required init(){
-            
-            displayLink = {
-                var linkRef:CVDisplayLink?
-                CVDisplayLinkCreateWithActiveCGDisplays( &linkRef )
                 
-                return linkRef!
-                
-                }()
-            
-            let callback = { (
-                _:CVDisplayLink!,
-                _:UnsafePointer<CVTimeStamp>,
-                _:UnsafePointer<CVTimeStamp>,
-                _:CVOptionFlags,
-                _:UnsafeMutablePointer<CVOptionFlags>,
-                _:UnsafeMutablePointer<Void>)->Void in
-                
-                for v in self.viewList {
-                    v.refresh()
-                }
-                
-            }
-            
-            displayLinkSetOutputCallback( displayLink, callback: callback )
-        }
+        impview.needUpdateDisplay = false
         
-        deinit{
-            self.paused = true
-        }
-        
+        impview.refresh(rect: NSZeroRect)
     }
-#endif
+}
+

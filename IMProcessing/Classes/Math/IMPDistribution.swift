@@ -1,11 +1,10 @@
 //
 //  IMPDistribution.swift
-//  IMProcessing
+//  Pods
 //
-//  Created by denis svinarchuk on 22.12.15.
-//  Copyright © 2015 Dehancer.photo. All rights reserved.
+//  Created by denis svinarchuk on 18.02.17.
 //
-
+//
 import Foundation
 import Accelerate
 
@@ -63,15 +62,14 @@ public extension Float {
     ///
     ///  - returns: gaussian kernel piecewise distribution
     ///
-    public static func gaussianKernel(sigma sigma:Float, size:Int) -> [Float] {
+    public static func gaussianKernel(sigma:Float, size:Int) -> [Float] {
         
         assert(size%2==1, "gaussian kernel size must be odd number...")
         
-        var kernel    = [Float](count: size, repeatedValue: 0)
+        var kernel    = [Float](repeating: 0, count: size)
         let mean      = Float(size/2)
         var sum:Float = 0.0
         
-        //for var x = 0; x < size; x += 1 {
         for x in 0..<size {
             kernel[x] = sqrt( exp( -0.5 * (pow((x.float-mean)/sigma, 2.0) + pow((mean)/sigma,2.0)) )
                 / (M_2_PI.float * sigma * sigma) )
@@ -88,11 +86,10 @@ public extension Float {
     ///
     ///  - returns: gaussian kernel piecewise distribution
     ///
-    public func gaussianKernel(size size:Int) -> [Float] {
+    public func gaussianKernel(size:Int) -> [Float] {
         return Float.gaussianKernel(sigma: self, size: size)
     }
 }
-
 
 // MARK: - Gaussian value in certain point of x
 public extension Float{
@@ -104,8 +101,9 @@ public extension Float{
     ///  - parameter sigma: ß
     ///
     ///  - returns: Y value
-    public func gaussianPoint(fi fi:Float, mu:Float, sigma:Float) -> Float {
-        return fi * exp( -(pow(( self - mu ),2)) / (2*pow(sigma, 2)) )
+    public func gaussianPoint(fi:Float, mu:Float, sigma:Float) -> Float {
+        //return fi * exp( -(pow(( self - mu ),2)) / (2*pow(sigma, 2)) )
+        return fi * exp( -0.5 * pow( ( self - mu )/sigma, 2)) 
     }
     
     ///  Get double pointed gaussian Y point from distripbution of two X points
@@ -115,7 +113,7 @@ public extension Float{
     ///  - parameter sigma: float2(ß1,ß2)
     ///
     ///  - returns: y value
-    public func gaussianPoint(fi fi:float2, mu:float2, sigma:float2) -> Float {
+    public func gaussianPoint(fi:float2, mu:float2, sigma:float2) -> Float {
         
         let c1 = self <= mu.x ? 1.float : 0.float
         let c2 = self >= mu.y ? 1.float : 0.float
@@ -134,7 +132,7 @@ public extension Float{
     ///
     ///  - returns: y value
     public func gaussianPoint(mu:Float, sigma:Float) -> Float {
-        return self.gaussianPoint(fi: 1/(sigma*sqrt(2*M_PI.float)), mu: mu, sigma: sigma)
+        return self.gaussianPoint(fi: 1/(sigma*sqrt(2*Float.pi)), mu: mu, sigma: sigma)
     }
     
     ///  Get double normalized gaussian Y point from distripbution of two X points
@@ -153,8 +151,8 @@ public extension Float{
     ///  - parameter r: range
     ///
     ///  - returns: X list
-    static func range(r:Range<Int>) -> [Float]{
-        return range(start: Float(r.startIndex), step: 1, end: Float(r.endIndex))
+    static func range(_ r:Range<Int>) -> [Float]{
+        return range(start: Float(r.lowerBound), step: 1, end: Float(r.upperBound))
     }
     
     
@@ -163,8 +161,8 @@ public extension Float{
     ///  - parameter r: range
     ///
     ///  - returns: X list
-    static func range(r:Range<Int>, scale:Float) -> [Float]{
-        var r = range(start: Float(r.startIndex), step: 1, end: Float(r.endIndex))
+    static func range(_ r:Range<Int>, scale:Float) -> [Float]{
+        var r = range(start: Float(r.lowerBound), step: 1, end: Float(r.upperBound))
         var denom:Float = 0
         vDSP_maxv(r, 1, &denom, vDSP_Length(r.count))
         denom /= scale
@@ -180,22 +178,30 @@ public extension Float{
     ///  - parameter end:   end, must be great the start
     ///
     ///  - returns: X list
-    static func range(start start:Float, step:Float, end:Float) -> [Float] {
-        let size       = Int((end-start)/step)
+    static func range(start:Float, step:Float, end:Float) -> [Float] {
+//        let size       = Int((end-start)/step)
+//        
+//        var h:[Float]  = [Float](repeating: 0, count: size)
+//        var zero:Float = start
+//        var v:Float    = step
+//        
+//        vDSP_vramp(&zero, &v, &h, 1, vDSP_Length(size))
+//        
+        precondition(start <= end, "start must be no larger than end.")
         
-        var h:[Float]  = [Float](count: size, repeatedValue: 0)
-        var zero:Float = start
-        var v:Float    = step
+        var startFloat = Float(start)
+        var endFloat = Float(end)
+        let size   = Int((end-start)/step)
+        var result = [Float](repeating: 0.0, count: size)
         
-        vDSP_vramp(&zero, &v, &h, 1, vDSP_Length(size))
-        
-        return h
+        vDSP_vgen(&startFloat, &endFloat, &result, 1, vDSP_Length(size))
+        return result
         
     }
 }
 
 // MARK: - Gaussian distribution
-public extension SequenceType where Generator.Element == Float {
+public extension Sequence where Iterator.Element == Float {
     
     ///  Create gaussian distribution of discrete values of Y's from mean parameters
     ///
@@ -204,7 +210,7 @@ public extension SequenceType where Generator.Element == Float {
     ///  - parameter sigma: ß
     ///
     ///  - returns: discrete gaussian distribution
-    public func gaussianDistribution(fi fi:Float, mu:Float, sigma:Float) -> [Float]{
+    public func gaussianDistribution(fi:Float, mu:Float, sigma:Float) -> [Float]{
         var a = [Float]()
         for i in self{
             a.append(i.gaussianPoint(fi: fi, mu: mu, sigma: sigma))
@@ -219,7 +225,7 @@ public extension SequenceType where Generator.Element == Float {
     ///  - parameter sigma: float2(ß1,ß2)
     ///
     ///  - returns: discrete gaussian distribution
-    public func gaussianDistribution(fi fi:float2, mu:float2, sigma:float2) -> [Float]{
+    public func gaussianDistribution(fi:float2, mu:float2, sigma:float2) -> [Float]{
         var a = [Float]()
         for i in self{
             a.append(i.gaussianPoint(fi: fi, mu: mu, sigma: sigma))
@@ -233,8 +239,8 @@ public extension SequenceType where Generator.Element == Float {
     ///  - parameter sigma: ß
     ///
     ///  - returns: discrete gaussian distribution
-    public func gaussianDistribution(mu mu:Float, sigma:Float) -> [Float]{
-        return self.gaussianDistribution(fi: 1/(sigma*sqrt(2*M_PI.float)), mu: mu, sigma: sigma)
+    public func gaussianDistribution(mu:Float, sigma:Float) -> [Float]{
+        return self.gaussianDistribution(fi: 1/(sigma*sqrt(2*Float.pi)), mu: mu, sigma: sigma)
     }
     
     ///  Create normalized gaussian distribution of discrete values of Y points from two points of means
@@ -243,16 +249,17 @@ public extension SequenceType where Generator.Element == Float {
     ///  - parameter sigma: float2(ß1,ß2)
     ///
     ///  - returns: discrete gaussian distribution
-    public func gaussianDistribution(mu mu:float2, sigma:float2) -> [Float]{
-        return self.gaussianDistribution(fi: float2(1/(sigma.x*sigma.y*sqrt(2*M_PI.float))), mu: mu, sigma: sigma)
+    public func gaussianDistribution(mu:float2, sigma:float2) -> [Float]{
+        return self.gaussianDistribution(fi: float2(1/(sigma.x*sigma.y*sqrt(2*Float.pi))), mu: mu, sigma: sigma)
     }
 }
+
 
 ///
 /// In two dimensions, the circular Gaussian function is the distribution function for uncorrelated variates X and Y having
 /// a bivariate normal distribution and equal standard deviation sigma=sigma_x=sigma_y,
 ///
-public extension CollectionType where Generator.Element == [Float] {
+public extension Collection where Iterator.Element == [Float] {
     
     ///  Create 2D gaussian distribution of discrete values of X/Y's
     ///
@@ -264,7 +271,7 @@ public extension CollectionType where Generator.Element == [Float] {
     ///
     /// http://mathworld.wolfram.com/GaussianFunction.html
     ///
-    public func gaussianDistribution(fi fi:Float, mu:float2, sigma:float2) -> [Float]{
+    public func gaussianDistribution(fi:Float, mu:float2, sigma:float2) -> [Float]{
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
         }
@@ -289,11 +296,11 @@ public extension CollectionType where Generator.Element == [Float] {
     ///
     /// http://mathworld.wolfram.com/GaussianFunction.html
     ///
-    public func gaussianDistribution(mu mu:float2, sigma:float2) -> [Float]{
+    public func gaussianDistribution(mu:float2, sigma:float2) -> [Float]{
         if self.count != 2 {
             fatalError("CollectionType must have 2 dimension Float array with X-points and Y-points lists...")
         }
-        let fi = 1/(sigma.x*sigma.y*sqrt(2*M_PI.float))
+        let fi = 1/(sigma.x*sigma.y*sqrt(2*Float.pi))
         
         return gaussianDistribution(fi: fi, mu: mu, sigma: sigma)
     }

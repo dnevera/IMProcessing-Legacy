@@ -21,8 +21,15 @@
             let distance:Float
         }
     
-        public typealias RotationHandler = ((orientation:UIDeviceOrientation) -> Void)
-        public typealias PositionHandler = ((position:IMPMotionManager.Position) -> Void)
+        public struct RotationHandler {
+            var index:Int;
+            public let closure:((_ orientation:UIDeviceOrientation) -> Void)
+        }
+        
+        public struct PositionHandler {
+            var index:Int;
+            public let closure:((_ position:IMPMotionManager.Position) -> Void)
+        }
 
         public static let sharedInstance = IMPMotionManager()
         
@@ -30,25 +37,47 @@
         
         private var motionRotationHandlers = [RotationHandler]()
         
-        public func addRotationObserver(observer:RotationHandler){
+        public func addRotationObserver(observer:@escaping ((_ orientation:UIDeviceOrientation) -> Void)) -> RotationHandler {
             if _motionHandler == nil {
                 self.startMotion()
             }
-            motionRotationHandlers.append(observer)
+            let h = RotationHandler(index: motionRotationHandlers.count, closure: observer)
+            motionRotationHandlers.append(h)
+            return h
+        }
+        
+        public func removeRotationObserver(observer:RotationHandler){
+            motionRotationHandlers.remove(at: observer.index)
+            for i in observer.index..<motionRotationHandlers.count{
+                motionRotationHandlers[i].index -= 1
+            }
         }
         
         private var motionPositionHandlers = [PositionHandler]()
-        public func addPositionObserver(observer:PositionHandler){
-            motionPositionHandlers.append(observer)
+        
+        public func addPositionObserver(observer:@escaping ((_ position:IMPMotionManager.Position) -> Void)) -> PositionHandler {
+            if _motionHandler == nil {
+                self.startMotion()
+            }
+            let h = PositionHandler(index: motionPositionHandlers.count, closure: observer)
+            motionPositionHandlers.append(h)
+            return h
+        }
+        
+        public func removePositionObserver(observer:PositionHandler){
+            motionPositionHandlers.remove(at: observer.index)
+            for i in observer.index..<motionPositionHandlers.count{
+                motionPositionHandlers[i].index -= 1
+            }
         }
 
         private init() {
             motionManager = CMMotionManager()
-            if motionManager.accelerometerAvailable {
+            if motionManager.isAccelerometerAvailable {
                 motionManager.accelerometerUpdateInterval = 0.2
             }
             else{
-                deviceOrientationDidChangeTo(.FaceDown)
+                deviceOrientationDidChangeTo(orientation: .faceDown)
             }
         }
         
@@ -66,8 +95,8 @@
         }
         
         var motionManager:CMMotionManager
-        var lastOrientation = UIDeviceOrientation.Unknown
-        var currentOrientation = UIDeviceOrientation.Portrait
+        var lastOrientation = UIDeviceOrientation.unknown
+        var currentOrientation = UIDeviceOrientation.portrait
         
         var lastX = Float(0)
         var lastY = Float(0)
@@ -108,14 +137,14 @@
                             z: accelerometerData.acceleration.z.float,
                             distance: distance)
                         
-                        weakSelf?.devicePositionDidChangeTo(position)
+                        weakSelf?.devicePositionDidChangeTo(position: position)
                     }
                     
-                    var device_angle = M_PI / 2.0 - atan2(yy, xx)
-                    var orientation = UIDeviceOrientation.Unknown
+                    var device_angle = Double.pi / 2.0 - atan2(yy, xx)
+                    var orientation = UIDeviceOrientation.unknown
                     
-                    if device_angle > M_PI {
-                        device_angle -= 2 * M_PI
+                    if device_angle > Double.pi {
+                        device_angle -= 2 * Double.pi
                     }
                     
                     if ((zz < -0.60) || (zz > 0.60)) {
@@ -123,42 +152,42 @@
                             orientation = selfBlock!.lastOrientation
                         }
                         else{
-                            orientation = .Unknown
+                            orientation = .unknown
                         }
                     } else {
-                        if ( (device_angle > -M_PI_4) && (device_angle < M_PI_4) ){
-                            orientation = .Portrait
+                        if ( (device_angle > -Double.pi/4) && (device_angle < Double.pi/4) ){
+                            orientation = .portrait
                         }
-                        else if ((device_angle < -M_PI_4) && (device_angle > -3 * M_PI_4)){
-                            orientation = .LandscapeLeft
+                        else if ((device_angle < -Double.pi/4) && (device_angle > -3 * Double.pi/4)){
+                            orientation = .landscapeLeft
                         }
-                        else if ((device_angle > M_PI_4) && (device_angle < 3 * M_PI_4)){
-                            orientation = .LandscapeRight
+                        else if ((device_angle > Double.pi/4) && (device_angle < 3 * Double.pi/4)){
+                            orientation = .landscapeRight
                         }
                         else{
-                            orientation = .PortraitUpsideDown
+                            orientation = .portraitUpsideDown
                         }
                     }
                     
                     if (orientation != selfBlock!.lastOrientation) {
-                        dispatch_async(dispatch_get_main_queue(), { () -> Void in
-                            selfBlock?.deviceOrientationDidChangeTo(orientation)
+                        DispatchQueue.main.async(execute: { () -> Void in
+                            selfBlock?.deviceOrientationDidChangeTo(orientation: orientation)
                         })
                     }
                 }
                 else if error != nil {
-                    NSLog(" *** Acceleraometer error: %@", error!)
+                    NSLog(" *** Acceleraometer error: \(String(describing: error))")
                 }
             }
             
             if let h  = _motionHandler{
-                motionManager.startAccelerometerUpdatesToQueue(NSOperationQueue.currentQueue()!, withHandler: h)
+                motionManager.startAccelerometerUpdates(to: OperationQueue.current!, withHandler: h)
             }
         }
         
         func devicePositionDidChangeTo(position:Position){
             for h in motionPositionHandlers {
-                h(position: position)
+                h.closure(position)
             }
         }
         
@@ -170,7 +199,7 @@
             else {
                currentOrientation = lastOrientation
                 for h in motionRotationHandlers {
-                    h(orientation: lastOrientation)
+                    h.closure(lastOrientation)
                 }
             }
         }

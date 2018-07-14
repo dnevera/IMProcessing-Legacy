@@ -5,6 +5,16 @@
 //  Created by denis svinarchuk on 18.12.15.
 //  Copyright © 2015 IMetalling. All rights reserved.
 //
+//  Acknowledgement:
+//  http://www.sunsetlakesoftware.com/ - the famous great work for Image Processing with GPU
+//  A lot of ideas were taken from the Brad Larson project: https://github.com/BradLarson/GPUImage
+//
+//  Photoshop blending examples: https://mouaif.wordpress.com/2009/01/05/photoshop-math-with-glsl-shaders/
+//  W3C: https://www.w3.org/TR/compositing-1/
+//
+//
+//
+
 
 #ifndef IMPBlending_metal_h
 #define IMPBlending_metal_h
@@ -39,11 +49,7 @@ namespace IMProcessing
         
         return clamp(outputColor, float4(0.0), float4(1.0));
     }
-    
-    
-#define blendLighten(base, blend) 		max(blend, base)
-#define blendDarken(base, blend) 		min(blend, base)
-    
+            
     inline  float4 blendLuminosity(float4 baseColor, float4 overlayColor)
     {
         return float4(baseColor.rgb * (1.0 - overlayColor.a) + setlum(baseColor.rgb, lum(overlayColor.rgb)) * overlayColor.a, baseColor.a);
@@ -75,6 +81,30 @@ namespace IMProcessing
         return float4(ra, ga, ba, 1.0);
     }
     
+    inline  float4 blendColor(float4 base, float4 overlay){
+        return float4(base.rgb * (1.0 - overlay.a) + setlum(overlay.rgb, lum(base.rgb)) * overlay.a, base.a);
+    }
+    
+    
+    static inline float4 blend(float4 inColor, float4 outColor, IMPBlending blending){
+        float4 result = float4(outColor.rgb, blending.opacity);
+        
+        switch (blending.mode) {
+            case IMPLuminosity:
+                result = blendLuminosity(inColor, result);
+                break;
+
+            case IMPColor:
+                result = blendColor(inColor, result);
+                break;
+
+            default:
+                result = blendNormal(inColor, result);    
+        }
+                
+        return  result;
+    }
+    
 #define BlendAddf(base, blend) 		    min(base + blend, 1.0)
 #define BlendLinearDodgef 			    BlendAddf
 #define BlendColorDodgef(base, blend) 	((blend == 1.0) ? blend : min(base / (1.0 - blend), 1.0))
@@ -96,6 +126,10 @@ namespace IMProcessing
     inline float4 blendMultiply(float4 base, float4 blend){
         return base*blend;
     }
+    
+#define blendLighten(base, blend) 		max(blend, base)
+#define blendDarken(base, blend) 		min(blend, base)
+
 }
 #endif
 

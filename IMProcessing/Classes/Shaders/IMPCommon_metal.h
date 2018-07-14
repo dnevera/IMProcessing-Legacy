@@ -97,16 +97,29 @@ namespace IMProcessing
     }
     
     inline float3 clipcolor(float3 c) {
-        return clipcolor_wlum(c,lum(c));
+        float l = lum(c);
+        float n = min(min(c.r, c.g), c.b);
+        float x = max(max(c.r, c.g), c.b);
+        
+        if (n < 0.0) {
+            c.r = l + ((c.r - l) * l) / (l - n);
+            c.g = l + ((c.g - l) * l) / (l - n);
+            c.b = l + ((c.b - l) * l) / (l - n);
+        }
+        if (x > 1.0) {
+            c.r = l + ((c.r - l) * (1.0 - l)) / (x - l);
+            c.g = l + ((c.g - l) * (1.0 - l)) / (x - l);
+            c.b = l + ((c.b - l) * (1.0 - l)) / (x - l);
+        }
+        
+        return c;
     }
     
     inline float3 setlum(float3 c, float l) {
-        float ll = lum(c);
-        float d = l - ll;
+        float d = l - lum(c);
         c = c + float3(d);
-        return clipcolor_wlum(c,ll);
+        return clipcolor(c);
     }
-    
     
     inline  float sat(float3 c) {
         float n = min_component(c);
@@ -158,18 +171,227 @@ namespace IMProcessing
         return c;
     }
 
+    constexpr sampler baseSampler(address::clamp_to_edge, filter::linear, coord::normalized);
+
     inline float4 sampledColor(
                                texture2d<float, access::sample> inTexture,
                                texture2d<float, access::write> outTexture,
                                uint2 gid
                                ){
-        constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
         float w = outTexture.get_width();
-        return mix(inTexture.sample(s, float2(gid) * float2(1.0/w, 1.0/outTexture.get_height())),
+        return mix(inTexture.sample(baseSampler, float2(gid) * float2(1.0/w, 1.0/outTexture.get_height())),
                    inTexture.read(gid),
                    IMProcessing::when_eq(inTexture.get_width(), w) // whe equal read exact texture color
                    );
     }
+    
+    
+    ///  @brief Get a sample acording texture scale factor value.
+    ///
+    ///  @param inTexture       input texture
+    ///  @param scale           scale factor
+    ///  @param gid             position thread in grrid, equal x,y coordiant position of pixel in texure
+    ///
+    ///  @return sampled color value
+    ///
+    inline float4 sampledColor(
+                               texture2d<float, access::sample> inTexture,
+                               float                   scale,
+                               uint2 gid
+                               ){
+        //constexpr sampler s(address::clamp_to_edge, filter::linear, coord::normalized);
+        
+        float w = float(inTexture.get_width())  * scale;
+        float h = float(inTexture.get_height()) * scale;
+        
+        return mix(inTexture.sample(baseSampler, float2(gid) * float2(1.0/w, 1.0/h)),
+                   inTexture.read(gid),
+                   IMProcessing::when_eq(inTexture.get_width(), w) // whe equal read exact texture color
+                   );
+    }
+    
+    
+    ///  @brief Test is there pixel inside in a box or not
+    ///
+    ///  @param v          pixel coordinate
+    ///  @param bottomLeft offset from bottom-left conner
+    ///  @param topRight   offset from top-right conner
+    ///
+    ///  @return 0 or 1
+    ///
+    inline  float coordsIsInsideBox(float2 v, float2 bottomLeft, float2 topRight) {
+        float2 s =  step(bottomLeft, v) - step(topRight, v);
+        return s.x * s.y;
+    }
+    
+    inline float4 sampledColor(
+                                        texture2d<float, access::sample>  inTexture,
+                                        constant IMPRegion               &regionIn,
+                                        float                             scale,
+                                        uint2 gid){
+        
+        float w = float(inTexture.get_width())  * scale;
+        float h = float(inTexture.get_height()) * scale;
+        
+        float2 coords  = float2(gid) * float2(1.0/w,1.0/h);
+        //
+        // для всех пикселей за пределами расчета возвращаем чорную точку с прозрачным альфа-каналом
+        //
+        float  isBoxed = coordsIsInsideBox(coords, float2(regionIn.left,regionIn.bottom), float2(1.0-regionIn.right,1.0-regionIn.top));
+        return sampledColor(inTexture,scale,gid) * isBoxed;
+    }
+    
+    inline float4 sampledColor(
+                               texture2d<float, access::sample>  inTexture,
+                               constant IMPRegion               &regionIn,
+                               uint2 gid){
+        return sampledColor(inTexture,regionIn,1,gid);
+    }
+
+    
+    constexpr sampler cornerSampler(address::clamp_to_edge, filter::linear, coord::normalized);
+    
+    class LineColors {
+        
+        public:
+        
+        float3 left;
+        float3 center;
+        float3 right;
+        
+        float leftIntensity;
+        float centerIntensity;
+        float rightIntensity;
+                
+        METAL_FUNC LineColors() {}
+        
+        METAL_FUNC LineColors(texture2d<float, access::sample> texture,
+                              const float2 texCoord,
+                              float y,
+                              float radius
+                              ) {
+            
+            float x = radius/float(texture.get_width());
+            
+            left   = texture.sample(cornerSampler, texCoord + float2(-x,y)).rgb;
+            center = texture.sample(cornerSampler, texCoord + float2( 0,y)).rgb;
+            right  = texture.sample(cornerSampler, texCoord + float2( x,y)).rgb;
+            leftIntensity   = left.r;
+            rightIntensity  = right.r;
+            centerIntensity = center.r;
+        }
+        
+        METAL_FUNC LineColors(
+                              texture2d<float, access::sample> texture,
+                              texture2d<float, access::write>  destination,
+                              const uint2 gid,
+                              int y,
+                              int radius
+                              ) {
+            
+            //float x = radius/float(texture.get_width());
+
+            //float2 texCoord = float2(gid)/float2(texture.get_width(),texture.get_height());
+            
+            int2 g = int2(gid);
+            
+            left   = IMProcessing::sampledColor(texture, destination, uint2(g + int2(-radius,y))).rgb; //texture.sample(cornerSampler, texCoord + float2(-x,y)).rgb;
+            center = IMProcessing::sampledColor(texture, destination, uint2(g + int2(      0,y))).rgb; //texture.sample(cornerSampler, texCoord + float2( 0,y)).rgb;
+            right  = IMProcessing::sampledColor(texture, destination, uint2(g + int2( radius,y))).rgb; //texture.sample(cornerSampler, texCoord + float2( x,y)).rgb;
+
+            leftIntensity   = left.r;
+            rightIntensity  = right.r;
+            centerIntensity = center.r;
+        }
+        
+
+        
+        float leftLuma(){
+            return IMProcessing::lum(left);
+        }
+        float centerLuma(){
+            return IMProcessing::lum(center);
+        }
+        float rightLuma(){
+            return IMProcessing::lum(right);
+        }
+        
+    };
+    
+    class Kernel3x3Colors {
+        public:
+        LineColors top;
+        LineColors mid;
+        LineColors bottom;
+        
+        METAL_FUNC Kernel3x3Colors(texture2d<float, access::sample> texture, const float2 texCoord, float radius){
+            float y = radius/float(texture.get_height());
+            top    = LineColors(texture,texCoord,-y,radius);
+            mid    = LineColors(texture,texCoord, 0,radius);
+            bottom = LineColors(texture,texCoord, y,radius);
+        };
+        
+        
+        METAL_FUNC Kernel3x3Colors(texture2d<float, access::sample> texture,
+                                   texture2d<float, access::write>  destination,
+                                   const uint2 gid, int radius){
+            //float y = radius/float(texture.get_height());
+            top    = LineColors(texture,destination,gid,-radius,radius);
+            mid    = LineColors(texture,destination,gid, 0,     radius);
+            bottom = LineColors(texture,destination,gid, radius,radius);
+        };
+        
+        float convolveLuma(float3x3 kernelMatrix) {
+            return
+            kernelMatrix[0].x * top.leftLuma()  +
+            kernelMatrix[0].y * top.centerLuma()+
+            kernelMatrix[0].z * top.rightLuma() +
+            
+            kernelMatrix[1].x * mid.leftLuma()  +
+            kernelMatrix[1].y * mid.centerLuma()+
+            kernelMatrix[1].z * mid.rightLuma() +
+
+            kernelMatrix[2].x * bottom.leftLuma()  +
+            kernelMatrix[2].y * bottom.centerLuma()+
+            kernelMatrix[2].z * bottom.rightLuma()
+            ;
+        }
+        
+        float convolveIntensity(float3x3 kernelMatrix) {
+            return
+            kernelMatrix[0].x * top.leftIntensity +
+            kernelMatrix[0].y * top.centerIntensity+
+            kernelMatrix[0].z * top.rightIntensity +
+            
+            kernelMatrix[1].x * mid.leftIntensity  +
+            kernelMatrix[1].y * mid.centerIntensity+
+            kernelMatrix[1].z * mid.rightIntensity +
+            
+            kernelMatrix[2].x * bottom.leftIntensity  +
+            kernelMatrix[2].y * bottom.centerIntensity+
+            kernelMatrix[2].z * bottom.rightIntensity
+            ;
+        }
+
+        float3 convolve(float3x3 kernelMatrix) {
+            return
+            kernelMatrix[0].x * top.left +
+            kernelMatrix[0].y * top.center+
+            kernelMatrix[0].z * top.right +
+            
+            kernelMatrix[1].x * mid.left  +
+            kernelMatrix[1].y * mid.center+
+            kernelMatrix[1].z * mid.right +
+            
+            kernelMatrix[2].x * bottom.left  +
+            kernelMatrix[2].y * bottom.center+
+            kernelMatrix[2].z * bottom.right
+            ;
+        }
+
+    };
+    
 }
 
 #endif

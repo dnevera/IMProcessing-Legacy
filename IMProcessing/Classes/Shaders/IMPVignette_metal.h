@@ -47,12 +47,14 @@ namespace IMProcessing
         
         float  percent = smoothstep(start, end, d);
         float3 rgb     = mix(inColor.rgb, color, percent);
-        float4 result  = float4(rgb,inColor.a);
-        
-        if (adjustment.blending.mode == 0)
-            result = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
-        else // only two modes yet
-            result = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
+        //float4 result  = float4(rgb,inColor.a);
+
+        float4 result = IMProcessing::blend(inColor,  float4(rgb,inColor.a), adjustment.blending);
+
+//        if (adjustment.blending.mode == IMPLuminosity)
+//            result = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
+//        else // only two modes yet
+//            result = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
         
         outTexture.write(result,gid);
     }
@@ -115,12 +117,14 @@ namespace IMProcessing
         
         float  percent = smoothstep(start, end, d);
         float3 rgb     = mix(inColor.rgb, color, percent);
-        float4 result  = float4(rgb,1);
+        //float4 result  = float4(rgb,1);
         
-        if (adjustment.blending.mode == 0)
-            result = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
-        else // only two modes yet
-            result = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
+        float4 result = IMProcessing::blend(inColor,  float4(rgb,1), adjustment.blending);
+
+//        if (adjustment.blending.mode == IMPLuminosity)
+//            result = IMProcessing::blendLuminosity(inColor, float4(rgb,adjustment.blending.opacity));
+//        else // only two modes yet
+//            result = IMProcessing::blendNormal(inColor, float4(rgb,adjustment.blending.opacity));
         
         outTexture.write(result,gid);
     }
