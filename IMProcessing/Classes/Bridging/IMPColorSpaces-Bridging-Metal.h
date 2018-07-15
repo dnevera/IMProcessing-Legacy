@@ -1575,15 +1575,17 @@ static inline float2 IMPtempTintFromGray(float3 color, float3 rgbGray){
     float3 yiq = RGBtoYIQ_M * color;
     float3 yiqGray = RGBtoYIQ_M * rgbGray;
 #else
-    float3 yiq = matrix_multiply(RGBtoYIQ_M,color);
-    float3 yiqGray = matrix_multiply(RGBtoYIQ_M,rgbGray);
+    float3 yiq = matrix_multiply(RGBtoYIQ_M, color);
+    float3 yiqGray = matrix_multiply(RGBtoYIQ_M, rgbGray);
 #endif
 
 #ifdef __METAL_VERSION__
-    float tint = clamp((yiq.y-yiqGray.y)/tintScale, float(-1.0), float(1.0));
+    //float tint = clamp((yiq.y-yiqGray.y)/tintScale, float(-kIMP_COLOR_TINT), float(kIMP_COLOR_TINT));
 #else
-    float tint = vector_clamp((yiq.y-yiqGray.y)/tintScale, -1, 1);
+    //float tint = vector_clamp((yiq.y-yiqGray.y)/tintScale, -kIMP_COLOR_TINT, kIMP_COLOR_TINT);
 #endif
+    
+    float tint = (yiq.y-yiqGray.y)/tintScale;
     
     yiq.y = vector_clamp(yiq.y - tint*tintScale, -tintScale, tintScale);
     
@@ -1597,7 +1599,7 @@ static inline float2 IMPtempTintFromGray(float3 color, float3 rgbGray){
     
     float temp = (color.x - rgbGray.x)/(processed.x-rgbGray.x);
     
-    temp = temp < 0 ? (temp / 0.0004 + 5000.0) : (temp / 0.00006 + 5000.0);
+    temp = temp < 0 ? (temp / 0.0004 + kIMP_COLOR_TEMP) : (temp / 0.00006 + kIMP_COLOR_TEMP);
     
     return (float2){temp,tint};
 }
@@ -1606,7 +1608,7 @@ static inline float3 IMPadjustTempTint(float2 tempTint, float3 color){
         
     float temperature = tempTint.x;
     
-    temperature = temperature < 5000.0 ? 0.0004 * (temperature - 5000.0) : 0.00006 * (temperature - 5000.0);
+    temperature = temperature < kIMP_COLOR_TEMP ? 0.0004 * (temperature - kIMP_COLOR_TEMP) : 0.00006 * (temperature - kIMP_COLOR_TEMP);
     
     float tint        = tempTint.y;
     

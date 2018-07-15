@@ -19,7 +19,7 @@ public class IMPColorObserver:IMPFilter {
         }
     }
     
-    public var centers:[float2] = [float2]() {
+    public var centers:[float2] = [] {
         didSet{
             if centers.count > 0 {
                 
@@ -86,6 +86,6 @@ public class IMPColorObserver:IMPFilter {
         return f
     }()
     
-    private var _colors:[float3] = [float3]()
+    private var _colors:[float3] = []
 }
 

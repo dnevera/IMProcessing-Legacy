@@ -81,5 +81,7 @@ static constant float4 kIMP_Cyans       = {135.0, 165.0, 195.0, 225.0};
 static constant float4 kIMP_Blues       = {195.0, 225.0, 255.0, 285.0};
 static constant float4 kIMP_Magentas    = {255.0, 285.0, 315.0, 345.0};
 
+static constant float kIMP_COLOR_TEMP = 5000.0;
+static constant float kIMP_COLOR_TINT = 0.0;
 
 #endif /* IMPConstants_Bridging_Metal_h */
