@@ -451,8 +451,8 @@ open class IMPView: MTKView {
 
     open override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
         
-        let sourceDragMask = sender.draggingSourceOperationMask()
-        let pboard = sender.draggingPasteboard()
+        let sourceDragMask = sender.draggingSourceOperationMask
+        let pboard = sender.draggingPasteboard
         
         let draggedType = NSPasteboard.PasteboardType(kUTTypeURL as String)
         
@@ -469,7 +469,7 @@ open class IMPView: MTKView {
     
     open override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
         let draggedType = NSPasteboard.PasteboardType(kUTTypeURL as String)
-        if let files  = sender.draggingPasteboard().propertyList(forType: draggedType) {
+        if let files  = sender.draggingPasteboard.propertyList(forType: draggedType) {
             if let o = dragOperation {
                 return o(files as! [String])
             }

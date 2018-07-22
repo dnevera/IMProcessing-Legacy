@@ -397,10 +397,10 @@ public extension IMPRegion{
         let w = rightx - leftx
         let h = topy - bottomy
         
-        self.left   = fabs(leftx - quad.left_bottom.x)/w
-        self.bottom = fabs(bottomy - quad.left_bottom.y)/h
+        self.left   = abs(leftx - quad.left_bottom.x)/w
+        self.bottom = abs(bottomy - quad.left_bottom.y)/h
         
-        self.right = fabs(rightx - quad.right_top.x)/w
-        self.top   = fabs(topy - quad.right_top.y)/h
+        self.right = abs(rightx - quad.right_top.x)/w
+        self.top   = abs(topy - quad.right_top.y)/h
     }
 }

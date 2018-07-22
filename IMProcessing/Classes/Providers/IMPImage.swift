@@ -81,7 +81,7 @@ open class IMPImage: IMPImageProvider {
         }
         get {
             if _image == nil && _texture != nil {
-                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+                _image = CIImage(mtlTexture: _texture!, options:  convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace]))
                 
                 let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
                 
@@ -132,4 +132,15 @@ open class IMPImage: IMPImageProvider {
     }
     
     private var filterObservers = [IMPObserverHash<ObserverType>]() //[((IMPImageProvider) -> Void)]()
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertToOptionalCIImageOptionDictionary(_ input: [String: Any]?) -> [CIImageOption: Any]? {
+	guard let input = input else { return nil }
+	return Dictionary(uniqueKeysWithValues: input.map { key, value in (CIImageOption(rawValue: key), value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromCIImageOption(_ input: CIImageOption) -> String {
+	return input.rawValue
 }

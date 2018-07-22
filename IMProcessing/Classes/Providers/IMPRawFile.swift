@@ -42,11 +42,11 @@ open class IMPRawFile: IMPImageProvider {
     
     public var baselineExposure:Float {
         set {
-            rawFilter?.setValue(baselineExposure,  forKey: kCIInputBaselineExposureKey)
+            rawFilter?.setValue(baselineExposure,  forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.baselineExposure))
             renderTexture()
         }
         get {
-            return (rawFilter?.value(forKey: kCIInputBaselineExposureKey) as? NSNumber)?.floatValue ?? 0 
+            return (rawFilter?.value(forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.baselineExposure)) as? NSNumber)?.floatValue ?? 0 
         }
     }
 
@@ -66,14 +66,14 @@ open class IMPRawFile: IMPImageProvider {
     
     public var boost:Float = 0 {
         didSet{
-            rawFilter?.setValue(max(min(1, boost),0), forKey: kCIInputBoostKey)
+            rawFilter?.setValue(max(min(1, boost),0), forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.boostAmount))
             renderTexture()
         }
     }
     
     public var boostShadow:Float = 0 {
         didSet{
-            rawFilter?.setValue(max(min(1, boostShadow),0), forKey: kCIInputBoostShadowAmountKey)
+            rawFilter?.setValue(max(min(1, boostShadow),0), forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.boostShadowAmount))
             renderTexture()
         }        
     }
@@ -81,14 +81,14 @@ open class IMPRawFile: IMPImageProvider {
     public var neutralChromaticity:float2? {
         set {
             if let nc = newValue {
-                rawFilter?.setValue(nc.x, forKey: kCIInputNeutralChromaticityXKey)
-                rawFilter?.setValue(nc.y, forKey: kCIInputNeutralChromaticityYKey)
+                rawFilter?.setValue(nc.x, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralChromaticityX))
+                rawFilter?.setValue(nc.y, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralChromaticityY))
                 renderTexture()
             }
         }
         get{
-            if let y = (rawFilter?.value(forKeyPath: kCIInputNeutralChromaticityYKey) as? NSNumber)?.floatValue,
-                let x = (rawFilter?.value(forKeyPath: kCIInputNeutralChromaticityXKey) as? NSNumber)?.floatValue{
+            if let y = (rawFilter?.value(forKeyPath: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralChromaticityY)) as? NSNumber)?.floatValue,
+                let x = (rawFilter?.value(forKeyPath: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralChromaticityX)) as? NSNumber)?.floatValue{
                 return float2(x,y)
             }
             return nil
@@ -99,7 +99,7 @@ open class IMPRawFile: IMPImageProvider {
         didSet{
             if let point = neutralLocation {
                 let loc = CIVector(cgPoint: CGPoint(x: CGFloat(point.x), y: CGFloat(point.y)))
-                rawFilter?.setValue(loc, forKey: kCIInputNeutralLocationKey)
+                rawFilter?.setValue(loc, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralLocation))
                 renderTexture()
             }
         }
@@ -116,81 +116,81 @@ open class IMPRawFile: IMPImageProvider {
 
     public var inputOrientation:IMPExifOrientation {
         set{
-            rawFilter?.setValue(true, forKey: kCIInputIgnoreImageOrientationKey)
-            rawFilter?.setValue(newValue.rawValue, forKey: kCIInputImageOrientationKey)
+            rawFilter?.setValue(true, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.ignoreImageOrientation))
+            rawFilter?.setValue(newValue.rawValue, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.imageOrientation))
             renderTexture()            
         }
         get {
-            let o = (rawFilter?.value(forKeyPath: kCIInputImageOrientationKey) as? NSNumber)?.int32Value ?? IMPExifOrientation.up.rawValue
+            let o = (rawFilter?.value(forKeyPath: convertFromCIRAWFilterOption(CIRAWFilterOption.imageOrientation)) as? NSNumber)?.int32Value ?? IMPExifOrientation.up.rawValue
             return IMPExifOrientation(rawValue: o) ?? IMPExifOrientation.up
         }
     }
     
     public var temperature:Float {
         set{
-            rawFilter?.setValue(newValue, forKey: kCIInputNeutralTemperatureKey)
+            rawFilter?.setValue(newValue, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralTemperature))
             renderTexture()            
         }
         get {
-            return (rawFilter?.value(forKeyPath: kCIInputNeutralTemperatureKey) as? NSNumber)?.floatValue ?? 5000
+            return (rawFilter?.value(forKeyPath: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralTemperature)) as? NSNumber)?.floatValue ?? 5000
         }
     }
     
     public var tint:Float {
         set{
-            rawFilter?.setValue(newValue, forKey: kCIInputNeutralTintKey)
+            rawFilter?.setValue(newValue, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralTint))
             renderTexture()            
         }
         get {
-            return (rawFilter?.value(forKeyPath: kCIInputNeutralTintKey) as? NSNumber)?.floatValue ?? 0
+            return (rawFilter?.value(forKeyPath: convertFromCIRAWFilterOption(CIRAWFilterOption.neutralTint)) as? NSNumber)?.floatValue ?? 0
         }
     }
     
     public var enableSharpening:Bool = false {
         didSet{  
-            rawFilter?.setValue(enableSharpening, forKey: kCIInputEnableSharpeningKey)
+            rawFilter?.setValue(enableSharpening, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.enableSharpening))
             renderTexture()
         }
     }    
     
     public var noiseReduction:Float = 0 {
         didSet{  
-            rawFilter?.setValue(noiseReduction, forKey: kCIInputNoiseReductionAmountKey)
+            rawFilter?.setValue(noiseReduction, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.noiseReductionAmount))
             renderTexture()
         }        
     }
     
     public var luminanceNoiseReduction:Float = 0 {
         didSet{  
-            rawFilter?.setValue(luminanceNoiseReduction, forKey: kCIInputLuminanceNoiseReductionAmountKey)
+            rawFilter?.setValue(luminanceNoiseReduction, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.luminanceNoiseReductionAmount))
             renderTexture()
         }                
     }
     
     public var noiseReductionDetail:Float = 0 {
         didSet{  
-            rawFilter?.setValue(noiseReductionDetail, forKey: kCIInputNoiseReductionDetailAmountKey)
+            rawFilter?.setValue(noiseReductionDetail, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.noiseReductionDetailAmount))
             renderTexture()
         }                
     }
     
     public var colorNoiseReduction:Float = 0 {
         didSet{  
-            rawFilter?.setValue(colorNoiseReduction, forKey: kCIInputColorNoiseReductionAmountKey)
+            rawFilter?.setValue(colorNoiseReduction, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.colorNoiseReductionAmount))
             renderTexture()
         }                
     }
     
     public var noiseReductionContrast:Float = 0 {
         didSet{  
-            rawFilter?.setValue(noiseReductionContrast, forKey: kCIInputNoiseReductionContrastAmountKey)
+            rawFilter?.setValue(noiseReductionContrast, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.noiseReductionContrastAmount))
             renderTexture()
         }                
     }
     
     public var noiseReductionSharpness:Float = 0 {
         didSet{  
-            rawFilter?.setValue(noiseReductionSharpness, forKey: kCIInputNoiseReductionSharpnessAmountKey)
+            rawFilter?.setValue(noiseReductionSharpness, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.noiseReductionSharpnessAmount))
             renderTexture()
         }                
     }
@@ -230,7 +230,7 @@ open class IMPRawFile: IMPImageProvider {
                             scale factor: Float = 1,
                             draft mode: Bool = false,
                             orientation:IMPImageOrientation? = nil,                            
-                            rawOptions:  [String : CFString]?=nil, 
+                            rawOptions:  [CIRAWFilterOption : Any]?=nil,
                             storageMode: IMPImageStorageMode?=nil, 
                             maxSize: CGFloat = 0) {
         self.init(context: context, storageMode: storageMode)
@@ -243,7 +243,7 @@ open class IMPRawFile: IMPImageProvider {
                             scale factor: Float = 1,
                             draft mode: Bool = false,
                             orientation:IMPImageOrientation? = nil,                            
-                            rawOptions:  [String : CFString]?=nil, 
+                            rawOptions:  [CIRAWFilterOption : Any]?=nil,
                             storageMode: IMPImageStorageMode?=nil, 
                             maxSize: CGFloat = 0) {
         self.init(context: context, storageMode: storageMode)
@@ -256,7 +256,7 @@ open class IMPRawFile: IMPImageProvider {
                             scale factor: Float = 1,
                             draft mode: Bool = false,
                             orientation:IMPImageOrientation? = nil,
-                            rawOptions:  [String : CFString]?=nil, 
+                            rawOptions:  [CIRAWFilterOption : Any]?=nil, 
                             storageMode: IMPImageStorageMode?=nil, 
                             maxSize: CGFloat = 0) {
         self.init(context: context, rawFile: URL(fileURLWithPath: path), scale: factor, draft: mode, orientation:orientation, rawOptions:rawOptions, storageMode: storageMode, maxSize:maxSize)
@@ -268,20 +268,20 @@ open class IMPRawFile: IMPImageProvider {
                              maxSize:CGFloat) {
                 
         self.maxSize = maxSize
-        rawFilter?.setValue(boost, forKey: kCIInputBoostKey)
-        rawFilter?.setValue(boostShadow, forKey: kCIInputBoostShadowAmountKey)
+        rawFilter?.setValue(boost, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.boostAmount))
+        rawFilter?.setValue(boostShadow, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.boostShadowAmount))
 
-        rawFilter?.setValue(noiseReduction, forKey: kCIInputNoiseReductionAmountKey)
-        rawFilter?.setValue(noiseReductionSharpness, forKey: kCIInputNoiseReductionSharpnessAmountKey)
-        rawFilter?.setValue(noiseReductionContrast, forKey: kCIInputNoiseReductionContrastAmountKey)
-        rawFilter?.setValue(noiseReductionDetail, forKey: kCIInputNoiseReductionDetailAmountKey)
+        rawFilter?.setValue(noiseReduction, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.noiseReductionAmount))
+        rawFilter?.setValue(noiseReductionSharpness, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.noiseReductionSharpnessAmount))
+        rawFilter?.setValue(noiseReductionContrast, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.noiseReductionContrastAmount))
+        rawFilter?.setValue(noiseReductionDetail, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.noiseReductionDetailAmount))
         
-        rawFilter?.setValue(colorNoiseReduction, forKey: kCIInputColorNoiseReductionAmountKey)
-        rawFilter?.setValue(luminanceNoiseReduction, forKey: kCIInputLuminanceNoiseReductionAmountKey)
+        rawFilter?.setValue(colorNoiseReduction, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.colorNoiseReductionAmount))
+        rawFilter?.setValue(luminanceNoiseReduction, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.luminanceNoiseReductionAmount))
         
-        rawFilter?.setValue(enableSharpening, forKey: kCIInputEnableSharpeningKey)
-        rawFilter?.setValue(factor, forKey: kCIInputScaleFactorKey)
-        rawFilter?.setValue(mode, forKey: kCIInputAllowDraftModeKey)
+        rawFilter?.setValue(enableSharpening, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.enableSharpening))
+        rawFilter?.setValue(factor, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.scaleFactor))
+        rawFilter?.setValue(mode, forKey: convertFromCIRAWFilterOption(CIRAWFilterOption.allowDraftMode))
         
         _image = renderOutput()
         
@@ -356,3 +356,8 @@ open class IMPRawFile: IMPImageProvider {
 
 }
 
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromCIRAWFilterOption(_ input: CIRAWFilterOption) -> String {
+	return input.rawValue
+}

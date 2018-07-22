@@ -137,13 +137,16 @@
     return IMPtempTint2xy(tempTint);
 }
 
-
 + (float2) tempTintFor:(float3)color from:(float3)gray {
     return IMPtempTintFromGray(color, gray);
 }
 
 + (float3) adjustTempTint:(float2)tempTint for:(float3)color{
     return IMPadjustTempTint(tempTint, color);
+}
+
++ (float)  xyz2CorColorTemp:(float3)color {
+    return IMPXYZtoCorColorTemp(color);
 }
 
 @end

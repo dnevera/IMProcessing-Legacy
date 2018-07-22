@@ -41,9 +41,9 @@ public extension NSColor{
             var red:CGFloat   = 0.0
             var green:CGFloat = 0.0
             var blue:CGFloat  = 0.0
-            var alpha:CGFloat = 0.0
-            getRed(&red, green: &green, blue: &blue, alpha: &alpha)
-            return float4(red.float,green.float,blue.float,alpha.float)
+            var _alpha:CGFloat = 0.0
+            getRed(&red, green: &green, blue: &blue, _alpha: &_alpha)
+            return float4(red.float,green.float,blue.float,_alpha.float)
         }
     }
     #else
@@ -127,7 +127,7 @@ public extension float3{
             var g = CGFloat(0)
             var b = CGFloat(0)
             var a = CGFloat(0)
-            color.getRed(&r, green:&g, blue:&b, alpha:&a)
+            color.getRed(&r, green:&g, blue:&b, _alpha:&a)
             self.init(Float(r),Float(g),Float(b))
         #else
             self.init(Float(color.redComponent),Float(color.greenComponent),Float(color.blueComponent))
@@ -191,7 +191,7 @@ public extension float4{
             var g = CGFloat(0)
             var b = CGFloat(0)
             var a = CGFloat(0)
-            color.getRed(&r, green:&g, blue:&b, alpha:&a)
+            color.getRed(&r, green:&g, blue:&b, _alpha:&a)
             self.init(Float(r),Float(g),Float(b),Float(a))
         #else
             self.init(Float(color.redComponent),Float(color.greenComponent),Float(color.blueComponent),Float(color.alphaComponent))

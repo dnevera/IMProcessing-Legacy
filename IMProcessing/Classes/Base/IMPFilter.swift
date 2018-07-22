@@ -336,7 +336,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                         let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
                         
                         filter.setValue(CIImage(mtlTexture: currentResult,
-                                                options:  [kCIImageColorSpace: colorSpace]),
+                                                options:  convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace])),
                                         forKey: kCIInputImageKey)
                         
                         guard let image = filter.outputImage else { return }
@@ -1006,4 +1006,15 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         v.source = IMPImage(context: self.context)
         return v
     }()
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertToOptionalCIImageOptionDictionary(_ input: [String: Any]?) -> [CIImageOption: Any]? {
+	guard let input = input else { return nil }
+	return Dictionary(uniqueKeysWithValues: input.map { key, value in (CIImageOption(rawValue: key), value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromCIImageOption(_ input: CIImageOption) -> String {
+	return input.rawValue
 }
