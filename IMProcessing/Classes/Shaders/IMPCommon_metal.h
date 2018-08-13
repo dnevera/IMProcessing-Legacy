@@ -16,6 +16,7 @@
 #include "IMPSwift-Bridging-Metal.h"
 #include "IMPFlowControl_metal.h"
 #include "IMPConstants_metal.h"
+#include "IMPMatrixExtension.h"
 
 using namespace metal;
 

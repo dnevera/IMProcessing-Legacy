@@ -11,6 +11,8 @@
 
 #include "IMPConstants-Bridging-Metal.h"
 #include "IMPTypes-Bridging-Metal.h"
+#include "IMPTpsSolverCommon.h"
+#include "IMPTpsSolverBridge.h"
 
 @interface IMPBridge : NSObject
 

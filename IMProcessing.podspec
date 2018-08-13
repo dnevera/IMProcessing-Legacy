@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
 
   s.name         = 'IMProcessing'
-  s.version      = '0.12.1'
+  s.version      = '0.13.0'
   s.license      = { :type => 'MIT', :file => 'LICENSE' }
   s.author       = { 'denn nevera' => 'denn.nevera@gmail.com' }
   s.homepage     = 'http://degradr.photo'
@@ -13,7 +13,7 @@ Pod::Spec.new do |s|
   s.osx.deployment_target = "10.12"
   s.ios.deployment_target = "10.2"
   
-  s.source_files        = 'IMProcessing/Classes/**/*.{h,swift,m}', 'IMProcessing/Classes/*.{swift}', 'IMProcessing/Classes/**/*.h','IMProcessing/Classes/Shaders/*.h', 'vendor/libjpeg-turbo/include/*'
+  s.source_files        = 'IMProcessing/Classes/**/*.{h,swift,m,mm}', 'IMProcessing/Classes/*.{swift}', 'IMProcessing/Classes/**/*.h','IMProcessing/Classes/Shaders/*.h', 'vendor/libjpeg-turbo/include/*'
   s.public_header_files = 'IMProcessing/Classes/**/*.h','IMProcessing/Classes/Shaders/*.h'
   s.vendored_libraries  = 'vendor/libjpeg-turbo/lib/libturbojpeg.a'
   s.header_dir   = 'IMProcessing'
