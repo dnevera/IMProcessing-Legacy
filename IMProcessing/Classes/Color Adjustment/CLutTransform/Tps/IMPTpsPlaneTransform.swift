@@ -6,7 +6,7 @@
 //  Copyright © 2018 Dehancer. All rights reserved.
 //
 
-import Foundation
+import AppKit
 import simd
 
 private func convert<T>(count: Int, data: UnsafePointer<T>) -> [T] {
@@ -149,4 +149,13 @@ public class IMPTpsLutTransform: IMPTpsPlaneTransform {
     
     private lazy var identityLut:IMPCLut =
         try! IMPCLut(context: context, lutType: .lut_2d, lutSize: 64, format: .float)
+}
+
+private extension NSImage {
+    convenience init(color: NSColor, size: NSSize) {
+        self.init(size: size)
+        lockFocus()
+        color.drawSwatch(in: NSMakeRect(0, 0, size.width, size.height))
+        unlockFocus()
+    }
 }
