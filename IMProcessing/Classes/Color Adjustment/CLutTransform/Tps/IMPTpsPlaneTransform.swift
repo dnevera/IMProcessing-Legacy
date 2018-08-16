@@ -9,58 +9,18 @@
 import AppKit
 import simd
 
-private func convert<T>(count: Int, data: UnsafePointer<T>) -> [T] {
-    let buffer = UnsafeBufferPointer(start: data, count: count);
-    return Array(buffer)
+extension IMPTpsPlaneTransform {
+    public func planeCoord(for color: float3) -> float2 {
+        let xyz01 = IMPColorSpace.rgb.toNormalized(space, value: color)
+        return float2(xyz01[self.spaceChannels.0],xyz01[self.spaceChannels.1])
+    }
 }
 
-public class IMPTpsPlaneTransform: IMPCLutTransform {
+public class IMPTpsPlaneTransform: IMPTpsTransform {
     
-    public typealias Vector = float3
-    public typealias Controls=IMPControlPoints<Vector>
-    
-    public var lambda:Float = 1 {
-        didSet{
-            dirty = true
-        }
-    }
-    
-    public var controls:Controls = Controls(p: [], q: []){
-        didSet{
-            
-            var cp = controls.p
-            var cq = controls.q
-            let count = Int32(cp.count)
-            let length = MemoryLayout<Vector>.size * cp.count
+    public var spaceChannels:(Int,Int) = (0,1)       { didSet{ dirty = true } }
 
-            let tps = IMPTpsSolverBridge(&cp, destination: &cq, count: count, lambda:lambda)
-            
-            let wcount = tps.weightsCount
-            let wsize = wcount * MemoryLayout<Vector>.size
-            let weights:[float3] = convert(count: wcount, data: tps.weights)
-            
-            if self.weightBuffer.length == length {
-                memcpy(self.weightBuffer.contents(), weights, wsize)
-                memcpy(self.qBuffer.contents(), self.controls.q, length)
-            }
-            else {
-                
-                self.weightBuffer = self.context.device.makeBuffer(
-                    bytes: weights,
-                    length: wsize,
-                    options: [])!
-                
-                self.qBuffer = self.context.device.makeBuffer(
-                    bytes: self.controls.q,
-                    length: length,
-                    options: [])!
-            }
-            
-            dirty = true
-        }
-    }
-    
-    public var kernelName:String {
+    public override var kernelName:String {
         return "kernel_tpsPlaneTransform"
     }
     
@@ -109,46 +69,6 @@ public class IMPTpsPlaneTransform: IMPCLutTransform {
             complete?(image)
         }
     }
-    
-    private lazy var weightBuffer:MTLBuffer = self
-        .context
-        .device
-        .makeBuffer(length: 4*MemoryLayout<Vector>.size, options:[])!
-    
-    private lazy var qBuffer:MTLBuffer = self
-        .context
-        .device
-        .makeBuffer(length: 4*MemoryLayout<Vector>.size, options:[])!
-}
-
-
-public class IMPTpsLutTransform: IMPTpsPlaneTransform {
-    
-    public override var kernelName:String {
-        return "kernel_tpsLutTransform"
-    }
-    
-    public var cLut:IMPCLut!
-    
-    override public func configure(complete: IMPFilter.CompleteHandler?) {
-        
-        super.extendName(suffix: "TPS Lut Transform")
-        super.configure(complete: nil)
-        source = identityLut
-        cLut =  try! IMPCLut(context: context, lutType: .lut_2d, lutSize: 64, format: .float)
-        
-        addObserver(destinationUpdated: { image in
-            do {
-                try self.cLut.update(from: image)
-            }
-            catch let error {
-                Swift.print("IMPTpsLutTransform error: \(error)")
-            }
-        })
-    }
-    
-    private lazy var identityLut:IMPCLut =
-        try! IMPCLut(context: context, lutType: .lut_2d, lutSize: 64, format: .float)
 }
 
 private extension NSImage {

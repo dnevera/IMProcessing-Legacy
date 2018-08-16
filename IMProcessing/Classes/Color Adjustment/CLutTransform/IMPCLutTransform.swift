@@ -21,7 +21,7 @@ open class IMPCLutTransform: IMPFilter {
         didSet{ reference = space.from(oldValue, value: reference); dirty = true }
     }
     
-    public var spaceChannels:(Int,Int) = (0,1)       { didSet{ dirty = true } }
+    //public var spaceChannels:(Int,Int) = (0,1)       { didSet{ dirty = true } }
     
     open override func configure(complete: IMPFilter.CompleteHandler?) {
         super.extendName(suffix: "Commont Lut Transformation")

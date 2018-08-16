@@ -87,19 +87,14 @@ namespace IMProcessing
                                        metal::texture2d<float, metal::access::write>  outTexture [[texture(1)]],
                                        constant float3              &reference      [[buffer(0)]],
                                        constant IMPColorSpaceIndex  &space          [[buffer(1)]],
-                                       constant uint2               &spacePlanes    [[buffer(2)]],
                                        
-                                       constant float3  *weights     [[buffer(3)]],
-                                       constant float3  *q           [[buffer(4)]],
-                                       constant int     &count       [[buffer(5)]],
+                                       constant float3  *weights     [[buffer(2)]],
+                                       constant float3  *q           [[buffer(3)]],
+                                       constant int     &count       [[buffer(4)]],
                                        
                                        metal::uint2 gid [[thread_position_in_grid]]
                                        )
     {
-        
-        float2 xyLut = float2(gid)/float2(outTexture.get_width(),outTexture.get_height());
-        
-        xyLut = float2(xyLut.x, xyLut.y);
         
         float3 rgb = lut.read(gid).rgb;
         
