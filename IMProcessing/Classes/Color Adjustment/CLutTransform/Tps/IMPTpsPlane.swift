@@ -9,15 +9,29 @@
 import AppKit
 import simd
 
-extension IMPTpsPlaneTransform {
+extension IMPTpsPlane {
     public func planeCoord(for color: float3) -> float2 {
         let xyz01 = IMPColorSpace.rgb.toNormalized(space, value: color)
         return float2(xyz01[self.spaceChannels.0],xyz01[self.spaceChannels.1])
     }
 }
 
-public class IMPTpsPlaneTransform: IMPTpsTransform {
+public class IMPTpsPlane: IMPTpsTransform {
     
+    public var rgb:float3 {
+        set{ reference = space.from(.rgb, value: newValue) }
+        get { return space.to(.rgb, value: reference) }
+    }
+    
+    public var reference:float3            = float3(0)   { didSet{ dirty = true } }
+    
+    public override var space:IMPColorSpace {
+        didSet{
+            reference = space.from(oldValue, value: reference);
+            dirty = true            
+        }
+    }
+
     public var spaceChannels:(Int,Int) = (0,1)       { didSet{ dirty = true } }
 
     public override var kernelName:String {

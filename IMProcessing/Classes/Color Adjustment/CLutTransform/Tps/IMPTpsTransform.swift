@@ -31,7 +31,7 @@ public class IMPTpsTransform: IMPCLutTransform {
             let count = Int32(cp.count)
             let length = MemoryLayout<Vector>.size * cp.count
             
-            let tps = IMPTpsSolverBridge(&cp, destination: &cq, count: count, lambda:lambda)
+            let tps = IMPTpsSolver(&cp, destination: &cq, count: count, lambda:lambda)
             
             let wcount = tps.weightsCount
             let wsize = wcount * MemoryLayout<Vector>.size

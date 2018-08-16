@@ -60,6 +60,11 @@ public struct IMPControlPoints<T:IMPTransformPoint> {
         self.p = p
         self.q = q
     }
+    
+    public init() {
+        self.p = [T()]
+        self.q = [T()]
+    }     
 }
 
 public protocol IMPTransformable {

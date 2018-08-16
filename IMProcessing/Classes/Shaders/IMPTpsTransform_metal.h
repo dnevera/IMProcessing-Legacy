@@ -85,12 +85,11 @@ namespace IMProcessing
     kernel void kernel_tpsLutTransform(
                                        metal::texture2d<float, metal::access::read> lut [[texture(0)]],
                                        metal::texture2d<float, metal::access::write>  outTexture [[texture(1)]],
-                                       constant float3              &reference      [[buffer(0)]],
-                                       constant IMPColorSpaceIndex  &space          [[buffer(1)]],
+                                       constant IMPColorSpaceIndex  &space          [[buffer(0)]],
                                        
-                                       constant float3  *weights     [[buffer(2)]],
-                                       constant float3  *q           [[buffer(3)]],
-                                       constant int     &count       [[buffer(4)]],
+                                       constant float3  *weights     [[buffer(1)]],
+                                       constant float3  *q           [[buffer(2)]],
+                                       constant int     &count       [[buffer(3)]],
                                        
                                        metal::uint2 gid [[thread_position_in_grid]]
                                        )

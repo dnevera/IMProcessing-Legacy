@@ -1,13 +1,13 @@
 //
-//  IMPTpsSolverCommon.hpp
+//  IMPTpsSolverCommon.h
 //  IMProcessing
 //
 //  Created by denn on 07.08.2018.
 //  Copyright © 2018 Dehancer. All rights reserved.
 //
 
-#ifndef IMPTpsSolverCommon_hpp
-#define IMPTpsSolverCommon_hpp
+#ifndef IMPTpsSolverCommon_h
+#define IMPTpsSolverCommon_h
 
 #ifdef __METAL_VERSION__
 
@@ -81,4 +81,4 @@ namespace IMProcessing
 
 #endif
 
-#endif /* IMPTpsSolverCommon_hpp */
+#endif /* IMPTpsSolverCommon_h */

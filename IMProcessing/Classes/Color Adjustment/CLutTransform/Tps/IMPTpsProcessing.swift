@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class IMPTpsSolver: IMPTransformable {
+public class IMPTpsProcessing: IMPTransformable {
     
     public typealias Vector = float3
     
@@ -33,7 +33,7 @@ public class IMPTpsSolver: IMPTransformable {
     }
 }
 
-extension IMPTpsSolver {
+extension IMPTpsProcessing {
     
     public func process(controls: IMPControlPoints<Vector>, complete: (([Vector]) -> Void)?) throws {
         
@@ -41,7 +41,7 @@ extension IMPTpsSolver {
         var cq = controls.q
         let count = Int32(cp.count)
         
-        let tps = IMPTpsSolverBridge(&cp, destination: &cq, count: count, lambda:lambda)
+        let tps = IMPTpsSolver(&cp, destination: &cq, count: count, lambda:lambda)
 
         var result = [Vector](repeating: Vector(), count: points.count)
         
