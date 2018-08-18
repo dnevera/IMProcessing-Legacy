@@ -23,6 +23,8 @@ public class IMPTpsTransform: IMPCLutTransform {
         }
     }
     
+    
+    /// Normalized control points, e.i. belong to [0,1]
     public var controls:Controls = Controls(p: [], q: []){
         didSet{
             

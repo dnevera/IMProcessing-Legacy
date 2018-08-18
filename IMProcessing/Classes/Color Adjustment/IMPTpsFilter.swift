@@ -20,11 +20,7 @@ public class IMPTpsFilter: IMPTpsTransform {
         
         let kernel = IMPFunction(context: self.context, kernelName: kernelName)
         
-        kernel.optionsHandler = {(shader, commandEncoder, input, output) in
-            
-//            commandEncoder.setBytes(&self.reference,
-//                                    length: MemoryLayout.size(ofValue: self.reference),
-//                                    index: 0)
+        kernel.optionsHandler = {(shader, commandEncoder, input, output) in            
             
             var index = self.space.index
             commandEncoder.setBytes(&index,
