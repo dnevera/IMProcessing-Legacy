@@ -55,6 +55,7 @@
 //#include "IMPFilmGrain_metal.h"
 //#include "IMPDithering_metal.h"
 #include "IMPVignette_metal.h"
+#include "IMPSaturation_metal.h"
 
 #ifdef __cplusplus
 
