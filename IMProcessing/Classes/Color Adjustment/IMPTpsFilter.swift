@@ -9,6 +9,9 @@ import Foundation
 
 public class IMPTpsFilter: IMPTpsTransform {
     
+    public static let defaultAdjustment = IMPAdjustment( blending: IMPBlending(mode: .normal, opacity: 1))
+    public var adjustment:IMPAdjustment = defaultAdjustment { didSet{ dirty = true } }
+
     public override var kernelName:String {
         return "kernel_tpsLutTransform"
     }
@@ -40,6 +43,10 @@ public class IMPTpsFilter: IMPTpsTransform {
                                     length: MemoryLayout.stride(ofValue: count),
                                     index: 3)
             
+            commandEncoder.setBytes(&self.adjustment,
+                                    length:MemoryLayout.stride(ofValue: self.adjustment),
+                                    index:4)
+
         }
         
         add(function: kernel) { (image) in

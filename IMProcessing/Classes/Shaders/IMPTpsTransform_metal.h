@@ -83,19 +83,20 @@ namespace IMProcessing
     }
     
     kernel void kernel_tpsLutTransform(
-                                       metal::texture2d<float, metal::access::read> lut [[texture(0)]],
+                                       metal::texture2d<float, metal::access::read> source [[texture(0)]],
                                        metal::texture2d<float, metal::access::write>  outTexture [[texture(1)]],
                                        constant IMPColorSpaceIndex  &space          [[buffer(0)]],
                                        
                                        constant float3  *weights     [[buffer(1)]],
                                        constant float3  *q           [[buffer(2)]],
                                        constant int     &count       [[buffer(3)]],
-                                       
+                                       constant IMPAdjustment  &adjustment   [[buffer(4)]],
+
                                        metal::uint2 gid [[thread_position_in_grid]]
                                        )
     {
         
-        float3 rgb = lut.read(gid).rgb;
+        float3 rgb = source.read(gid).rgb;
         
         float3 lutXyz = IMPConvertToNormalizedColor(IMPRgbSpace,
                                                     space,
@@ -107,6 +108,8 @@ namespace IMProcessing
                                                       IMPRgbSpace,
                                                       lutXyz);
         
+        float4 result = IMProcessing::blend(float4(rgb,1), float4(lutRgb,1), adjustment.blending);
+
         outTexture.write(float4(lutRgb,1), gid);
     }
     
