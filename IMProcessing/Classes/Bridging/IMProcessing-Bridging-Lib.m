@@ -12,6 +12,7 @@
 @implementation IMPBridge
 
 + (float3) rgb2xyz:(float3)color     { return IMPrgb2xyz(color); }
++ (float3) rgb2srgb:(float3)color     { return IMPrgb2srgb(color); }
 + (float3) rgb2lab:(float3)color     { return IMPrgb2lab(color); }
 + (float3) rgb2lch:(float3)color     { return IMPrgb2lch(color); }
 + (float3) rgb2dcproflut:(float3)color     { return IMPrgb2dcproflut(color); }
@@ -21,6 +22,7 @@
 + (float3) rgb2ycbcrHD:(float3)color { return IMPrgb2ycbcrHD(color); }
 
 + (float3) srgb2xyz:(float3)color     { return IMPsrgb2xyz(color); }
++ (float3) srgb2rgb:(float3)color     { return IMPsrgb2rgb(color); }
 + (float3) srgb2lab:(float3)color     { return IMPsrgb2lab(color); }
 + (float3) srgb2lch:(float3)color     { return IMPsrgb2lch(color); }
 + (float3) srgb2dcproflut:(float3)color     { return IMPsrgb2dcproflut(color); }

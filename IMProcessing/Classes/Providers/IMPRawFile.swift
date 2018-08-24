@@ -334,12 +334,7 @@ open class IMPRawFile: IMPImageProvider {
     // http://stackoverflow.com/questions/12524623/what-are-the-practical-differences-when-working-with-colors-in-a-linear-vs-a-no
     //
     lazy public var colorSpace:CGColorSpace = {
-        if #available(iOS 10.0, *) {
-            return CGColorSpace(name: CGColorSpace.sRGB)!
-        }
-        else {
-            fatalError("extendedLinearSRGB: ios >10.0 supports only")
-        }
+        return IMProcessing.colorSpace.cgColorSpace
     }()
     
     public required init(context: IMPContext, storageMode:IMPImageStorageMode? = .shared) {

@@ -19,6 +19,10 @@ func IMPstep(_ edge:Float, _ x:Float) -> Float {
 
 public extension float3{
     
+    public func rgb2srgb() -> float3 {
+        return IMPBridge.rgb2srgb(self)
+    }
+    
     public func rgb2xyz() -> float3 {
         return IMPBridge.rgb2xyz(self)
     }
@@ -49,5 +53,45 @@ public extension float3{
 
        public func rgb2lch() -> float3 {
         return IMPBridge.rgb2lch(self)
+    }
+}
+
+
+public extension float3{
+    
+    public func srgb2xyz() -> float3 {
+        return IMPBridge.srgb2xyz(self)
+    }
+    
+    public func srgb2rgb() -> float3 {
+        return IMPBridge.srgb2rgb(self)
+    }
+    
+    public func srgb2hsv() -> float3 {
+        return IMPBridge.srgb2hsv(self)
+    }
+    
+    public func srgb2hsl() -> float3 {
+        return IMPBridge.srgb2hsl(self)
+    }
+    
+    public func srgb2hsp() -> float3 {
+        return IMPBridge.srgb2hsp(self)
+    }
+    
+    public func srgb2ycbcrHD() -> float3 {
+        return IMPBridge.srgb2ycbcrHD(self)
+    }
+    
+    public func srgb2dcproflut() ->float3 {
+        return IMPBridge.srgb2dcproflut(self)
+    }
+    
+    public func srgb2lab() -> float3 {
+        return  IMPBridge.srgb2lab(self)
+    }
+    
+    public func srgb2lch() -> float3 {
+        return IMPBridge.srgb2lch(self)
     }
 }

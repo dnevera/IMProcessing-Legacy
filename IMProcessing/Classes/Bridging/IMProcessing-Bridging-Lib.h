@@ -16,7 +16,8 @@
 
 @interface IMPBridge : NSObject
 
-+ (float3) rgb2xyz:(float3)color;     // 1
++ (float3) rgb2xyz:(float3)color;     // 0
++ (float3) rgb2srgb:(float3)color;    // 1
 + (float3) rgb2lab:(float3)color;     // 2
 + (float3) rgb2lch:(float3)color;     // 3
 + (float3) rgb2dcproflut:(float3)color;     // 4
@@ -25,7 +26,8 @@
 + (float3) rgb2hsp:(float3)color;     // 6
 + (float3) rgb2ycbcrHD:(float3)color; // 7
 
-+ (float3) srgb2xyz:(float3)color;     // 1
++ (float3) srgb2xyz:(float3)color;     // 0
++ (float3) srgb2rgb:(float3)color;     // 1
 + (float3) srgb2lab:(float3)color;     // 2
 + (float3) srgb2lch:(float3)color;     // 3
 + (float3) srgb2dcproflut:(float3)color;     // 4
