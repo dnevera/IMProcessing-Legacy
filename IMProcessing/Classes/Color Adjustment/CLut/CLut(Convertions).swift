@@ -101,7 +101,7 @@ public extension IMPCLut {
         }
         
         else {
-            throw FormatError(file: #file, line: #line, kind: .wrangType)
+            throw FormatError(file: #file, line: #line, kind: .wrongType)
         }
 
         context.execute(.sync, wait: true){ (commandBuffer) in
