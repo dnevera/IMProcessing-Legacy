@@ -357,7 +357,7 @@ static inline float3 IMPHSL_2_rgb(float3 hsl)
 //
 // XYZ
 //
-static inline float3 IMPrgb_2_XYZ(float3 rgb)
+static inline float3 IMPsrgb_2_XYZ(float3 rgb)
 {
     float r = rgb.x;
     float g = rgb.y;
@@ -372,7 +372,7 @@ static inline float3 IMPrgb_2_XYZ(float3 rgb)
     return xyz;
 }
 
-static inline float3 IMPsrgb_2_XYZ(float3 rgb)
+static inline float3 IMPrgb_2_XYZ(float3 rgb)
 {
     float r = rgb.x;
     float g = rgb.y;
@@ -397,7 +397,7 @@ static inline float3 IMPsrgb_2_XYZ(float3 rgb)
 }
 
 
-static inline float3 IMPXYZ_2_rgb (float3 xyz){
+static inline float3 IMPXYZ_2_srgb (float3 xyz){
     
     float var_X = xyz.x / 100.0;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
     float var_Y = xyz.y / 100.0;       //Y from 0 to 100.000
@@ -412,7 +412,7 @@ static inline float3 IMPXYZ_2_rgb (float3 xyz){
     return rgb;
 }
 
-static inline float3 IMPXYZ_2_srgb (float3 xyz){
+static inline float3 IMPXYZ_2_rgb (float3 xyz){
     
     float var_X = xyz.x / 100.0;       //X from 0 to  95.047      (Observer = 2°, Illuminant = D65)
     float var_Y = xyz.y / 100.0;       //Y from 0 to 100.000
