@@ -433,7 +433,20 @@ static inline float3 IMPXYZ_2_rgb (float3 xyz){
     if ( rgb.z > 0.0031308 ) rgb.z = 1.055 * pow( rgb.z, ( 1.0 / 2.4 ) ) - 0.055;
     else                     rgb.z = 12.92 * rgb.z;
     
+#ifdef __METAL_VERSION__
+    return clamp(rgb, float3(0), float3(1));
+#else
+    rgb.x = rgb.x < 0 ? 0 : rgb.x;
+    rgb.x = rgb.x > 1 ? 1 : rgb.x;
+
+    rgb.y = rgb.y < 0 ? 0 : rgb.y;
+    rgb.y = rgb.y > 1 ? 1 : rgb.y;
+
+    rgb.z = rgb.z < 0 ? 0 : rgb.z;
+    rgb.z = rgb.z > 1 ? 1 : rgb.z;
+
     return rgb;
+#endif
 }
 
 
