@@ -72,3 +72,10 @@ public protocol IMPTransformable {
     var points:[Vector] {set get}
     func process(controls:IMPControlPoints<Vector>, complete:((_ points:[Vector])->Void)?) throws
 }
+
+open class IMPTransformation<T:IMPTransformPoint>:IMPTransformable{
+    open var points: [T] = []
+    open func process<T>(controls: IMPControlPoints<T>, complete: (([T]) -> Void)?) throws {}
+    public typealias Vector = T
+    public init() {}
+}
