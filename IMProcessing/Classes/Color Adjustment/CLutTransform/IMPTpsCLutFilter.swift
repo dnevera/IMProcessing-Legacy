@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class IMPCLutTpsTransform: IMPTpsFilter {
+public class IMPTpsCLutFilter: IMPTpsFilter {
     
     public var cLut:IMPCLut!
     

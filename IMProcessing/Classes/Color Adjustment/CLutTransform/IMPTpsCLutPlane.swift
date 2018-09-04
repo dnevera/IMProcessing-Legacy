@@ -9,14 +9,14 @@
 import AppKit
 import simd
 
-extension IMPTpsPlane {
+extension IMPTpsCLutPlane {
     public func planeCoord(for color: float3) -> float2 {
         let xyz01 = IMPColorSpace.rgb.toNormalized(space, value: color)
         return float2(xyz01[self.spaceChannels.0],xyz01[self.spaceChannels.1])
     }
 }
 
-public class IMPTpsPlane: IMPTpsTransform {
+public class IMPTpsCLutPlane: IMPTpsCLutTransform {
     
     public var rgb:float3 {
         set{ reference = space.from(.rgb, value: newValue) }

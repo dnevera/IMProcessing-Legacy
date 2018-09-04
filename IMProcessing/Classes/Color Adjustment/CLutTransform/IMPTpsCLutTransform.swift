@@ -13,7 +13,7 @@ private func convert<T>(count: Int, data: UnsafePointer<T>) -> [T] {
     return Array(buffer)
 }
 
-public class IMPTpsTransform: IMPCLutTransform {
+public class IMPTpsCLutTransform: IMPCLutTransform {
     public typealias Vector = float3
     public typealias Controls=IMPControlPoints<Vector>
     
@@ -33,7 +33,7 @@ public class IMPTpsTransform: IMPCLutTransform {
             let count = Int32(cp.count)
             let length = MemoryLayout<Vector>.size * cp.count
             
-            let tps = IMPTpsSolver(&cp, destination: &cq, count: count, lambda:lambda)
+            let tps = IMPTpsSolver3D(&cp, destination: &cq, count: count, lambda:lambda)
             
             let wcount = tps.weightsCount
             let wsize = wcount * MemoryLayout<Vector>.size

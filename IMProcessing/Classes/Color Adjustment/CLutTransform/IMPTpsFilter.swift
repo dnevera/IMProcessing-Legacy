@@ -7,7 +7,7 @@
 
 import Foundation
 
-public class IMPTpsFilter: IMPTpsTransform {
+public class IMPTpsFilter: IMPTpsCLutTransform {
     
     public static let defaultAdjustment = IMPAdjustment( blending: IMPBlending(mode: .normal, opacity: 1))
     public var adjustment:IMPAdjustment = defaultAdjustment { didSet{ dirty = true } }
