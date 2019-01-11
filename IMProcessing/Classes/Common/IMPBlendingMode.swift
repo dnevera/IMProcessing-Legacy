@@ -15,7 +15,7 @@ public extension IMPBlendingMode{
     }
     
     public static var list:[IMPBlendingMode]{
-        return [.normal, .luminosity, .color]
+        return [.normal, .luminosity, .color, .mix]
     }
 
     public var name:String {
@@ -26,6 +26,8 @@ public extension IMPBlendingMode{
             return "Luminosity"
         case .color:
             return "Color"
+        case .mix:
+            return "Mix"
         }
     }
     

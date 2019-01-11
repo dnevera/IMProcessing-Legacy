@@ -47,17 +47,18 @@ public extension IMPFilter {
     ///   - action: next processing action
     /// - Returns: filter
     ///
-    @discardableResult public func addProcessing<T:IMPFilter>(action:  ((_ image:IMPImageProvider) -> Void)?=nil) -> T {
+    @discardableResult public func addProcessing<T:IMPFilter>(sync:IMPContext.OperationType = .sync,
+                                                              action:  ((_ image:IMPImageProvider) -> Void)?=nil) -> T {
         addObserver(destinationUpdated: {(destination) in
             if let a = action {
-                self.context.runOperation(.async) {
+                self.context.runOperation(sync) {
                     a(destination)
                 }
             }
         })
         
         addObserver(newSource:{ (source) in
-            self.context.runOperation(.async, {
+            self.context.runOperation(sync, {
                 self.process()
             })
         })

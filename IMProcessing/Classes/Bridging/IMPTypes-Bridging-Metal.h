@@ -63,7 +63,8 @@ extern "C" {
     typedef NS_ENUM(uint, IMPBlendingMode) {
         IMPNormal     = 0,
         IMPLuminosity = 1,
-        IMPColor      = 2
+        IMPColor      = 2,
+        IMPMix        = 3
     };
     
 #else
@@ -71,12 +72,12 @@ extern "C" {
     typedef enum : uint {
         IMPNormal     = 0,
         IMPLuminosity = 1,
-        IMPColor      = 2
+        IMPColor      = 2,
+        IMPMix        = 3
     }IMPBlendingMode;
     
 #endif
   
-    
     typedef struct {
         float2 position;
         float2 slope;

@@ -27,7 +27,7 @@ Pod::Spec.new do |s|
   # TODO: find solution for -OSX/-IOS enviroment variable, at the moment i don;t know what hould it be, so use paths to boths platform
   # MTL shaders has platform independent sources
   #
-  s.xcconfig = { 'MTL_HEADER_SEARCH_PATHS' => '$(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing/IMProcessing.framework/Headers $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing-OSX/IMProcessing.framework/Headers $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing-iOS/IMProcessing.framework/Headers'}
+  s.xcconfig = { 'MTL_HEADER_SEARCH_PATHS' => '$(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing/IMProcessing.framework/Headers $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing-OSX/IMProcessing.framework/Headers $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessing-iOS/IMProcessing.framework/Headers  $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessingUI/IMProcessingUI.framework/Headers $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessingUI-OSX/IMProcessingUI.framework/Headers $(PODS_CONFIGURATION_BUILD_DIR)/IMProcessingUI-iOS/IMProcessingUI.framework/Headers'}
 
   s.requires_arc = true
 
