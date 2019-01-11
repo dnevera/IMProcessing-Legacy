@@ -21,6 +21,7 @@
 #include "IMPColorSpaces_metal.h"
 #include "IMPBlending_metal.h"
 #include "IMPGeometry_metal.h"
+#include "IMPTpsSolverCommon.h"
 
 #include "IMPDerivatives_metal.h"
 
@@ -28,7 +29,7 @@
 #include "IMPCrosshair_metal.h"
 
 #include "IMPColorProcessing_metal.h"
-#include "IMPHuoghTransform_metal.h"
+#include "IMPHoughTransform_metal.h"
 #include "IMPMorphology_metal.h"
 
 #include "IMPPosterize_metal.h"
@@ -46,12 +47,15 @@
 #include "IMPWhiteBalance_metal.h"
 #include "IMPContrastScretching_metal.h"
 
+#include "IMPTpsTransform_metal.h"
+
 //#include "IMPHistogramLayer_metal.h"
 //#include "IMPAdjustment_metal.h"
 //#include "IMPRandomNoise_metal.h"
 //#include "IMPFilmGrain_metal.h"
 //#include "IMPDithering_metal.h"
 #include "IMPVignette_metal.h"
+#include "IMPSaturation_metal.h"
 
 #ifdef __cplusplus
 

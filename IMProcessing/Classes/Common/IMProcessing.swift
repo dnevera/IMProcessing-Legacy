@@ -24,6 +24,16 @@ public enum IMProcessing{
     
     public struct colorSpace {
         #if os(OSX)
+//        if #available(iOS 10.0, *) {
+//        //return CGColorSpace(name: CGColorSpace.sRGB)!
+//        //return CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
+//        //return CGColorSpace(name: CGColorSpace.genericRGBLinear)!
+//        }
+//        else {
+//        fatalError("extendedLinearSRGB: ios >10.0 supports only")
+//        }
+
+        public static let cgColorSpace =  CGColorSpaceCreateDeviceRGB()
         public static let srgb = NSColorSpace.sRGB
         #endif
     }

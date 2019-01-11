@@ -34,16 +34,18 @@ open class IMPCLut: IMPImage {
     /// Lute error handling
     ///
     /// - notFound: data not found
-    /// - wrangFormat: wrang format of loaded data
-    /// - wrangRange: wrang range
+    /// - notCreated: could not creat output file
+    /// - wrongFormat: wrang format of loaded data
+    /// - wrongRange: wrang range
     /// - outOfRange: out of range
+    /// - empty: empty file
     public struct FormatError: Error {
         public enum Kind {
             case notFound
             case notCreated
-            case wrangFormat
-            case wrangType
-            case wrangRange
+            case wrongFormat
+            case wrongType
+            case wrongRange
             case outOfRange
             case empty
         }
@@ -174,15 +176,15 @@ public extension IMPCLut {
             throw FormatError(file: "", line: 0, kind: .empty) 
         }
         guard txt.textureType == oldtxt.textureType else {
-            throw FormatError(file: "", line: 0, kind: .wrangType)
+            throw FormatError(file: "", line: 0, kind: .wrongType)
         }
         
         guard txt.pixelFormat == oldtxt.pixelFormat else {
-            throw FormatError(file: "", line: 0, kind: .wrangFormat)
+            throw FormatError(file: "", line: 0, kind: .wrongFormat)
         }
         
         guard txt.size.width == oldtxt.size.width else {
-            throw FormatError(file: "", line: 0, kind: .wrangRange)
+            throw FormatError(file: "", line: 0, kind: .wrongRange)
         }
         
         context.execute(operation, wait: true, complete: {

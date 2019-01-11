@@ -81,7 +81,7 @@ open class IMPImage: IMPImageProvider {
         }
         get {
             if _image == nil && _texture != nil {
-                _image = CIImage(mtlTexture: _texture!, options:  [kCIImageColorSpace: colorSpace])
+                _image = CIImage(mtlTexture: _texture!, options:  convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace]))
                 
                 let observers = self.mutex.sync { return [IMPObserverHash<ObserverType>](self.filterObservers) }
                 
@@ -110,14 +110,7 @@ open class IMPImage: IMPImageProvider {
     // http://stackoverflow.com/questions/12524623/what-are-the-practical-differences-when-working-with-colors-in-a-linear-vs-a-no
     //
     lazy public var colorSpace:CGColorSpace = {
-        if #available(iOS 10.0, *) {
-            return CGColorSpace(name: CGColorSpace.sRGB)!
-            //return  CGColorSpace(name: CGColorSpace.extendedLinearSRGB)!
-           // return  CGColorSpace(name: CGColorSpace.genericRGBLinear)!
-        }
-        else {
-            fatalError("extendedLinearSRGB: ios >10.0 supports only")
-        }
+        return IMProcessing.colorSpace.cgColorSpace
     }()
     
     public required init(context: IMPContext, storageMode:IMPImageStorageMode? = .shared) {
@@ -132,4 +125,15 @@ open class IMPImage: IMPImageProvider {
     }
     
     private var filterObservers = [IMPObserverHash<ObserverType>]() //[((IMPImageProvider) -> Void)]()
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertToOptionalCIImageOptionDictionary(_ input: [String: Any]?) -> [CIImageOption: Any]? {
+	guard let input = input else { return nil }
+	return Dictionary(uniqueKeysWithValues: input.map { key, value in (CIImageOption(rawValue: key), value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromCIImageOption(_ input: CIImageOption) -> String {
+	return input.rawValue
 }

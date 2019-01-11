@@ -10,6 +10,7 @@ import Foundation
 import Accelerate
 
 public class IMPWhiteBalanceFilter: IMPFilter {
+    
     public static let defaultAdjustment = IMPAdjustment( blending: IMPBlending(mode: .normal, opacity: 1))
 
     public var temperature:Float = 5000.0 { 
@@ -40,7 +41,5 @@ public class IMPWhiteBalanceFilter: IMPFilter {
         }        
         return f
     }()
-    
-    //private var _temperature:Float = 0.0
-    
+        
 }

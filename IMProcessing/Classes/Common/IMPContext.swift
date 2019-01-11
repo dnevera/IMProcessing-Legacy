@@ -15,9 +15,10 @@
 
 import Metal
 
-public func IMPPeekFunc<A, R>(_ f: (A) -> R) -> (fp: Int, ctx: Int) {
+public func IMPPeekFunc<A, R>(_ f: @escaping (A) -> R) -> (fp: Int, ctx: Int) {
     typealias IntInt = (Int, Int)
     let (_, lo) = unsafeBitCast(f, to: IntInt.self)
+    //let lo = unsafeBitCast(f, to: IntInt.self)
     let offset = MemoryLayout<Int>.size == 8 ? 16 : 12
     let ptr = UnsafePointer<Int>(bitPattern: lo + offset)!
     return (ptr.pointee, ptr.successor().pointee)
@@ -31,7 +32,7 @@ public func IMPPeekFunc<A>(_ f: (A)) -> (fp: Int, ctx: Int) {
     return (ptr.pointee, ptr.successor().pointee)
 }
 
-public func === <A, R>(lhs: (A) -> R, rhs: (A) -> R) -> Bool {
+public func === <A, R>(lhs: @escaping (A) -> R, rhs: @escaping (A) -> R) -> Bool {
     let (tl, tr) = (IMPPeekFunc(lhs), IMPPeekFunc(rhs))
     return tl.0 == tr.0 && tl.1 == tr.1
 }
@@ -133,7 +134,7 @@ open class IMPContext {
         }
     }
     
-    open let uid = String.uniqString()
+    public let uid = String.uniqString()
     
     /// Current command queue uses the current device
     open var commandQueue:MTLCommandQueue? 
@@ -142,14 +143,14 @@ open class IMPContext {
     //}
     
     /// Default library associated with current context
-    open let defaultLibrary:MTLLibrary
+    public let defaultLibrary:MTLLibrary
     
     
     /// How context execution is processed
-    open let isLazy:Bool
+    public let isLazy:Bool
     
     /// check whether the MTL device is supported
-    open static var supportsSystemDevice:Bool{
+    public static var supportsSystemDevice:Bool{
         get{
             let device = MTLCreateSystemDefaultDevice()
             if device == nil {
@@ -371,7 +372,7 @@ open class IMPContext {
     }
     
     ///  the maximum supported devices texture size.
-    open static var maximumTextureSize:Int{
+    public static var maximumTextureSize:Int{
         
         set(newMaximumTextureSize){
             IMPContext.sharedContainer.currentMaximumTextureSize = 0
@@ -395,7 +396,7 @@ open class IMPContext {
     ///
     ///  - returns: maximum size
     ///
-    open static func sizeAdjustTo(size inputSize:CGSize, maxSize:Float = Float(IMPContext.maximumTextureSize)) -> CGSize
+    public static func sizeAdjustTo(size inputSize:CGSize, maxSize:Float = Float(IMPContext.maximumTextureSize)) -> CGSize
     {
         if (inputSize.width < CGFloat(maxSize)) && (inputSize.height < CGFloat(maxSize))  {
             return inputSize

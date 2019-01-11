@@ -184,7 +184,7 @@ public struct IMPPatch:Equatable {
                 
                 var minCosine:Float = Float.greatestFiniteMagnitude //FLT_MAX
                 for i in 0..<4 {
-                    let a = fabs(angle(vertices[i]!.point, vertices[(i+2)%4]!.point, vertices[(i+1)%4]!.point))
+                    let a = abs(angle(vertices[i]!.point, vertices[(i+2)%4]!.point, vertices[(i+1)%4]!.point))
                     minCosine = fmin(minCosine, a)
                 }
                 

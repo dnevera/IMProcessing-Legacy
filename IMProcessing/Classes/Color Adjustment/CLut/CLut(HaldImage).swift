@@ -72,11 +72,11 @@ extension IMPCLut {
         guard let text = texture else { throw FormatError(file: "", line: 0, kind: .empty) }
 
         if text.width != text.height {
-            throw FormatError(file: path, line: 0, kind: .wrangFormat)
+            throw FormatError(file: path, line: 0, kind: .wrongFormat)
         }
         
         if !text.width.isPowerOfTwo {
-            throw FormatError(file: path, line: 0, kind: .wrangFormat)
+            throw FormatError(file: path, line: 0, kind: .wrongFormat)
         }
         _type = .lut_2d
         _title = url.lastPathComponent
@@ -91,11 +91,11 @@ extension IMPCLut {
         guard let text = texture else { throw FormatError(file: "", line: 0, kind: .empty) }
         
         if Int(image.size.width) != text.height {
-            throw FormatError(file: "", line: 0, kind: .wrangFormat)
+            throw FormatError(file: "", line: 0, kind: .wrongFormat)
         }
         
         if !Int(image.size.width).isPowerOfTwo {
-            throw FormatError(file: "", line: 0, kind: .wrangFormat)
+            throw FormatError(file: "", line: 0, kind: .wrongFormat)
         }
         _type = .lut_2d
         //_title = url.lastPathComponent

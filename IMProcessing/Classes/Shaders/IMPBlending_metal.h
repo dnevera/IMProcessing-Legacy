@@ -87,6 +87,7 @@ namespace IMProcessing
     
     
     static inline float4 blend(float4 inColor, float4 outColor, IMPBlending blending){
+        
         float4 result = float4(outColor.rgb, blending.opacity);
         
         switch (blending.mode) {
@@ -98,8 +99,12 @@ namespace IMProcessing
                 result = blendColor(inColor, result);
                 break;
 
+            case IMPNormal:
+                result = blendNormal(inColor, result);
+                break;
+
             default:
-                result = blendNormal(inColor, result);    
+                result = mix(inColor, outColor, blending.opacity);
         }
                 
         return  result;

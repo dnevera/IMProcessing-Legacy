@@ -37,6 +37,14 @@ public protocol IMPFilterProtocol:IMPContextProvider, IMPDestinationSizeProvider
 open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatable {
     
     public var mutex = IMPSemaphore()
+    public var observingType:IMPContext.OperationType = .async {
+        didSet{
+            for c in self.coreImageFilterList {
+                c.filter?.observingType = observingType
+            }
+            root?.observingType = observingType
+        }
+    }
     
     public static let filterType = IMPFilter.self
     
@@ -336,7 +344,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
                         let tmp:MTLTexture = device.make2DTexture(size: dsize, pixelFormat: pixelFormat)
                         
                         filter.setValue(CIImage(mtlTexture: currentResult,
-                                                options:  [kCIImageColorSpace: colorSpace]),
+                                                options:  convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace])),
                                         forKey: kCIInputImageKey)
                         
                         guard let image = filter.outputImage else { return }
@@ -866,7 +874,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     //
     internal func executeNewSourceObservers(source:IMPImageProvider?){
         let observers = self.mutex.sync { Array(self.newSourceObservers) } 
-        context.runOperation(.async) {            
+        context.runOperation(self.observingType) {
             for hash in observers {
                 hash.observer(source)
             }            
@@ -877,7 +885,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         if observersEnabled {
             if let d = destination {
                 let observers = self.mutex.sync { Array(self.destinationObservers) }                     
-                context.runOperation(.async) {
+                context.runOperation(self.observingType) {
                     for hash in observers {
                         hash.observer(d)
                     }
@@ -890,7 +898,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         if observersEnabled {
             root?.executeDirtyObservers(filter: self)
             let observers = self.mutex.sync { Array(self.dirtyObservers) }
-            context.runOperation(.async) {
+            context.runOperation(self.observingType) {
                 for hash in observers {
                     hash.observer(filter,filter.source,filter._destination)
                 }
@@ -901,7 +909,7 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
     internal func executeEnablingObservers(filter:IMPFilter){
         if observersEnabled {
             let observers = self.mutex.sync { Array(self.enablingObservers) }
-            context.runOperation(.async) {
+            context.runOperation(self.observingType) {
                 for hash in observers {
                     hash.observer(filter,filter.source,filter._destination)
                 }
@@ -1006,4 +1014,15 @@ open class IMPFilter: IMPFilterProtocol, /*IMPDestinationSizeProvider,*/ Equatab
         v.source = IMPImage(context: self.context)
         return v
     }()
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertToOptionalCIImageOptionDictionary(_ input: [String: Any]?) -> [CIImageOption: Any]? {
+	guard let input = input else { return nil }
+	return Dictionary(uniqueKeysWithValues: input.map { key, value in (CIImageOption(rawValue: key), value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromCIImageOption(_ input: CIImageOption) -> String {
+	return input.rawValue
 }

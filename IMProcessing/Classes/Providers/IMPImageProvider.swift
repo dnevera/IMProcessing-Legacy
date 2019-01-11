@@ -207,7 +207,7 @@ public extension IMPImageProvider {
             guard let data = image.tiffRepresentation else {
                 return
             }
-            let ciimage = CIImage(data: data, options: [kCIImageColorSpace: colorSpace])
+            let ciimage = CIImage(data: data, options: convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace]))
             let imageOrientation = IMPImageOrientation.up
         #else
             let ciimage = CIImage(cgImage: image.cgImage!, options: [kCIImageColorSpace: colorSpace])
@@ -224,7 +224,7 @@ public extension IMPImageProvider {
                 maxSize: CGFloat = 0,
                 orientation:IMPImageOrientation? = nil){
         self.init(context:context, storageMode: storageMode)
-        self.image = prepareImage(image: CIImage(cgImage: image, options: [kCIImageColorSpace: colorSpace]),
+        self.image = prepareImage(image: CIImage(cgImage: image, options: convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace])),
                                   maxSize: maxSize, orientation: orientation)
     }
     
@@ -259,7 +259,7 @@ public extension IMPImageProvider {
     public mutating func update(_ inputImage:NSImage){
         #if os(OSX)
             guard let data = inputImage.tiffRepresentation else { return }
-            image = CIImage(data: data, options: [kCIImageColorSpace: colorSpace])
+            image = CIImage(data: data, options: convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace]))
         #else
             image = CIImage(image: inputImage)
         #endif
@@ -801,7 +801,7 @@ public extension IMPImageProvider {
     public func cgiImage(scale:CGFloat, reflect:Bool = false) -> CGImage? {
         guard let image = scaledImage(with: scale, reflect:reflect) else { return nil }
         return context.coreImage?.createCGImage(image, from: image.extent,
-                                                format: kCIFormatARGB8,
+                                                format: CIFormat.ARGB8,
                                                 colorSpace: colorSpace,
                                                 deferred:true)                    
     }
@@ -812,7 +812,7 @@ public extension IMPImageProvider {
         }
         set {
             if let im = newValue {
-                image = CIImage(cgImage: im, options: [kCIImageColorSpace: colorSpace])
+                image = CIImage(cgImage: im, options: convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace]))
             }
         }
     }
@@ -841,7 +841,7 @@ public extension IMPImageProvider {
         }
         set{
             guard let data = newValue?.tiffRepresentation else { return }
-            image = CIImage(data: data, options: [kCIImageColorSpace: colorSpace])
+            image = CIImage(data: data, options: convertToOptionalCIImageOptionDictionary([convertFromCIImageOption(CIImageOption.colorSpace): colorSpace]))
         }
     }
     #endif
@@ -900,9 +900,9 @@ public extension IMPImageProvider {
         /// - Returns: representation Data?
         public func representation(using type: IMPImageFileType, compression factor:Float? = nil, reflect:Bool = false) -> Data?{
             
-            var properties:[NSBitmapImageRep.PropertyKey : Any] = [:]            
+            var properties:[CIImageRepresentationOption : Any] = [:]
             if type == .jpeg {
-                properties = [NSBitmapImageRep.PropertyKey.compressionFactor: factor ?? 1.0]
+                properties = [CIImageRepresentationOption(rawValue: kCGImageDestinationLossyCompressionQuality as String): factor ?? 1.0]
             }
             
             let csp = self.colorSpace
@@ -917,12 +917,19 @@ public extension IMPImageProvider {
                 
                 switch type {
                 case .jpeg:
-                    return context.coreImage?.jpegRepresentation(of: image.transformed(by: t), colorSpace: csp, options: properties)
+                    return context.coreImage?.jpegRepresentation(of: image.transformed(by: t),
+                                                                 colorSpace: csp,
+                                                                 options: properties)
                 case .tiff:
-                    return context.coreImage?.tiffRepresentation(of: image.transformed(by: t), format: kCIFormatRGBAf, colorSpace: csp, options:properties)
+                    return context.coreImage?.tiffRepresentation(of: image.transformed(by: t),
+                                                                 format: CIFormat.RGBAf,
+                                                                 colorSpace: csp, options:properties)
                 case .png:
                     if #available(OSX 10.13, *) {
-                        return context.coreImage?.pngRepresentation(of: image.transformed(by: t), format: kCIFormatRGBA16, colorSpace: csp, options: properties)
+                        return context.coreImage?.pngRepresentation(of: image.transformed(by: t),
+                                                                    format: CIFormat.RGBA16,
+                                                                    colorSpace: csp,
+                                                                    options: properties)
                     } else {
                         nsImage(scale: 1, reflect: reflect)?.representation(using: type, compression: factor)
                     }
@@ -952,3 +959,14 @@ public extension IMPImageProvider {
     
 #endif
 
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertToOptionalCIImageOptionDictionary(_ input: [String: Any]?) -> [CIImageOption: Any]? {
+	guard let input = input else { return nil }
+	return Dictionary(uniqueKeysWithValues: input.map { key, value in (CIImageOption(rawValue: key), value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromCIImageOption(_ input: CIImageOption) -> String {
+	return input.rawValue
+}

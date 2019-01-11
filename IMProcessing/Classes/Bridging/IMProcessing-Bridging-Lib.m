@@ -12,6 +12,7 @@
 @implementation IMPBridge
 
 + (float3) rgb2xyz:(float3)color     { return IMPrgb2xyz(color); }
++ (float3) rgb2srgb:(float3)color     { return IMPrgb2srgb(color); }
 + (float3) rgb2lab:(float3)color     { return IMPrgb2lab(color); }
 + (float3) rgb2lch:(float3)color     { return IMPrgb2lch(color); }
 + (float3) rgb2dcproflut:(float3)color     { return IMPrgb2dcproflut(color); }
@@ -21,6 +22,7 @@
 + (float3) rgb2ycbcrHD:(float3)color { return IMPrgb2ycbcrHD(color); }
 
 + (float3) srgb2xyz:(float3)color     { return IMPsrgb2xyz(color); }
++ (float3) srgb2rgb:(float3)color     { return IMPsrgb2rgb(color); }
 + (float3) srgb2lab:(float3)color     { return IMPsrgb2lab(color); }
 + (float3) srgb2lch:(float3)color     { return IMPsrgb2lch(color); }
 + (float3) srgb2dcproflut:(float3)color     { return IMPsrgb2dcproflut(color); }
@@ -137,13 +139,16 @@
     return IMPtempTint2xy(tempTint);
 }
 
-
 + (float2) tempTintFor:(float3)color from:(float3)gray {
     return IMPtempTintFromGray(color, gray);
 }
 
 + (float3) adjustTempTint:(float2)tempTint for:(float3)color{
     return IMPadjustTempTint(tempTint, color);
+}
+
++ (float)  xyz2CorColorTemp:(float3)color {
+    return IMPXYZtoCorColorTemp(color);
 }
 
 @end

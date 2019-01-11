@@ -536,7 +536,7 @@ public class IMPHistogram {
         //
         // Перемножаем два вектора вектор
         //
-        vDSP_vmul(&A, 1, &intensityDistribution.1, 1, &tempBuffer, 1, vDSP_Length(size))
+        vDSP_vmul(&A, 1, intensityDistribution.1, 1, &tempBuffer, 1, vDSP_Length(size))
         return sum(A: &tempBuffer, size: size)
     }
     

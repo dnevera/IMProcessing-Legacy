@@ -88,7 +88,7 @@ kernel void kernel_patchColors(
     int re =  regionSize/2+1;
     uint2 gid = uint2(float2(point.x,point.y) * size);
     
-    colors[tid.x] = getAvrgColor(rs, re,  rs, re, gid, source);
+    colors[tid.x] =  getAvrgColor(rs, re,  rs, re, gid, source);
 }
 
 

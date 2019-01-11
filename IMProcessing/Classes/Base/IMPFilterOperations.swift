@@ -17,13 +17,25 @@ public extension IMPFilter {
     /// Async redirect source image frame to another filter
     ///
     /// - Parameters:
-    ///   - sourceFilter: source image frame updatable filter
     ///   - destinationFilter: destination filter which should recieve the same source image frames
     /// - Returns: destination filter
     ///
     @discardableResult public func addRedirection<T:IMPFilter>(to destination:T) ->T {
         addObserver(newSource: { (source) in
             destination.source = source
+        })
+        return destination
+    }
+    
+    /// Async redirect destination image frame to another filter
+    ///
+    /// - Parameters:
+    ///   - destinationFilter: destination filter which should recieve the same source image frames
+    /// - Returns: destination filter
+    ///
+    @discardableResult public func addDestination<T:IMPFilter>(to destination:T) ->T {
+        addObserver(destinationUpdated: { (destinationImage) in
+            destination.source = destinationImage
         })
         return destination
     }
@@ -35,19 +47,20 @@ public extension IMPFilter {
     ///   - action: next processing action
     /// - Returns: filter
     ///
-    @discardableResult public func addProcessing<T:IMPFilter>(action:  ((_ image:IMPImageProvider) -> Void)?=nil) -> T {
-        addObserver(newSource:{ (source) in
-            self.context.runOperation(.async, {
-                self.process()
-            })
-        })
-        
+    @discardableResult public func addProcessing<T:IMPFilter>(sync:IMPContext.OperationType = .sync,
+                                                              action:  ((_ image:IMPImageProvider) -> Void)?=nil) -> T {
         addObserver(destinationUpdated: {(destination) in
             if let a = action {
-                self.context.runOperation(.async) {
+                self.context.runOperation(sync) {
                     a(destination)
                 }
             }
+        })
+        
+        addObserver(newSource:{ (source) in
+            self.context.runOperation(sync, {
+                self.process()
+            })
         })
         
         return self as! T

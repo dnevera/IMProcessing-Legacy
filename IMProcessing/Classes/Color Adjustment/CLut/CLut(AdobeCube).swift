@@ -74,7 +74,7 @@ public extension IMPCLut {
         try autoreleasepool{
             
             if _type == .lut_2d {
-                throw FormatError(file: path, line: 0, kind: .wrangType)
+                throw FormatError(file: path, line: 0, kind: .wrongType)
             }
             
             guard let txt = texture else { throw FormatError(file: path, line: 0, kind: .empty) }
@@ -194,7 +194,7 @@ extension IMPCLut {
                 let words = line.components(separatedBy: .whitespacesAndNewlines)
                 
                 if words.count <= 1 {
-                    throw FormatError(file: path, line: linenumber, kind: .wrangFormat)
+                    throw FormatError(file: path, line: linenumber, kind: .wrongFormat)
                 }
                 
                 let keyword = words[0].uppercased()
@@ -211,7 +211,7 @@ extension IMPCLut {
                         _domainMin.b = Float(words[3]) ?? 0
                     }
                     else{
-                        throw FormatError(file: path, line: linenumber, kind: .wrangFormat)
+                        throw FormatError(file: path, line: linenumber, kind: .wrongFormat)
                     }
                 }
                     
@@ -222,7 +222,7 @@ extension IMPCLut {
                         _domainMax.b = Float(words[3]) ?? 0
                     }
                     else{
-                        throw  FormatError(file: path, line: linenumber, kind: .wrangFormat)
+                        throw  FormatError(file: path, line: linenumber, kind: .wrongFormat)
                     }
                 }
                     
@@ -231,7 +231,7 @@ extension IMPCLut {
                         _lutSize = s
                     }
                     else {
-                        throw  FormatError(file: path, line: linenumber, kind: .wrangFormat)
+                        throw  FormatError(file: path, line: linenumber, kind: .wrongFormat)
                     }
                     _type = .lut_3d
                     if  _lutSize < 2 || _lutSize > 256  {
@@ -244,7 +244,7 @@ extension IMPCLut {
                         _lutSize = s
                     }
                     else {
-                        throw FormatError(file: path, line: linenumber, kind: .wrangFormat)
+                        throw FormatError(file: path, line: linenumber, kind: .wrongFormat)
                     }
                     _type = .lut_1d;
                     if ( _lutSize < 2 || _lutSize > 65536 ) {
@@ -266,7 +266,7 @@ extension IMPCLut {
                         _domainMax.b=dmax
                     }
                     else{
-                        throw FormatError(file: path, line: linenumber, kind: .wrangFormat)
+                        throw FormatError(file: path, line: linenumber, kind: .wrongFormat)
                     }
                 }
                     
@@ -316,7 +316,7 @@ extension IMPCLut {
                 }
                     
                 else {
-                    throw FormatError(file: path, line: linenumber, kind: .wrangFormat)
+                    throw FormatError(file: path, line: linenumber, kind: .wrongFormat)
                 }
                 
                 linenumber += 1
